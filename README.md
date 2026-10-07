@@ -7,7 +7,7 @@
 2026_MS_418/
 ├── .github/        # PRテンプレート・Copilotレビュー設定
 ├── docs/           # ドキュメント（CONTRIBUTING / coding-rules）
-├── UnityProject/   # Unityプロジェクト本体（Unity Hubではこのフォルダを開く）
+├── MiraiSozo2027/  # Unityプロジェクト本体（Unity Hubではこのフォルダを開く）
 │   ├── Assets/
 │   ├── Packages/
 │   ├── ProjectSettings/
