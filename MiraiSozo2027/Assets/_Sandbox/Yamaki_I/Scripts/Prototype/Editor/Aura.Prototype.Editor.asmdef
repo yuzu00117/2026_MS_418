@@ -1,0 +1,20 @@
+{
+    "name": "Aura.Prototype.Editor",
+    "rootNamespace": "Aura.Prototype.Editor",
+    "references": [
+        "Aura.Wave",
+        "Aura.Wave.Controls",
+        "Aura.Prototype"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
