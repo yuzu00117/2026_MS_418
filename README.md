@@ -5,7 +5,7 @@
 
 ```
 2026_MS_418/
-├── .github/        # PRテンプレート・Copilotレビュー設定
+├── .github/        # PRテンプレート・PR自動レビュー設定（PR-Agent）
 ├── docs/           # ドキュメント（CONTRIBUTING / coding-rules）
 ├── MiraiSozo2027/  # Unityプロジェクト本体（Unity Hubではこのフォルダを開く）
 │   ├── Assets/
