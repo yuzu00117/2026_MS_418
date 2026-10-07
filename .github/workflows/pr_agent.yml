@@ -1,0 +1,60 @@
+name: PR Agent
+
+on:
+  # synchronize は入れない。push のたびに実行すると Gemini の無料枠を消費してしまうため。
+  # 再レビューが欲しいときは PR コメントで /review などを手動実行する。
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+  issue_comment:
+    types: [created]
+
+jobs:
+  pr_agent_job:
+    runs-on: ubuntu-latest
+    # 最小権限にする。PR へのコメント投稿に必要な分だけ許可する。
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    # 実行条件:
+    #  - Bot 自身のコメントで再度起動してループしないよう Bot を除外する
+    #  - (a) フォーク PR は Secrets が渡らず失敗するので、同一リポジトリの PR のみ対象にする
+    #  - (b) 公開リポジトリで第三者のコメントによる無料枠の浪費を防ぐため、
+    #        コメントコマンドは OWNER / MEMBER / COLLABORATOR のみ許可する
+    if: >-
+      github.event.sender.type != 'Bot' && (
+        (github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository) ||
+        (github.event_name == 'issue_comment' &&
+          github.event.issue.pull_request &&
+          contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
+      )
+    steps:
+      # タグではなくコミット SHA で固定する。タグは付け替え可能で、
+      # Secrets を扱うアクションがサプライチェーン攻撃を受けるリスクを避けるため。
+      # PR-Agent の Docker アクションは checkout 不要なので actions/checkout は入れない。
+      - name: PR Agent action step
+        uses: the-pr-agent/pr-agent@8e5a9295973b24af4b70cafd0b660a230811ef9e # v0.47.0
+        env:
+          # Secret の値は直接書かず、必ず secrets 経由で渡す。
+          GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          # PR レビュー専用の別プロジェクトの Gemini キーを使うため、Flash 系の無料枠(モデルごとに1日20回)も使える。
+          # 精度の高い Flash を優先し、上限エラー時は順に次のモデルへ切り替え、最後は 1日500回の Flash-Lite 系で受ける。
+          config.model: "gemini/gemini-3.8-flash"
+          config.fallback_models: '["gemini/gemini-3.7-flash","gemini/gemini-3.6-flash","gemini/gemini-3.5-flash-lite","gemini/gemini-3.1-flash-lite"]'
+          # PR-Agent の既知モデル表に無いモデルがフォールバックに含まれるため、最大トークン数の明示が必要。
+          config.custom_model_max_tokens: "1000000"
+          config.response_language: "ja-JP"
+
+          github_action_config.auto_review: "true"
+          github_action_config.auto_improve: "true"
+          # describe は PR のタイトル・説明を上書きしてしまう。
+          # docs/CONTRIBUTING.md の PR テンプレートを守るため自動実行しない。
+          github_action_config.auto_describe: "false"
+          github_action_config.pr_actions: '["opened", "reopened", "ready_for_review"]'
+
+          # Unity の YAML アセットなど、差分が巨大で AI が読めないものを除外する。
+          # .meta は「.meta の欠落確認」という規約チェックに必要なので、あえて除外しない。
+          ignore.glob: '["**/*.unity","**/*.prefab","**/*.asset","**/*.mat","**/*.anim","**/*.controller","**/*.overrideController","**/*.unitypackage","**/Library/**","**/Temp/**","**/Logs/**","**/obj/**"]'
