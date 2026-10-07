@@ -1,0 +1,38 @@
+# PR-Agent のプロジェクト個別設定。
+# このファイルはリポジトリのデフォルトブランチ(main)から読み込まれるため、
+# main にマージされるまで反映されない。
+# モデル等の設定は .github/workflows/pr_agent.yml の env 側にある。
+
+[pr_reviewer]
+num_max_findings = 5
+require_tests_review = false  # Unity の課題プロジェクトのため、テストに関する指摘は不要
+extra_instructions = """\
+レビューはすべて日本語で書くこと。
+規約に明確に違反している点と、バグ・パフォーマンス上の実害がある点を優先して指摘する。
+差分に書かれていない内容を推測で指摘しない。
+規約と一般的なベストプラクティスが衝突する場合は、プロジェクト規約を優先する。
+
+【確認すべき規約(docs/coding-rules.md, docs/CONTRIBUTING.md)】
+- 命名: クラス/メソッド/プロパティ/enum/定数は PascalCase、ローカル変数・引数は camelCase、privateフィールドは _camelCase、interfaceは I 接頭辞。定数に UPPER_SNAKE は禁止。boolは is/has/can で始める。コレクションは複数形。
+- Inspector公開は [SerializeField] private を使い、public フィールドは避ける。
+- Update 内で GetComponent / Find / Camera.main を呼ばず Awake/Start でキャッシュする。毎フレームの new や文字列結合を避ける。
+- マジックナンバーは const か [SerializeField] にする。不要な Debug.Log を残さない。
+- 1ファイル1クラス、ファイル名=クラス名。メソッドは30行を目安にする。コメントは「なぜ」を書く。
+- アセット接頭辞: Prefab=PF_, Material=M_, Texture=T_, AnimatorController=AC_, AnimationClip=AN_, ScriptableObject=SO_, 効果音=SE_, BGM=BGM_, Scene=Scene_。Misc フォルダは作成禁止。
+- Git/Unity: アセットと .meta を同時にコミットしているか。Library/Temp/Logs/obj の混入、API キー等の秘匿情報の混入がないか。
+- 他メンバーの個人フォルダ(MiraiSozo2027/Assets/_Sandbox/<名前>/)、共有アセット、シーン、Prefab を無断で編集していないか。
+- ブランチ名は feature/<タスク番号>_<機能名>。コミットとPRタイトルは `<種別>: <要約>`(種別は feat, fix, docs, style, refactor, chore。要約は日本語)。
+- PR説明に「概要」「変更内容」「動作確認」があるか。
+"""
+
+[pr_code_suggestions]
+extra_instructions = """\
+提案はすべて日本語で書くこと。差分に書かれていない内容を推測で提案しない。
+規約と一般的なベストプラクティスが衝突する場合は、プロジェクト規約を優先する。
+次の観点を優先する。
+- 命名: PascalCase(クラス/メソッド/プロパティ/enum/定数)、camelCase(ローカル変数・引数)、_camelCase(privateフィールド)、interfaceは I 接頭辞。定数に UPPER_SNAKE は使わない。boolは is/has/can、コレクションは複数形。
+- public フィールドではなく [SerializeField] private を使う。
+- Update 内の GetComponent / Find / Camera.main はキャッシュに変更する。毎フレームの new や文字列結合を避ける。
+- マジックナンバーは const か [SerializeField] にする。不要な Debug.Log は削除する。
+- 1ファイル1クラス、ファイル名=クラス名。長いメソッド(30行超)は分割する。コメントは「なぜ」を書く。
+"""
