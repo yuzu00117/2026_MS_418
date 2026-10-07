@@ -93,7 +93,7 @@ public void speed(float s) { }      // 動詞から始まっていない、引�
 
 ### 2.1 個人作業フォルダ
 
-各メンバーは `Assets/_Project/Members/<名前>/` を個人作業フォルダとして使用します。
+各メンバーは `UnityProject/Assets/_Project/Members/<名前>/` を個人作業フォルダとして使用します。
 
 > [!CAUTION]
 > **他メンバーのフォルダ・共有アセット・シーン・Prefab は無断で編集しないでください。**  
@@ -110,10 +110,10 @@ flowchart LR
 
 > **📌 ルール**: シーンは**担当ごとに分割**し、同時編集を避けてください。
 
-### 2.3 Assets/_Project/ の構成
+### 2.3 UnityProject/Assets/_Project/ の構成
 
 ```
-Assets/_Project/
+UnityProject/Assets/_Project/
 ├── Members/
 │   └── <名前>/        # 個人作業フォルダ
 ├── Scripts/
