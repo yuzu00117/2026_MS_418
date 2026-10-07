@@ -1,0 +1,1 @@
+{"name":"Echo.Editor","references":["Echo.Runtime","Echo.URP","Unity.RenderPipelines.Core.Runtime","Unity.RenderPipelines.Universal.Runtime"],"includePlatforms":["Editor"]}

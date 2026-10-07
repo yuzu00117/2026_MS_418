@@ -1,0 +1,1 @@
+{"name":"Echo.PlayModeTests","references":["Echo.Runtime","Echo.InputSystem","Echo.URP","Echo.Samples","Unity.InputSystem","Unity.RenderPipelines.Universal.Runtime","Unity.RenderPipelines.Core.Runtime"],"optionalUnityReferences":["TestAssemblies"]}
