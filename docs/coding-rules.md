@@ -93,7 +93,18 @@ public void speed(float s) { }      // 動詞から始まっていない、引�
 
 ### 2.1 個人作業フォルダ
 
-各メンバーは `Assets/_Project/Members/<名前>/` を個人作業フォルダとして使用します。
+各メンバーは `MiraiSozo2027/Assets/_Sandbox/<名前>/` を個人作業フォルダとして使用します。
+
+**作り方**:
+1. Unity の Project ウィンドウで `_Sandbox/_Template` フォルダを選択
+2. 右クリック → **Duplicate** を選択
+3. 複製されたフォルダを自分の名前にリネーム
+
+> [!CAUTION]
+> **Windows のエクスプローラーでのコピーは禁止です。** `.meta` ファイルの GUID が重複し、アセット参照が壊れます。**必ず Unity の Project ウィンドウ上で Duplicate を使用してください。**
+
+> [!CAUTION]
+> **`_Template` フォルダには個人の作業物を置かないでください。** あくまで雛形です。個人作業はリネーム後のフォルダで行ってください。
 
 > [!CAUTION]
 > **他メンバーのフォルダ・共有アセット・シーン・Prefab は無断で編集しないでください。**  
@@ -103,29 +114,40 @@ public void speed(float s) { }      // 動詞から始まっていない、引�
 
 ```mermaid
 flowchart LR
-    A[個人フォルダで作業] --> B[PR を作成]
+    A[個人フォルダで作業<br/>_Sandbox/&lt;名前&gt;/] --> B[PR を作成]
     B --> C[レビュー・承認]
-    C --> D[共有フォルダへ移動]
+    C --> D[_Project/配下の<br/>該当フォルダへ移動]
 ```
 
 > **📌 ルール**: シーンは**担当ごとに分割**し、同時編集を避けてください。
 
-### 2.3 Assets/_Project/ の構成
+### 2.3 MiraiSozo2027/Assets/ 全体の構成
 
 ```
-Assets/_Project/
-├── Members/
-│   └── <名前>/        # 個人作業フォルダ
-├── Scripts/
-│   ├── Player/
-│   └── Enemy/
-├── Prefabs/
-├── Scenes/
-├── Materials/
-├── Textures/
-├── Audio/
-├── Animations/
-└── ScriptableObjects/
+MiraiSozo2027/Assets/
+├── _Project/                 # 本番用(共有)
+│   ├── Scripts/
+│   │   ├── Player/
+│   │   ├── Enemy/
+│   │   ├── UI/
+│   │   ├── Systems/
+│   │   └── Utils/
+│   ├── Prefabs/
+│   ├── Scenes/
+│   ├── Art/
+│   ├── Audio/
+│   ├── Animations/
+│   └── Settings/
+├── _Sandbox/                 # 個人の試作・検証用
+│   ├── _Template/            # メンバー別フォルダの雛形(Unity上で複製して使う)
+│   │   ├── Scripts/
+│   │   ├── Prefabs/
+│   │   ├── Scenes/
+│   │   ├── Art/
+│   │   ├── Audio/
+│   │   └── Animations/
+│   └── <名前>/               # 個人作業フォルダ(_Template を複製して作成)
+└── ThirdParty/               # 外部アセット置き場
 ```
 
 > [!CAUTION]
