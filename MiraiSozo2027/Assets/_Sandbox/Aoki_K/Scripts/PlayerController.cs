@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Aura.Wave;
+using Echo.Echolocation;
 
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
@@ -15,6 +17,9 @@ public class PlayerController : MonoBehaviour
 
     private Rigidbody _rb;
     private Animator _animator;
+
+    private WaveEmitter _waveEmitter;
+    private EchoController _echoController;
 
     private InputSystem_Actions _actions;
 
@@ -46,6 +51,15 @@ public class PlayerController : MonoBehaviour
 
         // Rigidbodyの回転を禁止
         _rb.constraints = RigidbodyConstraints.FreezeRotation;
+
+        // WaveEmitterとEchoControllerを取得
+        _waveEmitter = GetComponent<WaveEmitter>();
+        _echoController = GetComponent<EchoController>();
+
+        if(_waveEmitter != null && _cameraTransform != null)
+        {
+            //インスペクターで未設定ならカメラに照準を割り当て
+        }
     }
 
     // Update is called once per frame
@@ -117,6 +131,32 @@ public class PlayerController : MonoBehaviour
         if(_actions.Player.LayoutMode.triggered)
         {
             gameObject.GetComponent<ObjectPlacer>().TogglePlaceMode();
+        }
+
+        // WaveEmmiter
+        if(_waveEmitter != null)
+        {
+            _waveEmitter.SetTriggerHeld(_actions.Player.Fire.IsPressed());
+
+            if(_actions.Player.SwitchWave.triggered)
+             {
+                _waveEmitter.SelectNextType();
+             }
+            if(_actions.Player.ToggleFireMode.triggered)
+            {
+                _waveEmitter.FireMode = _waveEmitter.FireMode == WaveFireMode.Pulse ? WaveFireMode.Beam : WaveFireMode.Pulse;
+            }
+
+        }
+
+
+        // EchoLocation
+        if(_echoController != null)
+        {
+            if(_actions.Player.EchoScan.triggered)
+            {
+                _echoController.ToggleScan();
+            }
         }
     }
 }

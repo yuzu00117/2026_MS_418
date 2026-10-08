@@ -113,10 +113,50 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""priority"": 0
                 },
                 {
-                    ""name"": ""Attack"",
+                    ""name"": ""Fire"",
                     ""type"": ""Button"",
                     ""id"": ""6c2ab1b8-8984-453a-af3d-a3c78ae1679a"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
+                },
+                {
+                    ""name"": ""Confirmed"",
+                    ""type"": ""Button"",
+                    ""id"": ""aaef437d-fece-4080-ab65-850b2cbf3978"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
+                },
+                {
+                    ""name"": ""AdjustDistance"",
+                    ""type"": ""Value"",
+                    ""id"": ""589f1dc5-8e51-431e-8548-074317de7d29"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true,
+                    ""priority"": 0
+                },
+                {
+                    ""name"": ""ScrollDistance"",
+                    ""type"": ""Value"",
+                    ""id"": ""d55233d8-4c23-44e1-b230-e23ba9ee9f66"",
+                    ""expectedControlType"": ""Vector2"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true,
+                    ""priority"": 0
+                },
+                {
+                    ""name"": ""LayoutMode"",
+                    ""type"": ""Button"",
+                    ""id"": ""9e518c6d-8227-4e78-b795-27e9c1f89d74"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false,
@@ -183,9 +223,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""priority"": 0
                 },
                 {
-                    ""name"": ""LayoutMode"",
+                    ""name"": ""SwitchWave"",
                     ""type"": ""Button"",
-                    ""id"": ""9e518c6d-8227-4e78-b795-27e9c1f89d74"",
+                    ""id"": ""87aad69a-8c6b-4dcc-bb8f-b8db61ffab95"",
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
@@ -193,9 +233,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""priority"": 0
                 },
                 {
-                    ""name"": ""Confirmed"",
+                    ""name"": ""ToggleFireMode"",
                     ""type"": ""Button"",
-                    ""id"": ""aaef437d-fece-4080-ab65-850b2cbf3978"",
+                    ""id"": ""6bc340af-4bbe-45d7-a875-748ff0bc87bc"",
                     ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
@@ -203,23 +243,13 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""priority"": 0
                 },
                 {
-                    ""name"": ""AdjustDistance"",
-                    ""type"": ""Value"",
-                    ""id"": ""589f1dc5-8e51-431e-8548-074317de7d29"",
-                    ""expectedControlType"": ""Vector2"",
+                    ""name"": ""EchoScan"",
+                    ""type"": ""Button"",
+                    ""id"": ""1db4edc9-2dca-4736-85cf-434268f1aafb"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
-                    ""initialStateCheck"": true,
-                    ""priority"": 0
-                },
-                {
-                    ""name"": ""ScrollDistance"",
-                    ""type"": ""Value"",
-                    ""id"": ""d55233d8-4c23-44e1-b230-e23ba9ee9f66"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true,
+                    ""initialStateCheck"": false,
                     ""priority"": 0
                 }
             ],
@@ -392,11 +422,11 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""143bb1cd-cc10-4eca-a2f0-a3664166fe91"",
-                    ""path"": ""<Gamepad>/buttonWest"",
+                    ""path"": ""<Gamepad>/rightTrigger"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": "";Gamepad"",
-                    ""action"": ""Attack"",
+                    ""action"": ""Fire"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -407,7 +437,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": "";Keyboard&Mouse"",
-                    ""action"": ""Attack"",
+                    ""action"": ""Fire"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -418,7 +448,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": "";Touch"",
-                    ""action"": ""Attack"",
+                    ""action"": ""Fire"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -429,7 +459,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Joystick"",
-                    ""action"": ""Attack"",
+                    ""action"": ""Fire"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -440,18 +470,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""XR"",
-                    ""action"": ""Attack"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""b3c1c7f0-bd20-4ee7-a0f1-899b24bca6d7"",
-                    ""path"": ""<Keyboard>/enter"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": ""Keyboard&Mouse"",
-                    ""action"": ""Attack"",
+                    ""action"": ""Fire"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -694,6 +713,72 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": "";Gamepad"",
                     ""action"": ""LayoutMode"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""5a179abb-914a-4498-8ef2-01019ed7bfbf"",
+                    ""path"": ""<Keyboard>/q"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard&Mouse"",
+                    ""action"": ""SwitchWave"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""503db97e-a783-4ab8-abea-319d57f2929c"",
+                    ""path"": ""<Gamepad>/leftTrigger"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Gamepad"",
+                    ""action"": ""SwitchWave"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d289c169-9675-4934-b1bd-2ddf275c63b4"",
+                    ""path"": ""<Keyboard>/b"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard&Mouse"",
+                    ""action"": ""ToggleFireMode"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""05241b75-efa2-4501-befa-ce04aa89cdd2"",
+                    ""path"": ""<Gamepad>/dpad/up"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Gamepad"",
+                    ""action"": ""ToggleFireMode"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""23c5c96f-f1a8-4a60-a8f8-d5fb5802a31d"",
+                    ""path"": ""<Keyboard>/e"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard&Mouse"",
+                    ""action"": ""EchoScan"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""769cdda2-9260-49d6-8641-73e81525e300"",
+                    ""path"": ""<Gamepad>/buttonWest"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Gamepad"",
+                    ""action"": ""EchoScan"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1293,17 +1378,20 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         m_Player = asset.FindActionMap("Player", throwIfNotFound: true);
         m_Player_Move = m_Player.FindAction("Move", throwIfNotFound: true);
         m_Player_Look = m_Player.FindAction("Look", throwIfNotFound: true);
-        m_Player_Attack = m_Player.FindAction("Attack", throwIfNotFound: true);
+        m_Player_Fire = m_Player.FindAction("Fire", throwIfNotFound: true);
+        m_Player_Confirmed = m_Player.FindAction("Confirmed", throwIfNotFound: true);
+        m_Player_AdjustDistance = m_Player.FindAction("AdjustDistance", throwIfNotFound: true);
+        m_Player_ScrollDistance = m_Player.FindAction("ScrollDistance", throwIfNotFound: true);
+        m_Player_LayoutMode = m_Player.FindAction("LayoutMode", throwIfNotFound: true);
         m_Player_Interact = m_Player.FindAction("Interact", throwIfNotFound: true);
         m_Player_Crouch = m_Player.FindAction("Crouch", throwIfNotFound: true);
         m_Player_Jump = m_Player.FindAction("Jump", throwIfNotFound: true);
         m_Player_Previous = m_Player.FindAction("Previous", throwIfNotFound: true);
         m_Player_Next = m_Player.FindAction("Next", throwIfNotFound: true);
         m_Player_Sprint = m_Player.FindAction("Sprint", throwIfNotFound: true);
-        m_Player_LayoutMode = m_Player.FindAction("LayoutMode", throwIfNotFound: true);
-        m_Player_Confirmed = m_Player.FindAction("Confirmed", throwIfNotFound: true);
-        m_Player_AdjustDistance = m_Player.FindAction("AdjustDistance", throwIfNotFound: true);
-        m_Player_ScrollDistance = m_Player.FindAction("ScrollDistance", throwIfNotFound: true);
+        m_Player_SwitchWave = m_Player.FindAction("SwitchWave", throwIfNotFound: true);
+        m_Player_ToggleFireMode = m_Player.FindAction("ToggleFireMode", throwIfNotFound: true);
+        m_Player_EchoScan = m_Player.FindAction("EchoScan", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -1399,17 +1487,20 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     private List<IPlayerActions> m_PlayerActionsCallbackInterfaces = new List<IPlayerActions>();
     private readonly InputAction m_Player_Move;
     private readonly InputAction m_Player_Look;
-    private readonly InputAction m_Player_Attack;
+    private readonly InputAction m_Player_Fire;
+    private readonly InputAction m_Player_Confirmed;
+    private readonly InputAction m_Player_AdjustDistance;
+    private readonly InputAction m_Player_ScrollDistance;
+    private readonly InputAction m_Player_LayoutMode;
     private readonly InputAction m_Player_Interact;
     private readonly InputAction m_Player_Crouch;
     private readonly InputAction m_Player_Jump;
     private readonly InputAction m_Player_Previous;
     private readonly InputAction m_Player_Next;
     private readonly InputAction m_Player_Sprint;
-    private readonly InputAction m_Player_LayoutMode;
-    private readonly InputAction m_Player_Confirmed;
-    private readonly InputAction m_Player_AdjustDistance;
-    private readonly InputAction m_Player_ScrollDistance;
+    private readonly InputAction m_Player_SwitchWave;
+    private readonly InputAction m_Player_ToggleFireMode;
+    private readonly InputAction m_Player_EchoScan;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -1430,9 +1521,25 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Look => m_Wrapper.m_Player_Look;
         /// <summary>
-        /// Provides access to the underlying input action "Player/Attack".
+        /// Provides access to the underlying input action "Player/Fire".
         /// </summary>
-        public InputAction @Attack => m_Wrapper.m_Player_Attack;
+        public InputAction @Fire => m_Wrapper.m_Player_Fire;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/Confirmed".
+        /// </summary>
+        public InputAction @Confirmed => m_Wrapper.m_Player_Confirmed;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/AdjustDistance".
+        /// </summary>
+        public InputAction @AdjustDistance => m_Wrapper.m_Player_AdjustDistance;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/ScrollDistance".
+        /// </summary>
+        public InputAction @ScrollDistance => m_Wrapper.m_Player_ScrollDistance;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/LayoutMode".
+        /// </summary>
+        public InputAction @LayoutMode => m_Wrapper.m_Player_LayoutMode;
         /// <summary>
         /// Provides access to the underlying input action "Player/Interact".
         /// </summary>
@@ -1458,21 +1565,17 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Sprint => m_Wrapper.m_Player_Sprint;
         /// <summary>
-        /// Provides access to the underlying input action "Player/LayoutMode".
+        /// Provides access to the underlying input action "Player/SwitchWave".
         /// </summary>
-        public InputAction @LayoutMode => m_Wrapper.m_Player_LayoutMode;
+        public InputAction @SwitchWave => m_Wrapper.m_Player_SwitchWave;
         /// <summary>
-        /// Provides access to the underlying input action "Player/Confirmed".
+        /// Provides access to the underlying input action "Player/ToggleFireMode".
         /// </summary>
-        public InputAction @Confirmed => m_Wrapper.m_Player_Confirmed;
+        public InputAction @ToggleFireMode => m_Wrapper.m_Player_ToggleFireMode;
         /// <summary>
-        /// Provides access to the underlying input action "Player/AdjustDistance".
+        /// Provides access to the underlying input action "Player/EchoScan".
         /// </summary>
-        public InputAction @AdjustDistance => m_Wrapper.m_Player_AdjustDistance;
-        /// <summary>
-        /// Provides access to the underlying input action "Player/ScrollDistance".
-        /// </summary>
-        public InputAction @ScrollDistance => m_Wrapper.m_Player_ScrollDistance;
+        public InputAction @EchoScan => m_Wrapper.m_Player_EchoScan;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -1505,9 +1608,21 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Look.started += instance.OnLook;
             @Look.performed += instance.OnLook;
             @Look.canceled += instance.OnLook;
-            @Attack.started += instance.OnAttack;
-            @Attack.performed += instance.OnAttack;
-            @Attack.canceled += instance.OnAttack;
+            @Fire.started += instance.OnFire;
+            @Fire.performed += instance.OnFire;
+            @Fire.canceled += instance.OnFire;
+            @Confirmed.started += instance.OnConfirmed;
+            @Confirmed.performed += instance.OnConfirmed;
+            @Confirmed.canceled += instance.OnConfirmed;
+            @AdjustDistance.started += instance.OnAdjustDistance;
+            @AdjustDistance.performed += instance.OnAdjustDistance;
+            @AdjustDistance.canceled += instance.OnAdjustDistance;
+            @ScrollDistance.started += instance.OnScrollDistance;
+            @ScrollDistance.performed += instance.OnScrollDistance;
+            @ScrollDistance.canceled += instance.OnScrollDistance;
+            @LayoutMode.started += instance.OnLayoutMode;
+            @LayoutMode.performed += instance.OnLayoutMode;
+            @LayoutMode.canceled += instance.OnLayoutMode;
             @Interact.started += instance.OnInteract;
             @Interact.performed += instance.OnInteract;
             @Interact.canceled += instance.OnInteract;
@@ -1526,18 +1641,15 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Sprint.started += instance.OnSprint;
             @Sprint.performed += instance.OnSprint;
             @Sprint.canceled += instance.OnSprint;
-            @LayoutMode.started += instance.OnLayoutMode;
-            @LayoutMode.performed += instance.OnLayoutMode;
-            @LayoutMode.canceled += instance.OnLayoutMode;
-            @Confirmed.started += instance.OnConfirmed;
-            @Confirmed.performed += instance.OnConfirmed;
-            @Confirmed.canceled += instance.OnConfirmed;
-            @AdjustDistance.started += instance.OnAdjustDistance;
-            @AdjustDistance.performed += instance.OnAdjustDistance;
-            @AdjustDistance.canceled += instance.OnAdjustDistance;
-            @ScrollDistance.started += instance.OnScrollDistance;
-            @ScrollDistance.performed += instance.OnScrollDistance;
-            @ScrollDistance.canceled += instance.OnScrollDistance;
+            @SwitchWave.started += instance.OnSwitchWave;
+            @SwitchWave.performed += instance.OnSwitchWave;
+            @SwitchWave.canceled += instance.OnSwitchWave;
+            @ToggleFireMode.started += instance.OnToggleFireMode;
+            @ToggleFireMode.performed += instance.OnToggleFireMode;
+            @ToggleFireMode.canceled += instance.OnToggleFireMode;
+            @EchoScan.started += instance.OnEchoScan;
+            @EchoScan.performed += instance.OnEchoScan;
+            @EchoScan.canceled += instance.OnEchoScan;
         }
 
         /// <summary>
@@ -1555,9 +1667,21 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Look.started -= instance.OnLook;
             @Look.performed -= instance.OnLook;
             @Look.canceled -= instance.OnLook;
-            @Attack.started -= instance.OnAttack;
-            @Attack.performed -= instance.OnAttack;
-            @Attack.canceled -= instance.OnAttack;
+            @Fire.started -= instance.OnFire;
+            @Fire.performed -= instance.OnFire;
+            @Fire.canceled -= instance.OnFire;
+            @Confirmed.started -= instance.OnConfirmed;
+            @Confirmed.performed -= instance.OnConfirmed;
+            @Confirmed.canceled -= instance.OnConfirmed;
+            @AdjustDistance.started -= instance.OnAdjustDistance;
+            @AdjustDistance.performed -= instance.OnAdjustDistance;
+            @AdjustDistance.canceled -= instance.OnAdjustDistance;
+            @ScrollDistance.started -= instance.OnScrollDistance;
+            @ScrollDistance.performed -= instance.OnScrollDistance;
+            @ScrollDistance.canceled -= instance.OnScrollDistance;
+            @LayoutMode.started -= instance.OnLayoutMode;
+            @LayoutMode.performed -= instance.OnLayoutMode;
+            @LayoutMode.canceled -= instance.OnLayoutMode;
             @Interact.started -= instance.OnInteract;
             @Interact.performed -= instance.OnInteract;
             @Interact.canceled -= instance.OnInteract;
@@ -1576,18 +1700,15 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Sprint.started -= instance.OnSprint;
             @Sprint.performed -= instance.OnSprint;
             @Sprint.canceled -= instance.OnSprint;
-            @LayoutMode.started -= instance.OnLayoutMode;
-            @LayoutMode.performed -= instance.OnLayoutMode;
-            @LayoutMode.canceled -= instance.OnLayoutMode;
-            @Confirmed.started -= instance.OnConfirmed;
-            @Confirmed.performed -= instance.OnConfirmed;
-            @Confirmed.canceled -= instance.OnConfirmed;
-            @AdjustDistance.started -= instance.OnAdjustDistance;
-            @AdjustDistance.performed -= instance.OnAdjustDistance;
-            @AdjustDistance.canceled -= instance.OnAdjustDistance;
-            @ScrollDistance.started -= instance.OnScrollDistance;
-            @ScrollDistance.performed -= instance.OnScrollDistance;
-            @ScrollDistance.canceled -= instance.OnScrollDistance;
+            @SwitchWave.started -= instance.OnSwitchWave;
+            @SwitchWave.performed -= instance.OnSwitchWave;
+            @SwitchWave.canceled -= instance.OnSwitchWave;
+            @ToggleFireMode.started -= instance.OnToggleFireMode;
+            @ToggleFireMode.performed -= instance.OnToggleFireMode;
+            @ToggleFireMode.canceled -= instance.OnToggleFireMode;
+            @EchoScan.started -= instance.OnEchoScan;
+            @EchoScan.performed -= instance.OnEchoScan;
+            @EchoScan.canceled -= instance.OnEchoScan;
         }
 
         /// <summary>
@@ -1903,12 +2024,40 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnLook(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "Attack" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "Fire" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnAttack(InputAction.CallbackContext context);
+        void OnFire(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Confirmed" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnConfirmed(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "AdjustDistance" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnAdjustDistance(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "ScrollDistance" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnScrollDistance(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "LayoutMode" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnLayoutMode(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "Interact" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
@@ -1952,33 +2101,26 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnSprint(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "LayoutMode" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "SwitchWave" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnLayoutMode(InputAction.CallbackContext context);
+        void OnSwitchWave(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "Confirmed" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "ToggleFireMode" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnConfirmed(InputAction.CallbackContext context);
+        void OnToggleFireMode(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "AdjustDistance" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "EchoScan" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnAdjustDistance(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "ScrollDistance" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnScrollDistance(InputAction.CallbackContext context);
+        void OnEchoScan(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "UI" which allows adding and removing callbacks.
