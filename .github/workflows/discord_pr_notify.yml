@@ -103,10 +103,10 @@ jobs:
               }
             ')"
 
-          # 失敗時(HTTP 4xx/5xx)はレスポンス本文を出力してワークフローを失敗させる。
+          # wait=true で保存完了を待ち、送信結果を確認する。成功時は投稿JSONを出力せず、失敗時(HTTP 4xx/5xx)のみ本文を出力して失敗させる。
           # URL は引数に渡すだけで echo しない。
-          printf '%s' "$payload" | curl -sS --fail-with-body \
+          resp="$(printf '%s' "$payload" | curl -sS --fail-with-body \
             -X POST \
             -H "Content-Type: application/json" \
             --data-binary @- \
-            "$DISCORD_WEBHOOK_URL"
+            "${DISCORD_WEBHOOK_URL}?wait=true")" || { echo "$resp"; exit 1; }
