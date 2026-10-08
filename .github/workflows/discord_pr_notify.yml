@@ -3,6 +3,11 @@
 #      PR ごとに新規スレッド(投稿)を Webhook で作成する。
 #  (2) 必要な Secret: DISCORD_WEBHOOK_URL (フォーラムチャンネルの Webhook URL)
 #  (3) 現状は作成時のみ通知する。Webhook 方式の制約で既存スレッドへの追記(更新通知など)はしない。
+#  (4) 必要な Variables(Secret ではない。未設定でも通知自体は行われ、メンションのみ省略される):
+#      DISCORD_NOTIFY_USER_ID: 通知時に必ずメンションする人の Discord ユーザー ID(数字のみ)
+#      DISCORD_USER_MAP: GitHub ログイン名 → Discord ユーザー ID の JSON オブジェクト
+#                        例: {"yuzu00117":"123456789012345678"}
+#                        対応表にない作成者は、メンションせずプレーンテキストで表示する。
 name: Discord PR Notify
 
 on:
@@ -39,6 +44,9 @@ jobs:
           PR_HEAD: ${{ github.event.pull_request.head.ref }}
           PR_BASE: ${{ github.event.pull_request.base.ref }}
           PR_CREATED_AT: ${{ github.event.pull_request.created_at }}
+          # 通知対象の Discord ユーザー ID と、GitHub ログイン名 → Discord ユーザー ID の対応表(Variables 由来)。
+          NOTIFY_USER_ID: ${{ vars.DISCORD_NOTIFY_USER_ID }}
+          USER_MAP: ${{ vars.DISCORD_USER_MAP }}
         run: |
           # set -x は使わない(Webhook URL をログに出さないため)。
           set -euo pipefail
@@ -46,7 +54,9 @@ jobs:
           # JSON は jq で組み立てる(引用符・改行・メンションを安全に扱うため)。
           # - thread_name は Discord の上限 100 文字に収める
           # - description は先頭 300 文字に切り詰め、空なら「(説明なし)」
-          # - allowed_mentions.parse を空にして @everyone などのメンションを無効化する
+          # - allowed_mentions は users に指定した ID(通知対象・PR作成者)のみ許可する。
+          #   parse は空のままにして、PR 本文由来の @everyone や @here を無効化する
+          # - content に通知対象のメンションと PR 作成者の表示を入れる(対応表に無ければプレーンテキスト)
           payload="$(jq -n \
             --arg number "$PR_NUMBER" \
             --arg title "$PR_TITLE" \
@@ -56,12 +66,29 @@ jobs:
             --arg head "$PR_HEAD" \
             --arg base "$PR_BASE" \
             --arg created_at "$PR_CREATED_AT" \
+            --arg notify_id "$NOTIFY_USER_ID" \
+            --arg user_map "$USER_MAP" \
             '
+            # Discord ID は数字のみ有効とする
+            def is_id: type == "string" and test("^[0-9]+$");
             ("#" + $number + " " + $title) as $thread
             | ($body | if length > 300 then .[0:300] + "…" else . end) as $excerpt
+            # 対応表は空文字・不正JSON・オブジェクト以外でも落ちずに {} 扱いにする
+            | (try ($user_map | fromjson) catch null) as $map0
+            | (if ($map0 | type) == "object" then $map0 else {} end) as $map
+            | ($map[$author] | if is_id then . else null end) as $author_id
+            | ($notify_id | if is_id then . else null end) as $nid
+            # 2行目: 作成者の表示(対応表に無い・無効なら plain text、通知対象と同じなら重複メンションを避ける)
+            | (if $author_id == null then "PR作成者 @" + $author
+               elif $author_id == $nid then "PR作成者 (上と同じ)"
+               else "PR作成者 <@" + $author_id + ">" end) as $author_line
+            # 1行目: 通知対象のメンション(無効なら出さない)
+            | ([ (if $nid == null then empty else "<@" + $nid + ">" end), $author_line ] | join("\n")) as $content
+            | ([$nid, $author_id] | map(select(. != null)) | unique) as $users
             | {
                 thread_name: (if ($thread | length) > 100 then $thread[0:99] + "…" else $thread end),
-                allowed_mentions: { parse: [] },
+                content: $content,
+                allowed_mentions: { parse: [], users: $users },
                 embeds: [{
                   title: ($title | if length > 256 then .[0:255] + "…" else . end),
                   url: $url,
