@@ -35,7 +35,8 @@ MonoBehaviour:
       type: 3}
   m_RendererFeatures:
   - {fileID: 7833122117494664109}
-  m_RendererFeatureMap: ad6b866f10d7b46c
+  - {fileID: -1790065026499998633}
+  m_RendererFeatureMap: ad6b866f10d7b46c570c9eb2576928e7
   m_UseNativeRenderPass: 1
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   m_AssetVersion: 2
@@ -93,3 +94,19 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 3302065f671a8450b82c9ddf07426f3a, type: 3}
   - {fileID: 2800000, guid: 56a77a3e8d64f47b6afe9e3c95cb57d5, type: 3}
   m_Shader: {fileID: 4800000, guid: 0849e84e3d62649e8882e9d6f056a017, type: 3}
+--- !u!114 &-1790065026499998633
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b8b882fa350d9c94688bd4e7afc62f1d, type: 3}
+  m_Name: Echo Highlight
+  m_EditorClassIdentifier: Echo.URP::Echo.Echolocation.EchoUrpRendererFeature
+  m_Active: 1
+  _highlightShader: {fileID: 4800000, guid: b777e6e10583eee489320bb51bb0a866, type: 3}
+  _compositeShader: {fileID: 4800000, guid: f73dc3cfdd977f641b42235ed41cf6c0, type: 3}
+  _rangeShader: {fileID: 4800000, guid: b0a492aa02cc9e749999934bad3390b8, type: 3}
