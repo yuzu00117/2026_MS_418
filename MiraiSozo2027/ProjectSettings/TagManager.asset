@@ -2,17 +2,12 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!78 &1
 TagManager:
-<<<<<<< HEAD
   serializedVersion: 3
   tags:
   - Ground
-=======
-  serializedVersion: 2
-  tags:
   - EchoEnemy
   - EchoItem
   - EchoStructure
->>>>>>> origin/develop
   layers:
   - Default
   - TransparentFX
