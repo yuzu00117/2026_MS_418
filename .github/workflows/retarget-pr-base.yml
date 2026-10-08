@@ -19,11 +19,11 @@ jobs:
       pull-requests: write
     # 実行条件:
     #  - base が main の PR のみ対象にする
-    #  - develop -> main の PR は正しい流れなので対象外にする
+    #  - head ブランチが feature/* の PR のみ対象にする(hotfix/*, release/* などは対象外)
     #  - フォーク PR は対象外にする(信頼できない PR を扱わないため)
     if: >-
       github.event.pull_request.base.ref == 'main' &&
-      github.event.pull_request.head.ref != 'develop' &&
+      startsWith(github.event.pull_request.head.ref, 'feature/') &&
       github.event.pull_request.head.repo.full_name == github.repository
     steps:
       # pull_request_target は書き込み権限を持つため、PR のコードは checkout しない。
