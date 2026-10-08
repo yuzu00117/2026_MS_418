@@ -1,0 +1,1 @@
+{"name":"Echo.InputSystem.Editor","references":["Echo.Runtime","Echo.InputSystem","Unity.InputSystem"],"includePlatforms":["Editor"],"defineConstraints":["ECHO_INPUT"],"versionDefines":[{"name":"com.unity.inputsystem","expression":"1.0.0","define":"ECHO_INPUT"}]}
