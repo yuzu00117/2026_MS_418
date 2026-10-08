@@ -1,0 +1,85 @@
+# PR 作成時に Discord のフォーラムチャンネルへ通知するワークフロー。
+#  (1) develop 向けの PR が opened / reopened / ready_for_review になったとき、
+#      PR ごとに新規スレッド(投稿)を Webhook で作成する。
+#  (2) 必要な Secret: DISCORD_WEBHOOK_URL (フォーラムチャンネルの Webhook URL)
+#  (3) 現状は作成時のみ通知する。Webhook 方式の制約で既存スレッドへの追記(更新通知など)はしない。
+name: Discord PR Notify
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+    branches: [develop]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    # 最小権限にする。通知には GitHub への書き込み権限は不要。
+    permissions:
+      contents: read
+    # 実行条件:
+    #  - Draft PR は opened 時には通知せず、ready_for_review になった時点で通知する
+    #  - フォーク PR は Secrets が渡らず失敗するので、同一リポジトリの PR のみ対象にする
+    #  - Bot 起因のイベントは除外する
+    if: >-
+      github.event.sender.type != 'Bot' &&
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Create Discord forum thread
+        env:
+          # Webhook URL は直書きせず、必ず secrets 経由で渡す。
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          # PR タイトル・本文・ブランチ名などユーザー入力由来の値は、
+          # スクリプトインジェクションを避けるため ${{ }} をシェル内に展開せず env 経由で参照する。
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_HEAD: ${{ github.event.pull_request.head.ref }}
+          PR_BASE: ${{ github.event.pull_request.base.ref }}
+          PR_CREATED_AT: ${{ github.event.pull_request.created_at }}
+        run: |
+          # set -x は使わない(Webhook URL をログに出さないため)。
+          set -euo pipefail
+
+          # JSON は jq で組み立てる(引用符・改行・メンションを安全に扱うため)。
+          # - thread_name は Discord の上限 100 文字に収める
+          # - description は先頭 300 文字に切り詰め、空なら「(説明なし)」
+          # - allowed_mentions.parse を空にして @everyone などのメンションを無効化する
+          payload="$(jq -n \
+            --arg number "$PR_NUMBER" \
+            --arg title "$PR_TITLE" \
+            --arg body "$PR_BODY" \
+            --arg url "$PR_URL" \
+            --arg author "$PR_AUTHOR" \
+            --arg head "$PR_HEAD" \
+            --arg base "$PR_BASE" \
+            --arg created_at "$PR_CREATED_AT" \
+            '
+            ("#" + $number + " " + $title) as $thread
+            | ($body | if length > 300 then .[0:300] + "…" else . end) as $excerpt
+            | {
+                thread_name: (if ($thread | length) > 100 then $thread[0:99] + "…" else $thread end),
+                allowed_mentions: { parse: [] },
+                embeds: [{
+                  title: ($title | if length > 256 then .[0:255] + "…" else . end),
+                  url: $url,
+                  description: (if ($excerpt | gsub("\\s"; "") | length) == 0 then "(説明なし)" else $excerpt end),
+                  color: 5793266,
+                  timestamp: $created_at,
+                  fields: [
+                    { name: "作成者", value: $author, inline: true },
+                    { name: "ブランチ", value: ($head + " → " + $base), inline: true }
+                  ]
+                }]
+              }
+            ')"
+
+          # 失敗時(HTTP 4xx/5xx)はレスポンス本文を出力してワークフローを失敗させる。
+          # URL は引数に渡すだけで echo しない。
+          printf '%s' "$payload" | curl -sS --fail-with-body \
+            -X POST \
+            -H "Content-Type: application/json" \
+            --data-binary @- \
+            "$DISCORD_WEBHOOK_URL"
