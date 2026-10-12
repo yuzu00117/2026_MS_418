@@ -18,8 +18,9 @@ namespace Aura.ObjectInfo
         [Tooltip("オンにすると、Reactive Types に関係なく、どの種類の波にも反応する")]
         [SerializeField] private bool _canReactToAnyType;                   ///< true なら種類に関係なく反応する
 
-        [Tooltip("動くまでに、波を当て続ける時間（秒）。例: 3 なら、3 秒当てると動く。0 なら、当たった瞬間に動く")]
-        [SerializeField, Min(0.0f)] private float _requiredSeconds = 1.0f;  ///< 動くまでに当てる時間（秒）
+        [Tooltip("動くまでに溜める量。強さ 1 のビームを当て続けたときの秒数で数える。例: 3 なら、強さ 1 のビームを 3 秒当てると動く\n" +
+                 "強いビームほど早く動く（強さ 2 なら半分の時間）。0 なら、当たった瞬間に動く")]
+        [SerializeField, Min(0.0f)] private float _requiredSeconds = 1.0f;  ///< 動くまでに溜める量（強さ 1 のビームで当てる秒数）
 
         /// @brief 反応する波の種類。Can React To Any Type がオンなら使わない
         public IReadOnlyList<WaveType> ReactiveTypes => _reactiveTypes ?? Array.Empty<WaveType>();
@@ -27,7 +28,7 @@ namespace Aura.ObjectInfo
         /// @brief 種類に関係なく、どの波にも反応するか
         public bool CanReactToAnyType => _canReactToAnyType;
 
-        /// @brief 動くまでに当てる時間（秒）。0 なら当たった瞬間に動く
+        /// @brief 動くまでに溜める量（強さ 1 のビームで当てる秒数）。強いビームほど早く溜まる。0 なら当たった瞬間に動く
         public float RequiredSeconds => _requiredSeconds;
 
         /// @brief その種類の波に反応するか。波の種類だけで決まる
