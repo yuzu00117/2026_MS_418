@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4601226c6281eec4e8a587b6697d3770, type: 3}
-  m_Name: SO_RadioWave
+  m_Name: SO_ElectromagneticWave
   m_EditorClassIdentifier: Aura.Wave::Aura.Wave.WaveType
-  _displayName: 電波
+  _displayName: 電磁波
   _color: {r: 0.3, g: 0.9, b: 1, a: 1}
   _wavelength: 0.7
   _amplitude: 0.12

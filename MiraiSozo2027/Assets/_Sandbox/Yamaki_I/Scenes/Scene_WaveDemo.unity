@@ -878,7 +878,7 @@ GameObject:
   m_Component:
   - component: {fileID: 410132725}
   m_Layer: 0
-  m_Name: RadioLift (Radio Wave / Sustain)
+  m_Name: ElectromagneticLift (Electromagnetic Wave / Sustain)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1884,7 +1884,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5dbdfe02529f1184b9280c255e5b88a7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.Prototype::Aura.Prototype.ViewModeSwitcher
-  _viewMode: 0
+  _viewMode: 1
   _emitter: {fileID: 1364016961}
   _firstPersonObjects:
   - {fileID: 378657768}
@@ -2081,7 +2081,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   _triggerInteraction: 1
-  _reflectionMode: 0
+  _reflectionMode: 1
   _maxReflections: 3
   _reflectionEnergyMultiplier: 1
   _isReflectionPreviewEnabled: 1

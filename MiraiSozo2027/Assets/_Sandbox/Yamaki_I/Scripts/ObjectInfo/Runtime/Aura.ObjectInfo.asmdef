@@ -1,0 +1,16 @@
+{
+    "name": "Aura.ObjectInfo",
+    "rootNamespace": "Aura.ObjectInfo",
+    "references": [
+        "Aura.Wave"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
