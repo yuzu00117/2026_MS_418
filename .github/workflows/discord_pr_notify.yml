@@ -2,7 +2,8 @@
 #  (1) develop 向けの PR が opened / reopened / ready_for_review になったとき、
 #      PR ごとに新規スレッド(投稿)を Webhook で作成する。
 #  (2) 必要な Secret: DISCORD_WEBHOOK_URL (フォーラムチャンネルの Webhook URL)
-#  (3) 現状は作成時のみ通知する。Webhook 方式の制約で既存スレッドへの追記(更新通知など)はしない。
+#  (3) スレッド作成後、Discord のスレッド ID を隠しマーカー付きコメント(<!-- discord-thread-id:ID -->)として PR に保存する。
+#      discord_coderabbit_notify.yml がこの ID を読み取り、CodeRabbit のレビュー状況を同じスレッドへ追記する。
 #  (4) 必要な Variables(Secret ではない。未設定でも通知自体は行われ、メンションのみ省略される):
 #      DISCORD_REVIEWER_USER_ID: PR のレビュー・確認を担当する人の Discord ユーザー ID(数字のみ・引用符なし)。PR が作られるたびに必ずメンションする
 #      DISCORD_GITHUB_TO_DISCORD_ID_MAP: GitHub ログイン名 → Discord ユーザー ID の JSON オブジェクト。PR 作成者のメンションに使う
@@ -18,9 +19,11 @@ on:
 jobs:
   notify:
     runs-on: ubuntu-latest
-    # 最小権限にする。通知には GitHub への書き込み権限は不要。
+    # 最小権限にする。必要なのは PR コメント投稿のみ。
+    # スレッド ID を PR コメントに保存するため pull-requests: write が必要。
     permissions:
       contents: read
+      pull-requests: write
     # 実行条件:
     #  - Draft PR は opened 時には通知せず、ready_for_review になった時点で通知する
     #  - フォーク PR は Secrets が渡らず失敗するので、同一リポジトリの PR のみ対象にする
@@ -47,6 +50,9 @@ jobs:
           # レビュー担当者の Discord ユーザー ID と、GitHub ログイン名 → Discord ユーザー ID の対応表(Variables 由来)。
           REVIEWER_USER_ID: ${{ vars.DISCORD_REVIEWER_USER_ID }}
           GITHUB_TO_DISCORD_ID_MAP: ${{ vars.DISCORD_GITHUB_TO_DISCORD_ID_MAP }}
+          # PR コメント投稿用。
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
         run: |
           # set -x は使わない(Webhook URL をログに出さないため)。
           set -euo pipefail
@@ -110,3 +116,14 @@ jobs:
             -H "Content-Type: application/json" \
             --data-binary @- \
             "${DISCORD_WEBHOOK_URL}?wait=true")" || { echo "$resp"; exit 1; }
+
+          # フォーラム投稿の場合、レスポンスの channel_id がスレッド ID になる。数字のみであることを検証する。
+          thread_id="$(printf '%s' "$resp" | jq -r '.channel_id // empty')"
+          if ! [[ "$thread_id" =~ ^[0-9]+$ ]]; then
+            echo "::error::Discord のレスポンスからスレッド ID を取得できませんでした。"
+            exit 1
+          fi
+
+          # 後続の discord_coderabbit_notify.yml が参照できるよう、スレッド ID を隠しマーカー付きコメントとして PR に保存する。
+          gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+            -f body="$(printf '<!-- discord-thread-id:%s -->\nDiscord に通知しました。' "$thread_id")" > /dev/null
