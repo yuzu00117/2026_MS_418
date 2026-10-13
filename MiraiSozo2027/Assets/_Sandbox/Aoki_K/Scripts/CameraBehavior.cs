@@ -53,6 +53,7 @@ public class CameraBehavior : MonoBehaviour
 
     void LateUpdate()
     {
+        if(GameManager.Instance.IsPaused) return;
         if (_target == null) return;
         // 1. Input System から Look（マウス移動 / 右スティック）を取得
         Vector2 lookInput = _actions.Player.Look.ReadValue<Vector2>();
