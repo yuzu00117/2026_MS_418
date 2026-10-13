@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d941eef1ba7b47a6bd0a8a8296908f20, type: 3}
+  m_Name: SO_Weight_Light
+  m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.WeightType
+  _displayName: "\u8EFD\u3044\u7269"
+  _mass: 1
+  _mobility: 1

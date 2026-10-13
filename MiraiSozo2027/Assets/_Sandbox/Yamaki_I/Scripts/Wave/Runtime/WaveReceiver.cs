@@ -5,7 +5,7 @@ using UnityEngine.Events;
 namespace Aura.Wave
 {
     /// @brief 決めた種類の波を受けるとエネルギーを溜め、溜まると起動する受け手
-    /// マイク（音波）やアンテナ（電波）の GameObject に付け、On Activated にギミックの処理をつなぐ
+    /// マイク（音波）やアンテナ（電磁波）の GameObject に付け、On Activated にギミックの処理をつなぐ
     public sealed class WaveReceiver : MonoBehaviour, IWaveReceiver
     {
         private const float ReceivingGraceTime = 0.1f;  ///< 最後に受けてからこの時間（秒）は、受けている最中とみなす
