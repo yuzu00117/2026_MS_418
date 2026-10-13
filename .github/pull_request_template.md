@@ -1,3 +1,7 @@
+## CodeRabbit による要約
+<!-- この欄は CodeRabbit が自動で要約を挿入します。PR作成者は編集不要です（触らないでください）。 -->
+@coderabbitai summary
+
 ## 概要
 <!-- 何のための変更か -->
 
