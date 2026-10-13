@@ -47,5 +47,78 @@ Shader "Hidden/Echo/Highlight"
             }
             ENDHLSL
         }
+        Pass
+        {
+            Name "ObjectMask"
+            // R: 全体のシルエット、B: カメラから見える表面。
+            // 波との接触はWorldContactパスでカメラから独立して判定する。
+            Cull Off ZWrite Off ZTest Always Blend One One BlendOp Max
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex Vert
+            #pragma fragment FragMask
+            #pragma multi_compile_instancing
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "EchoVolume.hlsl"
+            struct Attributes { float4 positionOS:POSITION; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Varyings { float4 positionCS:SV_POSITION; float3 positionWS:TEXCOORD0; UNITY_VERTEX_OUTPUT_STEREO };
+            Varyings Vert(Attributes input)
+            {
+                Varyings o;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+                o.positionWS=TransformObjectToWorld(input.positionOS.xyz);
+                o.positionCS=TransformWorldToHClip(o.positionWS);
+                return o;
+            }
+            half4 FragMask(Varyings input):SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                float visible=1;
+                if(_EchoOcclusion>.5)
+                {
+                    float2 uv=GetNormalizedScreenSpaceUV(input.positionCS);
+                    float raw=SampleSceneDepth(uv);
+                    #if !UNITY_REVERSED_Z
+                    raw=lerp(UNITY_NEAR_CLIP_VALUE,1,raw);
+                    #endif
+                    float3 sceneWS=ComputeWorldSpacePosition(uv,raw,UNITY_MATRIX_I_VP);
+                    visible=step(-TransformWorldToView(input.positionWS).z,-TransformWorldToView(sceneWS).z+.001);
+                }
+                return half4(1,0,visible,1);
+            }
+            ENDHLSL
+        }
+        Pass
+        {
+            Name "WorldContact"
+            Cull Off ZWrite Off ZTest Always Blend One One BlendOp Max
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex ContactVert
+            #pragma fragment ContactFrag
+            #pragma multi_compile_instancing
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #define ECHO_WHOLE_OBJECT_CONTACT 1
+            #include "EchoVolume.hlsl"
+            float4x4 _EchoContactMatrix;
+            struct Attributes { float4 positionOS:POSITION; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Varyings { float4 positionCS:SV_POSITION; float3 positionWS:TEXCOORD0; };
+            Varyings ContactVert(Attributes input)
+            {
+                Varyings o;
+                UNITY_SETUP_INSTANCE_ID(input);
+                o.positionWS=TransformObjectToWorld(input.positionOS.xyz);
+                o.positionCS=mul(_EchoContactMatrix,float4(o.positionWS,1));
+                return o;
+            }
+            half4 ContactFrag(Varyings input):SV_Target
+            {
+                float hit=EchoCoverage(input.positionWS);
+                return hit.xxxx;
+            }
+            ENDHLSL
+        }
     }
 }

@@ -52,11 +52,12 @@ namespace Echo.Echolocation.Editor
             }
 
             EditorGUILayout.Space();
-            EditorGUILayout.LabelField("対象と色", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("対象と表示", EditorStyles.boldLabel);
             DrawField("_settings._targetLayers", "対象レイヤー");
             DrawField("_excludedRoot", "除外するルート");
             DrawField("_settings._isAutoDiscoveryEnabled", "対象を自動収集");
-            DrawField("_settings._tagColorRules", "タグと表示色");
+            DrawField("_settings._tagColorRules", "タグと表示設定");
+            EditorGUILayout.HelpBox("タグごとに塗り・全体の輪郭・元マテリアル表示を併用できます。残存時間は最後の接触から計測し、再接触で延長します。元マテリアル表示の通常時非表示は、Controller無効化時に復元します。", MessageType.Info);
             DrawEnum("_settings._occlusionMode", "壁越し表示", new[] { "表示する", "深度で隠す" });
             DrawField("_isGizmoVisible", "範囲をScene Viewに表示");
             DrawField("_onStateChanged", "状態変更時の通知");

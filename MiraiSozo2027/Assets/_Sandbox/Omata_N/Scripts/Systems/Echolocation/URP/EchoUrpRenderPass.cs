@@ -13,7 +13,10 @@ namespace Echo.Echolocation
     {
         private readonly EchoUrpRenderBackend _backend;
         private readonly EchoShadowTexture _shadowTexture = new EchoShadowTexture();
-        public void Dispose() => _shadowTexture.Dispose();
+        private readonly EchoObjectEffects _objectEffects = new EchoObjectEffects();
+        private readonly Dictionary<Object, List<EchoRenderItem>> _effectGroups = new Dictionary<Object, List<EchoRenderItem>>();
+        public void Dispose() { _shadowTexture.Dispose(); _objectEffects.Dispose(); }
+        public void PruneObjectEffects() => _objectEffects.Prune();
         private static readonly int _colorId = Shader.PropertyToID("_EchoTint");
         private static readonly int _modeId = Shader.PropertyToID("_EchoOcclusion");
         /// <summary>パイプライン固有リソースを受け取る。</summary>
@@ -25,6 +28,7 @@ namespace Echo.Echolocation
         /// <summary>各カメラのリソース依存を明示し、Render Graphに寿命を任せる。</summary>
         public override void RecordRenderGraph(RenderGraph graph, ContextContainer context)
         {
+            _objectEffects.Prune();
             var camera = context.Get<UniversalCameraData>();
             var controller = EchoController.GetForCamera(camera.camera);
             if (!controller || controller.RenderItems.Count == 0)
@@ -39,8 +43,22 @@ namespace Echo.Echolocation
             desc.clearColor = Color.clear;
             var color = graph.CreateTexture(desc);
             var paths = _shadowTexture.Import(graph, controller);
+            _effectGroups.Clear();
+            foreach (var item in controller.RenderItems)
+                if (item.Rule.OutlineEnabled || item.Rule.OriginalEnabled)
+                {
+                    if (!_effectGroups.TryGetValue(item.EffectGroup, out var group))
+                        _effectGroups.Add(item.EffectGroup, group = new List<EchoRenderItem>());
+                    group.Add(item);
+                }
+            var sortedGroups = new List<List<EchoRenderItem>>(_effectGroups.Values);
+            var cameraPosition = camera.camera.transform.position;
+            sortedGroups.Sort((a, b) => (b[0].Renderer.bounds.center - cameraPosition).sqrMagnitude.CompareTo((a[0].Renderer.bounds.center - cameraPosition).sqrMagnitude));
+            foreach (var group in sortedGroups)
+                _objectEffects.Record(graph, context, resources, controller, group.ToArray(), desc, color, paths, _backend);
             foreach (var item in controller.RenderItems)
             {
+                if (!item.Rule.FillEnabled || item.Color.a <= 0) continue;
                 // 各Rendererで深度を初期化する。他対象との重なりは後段の色合成に任せる。
                 var objectDesc = desc;
                 objectDesc.name = "Echo object highlight";

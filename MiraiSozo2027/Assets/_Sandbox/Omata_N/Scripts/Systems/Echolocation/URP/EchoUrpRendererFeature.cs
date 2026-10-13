@@ -50,10 +50,11 @@ namespace Echo.Echolocation
         /// <summary>登録済みGame Cameraだけに追加する。</summary>
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData data)
         {
+            _pass?.PruneObjectEffects();
             if (!Application.isPlaying || !_backend.IsReady || data.cameraData.cameraType != CameraType.Game || data.cameraData.renderType != CameraRenderType.Base)
                 return;
             var controller = EchoController.GetForCamera(data.cameraData.camera);
-            if (!controller || controller.CurrentState == EchoState.Hidden)
+            if (!controller)
                 return;
             if (_rangeMaterial && controller.TryGetComponent<EchoRangeDisplay>(out var display) && display.isActiveAndEnabled)
             {

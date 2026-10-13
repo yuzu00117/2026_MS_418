@@ -390,7 +390,7 @@ Transform:
   m_LocalScale: {x: 0.6, y: 0.6, z: 0.6}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2053057318}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &583231016
 MeshRenderer:
@@ -534,7 +534,7 @@ Transform:
   m_LocalScale: {x: 0.6, y: 0.6, z: 0.6}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2053057318}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &919650134
 MeshRenderer:
@@ -1045,7 +1045,7 @@ Transform:
   m_GameObject: {fileID: 1278906930}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1, y: 1, z: 10}
+  m_LocalPosition: {x: 1, y: 1.21, z: 10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1083,7 +1083,7 @@ Transform:
   m_LocalScale: {x: 0.6, y: 0.6, z: 0.6}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2053057318}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &1329563388
 MeshRenderer:
@@ -1356,12 +1356,42 @@ MonoBehaviour:
     - _isEnabled: 1
       _tagName: EchoStructure
       _color: {r: 0.1, g: 0.6, b: 1, a: 0.65}
+      _fillEnabled: 1
+      _outlineEnabled: 1
+      _outlineColor: {r: 0, g: 1, b: 1, a: 1}
+      _outlineWidth: 3
+      _outlineHoldDuration: 0
+      _originalEnabled: 0
+      _hideOriginalOutsideEcho: 1
+      _originalHoldDuration: 2
+      _originalOpacity: 1
+      _contactResolution: 1024
     - _isEnabled: 1
       _tagName: EchoEnemy
       _color: {r: 1, g: 0.12, b: 0.22, a: 0.8}
+      _fillEnabled: 1
+      _outlineEnabled: 1
+      _outlineColor: {r: 0, g: 1, b: 1, a: 1}
+      _outlineWidth: 3
+      _outlineHoldDuration: 0
+      _originalEnabled: 0
+      _hideOriginalOutsideEcho: 1
+      _originalHoldDuration: 2
+      _originalOpacity: 1
+      _contactResolution: 1024
     - _isEnabled: 1
       _tagName: EchoItem
       _color: {r: 0.1, g: 1, b: 0.65, a: 0.8}
+      _fillEnabled: 1
+      _outlineEnabled: 1
+      _outlineColor: {r: 0, g: 1, b: 1, a: 1}
+      _outlineWidth: 3
+      _outlineHoldDuration: 0
+      _originalEnabled: 0
+      _hideOriginalOutsideEcho: 1
+      _originalHoldDuration: 2
+      _originalOpacity: 1
+      _contactResolution: 1024
     _shadow:
       _isEnabled: 1
       _layers:
@@ -1826,55 +1856,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2053057316
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2053057318}
-  - component: {fileID: 2053057317}
-  m_Layer: 0
-  m_Name: Items
-  m_TagString: EchoItem
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &2053057317
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2053057316}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
-  _isManualRendererSelectionEnabled: 0
-  _renderers: []
---- !u!4 &2053057318
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2053057316}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1329563387}
-  - {fileID: 583231015}
-  - {fileID: 919650133}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2133049086
 GameObject:
   m_ObjectHideFlags: 0
@@ -1981,8 +1962,8 @@ Transform:
   m_GameObject: {fileID: 2133049086}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1, y: 1.5, z: 7}
-  m_LocalScale: {x: 5, y: 3, z: 0.6}
+  m_LocalPosition: {x: 1, y: 1.1, z: 7}
+  m_LocalScale: {x: 5, y: 5, z: 0.6}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -1999,4 +1980,6 @@ SceneRoots:
   - {fileID: 1181222254}
   - {fileID: 2133049090}
   - {fileID: 1278906934}
-  - {fileID: 2053057318}
+  - {fileID: 1329563387}
+  - {fileID: 583231015}
+  - {fileID: 919650133}

@@ -83,7 +83,7 @@ namespace Echo.Echolocation.Tests
             foreach (var c in image.GetPixels32())
                 if (c.g > 180 && c.r < 80 && c.b < 80)
                     count++;
-            var root = Path.GetFullPath(Path.Combine(Application.dataPath, "../../Artifacts"));
+            var root = Path.GetFullPath(Path.Combine(Application.dataPath, "_Sandbox/Omata_N/Verification~/Images"));
             Directory.CreateDirectory(root);
             File.WriteAllBytes(Path.Combine(root, file + ".png"), image.EncodeToPNG());
             Object.Destroy(image);
@@ -108,6 +108,265 @@ namespace Echo.Echolocation.Tests
             float green = image.GetPixel((int)screen.x, (int)screen.y).g;
             Object.Destroy(image);
             return green;
+        }
+
+        [UnityTest]
+        public IEnumerator FullyBlockedObjectNeverActivatesWholeOutline()
+        {
+            var rule = _controller.Settings.TagColorRules[0];
+            rule.FillEnabled = false;
+            rule.OutlineEnabled = true;
+            rule.OutlineColor = Color.green;
+            rule.OutlineHoldDuration = 0;
+            _target.transform.position = new Vector3(1.5f, 1.5f, 8);
+            _target.transform.localScale = Vector3.one * 3;
+            _controller.Settings.Radius = 15;
+            CreateShadowWall(new Vector3(0, 0, 2.5f), new Vector3(30, 30, .2f));
+            _controller.Settings.Shadow.Resolution = 128;
+            _controller.SetScanEnabled(true);
+            foreach (float angle in new[] { 0f, .1f, 1f, 15f, 45f, 89f })
+            {
+                _target.transform.rotation = Quaternion.Euler(angle, angle, angle);
+                yield return null;
+                yield return null;
+                yield return null;
+                var image = Read();
+                int green = 0;
+                foreach (var pixel in image.GetPixels32()) if (pixel.g > 180 && pixel.r < 80) green++;
+                Object.Destroy(image);
+                Assert.That(green, Is.Zero, "完全遮蔽した物体の輪郭を起動しない。角度=" + angle);
+            }
+            _target.transform.rotation = Quaternion.identity;
+            _controller.Settings.Shadow.Rules.Add(new EchoBlockingRule { TagName = "Untagged", IsBlocking = false });
+            yield return null;
+            yield return null;
+            yield return null;
+            var visible = Read();
+            int revealed = 0;
+            foreach (var pixel in visible.GetPixels32()) if (pixel.g > 180 && pixel.r < 80) revealed++;
+            Object.Destroy(visible);
+            Assert.That(revealed, Is.GreaterThan(100), "遮断しないタグなら実際の接触で輪郭を表示する");
+        }
+
+        [UnityTest]
+        public IEnumerator OffscreenContactIsRememberedWhenCameraReturns()
+        {
+            var rule = _controller.Settings.TagColorRules[0];
+            rule.FillEnabled = false;
+            rule.OriginalEnabled = true;
+            rule.OriginalHoldDuration = 1;
+            _mat.SetColor("_BaseColor", Color.red);
+            _camera.transform.rotation = Quaternion.Euler(0, 180, 0);
+            _controller.SetScanEnabled(true);
+            yield return null;
+            yield return null;
+            yield return null;
+            _controller.SetScanEnabled(false);
+            _camera.transform.rotation = Quaternion.identity;
+            yield return null;
+            yield return null;
+            var image = Read();
+            Assert.That(image.GetPixel(128, 128).r, Is.GreaterThan(.9f), "画面外で当たった物体も残存時間内は表示");
+            Object.Destroy(image);
+        }
+
+        [UnityTest]
+        public IEnumerator RecontactExtendsOriginalLifetime()
+        {
+            var rule = _controller.Settings.TagColorRules[0];
+            rule.FillEnabled = false;
+            rule.OriginalEnabled = true;
+            rule.OriginalHoldDuration = .6f;
+            _mat.SetColor("_BaseColor", Color.red);
+            _controller.SetScanEnabled(true);
+            yield return null;
+            yield return null;
+            yield return null;
+            _controller.SetScanEnabled(false);
+            yield return new WaitForSeconds(.35f);
+            _controller.SetScanEnabled(true);
+            yield return null;
+            yield return null;
+            yield return null;
+            _controller.SetScanEnabled(false);
+            yield return new WaitForSeconds(.35f);
+            var image = Read();
+            Assert.That(image.GetPixel(128, 128).r, Is.GreaterThan(.9f), "初回の残存期限を過ぎても再接触分だけ延長");
+            Object.Destroy(image);
+            yield return new WaitForSeconds(.4f);
+            image = Read();
+            Assert.That(image.GetPixel(128, 128).r, Is.LessThan(.1f));
+            Object.Destroy(image);
+        }
+
+        [UnityTest]
+        public IEnumerator OriginalZeroHoldAndTagChangeRestoreRenderer()
+        {
+            var rule = _controller.Settings.TagColorRules[0];
+            rule.FillEnabled = false;
+            rule.OriginalEnabled = true;
+            rule.OriginalHoldDuration = 0;
+            _mat.SetColor("_BaseColor", Color.red);
+            _controller.SetScanEnabled(true);
+            yield return null;
+            yield return null;
+            yield return null;
+            var image = Read();
+            Assert.That(image.GetPixel(128, 128).r, Is.GreaterThan(.9f));
+            Object.Destroy(image);
+            _controller.SetScanEnabled(false);
+            yield return null;
+            yield return null;
+            image = Read();
+            Assert.That(image.GetPixel(128, 128).r, Is.LessThan(.1f));
+            Object.Destroy(image);
+            _target.tag = "Respawn";
+            yield return null;
+            yield return null;
+            Assert.True(_target.GetComponent<Renderer>().enabled);
+            image = Read();
+            Assert.That(image.GetPixel(128, 128).r, Is.GreaterThan(.9f));
+            Object.Destroy(image);
+        }
+
+        [UnityTest]
+        public IEnumerator OriginalLitMaterialKeepsItsAppearance()
+        {
+            _mat.shader = Shader.Find("Universal Render Pipeline/Lit");
+            _mat.SetColor("_BaseColor", Color.red);
+            _wall = new GameObject("Test directional light", typeof(Light));
+            var light = _wall.GetComponent<Light>();
+            light.type = LightType.Directional;
+            light.intensity = 1;
+            yield return null;
+            yield return null;
+            var image = Read();
+            var expected = image.GetPixel(128, 128);
+            Object.Destroy(image);
+            Assert.That(expected.r, Is.GreaterThan(.2f));
+            var rule = _controller.Settings.TagColorRules[0];
+            rule.FillEnabled = false;
+            rule.OriginalEnabled = true;
+            _controller.SetScanEnabled(true);
+            yield return null;
+            yield return null;
+            yield return null;
+            image = Read();
+            var actual = image.GetPixel(128, 128);
+            Assert.That(actual.r, Is.EqualTo(expected.r).Within(.06f));
+            Assert.That(actual.g, Is.EqualTo(expected.g).Within(.06f));
+            Object.Destroy(image);
+        }
+
+        [UnityTest]
+        public IEnumerator ContactWithOneChildRevealsWholeEchoTarget()
+        {
+            _wall = new GameObject("Grouped target", typeof(EchoTarget));
+            _wall.tag = "Player";
+            _target.transform.SetParent(_wall.transform, true);
+            _target.transform.position = new Vector3(-1.5f, 0, 5);
+            _target.transform.localScale = Vector3.one;
+            var child = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            child.transform.SetParent(_wall.transform, false);
+            child.transform.position = new Vector3(1.5f, 0, 5);
+            child.GetComponent<Renderer>().sharedMaterial = _mat;
+            _mat.SetColor("_BaseColor", Color.red);
+            var origin = new GameObject("Group contact origin").transform;
+            origin.SetParent(_cameraObject.transform, false);
+            origin.position = new Vector3(-1.5f, 0, 4);
+            _controller.OriginTransform = origin;
+            _controller.Settings.Radius = .75f;
+            var rule = _controller.Settings.TagColorRules[0];
+            rule.FillEnabled = false;
+            rule.OriginalEnabled = true;
+            rule.OutlineEnabled = true;
+            rule.OutlineColor = Color.green;
+            _controller.RefreshTargets();
+            _controller.SetScanEnabled(true);
+            yield return null;
+            yield return null;
+            yield return null;
+            var image = Read();
+            var point = _camera.WorldToScreenPoint(child.transform.position);
+            Assert.That(image.GetPixel((int)point.x, (int)point.y).r, Is.GreaterThan(.9f), "接触していない子も同じ物体として表示");
+            Object.Destroy(image);
+        }
+
+        [UnityTest]
+        public IEnumerator WholeOutlineDoesNotFillCenterAndReachesBeyondWave()
+        {
+            var rule = _controller.Settings.TagColorRules[0];
+            rule.FillEnabled = false;
+            rule.OutlineEnabled = true;
+            rule.OutlineColor = Color.green;
+            rule.OutlineWidth = 5;
+            _controller.Settings.Radius = 5; // 中央だけに接触。端は半径外。
+            _controller.SetScanEnabled(true);
+            yield return null;
+            yield return null;
+            yield return null;
+            var image = Read();
+            Assert.That(image.GetPixel(128, 128).g, Is.LessThan(.7f), "中心を塗らない");
+            int green = 0;
+            foreach (var pixel in image.GetPixels32()) if (pixel.g > 180 && pixel.r < 80) green++;
+            Assert.That(green, Is.GreaterThan(100), "波が当たれば半径外も含めて外周を描く");
+            Object.Destroy(image);
+            _controller.Settings.Radius = 4;
+            yield return null;
+            yield return null;
+            image = Read();
+            green = 0;
+            foreach (var pixel in image.GetPixels32()) if (pixel.g > 180 && pixel.r < 80) green++;
+            Assert.That(green, Is.Zero, "未接触なら輪郭を出さない");
+            Object.Destroy(image);
+        }
+
+        [UnityTest]
+        public IEnumerator OriginalMaterialCoexistsAndExpiresAfterLastContact()
+        {
+            var rule = _controller.Settings.TagColorRules[0];
+            rule.FillEnabled = false;
+            rule.OutlineEnabled = true;
+            rule.OutlineColor = Color.green;
+            rule.OriginalEnabled = true;
+            rule.OriginalHoldDuration = .3f;
+            _mat.SetColor("_BaseColor", Color.red);
+            yield return null;
+            yield return null;
+            yield return null;
+            var image = Read();
+            Assert.That(image.GetPixel(128, 128).r, Is.LessThan(.1f), "通常時は透明");
+            Object.Destroy(image);
+            _controller.SetScanEnabled(true);
+            yield return null;
+            yield return null;
+            yield return null;
+            image = Read();
+            Assert.That(image.GetPixel(128, 128).r, Is.GreaterThan(.9f), "元のマテリアルの赤を表示");
+            int green = 0;
+            foreach (var pixel in image.GetPixels32()) if (pixel.g > 180 && pixel.r < 80) green++;
+            Assert.That(green, Is.GreaterThan(100), "輪郭と同時表示");
+            Object.Destroy(image);
+            rule.FillEnabled = true;
+            yield return null;
+            yield return null;
+            image = Read();
+            Assert.That(image.GetPixel(128, 128).g, Is.GreaterThan(.9f), "従来の色塗りも併用");
+            Object.Destroy(image);
+            rule.FillEnabled = false;
+            _controller.SetScanEnabled(false);
+            yield return null;
+            yield return null;
+            image = Read();
+            Assert.That(image.GetPixel(128, 128).r, Is.GreaterThan(.9f), "接触が終わっても残存");
+            Object.Destroy(image);
+            yield return new WaitForSeconds(.4f);
+            image = Read();
+            Assert.That(image.GetPixel(128, 128).r, Is.LessThan(.1f), "残存時間後は非表示");
+            Object.Destroy(image);
+            _controller.enabled = false;
+            Assert.That(_target.GetComponent<Renderer>().sharedMaterial, Is.SameAs(_mat));
+            Assert.True(_target.GetComponent<Renderer>().enabled, "無効化時は元の描画状態へ復元");
         }
 
         [UnityTest]
@@ -382,7 +641,7 @@ namespace Echo.Echolocation.Tests
             Assert.That(original.r, Is.GreaterThan(.5f), "手前の赤も残る");
             Assert.That(original.g, Is.GreaterThan(.5f), "アルファ1の対象の後ろの緑も残る");
             Assert.That(original.b, Is.LessThan(.1f));
-            var folder = Path.GetFullPath(Path.Combine(Application.dataPath, "../../Artifacts"));
+            var folder = Path.GetFullPath(Path.Combine(Application.dataPath, "_Sandbox/Omata_N/Verification~/Images"));
             Directory.CreateDirectory(folder);
             File.WriteAllBytes(Path.Combine(folder, "overlapping-highlights.png"), mixed.EncodeToPNG());
             Object.Destroy(mixed);
@@ -626,7 +885,7 @@ namespace Echo.Echolocation.Tests
             var both = Read();
             Assert.That(At(both, -1.5f).g, Is.GreaterThan(.9f));
             Assert.That(At(both, 1.5f).g, Is.GreaterThan(.9f));
-            string folder = Path.GetFullPath(Path.Combine(Application.dataPath, "../../Artifacts"));
+            string folder = Path.GetFullPath(Path.Combine(Application.dataPath, "_Sandbox/Omata_N/Verification~/Images"));
             Directory.CreateDirectory(folder);
             File.WriteAllBytes(Path.Combine(folder, "sonar-two-origins.png"), both.EncodeToPNG());
             Object.Destroy(both);

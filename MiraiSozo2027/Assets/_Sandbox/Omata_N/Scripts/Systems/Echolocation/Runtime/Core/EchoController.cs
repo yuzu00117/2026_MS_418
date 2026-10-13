@@ -44,6 +44,8 @@ namespace Echo.Echolocation
         private readonly EchoShadowMaps _shadowMaps = new EchoShadowMaps();
         /// <summary>各エコー地点からの遮蔽距離。強調表示と範囲表示で共有する。</summary>
         public EchoShadowMaps ShadowMaps => _shadowMaps;
+        /// <summary>再有効化を描画履歴へ通知する世代番号。</summary>
+        public int EnableVersion { get; private set; }
 
         private EchoScanMode _oldMode;
         private float _oldInterval;
@@ -116,6 +118,7 @@ namespace Echo.Echolocation
 
         void OnEnable()
         {
+            EnableVersion++;
             _settings.Validate();
             _activeInstances.Add(this);
             RememberSettings();
@@ -313,8 +316,9 @@ namespace Echo.Echolocation
 
                 _shadowMaps.Update(_frames, _settings, _excludedRoot ? _excludedRoot : transform);
                 _tags.Update(_settings.TagColorRules);
+                _registry.UpdateHidden(_settings.TargetLayers, _excludedRoot ? _excludedRoot : transform, _targetCamera, _tags);
                 _items.Clear();
-                if (_frames.Count > 0 && _targetCamera)
+                if (_targetCamera)
                     _registry.Collect(_frames, _settings.TargetLayers, _excludedRoot ? _excludedRoot : transform, _targetCamera, _tags, _items);
             }
         }
