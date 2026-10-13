@@ -13,6 +13,8 @@ namespace Echo.Echolocation
         public EchoVolumeShaderData Waves { get; } = new EchoVolumeShaderData();
         public EchoOcclusionMode Occlusion { get; set; }
         public EchoRenderItem Item { get; set; }
+        public EchoRenderItem[] Items { get; set; }
+        public Matrix4x4[] ContactMatrices { get; set; }
         public Material Material { get; set; }
     }
 }

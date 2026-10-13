@@ -31,6 +31,17 @@ bool EchoSourceVisible(float3 p,int wave)
     uint width,height,layers;_EchoShadowMaps.GetDimensions(width,height,layers);
     int2 pixel=clamp((int2)(uv*float2(width,height)),int2(0,0),int2(width-1,height-1));
     float nearest=_EchoShadowMaps.Load(int4(pixel,slice,0));
+    #if defined(ECHO_WHOLE_OBJECT_CONTACT)
+    // 全体表示は1画素の誤った接触でも起動する。接平面による距離の短縮は使わない。
+    // 発生地点から実際の表面までの距離で判定し、画素境界では周囲の最も手前の遮断面を採用する。
+    int2 basePixel=(int2)floor(uv*float2(width,height)-.5);
+    [unroll] for(int sy=0;sy<2;sy++) [unroll] for(int sx=0;sx<2;sx++)
+    {
+        int2 samplePixel=clamp(basePixel+int2(sx,sy),int2(0,0),int2(width-1,height-1));
+        nearest=min(nearest,_EchoShadowMaps.Load(int4(samplePixel,slice,0)));
+    }
+    return d<=nearest+_EchoShadowBias;
+    #else
     // 距離マップの画素中心と現在の表面位置は少しずれる。
     // 表面の接平面と「画素中心の光線」の交点で比較し、床を斜めに見た際の縞状の自己遮蔽を防ぐ。
     float2 sampleUV=(float2(pixel)+.5)/float2(width,height);
@@ -50,6 +61,7 @@ bool EchoSourceVisible(float3 p,int wave)
     if(abs(denominator)>1e-10)
     {float planeDistance=dot(normal,direction)/denominator;if(planeDistance>0)expected=planeDistance;}
     return expected<=nearest+_EchoShadowBias;
+    #endif
 }
 bool EchoContainsAt(float3 p,int index)
 {

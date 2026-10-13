@@ -98,6 +98,7 @@ namespace Echo.Echolocation
             PulseInterval = Mathf.Max(.05f, GetFiniteNonNegative(PulseInterval, 2), (Duration + PulseHoldDuration) / EchoPulseTimeline.MaxPulses);
             AngleDegrees = Mathf.Clamp(GetFiniteNonNegative(AngleDegrees, 360), 0, 360);
             TagColorRules ??= new List<EchoTagColorRule>();
+            foreach (var rule in TagColorRules) rule?.Validate();
         }
 
         static float GetFiniteNonNegative(float v, float fallback) => float.IsNaN(v) || float.IsInfinity(v) ? fallback : Mathf.Max(0, v);
@@ -115,7 +116,7 @@ namespace Echo.Echolocation
             if (TagColorRules != null)
                 foreach (var r in TagColorRules)
                     if (r != null)
-                        copy.TagColorRules.Add(new EchoTagColorRule { IsEnabled = r.IsEnabled, TagName = r.TagName, Color = r.Color });
+                        copy.TagColorRules.Add(r.Copy());
             copy.Validate();
             return copy;
         }

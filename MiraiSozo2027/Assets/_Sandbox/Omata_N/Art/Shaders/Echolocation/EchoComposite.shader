@@ -1,6 +1,18 @@
 // 対象ごとの強調色を加算してから正規化する。手前の対象で奥を消さない。
 Shader "Hidden/Echo/Composite"
 {
+    HLSLINCLUDE
+    #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+    #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+    TEXTURE2D_X(_EchoHistory);
+    TEXTURE2D_X(_EchoObjectMask);
+    TEXTURE2D_X(_EchoSceneColor);
+    float4 _EchoSourceSize;
+    float4 _EchoEffectTiming; // delta, original hold, outline hold, reset
+    float4 _EchoOutlineColor;
+    float _EchoOutlineWidth;
+    float _EchoOriginalOpacity;
+    ENDHLSL
     SubShader
     {
         Tags { "RenderPipeline"="UniversalPipeline" }
@@ -34,6 +46,97 @@ Shader "Hidden/Echo/Composite"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             half4 Accumulate(Varyings input):SV_Target
             {return SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_LinearClamp,input.texcoord);}
+            ENDHLSL
+        }
+        Pass // 2: 4x4最大値縮小。1画素の接触も平均化で消さない。
+        {
+            ZWrite Off ZTest Always Cull Off Blend Off
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex Vert
+            #pragma fragment Reduce
+            float4 Reduce(Varyings input):SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                int2 origin=int2(input.positionCS.xy)*4;
+                float hit=0;
+                [unroll] for(int y=0;y<4;y++) [unroll] for(int x=0;x<4;x++)
+                {
+                    int2 p=min(origin+int2(x,y),int2(_EchoSourceSize.xy)-1);
+                    hit=max(hit,LOAD_TEXTURE2D_X(_BlitTexture,p).g);
+                }
+                return hit.xxxx;
+            }
+            ENDHLSL
+        }
+        Pass // 3: GPU上で最後の接触からの残存時間を管理。
+        {
+            ZWrite Off ZTest Always Cull Off Blend Off
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment History
+            float4 History(Varyings input):SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                float hit=step(.0001,SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_PointClamp,float2(.5,.5)).g);
+                float2 previous=SAMPLE_TEXTURE2D_X(_EchoHistory,sampler_PointClamp,float2(.5,.5)).xy;
+                if(_EchoEffectTiming.w>.5) previous=0;
+                float2 remaining=hit>.5?_EchoEffectTiming.yz:max(0,previous-_EchoEffectTiming.x);
+                return float4(remaining,max(hit,step(.00001,remaining)));
+            }
+            ENDHLSL
+        }
+        Pass // 4: シルエットの内側だけを描く。波の境界は輪郭にしない。
+        {
+            ZWrite Off ZTest Always Cull Off Blend One One
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Outline
+            half4 Outline(Varyings input):SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                float active=SAMPLE_TEXTURE2D_X(_EchoHistory,sampler_PointClamp,float2(.5,.5)).w;
+                float4 center=SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_PointClamp,input.texcoord);
+                float inner=1;
+                [unroll] for(int i=0;i<16;i++)
+                {
+                    float angle=i*6.2831853/16;
+                    float2 uv=input.texcoord+float2(cos(angle),sin(angle))*_EchoOutlineWidth*_EchoSourceSize.zw;
+                    inner=min(inner,SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_PointClamp,uv).r);
+                }
+                float alpha=center.r*center.b*(1-inner)*active*_EchoOutlineColor.a;
+                return half4(_EchoOutlineColor.rgb*alpha,alpha);
+            }
+            ENDHLSL
+        }
+        Pass // 5: 本来のシェーダーで描いた画像を接触状態・表示不透明度で合成。
+        {
+            ZWrite Off ZTest Always Cull Off Blend Off
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Original
+            half4 Original(Varyings input):SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                float active=SAMPLE_TEXTURE2D_X(_EchoHistory,sampler_PointClamp,float2(.5,.5)).z;
+                float visible=SAMPLE_TEXTURE2D_X(_EchoObjectMask,sampler_PointClamp,input.texcoord).b;
+                float4 scene=SAMPLE_TEXTURE2D_X(_EchoSceneColor,sampler_LinearClamp,input.texcoord);
+                float4 original=SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_LinearClamp,input.texcoord);
+                return lerp(scene,original,active*visible*_EchoOriginalOpacity);
+            }
+            ENDHLSL
+        }
+        Pass // 6: 元の透明マテリアルも正しい背景とブレンドできるよう背景をコピー。
+        {
+            ZWrite Off ZTest Always Cull Off Blend Off
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Copy
+            half4 Copy(Varyings input):SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                return SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_LinearClamp,input.texcoord);
+            }
             ENDHLSL
         }
     }
