@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class CameraBehavior : MonoBehaviour
 {
-    private InputSystem_Actions _actions;
+    private InputSystem_Actions _actions => GameManager.Actions;
     private float _yaw;
     private float _pitch;
 
@@ -26,17 +26,16 @@ public class CameraBehavior : MonoBehaviour
     
     private void Awake()
     {
-        _actions = new InputSystem_Actions();
+
     }
 
     private void OnEnable()
     {
-        _actions.Enable();
     }
 
     private void OnDisable()
     {
-        _actions.Disable();
+
     }
     
     void Start()
