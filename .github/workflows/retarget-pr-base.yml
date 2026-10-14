@@ -1,0 +1,43 @@
+name: Retarget PR Base
+
+# main 向けに作られた feature/* の PR を、自動で develop 向けに付け替える。
+# docs/CONTRIBUTING.md のルールは feature/* -> develop -> main。
+# デフォルトブランチが main のため、PR のベースが main になりがちなので補正する。
+#
+# 注意: pull_request_target はデフォルトブランチ(main)上のファイルが使われる。
+# そのため develop から main へ反映されるまでは有効にならない。
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+jobs:
+  retarget:
+    runs-on: ubuntu-latest
+    # 最小権限にする。ベース変更とコメント投稿に必要な分だけ許可する。
+    permissions:
+      contents: read
+      pull-requests: write
+    # 実行条件:
+    #  - base が main の PR のみ対象にする
+    #  - head ブランチが feature/* の PR のみ対象にする(hotfix/*, release/* などは対象外)
+    #  - フォーク PR は対象外にする(信頼できない PR を扱わないため)
+    if: >-
+      github.event.pull_request.base.ref == 'main' &&
+      startsWith(github.event.pull_request.head.ref, 'feature/') &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      # pull_request_target は書き込み権限を持つため、PR のコードは checkout しない。
+      # gh コマンドだけで完結させる。
+      - name: Retarget base branch to develop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # スクリプトインジェクションを避けるため、値は env 経由で渡す。
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh pr edit "$PR_NUMBER" --base develop --repo "$REPO"
+          gh pr comment "$PR_NUMBER" --repo "$REPO" --body "このPRのベースブランチを main から develop に自動で付け替えました。
+
+          \`$HEAD_REF\` のような feature/* ブランチは、docs/CONTRIBUTING.md のルールにより develop 向けの PR が正しいためです。
+          意図的に main 向けにしたい場合は、develop から main への PR を作成してください。"

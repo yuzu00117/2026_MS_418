@@ -1,0 +1,354 @@
+# CodeRabbit のレビュー進行状況を、PR 作成時に Discord フォーラムへ作られたスレッドへ書き込むワークフロー。
+#  (1) PR を出す / push すると、スレッドに「⏳ CodeRabbit レビュー中…」を投稿する(メンションなし)。
+#  (2) CodeRabbit のレビューが終わったら、その投稿を「✅ 完了」表示に編集し、
+#      さらにメンション付きの短い別メッセージを新規投稿して通知を鳴らす。
+#      (Discord はメッセージの編集ではメンション通知が飛ばないため、別メッセージにしている)
+#  (3) 時間切れなら編集で「⚠️ 完了を確認できませんでした」にして、同様にメンションする。
+#  (4) 連続 push で待機がキャンセルされたら、古い「レビュー中…」を「⏭ 新しいコミットで置き換えられました」に編集する。
+#      ステータス取得に連続失敗したとき・予期しないエラーで止まったときも、投稿を警告表示に更新する
+#      (「レビュー中…」のまま残さない)。
+#
+# 必要な Secret / Variables は discord_pr_notify.yml と同じ。
+#   Secret   DISCORD_WEBHOOK_URL: フォーラムチャンネルの Webhook URL
+#   Variable DISCORD_REVIEWER_USER_ID: レビュー担当者の Discord ユーザー ID(数字のみ)
+#   Variable DISCORD_GITHUB_TO_DISCORD_ID_MAP: GitHub ログイン名 → Discord ユーザー ID の JSON オブジェクト
+#
+# 前提:
+#  - 書き込み先のスレッド ID は discord_pr_notify.yml が PR コメント(<!-- discord-thread-id:ID -->)に保存したものを使う。
+#  - CodeRabbit は commit status `CodeRabbit` を付ける(レビュー中は pending / description="Review in progress")。
+#    success / failure / error になった時点を「完了」とみなす。
+#  - `status` イベントで起動する方式は、デフォルトブランチ上の workflow しか動かないため使えない。
+#    そのため、このワークフロー内で commit status をポーリングして完了を待つ方式にしている。
+name: Discord CodeRabbit Notify
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, synchronize]
+    branches: [develop]
+
+# 同じ PR で新しい push が来たら、古い待機はキャンセルする(古い投稿はキャンセル時ステップで更新される)。
+concurrency:
+  group: coderabbit-discord-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # 最小権限にする。PR コメントと commit status の読み取りのみ。
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: read
+    # 実行条件(discord_pr_notify.yml と同じ考え方):
+    #  - Draft PR は対象外(ready_for_review になった時点で動く)
+    #  - フォーク PR は Secrets が渡らず失敗するので、同一リポジトリの PR のみ対象にする
+    #  - Bot 起因のイベントは除外する
+    if: >-
+      github.event.sender.type != 'Bot' &&
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    env:
+      # Webhook URL は直書きせず、必ず secrets 経由で渡す。
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      REVIEWER_USER_ID: ${{ vars.DISCORD_REVIEWER_USER_ID }}
+      GITHUB_TO_DISCORD_ID_MAP: ${{ vars.DISCORD_GITHUB_TO_DISCORD_ID_MAP }}
+      # PR タイトルなどユーザー入力由来の値は、シェルに ${{ }} を展開せず env 経由で参照する。
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      PR_URL: ${{ github.event.pull_request.html_url }}
+      PR_TITLE: ${{ github.event.pull_request.title }}
+      PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      # 各ステップとも set -x は使わない(Webhook URL をログに出さないため)。
+      # URL は curl の引数に渡すだけで echo しない。失敗時(HTTP 4xx/5xx)のみ本文を出力して失敗させる。
+      - name: Find Discord thread ID
+        env:
+          EVENT_ACTION: ${{ github.event.action }}
+          PR_UPDATED_AT: ${{ github.event.pull_request.updated_at }}
+        run: |
+          set -euo pipefail
+
+          # opened / reopened / ready_for_review では discord_pr_notify.yml が毎回新しいスレッドと
+          # 新しいマーカーコメントを作る。再オープン時などに旧スレッドへ投稿しないよう、
+          # 今回のイベント以降(10 秒の余裕を見る)に作られたマーカーだけを採用する。
+          # synchronize では新しいスレッドは作られないため、従来どおり最新のマーカーを使う。
+          cutoff=""
+          case "${EVENT_ACTION}" in
+            opened|reopened|ready_for_review)
+              cutoff="$(date -u -d "${PR_UPDATED_AT} - 10 seconds" +%Y-%m-%dT%H:%M:%SZ)"
+              ;;
+          esac
+
+          # opened 直後は discord_pr_notify.yml と同時に走るため、コメントが付くまで 10 秒おきに最大 3 分待つ。
+          thread_id=""
+          for i in $(seq 1 18); do
+            thread_id="$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate \
+              | jq -rs --arg cutoff "$cutoff" '
+                  [ .[][]
+                    | select(.user.login == "github-actions[bot]")
+                    | select(.body | test("<!-- discord-thread-id:[0-9]+ -->"))
+                    | select($cutoff == "" or .created_at >= $cutoff)
+                  ]
+                  | last
+                  | if . == null then empty
+                    else (.body | capture("<!-- discord-thread-id:(?<id>[0-9]+) -->").id)
+                    end
+                ')"
+            if [[ "$thread_id" =~ ^[0-9]+$ ]]; then
+              break
+            fi
+            thread_id=""
+            echo "スレッド ID のコメントが未作成です。リトライします (${i}/18)"
+            sleep 10
+          done
+
+          if ! [[ "$thread_id" =~ ^[0-9]+$ ]]; then
+            echo "::error::PR コメントから Discord のスレッド ID を取得できませんでした (discord_pr_notify.yml の実行を確認してください)。"
+            exit 1
+          fi
+          echo "THREAD_ID=${thread_id}" >> "$GITHUB_ENV"
+
+      - name: Post "review in progress"
+        run: |
+          set -euo pipefail
+
+          short_sha="${HEAD_SHA:0:7}"
+          # メンションなし(parse: [])。
+          payload="$(jq -n \
+            --arg sha "$short_sha" \
+            --arg title "$PR_TITLE" \
+            --arg url "$PR_URL" \
+            '{
+              content: ("⏳ CodeRabbit レビュー中… (コミット " + $sha + ")"),
+              allowed_mentions: { parse: [] },
+              embeds: [{
+                title: ($title | if length > 256 then .[0:255] + "…" else . end),
+                url: $url,
+                color: 16776960
+              }]
+            }')"
+
+          resp="$(printf '%s' "$payload" | curl -sS --fail-with-body \
+            -X POST \
+            -H "Content-Type: application/json" \
+            --data-binary @- \
+            "${DISCORD_WEBHOOK_URL}?wait=true&thread_id=${THREAD_ID}")" || { echo "$resp"; exit 1; }
+
+          message_id="$(printf '%s' "$resp" | jq -r '.id // empty')"
+          if ! [[ "$message_id" =~ ^[0-9]+$ ]]; then
+            echo "::error::Discord のレスポンスからメッセージ ID を取得できませんでした。"
+            exit 1
+          fi
+          echo "MESSAGE_ID=${message_id}" >> "$GITHUB_ENV"
+
+      - name: Wait for CodeRabbit status
+        run: |
+          set -euo pipefail
+
+          # 20 秒おきに commit status を確認する。上限は 20 分。
+          interval=20
+          limit=1200
+          elapsed=0
+          state=""
+          description=""
+          result="timeout"
+          # API の一時的な失敗には耐え、連続 5 回失敗したら api_error として終了する。
+          fail_count=0
+          max_fail=5
+
+          while [ "$elapsed" -lt "$limit" ]; do
+            # context == "CodeRabbit" のうち最新(配列の先頭)を見る。未作成なら空。
+            if ! latest="$(gh api "repos/${REPO}/commits/${HEAD_SHA}/statuses" \
+              | jq -c '[ .[] | select(.context == "CodeRabbit") ] | first // empty')"; then
+              fail_count=$((fail_count + 1))
+              echo "ステータス取得に失敗しました (連続 ${fail_count}/${max_fail})"
+              if [ "$fail_count" -ge "$max_fail" ]; then
+                result="api_error"
+                break
+              fi
+              sleep "$interval"
+              elapsed=$((elapsed + interval))
+              continue
+            fi
+            fail_count=0
+            state=""
+            description=""
+            if [ -n "$latest" ]; then
+              state="$(printf '%s' "$latest" | jq -r '.state // ""')"
+              description="$(printf '%s' "$latest" | jq -r '.description // ""')"
+            fi
+            echo "state=${state:-none} elapsed=${elapsed}s"
+
+            case "$state" in
+              success|failure|error)
+                result="done"
+                break
+                ;;
+            esac
+
+            sleep "$interval"
+            elapsed=$((elapsed + interval))
+          done
+
+          {
+            echo "RESULT=${result}"
+            echo "CR_STATE=${state}"
+            # description は 1 行にして保存する(GITHUB_ENV の書式を壊さないため)。
+            echo "CR_DESCRIPTION=$(printf '%s' "$description" | tr '\r\n' '  ')"
+          } >> "$GITHUB_ENV"
+
+      - name: Update message and notify
+        run: |
+          set -euo pipefail
+
+          # 結果ごとの見出しと文言を決める。
+          case "${RESULT}:${CR_STATE}" in
+            done:success)
+              heading="✅ CodeRabbit レビュー完了"
+              notice="CodeRabbit のレビューが終わりました"
+              color=5763719
+              ;;
+            done:*)
+              heading="❌ CodeRabbit レビューが失敗/エラーで終了"
+              notice="CodeRabbit のレビューが失敗またはエラーで終了しました"
+              color=15548997
+              ;;
+            api_error:*)
+              heading="⚠️ CodeRabbit のステータスを取得できませんでした"
+              notice="CodeRabbit のステータスを取得できませんでした(GitHub API エラー)"
+              color=16776960
+              ;;
+            *)
+              heading="⚠️ CodeRabbit の完了を確認できませんでした"
+              notice="CodeRabbit の完了を確認できませんでした(タイムアウト)"
+              color=16776960
+              ;;
+          esac
+
+          short_sha="${HEAD_SHA:0:7}"
+
+          # (a) 「レビュー中」の投稿を編集する(メンションなし)。
+          edit_payload="$(jq -n \
+            --arg heading "$heading" \
+            --arg sha "$short_sha" \
+            --arg title "$PR_TITLE" \
+            --arg url "$PR_URL" \
+            --arg desc "$CR_DESCRIPTION" \
+            --argjson color "$color" \
+            '{
+              content: ($heading + " (コミット " + $sha + ")"),
+              allowed_mentions: { parse: [] },
+              embeds: [{
+                title: ($title | if length > 256 then .[0:255] + "…" else . end),
+                url: $url,
+                description: (if ($desc | length) == 0 then "(ステータスの説明なし)" else $desc end),
+                color: $color
+              }]
+            }')"
+
+          resp="$(printf '%s' "$edit_payload" | curl -sS --fail-with-body \
+            -X PATCH \
+            -H "Content-Type: application/json" \
+            --data-binary @- \
+            "${DISCORD_WEBHOOK_URL}/messages/${MESSAGE_ID}?thread_id=${THREAD_ID}")" || { echo "$resp"; exit 1; }
+
+          # (b) メンション付きの別メッセージを新規投稿して通知を鳴らす。
+          #  - allowed_mentions は users に有効な ID のみ許可し、parse は空にして @everyone / @here を無効化する
+          #  - PR 作成者は対応表にあれば <@ID>、無ければ @ログイン名 のプレーンテキスト(担当者と同一なら重複させない)
+          notify_payload="$(jq -n \
+            --arg notice "$notice" \
+            --arg url "$PR_URL" \
+            --arg author "$PR_AUTHOR" \
+            --arg reviewer_id "$REVIEWER_USER_ID" \
+            --arg id_map "$GITHUB_TO_DISCORD_ID_MAP" \
+            '
+            def is_id: type == "string" and test("^[0-9]+$");
+            (try ($id_map | fromjson) catch null) as $map0
+            | (if ($map0 | type) == "object" then $map0 else {} end) as $map
+            | ($map[$author] | if is_id then . else null end) as $author_id
+            | ($reviewer_id | if is_id then . else null end) as $rid
+            | ([ (if $rid == null then null else "<@" + $rid + ">" end),
+                 (if $author_id == null then "@" + $author
+                  elif $author_id == $rid then null
+                  else "<@" + $author_id + ">" end)
+               ] | map(select(. != null)) | join(" ")) as $mentions
+            | ([$rid, $author_id] | map(select(. != null)) | unique) as $users
+            | {
+                content: ((if ($mentions | length) > 0 then $mentions + "\n" else "" end) + $notice + ": " + $url),
+                allowed_mentions: { parse: [], users: $users }
+              }
+            ')"
+
+          resp="$(printf '%s' "$notify_payload" | curl -sS --fail-with-body \
+            -X POST \
+            -H "Content-Type: application/json" \
+            --data-binary @- \
+            "${DISCORD_WEBHOOK_URL}?thread_id=${THREAD_ID}")" || { echo "$resp"; exit 1; }
+
+      - name: Mark message as superseded on cancel
+        if: cancelled()
+        run: |
+          set -euo pipefail
+
+          # 「レビュー中」を投稿する前にキャンセルされた場合は何もしない。
+          if [ -z "${MESSAGE_ID:-}" ] || [ -z "${THREAD_ID:-}" ]; then
+            echo "更新対象のメッセージがないため何もしません。"
+            exit 0
+          fi
+
+          payload="$(jq -n \
+            --arg title "$PR_TITLE" \
+            --arg url "$PR_URL" \
+            '{
+              content: "⏭ 新しいコミットで置き換えられました",
+              allowed_mentions: { parse: [] },
+              embeds: [{
+                title: ($title | if length > 256 then .[0:255] + "…" else . end),
+                url: $url,
+                color: 9807270
+              }]
+            }')"
+
+          resp="$(printf '%s' "$payload" | curl -sS --fail-with-body \
+            -X PATCH \
+            -H "Content-Type: application/json" \
+            --data-binary @- \
+            "${DISCORD_WEBHOOK_URL}/messages/${MESSAGE_ID}?thread_id=${THREAD_ID}")" || { echo "$resp"; exit 1; }
+
+      - name: Mark message as failed on error
+        if: failure()
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          # 「レビュー中」を投稿する前に失敗した場合は何もしない。
+          if [ -z "${MESSAGE_ID:-}" ] || [ -z "${THREAD_ID:-}" ]; then
+            echo "更新対象のメッセージがないため何もしません。"
+            exit 0
+          fi
+
+          # 編集のみ(メンションなし)。Actions の実行ログへのリンクを付ける。
+          payload="$(jq -n \
+            --arg title "$PR_TITLE" \
+            --arg url "$PR_URL" \
+            --arg run_url "$RUN_URL" \
+            '{
+              content: "⚠️ 通知処理でエラーが発生しました(Actions のログを確認してください)",
+              allowed_mentions: { parse: [] },
+              embeds: [{
+                title: ($title | if length > 256 then .[0:255] + "…" else . end),
+                url: $url,
+                description: ("[Actions の実行ログ](" + $run_url + ")"),
+                color: 15548997
+              }]
+            }')"
+
+          resp="$(printf '%s' "$payload" | curl -sS --fail-with-body \
+            -X PATCH \
+            -H "Content-Type: application/json" \
+            --data-binary @- \
+            "${DISCORD_WEBHOOK_URL}/messages/${MESSAGE_ID}?thread_id=${THREAD_ID}")" || { echo "$resp"; exit 1; }

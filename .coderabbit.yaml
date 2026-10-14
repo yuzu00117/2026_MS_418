@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "ja-JP"
+reviews:
+  auto_review:
+    enabled: true
+    base_branches: ["^develop$", "^main$"]
+  high_level_summary: true
+  path_filters:
+    - "!**/*.meta"                       # prefab/sceneの追加はその本体ファイルで検出できる
+    - "!**/Library/**"
+    - "!**/Temp/**"
+    - "!**/Logs/**"
+    - "!**/Packages/packages-lock.json"
+  path_instructions:
+    - path: "**/*.cs"
+      instructions: |
+        docs/coding-rules.md のルールに従ってレビューしてください。特に次の点を確認してください。
+        - 命名: クラス/メソッド/プロパティ/enum/定数は PascalCase、ローカル変数・引数は camelCase、private フィールドは _camelCase、インターフェースは I+PascalCase。定数は MAX_AMMO のような大文字ではなく PascalCase。
+        - bool 変数は is/has/can で始める。コレクションは複数形。メソッドは動詞から始め、Get/Set/Is/Can/Has/On/Handle の接頭辞規則に従う。
+        - Inspector への公開は [SerializeField] private を使い、public フィールドは避ける。
+        - Update 内で GetComponent / Find / Camera.main を呼ばず、Awake/Start でキャッシュする。毎フレームの new・文字列結合も避ける。
+        - マジックナンバーは const か [SerializeField] にする。不要な Debug.Log は残さない。
+        - 1ファイル1クラスで、ファイル名とクラス名を一致させる。メソッドは目安30行以内。シングルトンは最小限にする。
+        - コメントは「何をしているか」ではなく「なぜそうするか」を書く。
+        - docs/CONTRIBUTING.md も参照し、1コミット1目的、.meta は必ずコミットする、Library/Temp/Logs/obj/UserSettings はコミットしない、を確認する。
+    - path: "**"
+      instructions: |
+        docs/CONTRIBUTING.md を参照して、次の点を確認してください(ルールの詳細は同ファイルを参照)。
+        - PRタイトルが `<種別>: <要約>` の形式であること(種別は feat/fix/docs/style/refactor/chore、要約は日本語)。
+        - マージ先が develop であること(develop から main へのPRは対象外)。
+        - PRテンプレートの「動作確認」が埋められていること。

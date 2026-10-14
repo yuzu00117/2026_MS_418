@@ -113,6 +113,8 @@ git push origin --delete feature/1001_player-movement
 
 コミットと同じ形式にします（例: `feat: プレイヤーの移動処理を追加`）。
 
+> **📌 ルール**: PR のマージ先（ベース）は `develop` にします。誤って `main` 向けに作った `feature/*` の PR は、GitHub Actions により自動で `develop` に付け替えられます。`develop` → `main` の PR は対象外です。
+
 ### 4.2 説明テンプレート
 
 ```markdown
@@ -123,10 +125,9 @@ git push origin --delete feature/1001_player-movement
 - 
 
 ## 動作確認
+<!-- チェックボックスは PR 作成後に、確認できた項目をクリックしてチェックしてください。作成時は [ ] のまま(◯や x などは入力しない)にしてください。 -->
 - [ ] Unity で開いてエラーが出ない
 - [ ] 既存機能に影響がない
-- [ ] Debug.Log を残していない
-- [ ] .meta が揃っている
 
 ## スクリーンショット（任意）
 ```

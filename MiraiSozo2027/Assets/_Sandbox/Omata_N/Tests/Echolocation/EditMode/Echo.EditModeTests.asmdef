@@ -1,0 +1,1 @@
+{"name":"Echo.EditModeTests","references":["Echo.Runtime","Echo.InputSystem"],"includePlatforms":["Editor"],"optionalUnityReferences":["TestAssemblies"]}

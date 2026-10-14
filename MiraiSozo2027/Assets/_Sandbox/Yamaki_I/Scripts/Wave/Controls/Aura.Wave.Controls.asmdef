@@ -1,0 +1,17 @@
+{
+    "name": "Aura.Wave.Controls",
+    "rootNamespace": "Aura.Wave.Controls",
+    "references": [
+        "Aura.Wave",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
