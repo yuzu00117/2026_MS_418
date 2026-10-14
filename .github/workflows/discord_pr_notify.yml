@@ -1,5 +1,5 @@
 # PR 作成時に Discord のフォーラムチャンネルへ通知するワークフロー。
-#  (1) develop 向けの PR が opened / reopened / ready_for_review になったとき、
+#  (1) develop 向けの PR、および develop → main の PR が opened / reopened / ready_for_review になったとき、
 #      PR ごとに新規スレッド(投稿)を Webhook で作成する。
 #  (2) 必要な Secret: DISCORD_WEBHOOK_URL (フォーラムチャンネルの Webhook URL)
 #  (3) スレッド作成後、Discord のスレッド ID を隠しマーカー付きコメント(<!-- discord-thread-id:ID -->)として PR に保存する。
@@ -14,7 +14,7 @@ name: Discord PR Notify
 on:
   pull_request:
     types: [opened, reopened, ready_for_review]
-    branches: [develop]
+    branches: [develop, main]
 
 jobs:
   notify:
@@ -28,10 +28,13 @@ jobs:
     #  - Draft PR は opened 時には通知せず、ready_for_review になった時点で通知する
     #  - フォーク PR は Secrets が渡らず失敗するので、同一リポジトリの PR のみ対象にする
     #  - Bot 起因のイベントは除外する
+    #  - main 向けは develop → main の PR のみ対象にする。main 向けの feature/* PR は
+    #    retarget-pr-base.yml が develop に付け替えるため、ここで通知すると二重・不正確になる
     if: >-
       github.event.sender.type != 'Bot' &&
       github.event.pull_request.draft == false &&
-      github.event.pull_request.head.repo.full_name == github.repository
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (github.event.pull_request.base.ref != 'main' || github.event.pull_request.head.ref == 'develop')
     steps:
       - name: Create Discord forum thread
         env:
