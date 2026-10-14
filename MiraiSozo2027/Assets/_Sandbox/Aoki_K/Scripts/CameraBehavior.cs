@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class CameraBehavior : MonoBehaviour
 {
-    private InputSystem_Actions _actions;
+    private InputSystem_Actions _actions => GameManager.Actions;
     private float _yaw;
     private float _pitch;
 
@@ -26,17 +26,16 @@ public class CameraBehavior : MonoBehaviour
     
     private void Awake()
     {
-        _actions = new InputSystem_Actions();
+
     }
 
     private void OnEnable()
     {
-        _actions.Enable();
     }
 
     private void OnDisable()
     {
-        _actions.Disable();
+
     }
     
     void Start()
@@ -53,7 +52,6 @@ public class CameraBehavior : MonoBehaviour
 
     void LateUpdate()
     {
-        if(GameManager.Instance.IsPaused) return;
         if (_target == null) return;
         // 1. Input System から Look（マウス移動 / 右スティック）を取得
         Vector2 lookInput = _actions.Player.Look.ReadValue<Vector2>();

@@ -9,10 +9,12 @@ public class GameManager : MonoBehaviour
     [Tooltip("ポーズメニューのCanvasやパネル")]
     [SerializeField] private GameObject _menuUI;
 
-    private InputSystem_Actions _actions;
     private bool _isPaused = false;
 
     public bool IsPaused => _isPaused;
+
+    //ゲームで使用する用のInput
+    public static InputSystem_Actions Actions { get; private set; }
 
     private void Awake()
     {
@@ -20,22 +22,24 @@ public class GameManager : MonoBehaviour
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            Actions = new InputSystem_Actions();
+            Actions.Enable();
         }
         else
         {
             Destroy(gameObject);
+            return;
         }
-        _actions = new InputSystem_Actions();
+
     }
 
-    private void OnEnable()
+    private void OnDestroy()
     {
-        _actions.Enable();
-    }
-
-    private void OnDisable()
-    {
-        _actions.Disable();
+        if(Instance == this)
+        {
+            Actions?.Dispose();
+            Actions = null;
+        }
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -47,7 +51,7 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(_actions.All.Pause.triggered)
+        if(Actions.All.Pause.triggered)
         {
             TogglePause();
         }
@@ -57,39 +61,24 @@ public class GameManager : MonoBehaviour
     {
         _isPaused = !_isPaused;
 
+        Time.timeScale = _isPaused ? 0f : 1f;
+        Cursor.lockState = _isPaused ? CursorLockMode.None : CursorLockMode.Locked;
+        Cursor.visible = _isPaused;
+
+        if(_menuUI != null)
+        {
+            _menuUI.SetActive(_isPaused);
+        }
+
         if(_isPaused)
         {
-            //一時停止
-            Time.timeScale = 0f;
-
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-
-            // プレイヤー動作制約
-            _actions.Player.Disable();
-            _actions.UI.Enable();
-
-            if(_menuUI != null)
-            {
-                _menuUI.SetActive(true);
-            }
+            Actions.Player.Disable();
+            Actions.UI.Enable();
         }
         else
         {
-            // 再開
-            Time.timeScale = 1f;
-
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-
-            // プレイヤー動作再開
-            _actions.Player.Enable();
-            _actions.UI.Disable();
-
-            if (_menuUI != null)
-            {
-                _menuUI.SetActive(false);
-            }
+            Actions.Player.Enable();
+            Actions.UI.Disable();
         }
     }
 

@@ -22,7 +22,7 @@ public class PlayerController : MonoBehaviour
     private EchoController _echoController;
     private Phononkinesis _phononkinesis;
 
-    private InputSystem_Actions _actions;
+    private InputSystem_Actions _actions => GameManager.Actions;
 
     // 移動用のキャッシュ変数
     private Vector3 _moveDirection = Vector3.zero;
@@ -30,17 +30,17 @@ public class PlayerController : MonoBehaviour
 
     private void Awake()
     {
-        _actions = new InputSystem_Actions();
+
     }
 
     private void OnEnable()
     {
-        _actions.Enable();
+
     }
 
     private void OnDisable()
     {
-        _actions.Disable();
+
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -74,6 +74,7 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
         // 1. 入力の取得 (W/A/S/D)
         Vector2 input = _actions.Player.Move.ReadValue<Vector2>();
 

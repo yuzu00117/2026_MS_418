@@ -27,6 +27,8 @@ public class Phononkinesis : MonoBehaviour
     [SerializeField] private float _currentDistance = 6.0f;
     [SerializeField] private float _minDistance = 2.0f;
     [SerializeField] private float _maxDistance = 25.0f;
+    private float _activeMinDistance;
+    private float _activeMaxDistance;
 
     [Header("Distance Adjustment Sensitivity (ObjectPlacer流用)")]
     [Tooltip("マウスホイール1ノッチあたりの移動量（メートル）")]
@@ -57,7 +59,7 @@ public class Phononkinesis : MonoBehaviour
     [SerializeField] private Transform _targetHeadTransform;
 
     // 内部変数
-    private InputSystem_Actions _actions;
+    private InputSystem_Actions _actions => GameManager.Actions;
     private PhononkinesisTarget _heldTarget;
     private PhononkinesisTarget _currentTarget;
     private RaycastHit _currentHit;
@@ -77,13 +79,12 @@ public class Phononkinesis : MonoBehaviour
 
     private void Awake()
     {
-        _actions = new InputSystem_Actions();
         SetupLineRenderer();
     }
 
     private void OnEnable()
     {
-        _actions.Enable();
+
     }
 
     private void OnDisable()
@@ -92,7 +93,7 @@ public class Phononkinesis : MonoBehaviour
         {
             ReleaseObject();
         }
-        _actions.Disable();
+
     }
 
     private void Start()
@@ -202,8 +203,10 @@ public class Phononkinesis : MonoBehaviour
         _currentDistance = Vector3.Dot(toObj, _cameraTransform.forward);
 
         // クランプ範囲を現在距離に応じて安全に調整
-        if (_currentDistance > _maxDistance) _maxDistance = _currentDistance + 5f;
-        if (_currentDistance < _minDistance) _minDistance = Mathf.Max(1.0f, _currentDistance);
+        //遠くでつかんだ場合はその位置を一旦の上限とする
+        _activeMaxDistance = Mathf.Max(_maxDistance, _currentDistance);
+        //近距離でつかんだ場合は0.5fを最低距離とする
+        _activeMinDistance = Mathf.Min(_minDistance, Mathf.Max(0.5f, _currentDistance));
 
         _currentState = State.Holding;
     }
@@ -306,7 +309,14 @@ public class Phononkinesis : MonoBehaviour
             _currentDistance += controllerAxis * _controllerSpeed * Time.deltaTime;
         }
 
-        _currentDistance = Mathf.Clamp(_currentDistance, _minDistance, _maxDistance);
+        _currentDistance = Mathf.Clamp(_currentDistance, _activeMinDistance, _activeMaxDistance);
+
+        //一旦の上限より近づいたら、本来の上限値まで戻す
+        if(_activeMaxDistance > _maxDistance)
+        {
+            _activeMaxDistance = Mathf.Max(_maxDistance, _currentDistance);
+        }
+
     }
 
     private void ReleaseObject()
