@@ -74,12 +74,12 @@ namespace Aura.ObjectInfoDemo
         {
             _text.Clear();
             AppendSource(_emitter.CurrentSource);
-            AppendBeamShape();
+            AppendPoints();
             AppendLastHits();
             _text.Append('\n');
             AppendAimedObject();
             _text.Append('\n')
-                .Append("左クリック: ビーム   Q/E: ビームの切り替え   B: ビームの形   V: 一人称/三人称\n")
+                .Append("左クリック: ビーム   Q/E: ビームの切り替え   V: 一人称/三人称\n")
                 .Append("WASD: 移動   Space: ジャンプ   Shift: 走る   Esc: カーソルを解放");
             _displayText = _text.ToString();
         }
@@ -100,16 +100,10 @@ namespace Aura.ObjectInfoDemo
                 .Append('\n');
         }
 
-        private void AppendBeamShape()
+        private void AppendPoints()
         {
-            _text.Append("ビームの形: ");
-            if (_emitter.BeamShape != BeamShape.PointChain)
-            {
-                _text.Append("真っすぐ\n");
-                return;
-            }
-            _text.Append("点と線（点 ").Append(_emitter.Points.Count).Append(" 個、間隔 ")
-                .Append(_emitter.PointSpacing.ToString("0.##")).Append("m、支点 ").Append(_emitter.AnchorCount).Append(" 個）\n");
+            _text.Append("ビームの点: ").Append(_emitter.Points.Count).Append(" 個、間隔 ")
+                .Append(_emitter.PointSpacing.ToString("0.##")).Append("m、支点 ").Append(_emitter.AnchorCount).Append(" 個\n");
         }
 
         private void AppendLastHits()

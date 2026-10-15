@@ -27,11 +27,6 @@ namespace Aura.ObjectInfoDemo
                  "既定: Q キー、ゲームパッドの LB")]
         [SerializeField] private InputAction _previousTypeAction = CreateButton("PreviousType", "<Keyboard>/q", "<Gamepad>/leftShoulder"); ///< 前のビーム
 
-        [InspectorLabel("ビームの形を入れ替える操作")]
-        [Tooltip("ビームの作り方（InfoBeamEmitter の「ビームの形」）の、真っすぐなビーム（「真っすぐ」）と点と線のビーム（「点と線」）を入れ替えるボタン。比べて試す用\n" +
-                 "既定: B キー、ゲームパッドの十字キーの上")]
-        [SerializeField] private InputAction _toggleBeamShapeAction = CreateButton("ToggleBeamShape", "<Keyboard>/b", "<Gamepad>/dpad/up");  ///< ビームの作り方を入れ替える（確かめる用）
-
         private void Awake()
         {
             if (_emitter == null)
@@ -45,7 +40,6 @@ namespace Aura.ObjectInfoDemo
             _fireAction.Enable();
             _nextTypeAction.Enable();
             _previousTypeAction.Enable();
-            _toggleBeamShapeAction.Enable();
         }
 
         private void OnDisable()
@@ -53,7 +47,6 @@ namespace Aura.ObjectInfoDemo
             _fireAction.Disable();
             _nextTypeAction.Disable();
             _previousTypeAction.Disable();
-            _toggleBeamShapeAction.Disable();
             if (_emitter != null)
             {
                 _emitter.SetTriggerHeld(false);
@@ -74,10 +67,6 @@ namespace Aura.ObjectInfoDemo
             if (_previousTypeAction.WasPressedThisFrame())
             {
                 _emitter.SelectPreviousSource();
-            }
-            if (_toggleBeamShapeAction.WasPressedThisFrame())
-            {
-                _emitter.BeamShape = _emitter.BeamShape == BeamShape.Straight ? BeamShape.PointChain : BeamShape.Straight;
             }
             _emitter.SetTriggerHeld(_fireAction.IsPressed());
         }

@@ -1027,7 +1027,6 @@ MonoBehaviour:
   _radius: 0.1
   _maxReflections: 8
   _lineMaterial: {fileID: 0}
-  _beamShape: 1
   _pointSpacing: 0.5
   _bendMode: 1
   _bendRange: 3
@@ -1376,7 +1375,6 @@ MonoBehaviour:
   _radius: 0.1
   _maxReflections: 8
   _lineMaterial: {fileID: 0}
-  _beamShape: 0
   _pointSpacing: 0.5
   _bendMode: 1
   _bendRange: 3
@@ -1386,7 +1384,7 @@ MonoBehaviour:
   _isAimLockedWhileHeld: 1
   _pointRadius: 0.3
   _pointLayer: 0
-  _pointPrefab: {fileID: 0}
+  _pointPrefab: {fileID: 3311711355854517144, guid: 1362f66c5301bb64aab30b1147bfdf58, type: 3}
   _isBodyLineVisible: 0
 --- !u!114 &364363754
 MonoBehaviour:
@@ -4156,32 +4154,6 @@ MonoBehaviour:
       m_Flags: 0
     m_Flags: 0
     m_Priority: 0
-  _toggleBeamShapeAction:
-    m_Name: ToggleBeamShape
-    m_Type: 1
-    m_ExpectedControlType: 
-    m_Id: 7728e093-7712-4eca-b447-2aa911cf50f0
-    m_Processors: 
-    m_Interactions: 
-    m_SingletonActionBindings:
-    - m_Name: 
-      m_Id: bd1bf0ce-3575-485b-b34e-44c62edba6d1
-      m_Path: <Keyboard>/b
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: ToggleBeamShape
-      m_Flags: 0
-    - m_Name: 
-      m_Id: f7713bbf-e986-488d-ba41-169b408a6fb0
-      m_Path: <Gamepad>/dpad/up
-      m_Interactions: 
-      m_Processors: 
-      m_Groups: 
-      m_Action: ToggleBeamShape
-      m_Flags: 0
-    m_Flags: 0
-    m_Priority: 0
 --- !u!114 &1361693762
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4211,7 +4183,6 @@ MonoBehaviour:
   _radius: 0.1
   _maxReflections: 8
   _lineMaterial: {fileID: 0}
-  _beamShape: 1
   _pointSpacing: 0.5
   _bendMode: 1
   _bendRange: 3

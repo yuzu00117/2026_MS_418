@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Aura.ObjectInfoDemo
 {
-    /// @brief ビームの点。InfoBeamEmitter が、Beam Shape が Point Chain のときに作って一定の間隔で並べる（自分で付けるものではない）
+    /// @brief ビームの点。InfoBeamEmitter が作って一定の間隔で並べる（自分で付けるものではない）
     /// 見えない Object で、念力で掴む対象を選ぶときに、ふつうの Object と同じように選べるようにするためにある
     /// （コライダーと Rigidbody を持つ。念力の側の印（Phononkinesis の PhononkinesisTarget など）は、Point Prefab に付けておく。ビームの実体は、点どうしをつなぐ直線の方）
     /// 掴まれたかは、次のどちらかで決める

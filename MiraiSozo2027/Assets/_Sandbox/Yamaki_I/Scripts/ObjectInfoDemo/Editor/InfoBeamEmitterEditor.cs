@@ -6,7 +6,6 @@ using UnityEngine;
 namespace Aura.ObjectInfoDemo.Editor
 {
     /// @brief InfoBeamEmitter の Inspector。ふつうの Inspector と同じ順に全項目を出すが、
-    /// ・点と線の欄（Point Spacing など）は、Beam Shape が Point Chain のときだけ出す
     /// ・離した後に戻るまでの時間（Bend Hold Seconds、Bend Return Seconds）は、Bend Release Mode が Hold Then Return のときだけ出す
     /// ・点のレイヤー（Point Layer）は、レイヤーを選ぶ欄で出す
     [CustomEditor(typeof(InfoBeamEmitter))]
@@ -14,25 +13,8 @@ namespace Aura.ObjectInfoDemo.Editor
     public sealed class InfoBeamEmitterEditor : UnityEditor.Editor
     {
         private const string ScriptPropertyPath = "m_Script";
-        private const string BeamShapePropertyPath = "_beamShape";
         private const string BendReleaseModePropertyPath = "_bendReleaseMode";
         private const string PointLayerPropertyPath = "_pointLayer";
-
-        /// @brief Beam Shape が Point Chain のときだけ出す項目
-        private static readonly string[] PointChainPropertyPaths =
-        {
-            "_pointSpacing",
-            "_bendMode",
-            "_bendRange",
-            "_bendReleaseMode",
-            "_bendHoldSeconds",
-            "_bendReturnSeconds",
-            "_isAimLockedWhileHeld",
-            "_pointRadius",
-            "_pointLayer",
-            "_pointPrefab",
-            "_isBodyLineVisible",
-        };
 
         /// @brief Bend Release Mode が Hold Then Return のときだけ出す項目
         private static readonly string[] HoldThenReturnPropertyPaths =
@@ -44,7 +26,6 @@ namespace Aura.ObjectInfoDemo.Editor
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            bool isPointChain = HasEnumValue(serializedObject, BeamShapePropertyPath, (int)BeamShape.PointChain);
             bool isHoldThenReturn = HasEnumValue(serializedObject, BendReleaseModePropertyPath, (int)BendReleaseMode.HoldThenReturn);
 
             SerializedProperty property = serializedObject.GetIterator();
@@ -52,7 +33,7 @@ namespace Aura.ObjectInfoDemo.Editor
             while (property.NextVisible(isEnteringChildren))
             {
                 isEnteringChildren = false;
-                if (!IsPropertyVisible(property.propertyPath, isPointChain, isHoldThenReturn))
+                if (!IsPropertyVisible(property.propertyPath, isHoldThenReturn))
                 {
                     continue;
                 }
@@ -99,15 +80,10 @@ namespace Aura.ObjectInfoDemo.Editor
 
         /// @brief その項目を Inspector に出すか
         /// @param propertyPath 項目の SerializedProperty.propertyPath
-        /// @param isPointChain Beam Shape が Point Chain か
         /// @param isHoldThenReturn Bend Release Mode が Hold Then Return か
         /// @return 出すなら true
-        public static bool IsPropertyVisible(string propertyPath, bool isPointChain, bool isHoldThenReturn)
+        public static bool IsPropertyVisible(string propertyPath, bool isHoldThenReturn)
         {
-            if (Array.IndexOf(PointChainPropertyPaths, propertyPath) >= 0 && !isPointChain)
-            {
-                return false;
-            }
             return isHoldThenReturn || Array.IndexOf(HoldThenReturnPropertyPaths, propertyPath) < 0;
         }
     }

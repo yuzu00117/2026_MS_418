@@ -7,8 +7,7 @@ namespace Aura.ObjectInfoDemo
 {
     /// @brief LineRenderer で、折れ線に沿って正弦波の線を描く。InfoBeamEmitter のビームの見た目に使う
     /// 今ある WaveLine（Aura.Wave）と同じ描き方に、「揺れを 0 にする曲がり目」を選べるようにしたもの
-    /// ・真っすぐなビーム（Straight）: 間の曲がり目（跳ね返った位置）すべてで揺れを 0 にする（WaveLine と同じ）
-    /// ・点と線のビーム（Point Chain）: 跳ね返った位置だけ揺れを 0 にし、点どうしの小さな曲がり目では揺らしたまま、線に沿って流す
+    /// 点と線のビームでは、跳ね返った位置だけ揺れを 0 にし、点どうしの小さな曲がり目では揺らしたまま、線に沿って流す
     /// 揺らさない折れ線（DrawStraight）も描ける。ビームの実体の線（点どうしをつなぐ直線）を見せるのに使う
     [RequireComponent(typeof(LineRenderer))]
     public sealed class InfoBeamLine : MonoBehaviour
@@ -48,16 +47,6 @@ namespace Aura.ObjectInfoDemo
             lineRenderer.sharedMaterial = material != null ? material : GetDefaultMaterial();
 
             return lineObject.AddComponent<InfoBeamLine>();
-        }
-
-        /// @brief 折れ線に沿ってビームの波を描く。間の曲がり目すべてで揺れを 0 にする（WaveLine.Draw と同じ）
-        /// @param corners 折れ線の点（始点、曲がり目、終点の順）。2 つ以上
-        /// @param up 波が揺れる面を決める上の向き
-        /// @param type 波の種類（色、波長、振幅、太さ）
-        /// @param phase 波の位相（m）。corners の最初の点からの道のりで数える。時間とともに増やすと波が流れて見える
-        public void Draw(IReadOnlyList<Vector3> corners, Vector3 up, WaveType type, float phase)
-        {
-            Draw(corners, null, up, type, phase);
         }
 
         /// @brief 折れ線に沿ってビームの波を描く。揺れを 0 にするのは、fadingCorners が true の曲がり目だけ

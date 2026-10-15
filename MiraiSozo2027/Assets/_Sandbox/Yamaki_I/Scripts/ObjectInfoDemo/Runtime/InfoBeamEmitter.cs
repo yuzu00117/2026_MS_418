@@ -11,7 +11,7 @@ namespace Aura.ObjectInfoDemo
     /// ・ビームの種類・強さ・届く距離は BeamSourceInfo（B1〜B3）から読む。切り替えは、BeamSourceInfo を付けた物を選び直す
     /// ・跳ね返るかは、当たった物の素材（Substance の SubstanceType、O6）で決める。素材の無い物では止まる
     /// ・当たった物に WaveReaction（O3、O4）と ReactionTrigger があれば、ビームを渡す。弱点（WeakPoint、O5）なら強さに倍率を掛ける
-    /// ・ビームの形は Beam Shape で選ぶ。Point Chain なら、一定の間隔の点（BeamPoint）と点どうしをつなぐ直線でビームを作り、
+    /// ・ビームは、一定の間隔の点（BeamPoint）と点どうしをつなぐ直線で作る。
     ///   点を念力で掴んで動かすと、掴んだ点の前後が曲がる（BeamSourceInfo の Is Bendable がオンのときだけ）
     /// 今ある WaveEmitter（Aura.Wave）とは別物で、WaveSurface や WaveReceiver は見ない
     public sealed class InfoBeamEmitter : MonoBehaviour
@@ -85,18 +85,12 @@ namespace Aura.ObjectInfoDemo
         [Tooltip("ビームの線のマテリアル。空なら既定のマテリアルを使い、WaveType の「波の色」で色を付ける")]
         [SerializeField] private Material _lineMaterial;              ///< ビームの線のマテリアル。空なら既定のもの
 
-        [Header("ビームの形")]
-        [InspectorLabel("ビームの形")]
-        [Tooltip("ビームの作り方。実行中に変えてもよい（変えると、曲げていた形は消える）\n" +
-                 "真っすぐ: 今までの真っすぐなビーム。点は作らない（点と線を入れる前と同じ動き。比べる用）\n" +
-                 "点と線: 一定の間隔で並べた見えない点（BeamPoint）と、点どうしをつなぐ直線でビームを作る。当たり判定はこの直線で行い、見た目の波はこの線に沿って流れる\n" +
-                 "　点は念力で掴める（ふつうの Object と同じく、コライダーと Rigidbody を持つ。念力の側の印は「点のプレハブ」に付ける）。掴んで動かすと、「支点での曲げ方」のとおりに曲がる\n" +
-                 "　曲げられるのは、今のビームの BeamSourceInfo の「念力で曲げられる」がオンのときだけ（オフでも点は並ぶが、掴めない）")]
-        [SerializeField] private BeamShape _beamShape = BeamShape.Straight;  ///< ビームの作り方
-
-        [Header("点と線（「ビームの形」が「点と線」のとき）")]
+        [Header("点と線")]
         [InspectorLabel("点の間隔（m）")]
-        [Tooltip("点どうしの間隔（m。0.05 以上）。狭いほど、曲げたときに直線の集まりがなめらかな曲線に見えるが、点の数と当たり判定の回数が増える\n" +
+        [Tooltip("ビームは、この間隔で並べた見えない点（BeamPoint）と、点どうしをつなぐ直線でできている。当たり判定はこの直線で行い、見た目の波はこの線に沿って流れる\n" +
+                 "点は念力で掴める（ふつうの Object と同じく、コライダーと Rigidbody を持つ。念力の側の印は「点のプレハブ」に付ける）。掴んで動かすと、「支点での曲げ方」のとおりに曲がる\n" +
+                 "曲げられるのは、今のビームの BeamSourceInfo の「念力で曲げられる」がオンのときだけ（オフでも点は並ぶが、掴めない）\n" +
+                 "点どうしの間隔（m。0.05 以上）。狭いほど、曲げたときに直線の集まりがなめらかな曲線に見えるが、点の数と当たり判定の回数が増える\n" +
                  "曲げた所では、曲線に沿ってこの間隔で並べる。跳ね返った位置、支点（掴んだ点）、終わりの位置は、間隔に関係なく途中に入る")]
         [SerializeField, Min(MinPointSpacing)] private float _pointSpacing = 0.5f;  ///< 点どうしの間隔（m）
 
@@ -163,13 +157,11 @@ namespace Aura.ObjectInfoDemo
                  "点そのものは、Scene ビューに印（水色: 掴める点、灰: 掴めない点、橙: 支点、赤: 掴まれている支点）で出る")]
         [SerializeField] private bool _isBodyLineVisible;  ///< ビームの実体の線を見せるか（確かめる用）
 
-        private readonly List<Vector3> _corners = new List<Vector3>();                         ///< ビームの線を描く折れ線の点。毎フレーム使い回す
         private readonly List<InfoBeamHit> _lastHits = new List<InfoBeamHit>();                ///< 最後のフレームでビームが当たった物（当たった順）
         private readonly HashSet<ReactionTrigger> _deliveredTriggers = new HashSet<ReactionTrigger>();  ///< このフレームで、もうビームを渡した受け手
         private InfoBeamLine _beamLine;
         private InfoBeamLine _bodyLine;      ///< ビームの実体の線（確かめる用）
         private BeamPointChain _chain;       ///< 点と線のビームの点と曲げ方。Chain から使う
-        private BeamShape _appliedBeamShape; ///< 最後に反映したビームの作り方。Inspector での変更に気付くために持つ
         private Vector3 _lockedAimDirection; ///< 止めているビームを出す向き（Is Aim Locked While Held）
         private bool _hasLockedAim;          ///< ビームを出す向きを止めているか
         private int _appliedSourceIndex;     ///< 最後に反映したビームの番号。Inspector での変更に気付くために持つ
@@ -202,19 +194,8 @@ namespace Aura.ObjectInfoDemo
         /// @brief この下のコライダーには、ビームが当たらない
         public Transform IgnoreRoot => _ignoreRoot != null ? _ignoreRoot : transform;
 
-        /// @brief ビームの作り方。変えると、曲げていた形は消える
-        public BeamShape BeamShape
-        {
-            get => _beamShape;
-            set
-            {
-                _beamShape = value;
-                ApplyBeamShape();
-            }
-        }
-
         /// @brief 点と線のビームの点。出る位置から順に並び、最後が終わりの位置。跳ね返った位置と支点（掴んだ点）は、順番どおりの位置に入る
-        /// Beam Shape が Straight のときと、ビームを出していないときは空
+        /// ビームを出していないときは空
         public IReadOnlyList<BeamPoint> Points => _chain != null ? _chain.Points : System.Array.Empty<BeamPoint>();
 
         /// @brief 点と線のビームの、今ある支点（掴まれている点と、離された後も曲げている点）の数
@@ -329,7 +310,6 @@ namespace Aura.ObjectInfoDemo
             _bodyLine.Hide();
             _sourceIndex = HasSources ? Mathf.Clamp(_sourceIndex, 0, _sources.Length - 1) : 0;
             _appliedSourceIndex = _sourceIndex;
-            _appliedBeamShape = _beamShape;
         }
 
         private void OnDestroy()
@@ -358,10 +338,6 @@ namespace Aura.ObjectInfoDemo
                 _sourceIndex = HasSources ? Mathf.Clamp(_sourceIndex, 0, _sources.Length - 1) : 0;
                 ApplySourceIndex();
             }
-            if (_beamShape != _appliedBeamShape)
-            {
-                ApplyBeamShape();
-            }
         }
 
         private void LateUpdate()
@@ -388,16 +364,7 @@ namespace Aura.ObjectInfoDemo
             float range = source.Range;
             Vector3 direction = GetAimDirection(muzzle, range);
             float energy = source.EnergyPerSecond * deltaTime;
-            if (_beamShape == BeamShape.PointChain)
-            {
-                TraceChainBeam(source, muzzle.position, direction, range, energy);
-            }
-            else
-            {
-                TraceBeam(source, muzzle.position, direction, range, energy);
-                // 点と線のビームから切り替えた後も、掴まれたまま残った点を見張り、離されたら片付ける（点が無ければ何もしない）
-                _chain?.Stop();
-            }
+            TraceChainBeam(source, muzzle.position, direction, range, energy);
 
             // 受け手の処理でビームが止められた（この部品が無効にされたなど）ときは、線を出し直さない
             // 止められた後に並べ直した点も、片付け直す
@@ -408,11 +375,6 @@ namespace Aura.ObjectInfoDemo
             }
             WaveType type = source.WaveType;
             float phase = Time.time * type.ScrollSpeed;
-            if (_beamShape != BeamShape.PointChain)
-            {
-                _beamLine.Draw(_corners, muzzle.up, type, phase);
-                return;
-            }
 
             // 見た目の波は、点どうしをつなぐ直線に沿って流す。跳ね返った位置でだけ揺れを 0 にする
             BeamPointChain chain = Chain;
@@ -424,50 +386,6 @@ namespace Aura.ObjectInfoDemo
             else
             {
                 _bodyLine.Hide();
-            }
-        }
-
-        /// @brief ビームの通り道をたどり、当たった物にビームを渡す。跳ね返るかは素材で決める
-        private void TraceBeam(BeamSourceInfo source, Vector3 origin, Vector3 direction, float range, float energy)
-        {
-            _corners.Clear();
-            _lastHits.Clear();
-            _deliveredTriggers.Clear();
-            _corners.Add(origin);
-
-            Vector3 position = origin;
-            float remaining = range;
-            int reflectionCount = 0;
-            // 1 回まわるごとに、止まるか、跳ね返る（Max Reflections 回まで）か、残りを進みきって抜けるので、必ず終わる
-            while (true)
-            {
-                // 跳ね返った後は、出した本人（Ignore Root の下）にも当たるようにして、当たったらそこで止める
-                Transform ignoreRoot = reflectionCount == 0 ? IgnoreRoot : null;
-                if (!BeamPhysics.TryCast(position, direction, _radius, remaining, _hitMask, _triggerInteraction,
-                        ignoreRoot, out RaycastHit hit))
-                {
-                    _corners.Add(position + direction * remaining);
-                    return;
-                }
-
-                remaining -= hit.distance;
-                _corners.Add(hit.point);
-                if (reflectionCount > 0 && hit.collider.transform.IsChildOf(IgnoreRoot))
-                {
-                    return;
-                }
-
-                bool isReflected = CanReflect(hit, direction, reflectionCount, out Vector3 normal);
-                Deliver(source.WaveType, energy, hit, reflectionCount, isReflected);
-                if (!isReflected || remaining <= 0.0f)
-                {
-                    return;
-                }
-
-                // 当たったときの当たり判定の球の中心から、面の外へ少し離して続ける
-                position += direction * hit.distance + normal * SurfaceOffset;
-                direction = Vector3.Reflect(direction, normal).normalized;
-                ++reflectionCount;
             }
         }
 
@@ -680,17 +598,6 @@ namespace Aura.ObjectInfoDemo
             {
                 source.SourceKind = _sourceKind;
             }
-        }
-
-        /// @brief ビームの作り方を反映する。変えたら、今のビームの線と点を片付ける（次のフレームから新しい作り方で出す）
-        private void ApplyBeamShape()
-        {
-            if (_beamShape == _appliedBeamShape)
-            {
-                return;
-            }
-            _appliedBeamShape = _beamShape;
-            HideBeam();
         }
 
         private void HideBeam()
