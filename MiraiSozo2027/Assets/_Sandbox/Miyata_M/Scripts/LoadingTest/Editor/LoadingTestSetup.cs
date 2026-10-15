@@ -77,7 +77,7 @@ namespace LoadingTest.EditorTools
         {
             // Boot: ローダーとロードUIのみ。EventSystem もここに1つだけ置く
             var boot = NewScene();
-            CreateCamera(); // カメラは常駐する Boot にのみ置く(ゲームシーン側に置くと AudioListener が重複する)
+            CreateBootCamera();
             var canvas = CreateCanvas("LoadingCanvas", 100);
             var group = canvas.gameObject.AddComponent<CanvasGroup>();
             var bg = CreateImage(canvas.transform, "Background", new Color(0, 0, 0, 0.9f));
@@ -98,6 +98,7 @@ namespace LoadingTest.EditorTools
         private static void BuildBGameScene(string name, string label, string target, Color bgColor)
         {
             var scene = NewScene();
+            CreateCamera(); // カメラはゲームシーン側に置く(同時に読み込まれるのは1シーンのみなので重複しない)
             var canvas = CreateCanvas("Canvas");
             var bg = CreateImage(canvas.transform, "Background", bgColor);
             Stretch(bg.rectTransform);
@@ -176,6 +177,18 @@ namespace LoadingTest.EditorTools
             var cam = go.GetComponent<Camera>();
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = Color.black;
+        }
+
+        private static void CreateBootCamera()
+        {
+            // ゲームシーンのカメラが0台になる入れ替え中の間も、背景を黒で確実に描画するための最小カメラ。
+            // AudioListener はゲームシーン側と重複するため付けない。MainCamera タグも付けない
+            var go = new GameObject("BootCamera", typeof(Camera));
+            var cam = go.GetComponent<Camera>();
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = Color.black;
+            cam.cullingMask = 0; // 何も描画しない
+            cam.depth = -100f;   // ゲームシーンのカメラより常に後ろ
         }
 
         private static void CreateEventSystem()
