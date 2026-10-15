@@ -4,10 +4,11 @@ namespace Aura.ObjectInfoDemo
 {
     /// @brief ビームと照準の当たり判定をまとめたもの
     /// 今ある WavePhysics（Aura.Wave）はアセンブリの外から使えないので、同じ決まりの判定をここに持つ
+    /// 点と線のビームの点（BeamPoint）は、念力で掴むためだけにあるので、ビームと照準には当たらない（どのビームの点でも素通りする）
     internal static class BeamPhysics
     {
         private const int MaxCastHits = 32;
-        private static readonly RaycastHit[] CastHits = new RaycastHit[MaxCastHits];  ///< 判定の結果を受ける使い回しの配列
+        private static RaycastHit[] _castHits = new RaycastHit[MaxCastHits];  ///< 判定の結果を受ける使い回しの配列。埋まったら大きくしてやり直す
 
         /// @brief 球（radius が 0 なら線）を飛ばし、ignoreRoot の下を除いた一番近い当たりを返す
         /// @param origin 始点
@@ -28,16 +29,31 @@ namespace Aura.ObjectInfoDemo
                 return false;
             }
 
-            int count = radius > 0.0f
-                ? Physics.SphereCastNonAlloc(origin, radius, direction, CastHits, distance, mask, triggerInteraction)
-                : Physics.RaycastNonAlloc(origin, direction, CastHits, distance, mask, triggerInteraction);
+            int count;
+            while (true)
+            {
+                count = radius > 0.0f
+                    ? Physics.SphereCastNonAlloc(origin, radius, direction, _castHits, distance, mask, triggerInteraction)
+                    : Physics.RaycastNonAlloc(origin, direction, _castHits, distance, mask, triggerInteraction);
+                // 受け皿が埋まったときは、一番近い当たりが抜けているかもしれない（近い順には返らない）ので、大きくしてやり直す
+                // （ビームの点が並ぶ所を通ると、点だけで埋まることがある）
+                if (count < _castHits.Length)
+                {
+                    break;
+                }
+                _castHits = new RaycastHit[_castHits.Length * 2];
+            }
 
             bool hasHit = false;
             float nearestDistance = float.MaxValue;
             for (int i = 0; i < count; ++i)
             {
-                RaycastHit hit = CastHits[i];
+                RaycastHit hit = _castHits[i];
                 if (ignoreRoot != null && hit.collider.transform.IsChildOf(ignoreRoot))
+                {
+                    continue;
+                }
+                if (IsBeamPoint(hit.collider))
                 {
                     continue;
                 }
@@ -57,6 +73,13 @@ namespace Aura.ObjectInfoDemo
                 }
             }
             return hasHit;
+        }
+
+        /// @brief ビームの点（BeamPoint）のコライダーか。点の Rigidbody に BeamPoint が付いているかで見分ける
+        private static bool IsBeamPoint(Collider hitCollider)
+        {
+            Rigidbody attachedRigidbody = hitCollider.attachedRigidbody;
+            return attachedRigidbody != null && attachedRigidbody.TryGetComponent(out BeamPoint _);
         }
     }
 }

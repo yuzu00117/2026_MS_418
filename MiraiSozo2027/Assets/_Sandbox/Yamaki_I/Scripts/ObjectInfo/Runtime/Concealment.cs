@@ -1,3 +1,4 @@
+using Aura.Inspector;
 using UnityEngine;
 
 namespace Aura.ObjectInfo
@@ -7,17 +8,20 @@ namespace Aura.ObjectInfo
     [DisallowMultipleComponent]
     public sealed class Concealment : MonoBehaviour, IObjectInfo
     {
+        [InspectorLabel("隠れ方")]
         [Tooltip("隠れ方\n" +
-                 "Invisible: 見えない\n" +
-                 "Disguised: 別の見た目に化けている（Disguise Form の見た目で見えている）")]
+                 "見えない: 見えない\n" +
+                 "化けている: 別の見た目に化けている（「化けている見た目」の見た目で見えている）")]
         [SerializeField] private ConcealmentStyle _style;  ///< 隠れ方
 
-        [Tooltip("本当の姿。見つかったときに見せる見た目（子の GameObject）。Invisible でも Disguised でも使う\n" +
+        [InspectorLabel("本当の姿")]
+        [Tooltip("本当の姿。見つかったときに見せる見た目（子の GameObject）。「見えない」でも「化けている」でも使う\n" +
                  "空なら、見つかったときに何を見せるかは、エコーロケーションの機能の側が決める")]
         [SerializeField] private GameObject _trueForm;     ///< 見つかったときに見せる見た目
 
+        [InspectorLabel("化けている見た目")]
         [Tooltip("化けている見た目（子の GameObject）。見つかる前に見えている姿\n" +
-                 "Style が Disguised のときだけ使う（Inspector にも、そのときだけ出る）\n" +
+                 "「隠れ方」が「化けている」のときだけ使う（Inspector にも、そのときだけ出る）\n" +
                  "空なら、化けている見た目は無い扱い（見つかる前の見え方は、エコーロケーションの機能の側が決める）")]
         [SerializeField] private GameObject _disguiseForm; ///< 見つかる前に見えている、化けた見た目
 

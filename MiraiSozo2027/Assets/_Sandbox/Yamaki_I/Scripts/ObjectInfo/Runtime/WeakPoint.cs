@@ -1,3 +1,4 @@
+using Aura.Inspector;
 using Aura.Wave;
 using UnityEngine;
 
@@ -9,6 +10,7 @@ namespace Aura.ObjectInfo
     [DisallowMultipleComponent]
     public sealed class WeakPoint : MonoBehaviour, IObjectInfo
     {
+        [InspectorLabel("弱点の種類")]
         [Tooltip("弱点の種類（WeaknessType のアセット）。電磁波に弱い、など\n" +
                  "空なら、どの波も普通の効き目（倍率 1）で扱う")]
         [SerializeField] private WeaknessType _weaknessType;  ///< 弱点の種類

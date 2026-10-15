@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Aura.Inspector;
 using Aura.Wave;
 using UnityEngine;
 
@@ -13,12 +14,15 @@ namespace Aura.ObjectInfo
         /// @brief 普通の効き目（倍率）。これより大きい種類を「弱点」とみなす
         public const float NormalMultiplier = 1.0f;
 
+        [InspectorLabel("画面に出す名前")]
         [Tooltip("画面（HUD など）に出す名前。空なら、このアセットのファイル名を使う")]
         [SerializeField] private string _displayName;                       ///< 画面に出す名前。空ならアセットの名前
 
+        [InspectorLabel("波ごとの効き目")]
         [Tooltip("弱点の一覧。波の種類ごとの効き目（倍率）。同じ種類が 2 回あれば、上の行を使う")]
         [SerializeField] private WeaknessEntry[] _entries;                  ///< 波の種類ごとの効き目
 
+        [InspectorLabel("ほかの波の効き目（倍率）")]
         [Tooltip("一覧にない種類の波の効き目（倍率）。1 なら普通に効く")]
         [SerializeField, Min(0.0f)] private float _otherMultiplier = NormalMultiplier;  ///< 一覧にない種類の効き目
 

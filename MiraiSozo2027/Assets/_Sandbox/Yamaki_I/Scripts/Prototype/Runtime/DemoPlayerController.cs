@@ -1,3 +1,4 @@
+using Aura.Inspector;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -11,46 +12,58 @@ namespace Aura.Prototype
         private const float GroundedVerticalSpeed = -2.0f;  ///< 着地中に下へ押し付ける速さ（m/s）
 
         [Header("視点")]
+        [InspectorLabel("上下に向ける部分")]
         [Tooltip("上下に向きを変える部分（カメラと手の親）。上下の操作ではこれだけが傾き、左右の操作ではこの GameObject（Player）ごと回る\n" +
                  "上下は ±85 度まで。空だと上下を向けない")]
         [SerializeField] private Transform _pitchPivot;                      ///< 上下に向ける部分（カメラの親）
 
+        [InspectorLabel("マウス感度（度/ピクセル）")]
         [Tooltip("マウスを 1 ピクセル動かしたときに回る角度（度）。大きいほど速く振り向く")]
         [SerializeField, Min(0.0f)] private float _mouseSensitivity = 0.1f;  ///< マウスの 1 ドットあたりの回転（度）
 
+        [InspectorLabel("スティック感度（度/秒）")]
         [Tooltip("ゲームパッドの右スティックを倒しきったときに回る速さ（度/秒）。倒した量に比例する")]
         [SerializeField, Min(0.0f)] private float _stickSensitivity = 180.0f;  ///< スティックを倒しきったときの回転（度/秒）
 
         [Header("移動")]
+        [InspectorLabel("歩く速さ（m/s）")]
         [Tooltip("歩く速さ（m/s）。スティックは倒した量に比例する")]
         [SerializeField, Min(0.0f)] private float _moveSpeed = 5.0f;         ///< 歩く速さ（m/s）
 
-        [Tooltip("Sprint Action を押している間の速さ（m/s）")]
+        [InspectorLabel("走る速さ（m/s）")]
+        [Tooltip("「走る操作」を押している間の速さ（m/s）")]
         [SerializeField, Min(0.0f)] private float _sprintSpeed = 8.0f;       ///< 走る速さ（m/s）
 
-        [Tooltip("ジャンプで上がる高さ（m）。地面に着いているときだけ跳べる。Gravity を変えても、上がる高さはほぼこの値のまま（上がり下りの速さが変わる）。0 なら跳ばない")]
+        [InspectorLabel("ジャンプの高さ（m）")]
+        [Tooltip("ジャンプで上がる高さ（m）。地面に着いているときだけ跳べる。「重力の加速度（m/s²）」を変えても、上がる高さはほぼこの値のまま（上がり下りの速さが変わる）。0 なら跳ばない")]
         [SerializeField, Min(0.0f)] private float _jumpHeight = 1.2f;        ///< 跳ぶ高さ（m）
 
+        [InspectorLabel("重力の加速度（m/s²）")]
         [Tooltip("重力の加速度（m/s²）。必ず負の値にする（0 以上だとジャンプと落下が正しく動かない）\n" +
                  "現実の重力は約 -9.8。絶対値を大きくするほど、速く落ち、ジャンプが短く鋭くなる")]
         [SerializeField] private float _gravity = -20.0f;                    ///< 重力（m/s^2）
 
         [Header("入力")]
+        [InspectorLabel("移動する操作")]
         [Tooltip("移動。既定: W / A / S / D キー、ゲームパッドの左スティック")]
         [SerializeField] private InputAction _moveAction = CreateMoveAction();  ///< 移動
 
-        [Tooltip("マウスで視点を回す。既定: マウスの移動量。回る量は Mouse Sensitivity で決める\n" +
+        [InspectorLabel("マウスで見回す操作")]
+        [Tooltip("マウスで視点を回す。既定: マウスの移動量。回る量は「マウス感度（度/ピクセル）」で決める\n" +
                  "画面をクリックしてカーソルを固定している間だけ効く（Esc で解除）")]
         [SerializeField] private InputAction _mouseLookAction = new InputAction("MouseLook", InputActionType.Value, "<Mouse>/delta");  ///< マウスで視点を回す
 
-        [Tooltip("スティックで視点を回す。既定: ゲームパッドの右スティック。回る速さは Stick Sensitivity で決める\n" +
+        [InspectorLabel("スティックで見回す操作")]
+        [Tooltip("スティックで視点を回す。既定: ゲームパッドの右スティック。回る速さは「スティック感度（度/秒）」で決める\n" +
                  "画面をクリックしてカーソルを固定している間だけ効く（Esc で解除）")]
         [SerializeField] private InputAction _stickLookAction = new InputAction("StickLook", InputActionType.Value, "<Gamepad>/rightStick");  ///< スティックで視点を回す
 
+        [InspectorLabel("ジャンプする操作")]
         [Tooltip("ジャンプ。既定: Space キー、ゲームパッドの下のボタン（Xbox の A）")]
         [SerializeField] private InputAction _jumpAction = CreateButton("Jump", "<Keyboard>/space", "<Gamepad>/buttonSouth");  ///< ジャンプ
 
-        [Tooltip("押している間、Sprint Speed で走る。既定: 左 Shift キー、ゲームパッドの左スティックの押し込み")]
+        [InspectorLabel("走る操作")]
+        [Tooltip("押している間、「走る速さ（m/s）」で走る。既定: 左 Shift キー、ゲームパッドの左スティックの押し込み")]
         [SerializeField] private InputAction _sprintAction = CreateButton("Sprint", "<Keyboard>/leftShift", "<Gamepad>/leftStickPress");  ///< 走る
 
         private CharacterController _characterController;

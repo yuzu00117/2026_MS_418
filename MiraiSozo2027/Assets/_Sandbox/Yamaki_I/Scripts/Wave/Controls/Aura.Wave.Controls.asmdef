@@ -3,7 +3,8 @@
     "rootNamespace": "Aura.Wave.Controls",
     "references": [
         "Aura.Wave",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Aura.Inspector"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

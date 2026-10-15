@@ -1,4 +1,5 @@
 using System;
+using Aura.Inspector;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -11,35 +12,42 @@ namespace Aura.Wave
         private const float ReceivingGraceTime = 0.1f;  ///< 最後に受けてからこの時間（秒）は、受けている最中とみなす
 
         [Header("反応する波")]
+        [InspectorLabel("反応する波の種類")]
         [Tooltip("反応する波の種類（WaveType のアセット）。ここにない種類の波が当たっても反応しない（WaveReceiverFeedback を付けていれば赤く光る）")]
         [SerializeField] private WaveType[] _acceptedTypes;                ///< 反応する波の種類
 
-        [Tooltip("オンにすると、Accepted Types に関係なく、どの種類の波にも反応する")]
+        [InspectorLabel("どの波にも反応する")]
+        [Tooltip("オンにすると、「反応する波の種類」に関係なく、どの種類の波にも反応する")]
         [SerializeField] private bool _canAcceptAnyType;                   ///< true なら種類に関係なく反応する
 
         [Header("起動")]
-        [Tooltip("エネルギーが Required Energy まで溜まったときの動き\n" +
-                 "Latch: 起動したら、ずっと起動したまま（扉を開けるなど）\n" +
-                 "Toggle: 起動するたびに ON と OFF が入れ替わる。ビームは一度途切れるまで次を数えない（スイッチなど）\n" +
-                 "Sustain: 起動した後、エネルギーが 0 まで減ると止まる。当てている間だけ動くギミックに使う（リフトなど）")]
+        [InspectorLabel("起動のしかた")]
+        [Tooltip("エネルギーが「起動に要るエネルギー」まで溜まったときの動き\n" +
+                 "起動したまま: 起動したら、ずっと起動したまま（扉を開けるなど）\n" +
+                 "オンとオフを交互に: 起動するたびに ON と OFF が入れ替わる。ビームは一度途切れるまで次を数えない（スイッチなど）\n" +
+                 "減りきると止まる: 起動した後、エネルギーが 0 まで減ると止まる。当てている間だけ動くギミックに使う（リフトなど）")]
         [SerializeField] private WaveActivationMode _mode = WaveActivationMode.Latch;  ///< 起動のしかた
 
-        [Tooltip("起動に要るエネルギー。単発は 1 発ごとに WaveEmitter の Pulse Energy（既定 1）、ビームは当てている間 1 秒ごとに Beam Energy Per Second（既定 1）溜まる\n" +
-                 "例: 3 にすると、ビームなら 3 秒で起動する。単発なら Decay Per Second が 0 のとき 3 発。既定の 0.5 では撃つ間にも減るので、最速で撃っても 4 発要る")]
+        [InspectorLabel("起動に要るエネルギー")]
+        [Tooltip("起動に要るエネルギー。単発は 1 発ごとに WaveEmitter の「1 発で渡すエネルギー」（既定 1）、ビームは当てている間 1 秒ごとに「1 秒で渡すエネルギー」（既定 1）溜まる\n" +
+                 "例: 3 にすると、ビームなら 3 秒で起動する。単発なら「1 秒で減る量」が 0 のとき 3 発。既定の 0.5 では撃つ間にも減るので、最速で撃っても 4 発要る")]
         [SerializeField, Min(0.001f)] private float _requiredEnergy = 1.0f;  ///< 起動に要るエネルギー。単発 1 発は既定で 1
 
+        [InspectorLabel("1 秒で減る量")]
         [Tooltip("波を受けていない間に、1 秒あたりに減るエネルギー。0 なら減らず、溜めた分が残る\n" +
                  "単発を何発か当てて溜めるときは、撃つ間にも減る（間を空けすぎると溜まらない）\n" +
-                 "Sustain では、当てるのをやめてから止まるまでの時間がこれで決まる（Required Energy ÷ これ。例: 1.5 ÷ 0.5 で 3 秒）\n" +
-                 "Latch で起動した後は減らない")]
+                 "「減りきると止まる」では、当てるのをやめてから止まるまでの時間がこれで決まる（「起動に要るエネルギー」 ÷ これ。例: 1.5 ÷ 0.5 で 3 秒）\n" +
+                 "「起動したまま」で起動した後は減らない")]
         [SerializeField, Min(0.0f)] private float _decayPerSecond = 0.5f;  ///< 波を受けていない間に 1 秒あたりに減るエネルギー
 
         [Header("イベント")]
+        [InspectorLabel("起動したときの処理")]
         [Tooltip("起動したときに呼ぶ処理。扉を開ける、リフトを上げるなど、ギミックの処理をつなぐ")]
         [SerializeField] private UnityEvent _onActivated = new UnityEvent();    ///< 起動した後に呼ぶ
 
-        [Tooltip("止まったときに呼ぶ処理。Toggle で OFF になったときと、Sustain でエネルギーが 0 になったときに呼ばれる\n" +
-                 "Latch では、コードから戻したとき（ResetState、SetActive(false)）だけ呼ばれる")]
+        [InspectorLabel("止まったときの処理")]
+        [Tooltip("止まったときに呼ぶ処理。「オンとオフを交互に」で OFF になったときと、「減りきると止まる」でエネルギーが 0 になったときに呼ばれる\n" +
+                 "「起動したまま」では、コードから戻したとき（ResetState、SetActive(false)）だけ呼ばれる")]
         [SerializeField] private UnityEvent _onDeactivated = new UnityEvent();  ///< 止まった後に呼ぶ
 
         private float _energy;          ///< 溜まっているエネルギー
