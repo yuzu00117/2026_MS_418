@@ -1,0 +1,62 @@
+# ゲーム内オプション
+
+`Scenes/OptionTestScene.unity` を開いて Play すると、WASD とマウスで動かせる確認用ステージが起動します。
+ESC（ゲームパッドでは Start）でメニューを開きます。
+
+- **ゲームに戻る**：ゲームを再開します。
+- **タイトルに戻る／ステージセレクトに戻る**：将来の接続用です。案内のみ表示し、どのシーンにも移動しません。
+- **オプション**：下記の4タブを表示します。
+- **ゲームを閉じる**：確認後に終了します。Unity Editor では Play を終了します。
+
+## 設定
+
+| タブ | 内容 |
+| --- | --- |
+| システム | FPS：30 / 60 / 120 / 144 / 無制限、明度：露出 -2～+2 EV、視野角：40～100度 |
+| カメラ | 横・縦感度：0.02～1.00、左右・上下反転、画面揺れ軽減：0～100%、揺れの試演 |
+| 音量 | マスター・SE・BGM・ボイス音量：0～100%、各カテゴリーのテスト音 |
+| 操作 | Input System によるキーボード・マウスボタンの変更。移動のWASD／矢印キーも個別変更可 |
+
+各値は操作時に反映し、メニューを閉じる・タブを切り替える・アプリのフォーカスが外れるときなどに `PlayerPrefs` へ保存します。キー変更は確定時に保存します。ESCで変更をキャンセルし、10秒無入力でもキャンセルします。ESCの割り当てと新たな操作の重複は拒否します。既存の共有キー（例：調べる／エコースキャンのE）は初期配置として保持します。
+
+エイムアシストはゲーム側に実装がないため、操作タブに未対応と表示し、スイッチを無効にしています。
+「このタブを初期化」は確認後に、そのタブだけを初期化します。
+
+## 他のゲームシーンへ配置する
+
+`Assets/_Project/Prehubs/InGameOptions.prefab` をSceneのHierarchy直下に置きます。Canvas・設定保存・メニュー処理をまとめたPrefabです。複数シーンで配置されても、実行時には1つを保持します。
+`OptionGameManager` がなければ自動生成し、`OptionGameManager.Actions` をこのSandboxのゲーム操作・キー変更の共通入力として使用します。
+ポーズ中は Player アクションマップと時間進行を止め、終了時に元の時間倍率・入力の有効状態・カーソル状態を復元します。
+
+このSandboxでは、Aoki_Kの元スクリプトを変更せず、次のコピーを使用します。コピーのクラスはすべて `MiraiSozo.Options` 名前空間に分けています。
+
+| コピー元 | オプション専用のコピー |
+| --- | --- |
+| Aoki_K/Scripts/CameraBehavior.cs | Scripts/OptionCameraBehavior.cs |
+| Aoki_K/Scripts/GameManager.cs | Scripts/OptionGameManager.cs |
+| Aoki_K/Scripts/GameSettings.cs | Scripts/OptionGameSettings.cs |
+
+`OptionTestScene`のカメラとテストプレイヤーはコピー版を参照します。入力定義は既存の `InputSystem_Actions` を読み取り利用し、オプション専用のインスタンスを生成します。
+別のシーンへ導入する際も、カメラ・ゲーム管理・プレイヤー入力の参照をコピー版に揃えてください。元のGameManagerを使うシーンへPrefabを追加するだけでは、別々の入力・ポーズ処理が動作します。
+ESCによるポーズ処理の担当は1つに揃えます。既存のGameManagerが同じESCを処理する場合は、そのScene内でコンポーネントを無効にしてコピー版へ接続します。元のスクリプトの編集は不要です。
+
+共通Prefabではテスト用HUDは非表示です。EventSystemがあるSceneでは既存のものを使い、ないSceneでは自動生成します。Scene移動時はメニューを閉じ、移動先のEventSystemへ切り替えます。PrefabのGUIDを保持して移動したため、OptionTestSceneの参照も同じPrefabを使用します。
+
+- **カメラ**：`OptionCameraBehavior` を使用するカメラへ感度と反転を反映します。初回の感度・反転はそのInspector値を引き継ぎます。視野角と明度の対象は MainCamera または OptionCameraBehavior の付いた透視投影カメラです。明度はURPのグローバルVolumeで露出だけを上書きします。
+- **音源**：各 `AudioSource` に `OptionAudioChannel` を付け、Category を SE / BGM / Voice に設定します。元の音量にカテゴリー音量を掛け、マスター音量は `AudioListener.volume` で全体に掛けます。実行中に音源自体の音量を変える場合は `BaseVolume` を使ってください。
+- **画面揺れ**：カメラに `OptionCameraShake` を付け、演出側から `Play(strength, duration)` を呼びます。このコンポーネントの揺れに軽減率を適用します。別方式の揺れ演出を追加する場合も `GameOptions.Instance.Values.shakeReduction` を参照してください。
+- **フォント**：Windowsではインストール済みの日本語フォントを使います。日本語フォントのない配布先ではPrefabの Font に同梱する日本語フォントを指定してください。
+- **画面**：Prefab内のuGUI階層を編集できます。Canvasは1280×720基準の可変サイズです。
+
+FPS制御は `QualitySettings.vSyncCount = 0` と `Application.targetFrameRate` を使います。プラットフォーム側の制限がある場合は、設定値より低いFPSになることがあります。
+テストシーンのBuild Settingsへの追加は行っていません。ビルドする際は必要なシーンとして追加してください。
+
+## 検証と再生成
+
+Unityのメニュー `Tools > Hirakawa R > Options` に以下の項目があります。
+
+- `Setup OptionTestScene`：Prefabと確認用ステージを再生成します。生成対象のPrefabとステージオブジェクトを上書きします。
+- `Validate Option Assets`：Prefabの構成とSceneのMissing Scriptを検査します。
+- `Run PlayMode Validation`：実際のESC入力、タブ、設定反映、保存、キー変更・キャンセル・重複拒否、ポーズ復元を確認します。個人の保存設定はバックアップ・復元します。結果は `Logs/OptionValidation/PlayChecks.txt`、画面は同フォルダーのPNGに出力します。
+
+保存キー：`Hirakawa.Options.v1`、`Hirakawa.Options.Bindings.v1`。
