@@ -8,5 +8,26 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/_Sandbox/Miyata_M/Scenes/LoadingTest/LT_A_Start.unity
+    guid: 3db2227a6fafeb94a95ee9d9236866df
+  - enabled: 1
+    path: Assets/_Sandbox/Miyata_M/Scenes/LoadingTest/LT_A_Next.unity
+    guid: 6f48a96a322c7bf4bbef7cf0c854733c
+  - enabled: 1
+    path: Assets/_Sandbox/Miyata_M/Scenes/LoadingTest/LT_B_Boot.unity
+    guid: bdab84a24efa19545bf9c6a115ce5f3a
+  - enabled: 1
+    path: Assets/_Sandbox/Miyata_M/Scenes/LoadingTest/LT_B_Title.unity
+    guid: 034b52d73ab45734c95416f39c87b153
+  - enabled: 1
+    path: Assets/_Sandbox/Miyata_M/Scenes/LoadingTest/LT_B_Game.unity
+    guid: 696ffb7a69b87c747b39987c91d628b4
+  - enabled: 1
+    path: Assets/_Sandbox/Miyata_M/Scenes/LoadingTest/LT_C_Start.unity
+    guid: c388074678671894791691d901b8e2fb
+  - enabled: 1
+    path: Assets/_Sandbox/Miyata_M/Scenes/LoadingTest/LT_C_Next.unity
+    guid: 81df30fd58781174cb3f2f93579f7978
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
