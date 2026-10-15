@@ -155,7 +155,8 @@ namespace LoadingTest.EditorTools
             SessionState.SetBool(KeyRun, false);
             EditorApplication.update -= Tick;
             Debug.Log(Tag + (failed ? "RESULT FAILED" : "RESULT ALL OK"));
-            EditorApplication.Exit(failed ? 1 : 0);
+            // 対話モードで実行した場合に Editor を閉じて未保存の作業を失わせないよう、バッチ時のみ終了する
+            if (Application.isBatchMode) EditorApplication.Exit(failed ? 1 : 0);
         }
     }
 }
