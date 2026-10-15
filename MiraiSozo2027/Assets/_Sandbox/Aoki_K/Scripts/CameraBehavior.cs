@@ -31,11 +31,17 @@ public class CameraBehavior : MonoBehaviour
 
     private void OnEnable()
     {
+        PlayerController.OnPlayerSpawned += HandlePlayerSpawned;
     }
 
     private void OnDisable()
     {
+        PlayerController.OnPlayerSpawned -= HandlePlayerSpawned;
+    }
 
+    private void HandlePlayerSpawned(PlayerController player)
+    {
+        _target = player.transform;
     }
     
     void Start()

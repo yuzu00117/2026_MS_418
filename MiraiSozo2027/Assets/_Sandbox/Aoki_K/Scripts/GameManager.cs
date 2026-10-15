@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
@@ -8,6 +9,10 @@ public class GameManager : MonoBehaviour
     [Header("UI Reference")]
     [Tooltip("ポーズメニューのCanvasやパネル")]
     [SerializeField] private GameObject _menuUI;
+
+    [Header("Player")]
+    [Tooltip("プレイヤーのプレハブ")]
+    [SerializeField] private GameObject _playerPrefab;
 
     private bool _isPaused = false;
 
@@ -24,6 +29,7 @@ public class GameManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
             Actions = new InputSystem_Actions();
             Actions.Enable();
+            SceneManager.sceneLoaded += OnSceneLoaded;
         }
         else
         {
@@ -37,15 +43,39 @@ public class GameManager : MonoBehaviour
     {
         if(Instance == this)
         {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
             Actions?.Dispose();
             Actions = null;
         }
     }
 
+    private void TrySpawnPlayer()
+    {
+        //プレイヤースタートを検索
+        var starts = Object.FindObjectsByType<PlayerStart>(FindObjectsSortMode.None);
+        if(starts.Length == 0) return;
+
+        if(PlayerController.Instance != null) return;
+
+        if(_playerPrefab == null)
+        {
+            Debug.LogError("PlayerPrefabが設定されていません");
+            return;
+        }
+
+        PlayerStart firstStart = starts[0];
+        Instantiate(_playerPrefab, firstStart.transform.position, firstStart.transform.rotation);
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        TrySpawnPlayer();
+    }
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        
+        TrySpawnPlayer();
     }
 
     // Update is called once per frame
