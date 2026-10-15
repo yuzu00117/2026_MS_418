@@ -2,7 +2,8 @@
     "name": "Aura.ObjectInfoDemo.Editor",
     "rootNamespace": "Aura.ObjectInfoDemo.Editor",
     "references": [
-        "Aura.ObjectInfoDemo"
+        "Aura.ObjectInfoDemo",
+        "Aura.Inspector.Editor"
     ],
     "includePlatforms": [
         "Editor"

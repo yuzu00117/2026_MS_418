@@ -1,4 +1,5 @@
 using System;
+using Aura.Inspector;
 using Aura.Wave;
 using UnityEngine;
 
@@ -8,9 +9,11 @@ namespace Aura.ObjectInfo
     [Serializable]
     public struct WeaknessEntry
     {
+        [InspectorLabel("波の種類")]
         [Tooltip("弱点になる波の種類（WaveType のアセット）")]
         [SerializeField] private WaveType _waveType;            ///< 弱点になる波の種類
 
+        [InspectorLabel("効き目（倍率）")]
         [Tooltip("この種類の波の効き目（倍率）。2 なら 2 倍効く。1 なら普通、0 なら効かない")]
         [SerializeField, Min(0.0f)] private float _multiplier;  ///< 効き目（倍率）
 

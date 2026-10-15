@@ -2,7 +2,8 @@
     "name": "Aura.ObjectInfo",
     "rootNamespace": "Aura.ObjectInfo",
     "references": [
-        "Aura.Wave"
+        "Aura.Wave",
+        "Aura.Inspector"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

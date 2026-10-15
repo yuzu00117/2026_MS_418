@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Aura.Inspector;
 using Aura.ObjectInfo;
 using UnityEngine;
 using UnityEngine.Events;
@@ -20,21 +21,25 @@ namespace Aura.ObjectInfoDemo
         private static readonly Dictionary<WaveReaction, ReactionTrigger> TriggersByReaction =
             new Dictionary<WaveReaction, ReactionTrigger>();
 
+        [InspectorLabel("起動のしかた")]
         [Tooltip("溜まりきったときの動き\n" +
-                 "Latch: 起動したら、ずっと起動したまま（扉を開けるなど）\n" +
-                 "Toggle: 起動するたびに ON と OFF が入れ替わる。ビームが一度途切れるまで次を数えない（スイッチ、電気など）\n" +
-                 "Sustain: 起動した後、溜まった分が 0 まで減ると止まる。当てている間だけ動くギミックに使う（リフトなど）")]
+                 "起動したまま: 起動したら、ずっと起動したまま（扉を開けるなど）\n" +
+                 "オンとオフを交互に: 起動するたびに ON と OFF が入れ替わる。ビームが一度途切れるまで次を数えない（スイッチ、電気など）\n" +
+                 "減りきると止まる: 起動した後、溜まった分が 0 まで減ると止まる。当てている間だけ動くギミックに使う（リフトなど）")]
         [SerializeField] private ReactionActivationMode _mode = ReactionActivationMode.Latch;  ///< 起動のしかた
 
+        [InspectorLabel("1 秒で減る量")]
         [Tooltip("ビームを受けていない間に、1 秒あたりに減る量（溜まった秒数で数える）。0 なら減らず、溜めた分が残る\n" +
-                 "Sustain では、当てるのをやめてから止まるまでの時間がこれで決まる（Required Seconds ÷ これ）\n" +
-                 "Latch で起動した後は減らない")]
+                 "「減りきると止まる」では、当てるのをやめてから止まるまでの時間がこれで決まる（「動くまでの秒数（強さ 1）」 ÷ これ）\n" +
+                 "「起動したまま」で起動した後は減らない")]
         [SerializeField, Min(0.0f)] private float _decayPerSecond = 0.5f;  ///< ビームを受けていない間に 1 秒あたりに減る量
 
+        [InspectorLabel("起動したときの処理")]
         [Tooltip("起動したときに呼ぶ処理。扉を開ける、電気をつける、リフトを上げるなど")]
         [SerializeField] private UnityEvent _onActivated = new UnityEvent();    ///< 起動した後に呼ぶ
 
-        [Tooltip("止まったときに呼ぶ処理。Toggle で OFF になったときと、Sustain で溜まった分が 0 になったときに呼ばれる")]
+        [InspectorLabel("止まったときの処理")]
+        [Tooltip("止まったときに呼ぶ処理。「オンとオフを交互に」で OFF になったときと、「減りきると止まる」で溜まった分が 0 になったときに呼ばれる")]
         [SerializeField] private UnityEvent _onDeactivated = new UnityEvent();  ///< 止まった後に呼ぶ
 
         private WaveReaction _reaction;

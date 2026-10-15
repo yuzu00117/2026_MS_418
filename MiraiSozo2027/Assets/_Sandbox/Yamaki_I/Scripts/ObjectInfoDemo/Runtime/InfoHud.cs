@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using Aura.Inspector;
 using Aura.ObjectInfo;
 using Aura.Wave;
 using UnityEngine;
@@ -19,6 +20,7 @@ namespace Aura.ObjectInfoDemo
         private const float TextWhiteBlend = 0.4f;   ///< 文字の色を、ビームの色から白へ寄せる割合
         private const string Separator = " → ";
 
+        [InspectorLabel("ビームを出す部品")]
         [Tooltip("状態（今のビーム、最後のビームが当たった物）を出す InfoBeamEmitter。照準の先も、これの視点から調べる\n" +
                  "空なら照準だけを出す")]
         [SerializeField] private InfoBeamEmitter _emitter;  ///< 状態を出す InfoBeamEmitter

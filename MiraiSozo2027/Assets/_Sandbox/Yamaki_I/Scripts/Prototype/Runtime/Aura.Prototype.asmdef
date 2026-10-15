@@ -2,7 +2,8 @@
     "name": "Aura.Prototype",
     "rootNamespace": "Aura.Prototype",
     "references": [
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Aura.Inspector"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

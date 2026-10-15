@@ -1,7 +1,9 @@
 {
     "name": "Aura.Wave",
     "rootNamespace": "Aura.Wave",
-    "references": [],
+    "references": [
+        "Aura.Inspector"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

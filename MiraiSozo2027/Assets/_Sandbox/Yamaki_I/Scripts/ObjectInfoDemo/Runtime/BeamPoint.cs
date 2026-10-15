@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Aura.Inspector;
 using UnityEngine;
 
 namespace Aura.ObjectInfoDemo
@@ -15,6 +16,7 @@ namespace Aura.ObjectInfoDemo
         private const float GizmoRadius = 0.06f;        ///< Scene ビューに出す点の印の半径（m）
         private const float AnchorGizmoRadius = 0.12f;  ///< Scene ビューに出す支点の印の半径（m）
 
+        [InspectorLabel("掴まれた扱いにする")]
         [Tooltip("オンにすると、掴まれたものとして扱う（確かめる用。再生中にオンにして Scene ビューで動かすと、ビームが曲がる）\n" +
                  "Rigidbody を動かさない念力なら、掴んだときにコードからオンにし、離したときにオフにする\n" +
                  "Rigidbody を速度で動かす念力（Is Kinematic を外して重力を切るもの）なら、オンにしなくてよい")]

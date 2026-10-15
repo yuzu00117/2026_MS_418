@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Aura.Inspector;
 using Aura.ObjectInfo;
 using Aura.Wave;
 using UnityEngine;
@@ -26,114 +27,138 @@ namespace Aura.ObjectInfoDemo
         private const float BodyLineWhiteBlend = 0.5f;       ///< ビームの実体の線の色を、ビームの色から白へ寄せる割合
 
         [Header("ビームの種類")]
+        [InspectorLabel("出せるビーム")]
         [Tooltip("出せるビーム。BeamSourceInfo を付けた GameObject（子に置く）を並べる。種類・強さ・届く距離は、ここから読む\n" +
                  "切り替えると上から順に入れ替わり、最後の次は最初に戻る。空だと出せない")]
         [SerializeField] private BeamSourceInfo[] _sources;           ///< 出せるビーム（BeamSourceInfo）
 
-        [Tooltip("今のビームの番号（Sources の何番目か。0 から数える）。実行中に変えると、そのビームに切り替わる")]
+        [InspectorLabel("今のビームの番号")]
+        [Tooltip("今のビームの番号（「出せるビーム」の何番目か。0 から数える）。実行中に変えると、そのビームに切り替わる")]
         [SerializeField, Min(0)] private int _sourceIndex;            ///< 今のビームの番号
 
-        [Tooltip("出したもの。出し始めるときに、BeamSourceInfo の Source Kind に入れる（シートの B5）\n" +
+        [InspectorLabel("ビームを出したもの")]
+        [Tooltip("出したもの。出し始めるときに、BeamSourceInfo の SourceKind に入れる（シートの B5）\n" +
                  "受け手の反応には使わない（受け手は波の種類だけで反応する）")]
         [SerializeField] private BeamSourceKind _sourceKind = BeamSourceKind.Player;  ///< 出したもの
 
+        [InspectorLabel("始めから出し続ける")]
         [Tooltip("オンにすると、始めからビームを出し続ける（フィールドのギミック用）。入力の部品が無くても出る\n" +
                  "Set Trigger Held を UnityEvent から呼ぶと、出す・止めるを切り替えられる")]
         [SerializeField] private bool _isFiringOnStart;               ///< 始めからビームを出し続けるか
 
         [Header("狙い")]
+        [InspectorLabel("ビームが出る位置の候補")]
         [Tooltip("ビームが出る位置の候補（手の先に置いた空の GameObject など）。上から見て、アクティブな最初のものを使う\n" +
                  "一人称と三人称で手が変わるときは両方入れておく（ViewModeSwitcher が出し入れした方が使われる）\n" +
-                 "Aim Origins が空のときは、この正面（青い矢印の向き）に出す。空なら、この GameObject の位置から出る")]
+                 "「狙いを決める視点の候補」が空のときは、この正面（青い矢印の向き）に出す。空なら、この GameObject の位置から出る")]
         [SerializeField] private Transform[] _muzzles;                ///< ビームが出る位置の候補
 
+        [InspectorLabel("狙いを決める視点の候補")]
         [Tooltip("狙いを決める視点の候補（ふつうはカメラ）。アクティブな最初のものの正面で最初に当たる位置へ向けて出すので、画面の中心（照準）に飛ぶ\n" +
-                 "空なら、Muzzle の正面に出す（ギミックのビームはこちら）")]
+                 "空なら、「ビームが出る位置の候補」の正面に出す（ギミックのビームはこちら）")]
         [SerializeField] private Transform[] _aimOrigins;             ///< 狙いを決める視点の候補
 
+        [InspectorLabel("当たらない自分の体")]
         [Tooltip("この GameObject とその子のコライダーには、ビームが当たらない（自分の体に当たらないようにする）\n" +
                  "跳ね返って戻ってきたビームは、ここの下のコライダーに当たると止まる\n" +
                  "空なら、この GameObject を使う")]
         [SerializeField] private Transform _ignoreRoot;               ///< この下のコライダーに当たらない。空なら自分
 
+        [InspectorLabel("当たるレイヤー")]
         [Tooltip("ビームが当たるレイヤー。チェックを外したレイヤーの物は、ビームが素通りする")]
         [SerializeField] private LayerMask _hitMask = ~0;             ///< ビームが当たるレイヤー
 
+        [InspectorLabel("トリガーに当たるか")]
         [Tooltip("Is Trigger をオンにしたコライダーに、ビームが当たるか")]
         [SerializeField] private QueryTriggerInteraction _triggerInteraction = QueryTriggerInteraction.Ignore;  ///< トリガーに当たるか
 
         [Header("ビーム")]
+        [InspectorLabel("ビームの判定の半径（m）")]
         [Tooltip("当たり判定の太さ（球の半径、m）。大きいほど、狙いが少しずれても当たる。0 なら太さのない線で判定する")]
         [SerializeField, Min(0.0f)] private float _radius = 0.1f;     ///< 当たり判定の半径（m）
 
+        [InspectorLabel("跳ね返る回数の上限")]
         [Tooltip("1 本のビームが跳ね返る回数の上限（回。1〜16）。この回数だけ跳ね返った後は、次に当たった物で止まる")]
         [SerializeField, Range(1, MaxReflectionLimit)] private int _maxReflections = 8;  ///< 跳ね返る回数の上限
 
-        [Tooltip("ビームの線のマテリアル。空なら既定のマテリアルを使い、WaveType の Color で色を付ける")]
+        [InspectorLabel("線のマテリアル")]
+        [Tooltip("ビームの線のマテリアル。空なら既定のマテリアルを使い、WaveType の「波の色」で色を付ける")]
         [SerializeField] private Material _lineMaterial;              ///< ビームの線のマテリアル。空なら既定のもの
 
         [Header("ビームの形")]
+        [InspectorLabel("ビームの形")]
         [Tooltip("ビームの作り方。実行中に変えてもよい（変えると、曲げていた形は消える）\n" +
-                 "Straight: 今までの真っすぐなビーム。点は作らない（点と線を入れる前と同じ動き。比べる用）\n" +
-                 "Point Chain: 一定の間隔で並べた見えない点（BeamPoint）と、点どうしをつなぐ直線でビームを作る。当たり判定はこの直線で行い、見た目の波はこの線に沿って流れる\n" +
-                 "　点は念力で掴める（ふつうの Object と同じく、コライダーと Rigidbody を持つ。念力の側の印は Point Prefab に付ける）。掴んで動かすと、Bend Mode のとおりに曲がる\n" +
-                 "　曲げられるのは、今のビームの BeamSourceInfo の Is Bendable がオンのときだけ（オフでも点は並ぶが、掴めない）")]
+                 "真っすぐ: 今までの真っすぐなビーム。点は作らない（点と線を入れる前と同じ動き。比べる用）\n" +
+                 "点と線: 一定の間隔で並べた見えない点（BeamPoint）と、点どうしをつなぐ直線でビームを作る。当たり判定はこの直線で行い、見た目の波はこの線に沿って流れる\n" +
+                 "　点は念力で掴める（ふつうの Object と同じく、コライダーと Rigidbody を持つ。念力の側の印は「点のプレハブ」に付ける）。掴んで動かすと、「支点での曲げ方」のとおりに曲がる\n" +
+                 "　曲げられるのは、今のビームの BeamSourceInfo の「念力で曲げられる」がオンのときだけ（オフでも点は並ぶが、掴めない）")]
         [SerializeField] private BeamShape _beamShape = BeamShape.Straight;  ///< ビームの作り方
 
-        [Header("点と線（Beam Shape が Point Chain のとき）")]
+        [Header("点と線（「ビームの形」が「点と線」のとき）")]
+        [InspectorLabel("点の間隔（m）")]
         [Tooltip("点どうしの間隔（m。0.05 以上）。狭いほど、曲げたときに直線の集まりがなめらかな曲線に見えるが、点の数と当たり判定の回数が増える\n" +
                  "曲げた所では、曲線に沿ってこの間隔で並べる。跳ね返った位置、支点（掴んだ点）、終わりの位置は、間隔に関係なく途中に入る")]
         [SerializeField, Min(MinPointSpacing)] private float _pointSpacing = 0.5f;  ///< 点どうしの間隔（m）
 
+        [InspectorLabel("支点での曲げ方")]
         [Tooltip("掴んだ点（支点）で、ビームをどう曲げるか。実行中に変えてもよい\n" +
-                 "Redirect: 支点の手前 Bend Range から円の一部のように曲がって支点を通り、その先は曲がった向きのまま真っすぐ進む（当たる先が変わる）\n" +
+                 "向きを変える: 支点の手前「曲がる範囲（m）」から円の一部のように曲がって支点を通り、その先は曲がった向きのまま真っすぐ進む（当たる先が変わる）\n" +
                  "　離した支点の曲がりは「進んできた向きから見て、どちらへ何度曲がるか」として残る。手前の支点を動かしたり、手前の支点が真っすぐに戻ったりしても、" +
                  "後ろの曲がりはその向きから見て同じだけ曲がる（鎖のように一緒に動く）\n" +
                  "　届く距離は、曲げた後の道のりで数える\n" +
-                 "Bump: 支点の前後 Bend Range だけが山のように曲がり、その外は元の線に戻る（途中の物を避ける。支点が終わりの近くなら、当たる先も変わる）\n" +
+                 "山のように曲げる: 支点の前後「曲がる範囲（m）」だけが山のように曲がり、その外は元の線に戻る（途中の物を避ける。支点が終わりの近くなら、当たる先も変わる）\n" +
                  "　届く距離は、曲げる前の元の線の長さで数える")]
         [SerializeField] private BendMode _bendMode = BendMode.Redirect;  ///< 支点での曲げ方
 
+        [InspectorLabel("曲がる範囲（m）")]
         [Tooltip("曲がる範囲（m。0.1 以上）\n" +
-                 "Redirect: 支点の手前この長さから曲がり始める。短いほど急に、長いほどゆるやかに曲がる（支点を横へ動かしたとき、短いと大きく向きが変わる）\n" +
-                 "Bump: 支点の手前この長さから曲がり始め、支点の先この長さで元の線に戻る\n" +
-                 "Bump では、支点どうしはこの半分より近づけられない（近すぎるときは片方だけを使う）")]
+                 "向きを変える: 支点の手前この長さから曲がり始める。短いほど急に、長いほどゆるやかに曲がる（支点を横へ動かしたとき、短いと大きく向きが変わる）\n" +
+                 "山のように曲げる: 支点の手前この長さから曲がり始め、支点の先この長さで元の線に戻る\n" +
+                 "「山のように曲げる」では、支点どうしはこの半分より近づけられない（近すぎるときは片方だけを使う）")]
         [SerializeField, Min(MinBendRange)] private float _bendRange = 3.0f;  ///< 曲がる範囲（m）
 
+        [InspectorLabel("離した後の曲がり")]
         [Tooltip("掴んだ点を離した後の、ビームの曲がりの扱い。実行中に変えてもよい\n" +
-                 "Keep: 離した位置に点が残り、ビームを止めるまで曲がったまま\n" +
-                 "Hold Then Return: 離した後 Bend Hold Seconds の間は曲がったままにし、その後 Bend Return Seconds をかけて真っすぐに戻る\n" +
+                 "曲がったまま: 離した位置に点が残り、ビームを止めるまで曲がったまま\n" +
+                 "しばらくして戻る: 離した後「曲がったままの時間（秒）」の間は曲がったままにし、その後「戻るのにかける時間（秒）」をかけて真っすぐに戻る\n" +
                  "　どこかの点を掴んでいる間は、どの支点も時間を数えない（離すと、すべて同時に続きから数える）。なので、支点は離した順に戻る\n" +
-                 "Return Immediately: 離した瞬間に真っすぐに戻る\n" +
+                 "すぐ戻る: 離した瞬間に真っすぐに戻る\n" +
                  "どれでも、ビームを止めると曲がりは消える（掴まれている点は残り、次に出したビームはその点を通る）")]
         [SerializeField] private BendReleaseMode _bendReleaseMode = BendReleaseMode.Keep;  ///< 離した後の曲がりの扱い
 
-        [Tooltip("離した後、曲がったままにする時間（秒）。Bend Release Mode が Hold Then Return のときだけ使う")]
+        [InspectorLabel("曲がったままの時間（秒）")]
+        [Tooltip("離した後、曲がったままにする時間（秒）。「離した後の曲がり」が「しばらくして戻る」のときだけ使う")]
         [SerializeField, Min(0.0f)] private float _bendHoldSeconds = 2.0f;  ///< 離した後、曲がったままにする時間（秒）
 
-        [Tooltip("曲がったままの時間の後、真っすぐに戻るまでの時間（秒）。0 なら一度に戻る。Bend Release Mode が Hold Then Return のときだけ使う")]
+        [InspectorLabel("戻るのにかける時間（秒）")]
+        [Tooltip("曲がったままの時間の後、真っすぐに戻るまでの時間（秒）。0 なら一度に戻る。「離した後の曲がり」が「しばらくして戻る」のときだけ使う")]
         [SerializeField, Min(0.0f)] private float _bendReturnSeconds = 1.0f;  ///< 真っすぐに戻るまでの時間（秒）
 
+        [InspectorLabel("曲げる間は出す向きを固定")]
         [Tooltip("オンにすると、区間 0（出る位置から最初に跳ね返るまで）の点で曲げている間、ビームを出す向きを、掴んだときの向きのまま止める\n" +
-                 "曲げている間とは、掴んでいる間と、離した後も曲がりが残っている間（Keep ならビームを止めるまで）。真っすぐに戻っている間は、今の狙いへ少しずつ戻す\n" +
+                 "曲げている間とは、掴んでいる間と、離した後も曲がりが残っている間（「曲がったまま」ならビームを止めるまで）。真っすぐに戻っている間は、今の狙いへ少しずつ戻す\n" +
                  "カメラについて掴んだ物を動かす念力（Phononkinesis）で自分のビームを掴むと、カメラと一緒に元の線も回るので曲がらない。止めると、カメラを回した分だけ曲がる\n" +
-                 "Aim Origins が空のギミックのビームは、もともと向きが動かないので、どちらでも同じ")]
+                 "「狙いを決める視点の候補」が空のギミックのビームは、もともと向きが動かないので、どちらでも同じ")]
         [SerializeField] private bool _isAimLockedWhileHeld = true;  ///< 区間 0 の点で曲げている間、ビームを出す向きを止めるか
 
+        [InspectorLabel("点を掴める半径（m）")]
         [Tooltip("点を掴める大きさ（球のコライダーの半径、m）。大きいほど、狙いが少しずれても掴める\n" +
-                 "Point Prefab にコライダーがあるときは、そのコライダーの大きさになり、これは使わない（コライダーが無ければ、この半径の球のトリガーを足す）")]
+                 "「点のプレハブ」にコライダーがあるときは、そのコライダーの大きさになり、これは使わない（コライダーが無ければ、この半径の球のトリガーを足す）")]
         [SerializeField, Min(0.01f)] private float _pointRadius = 0.3f;  ///< 点を掴める大きさ（球のコライダーの半径、m）
 
-        [Tooltip("Point Prefab が空のときに作る点のレイヤー（プレハブを使うときは、プレハブのレイヤーになる）\n" +
+        [InspectorLabel("プレハブなしの点のレイヤー")]
+        [Tooltip("「点のプレハブ」が空のときに作る点のレイヤー（プレハブを使うときは、プレハブのレイヤーになる）\n" +
                  "このプロジェクトは、トリガーのコライダーにもレイが当たる設定。念力の側が点を掴まない間は、そのレイを点がさえぎるので、" +
                  "念力の側の当たるレイヤーから、このレイヤーを外しておく（プレハブなしの点は PhononkinesisTarget を持たないので、Phononkinesis では掴めない）")]
         [SerializeField] private int _pointLayer;  ///< プレハブなしで作る点のレイヤー
 
+        [InspectorLabel("点のプレハブ")]
         [Tooltip("点を作るときのプレハブ（任意）。念力の側で必要な部品（Phononkinesis の PhononkinesisTarget など）を付けておく\n" +
-                 "足りない部品は作るときに足す: Rigidbody（Is Kinematic オン、Use Gravity オフにする）、コライダー（無ければ Point Radius の球のトリガー）、BeamPoint\n" +
+                 "足りない部品は作るときに足す: Rigidbody（Is Kinematic オン、Use Gravity オフにする）、コライダー（無ければ「点を掴める半径（m）」の球のトリガー）、BeamPoint\n" +
                  "空なら、球のトリガーのコライダー、Rigidbody、BeamPoint だけを持つ見えない Object を作る（念力の側の印が無いので、Phononkinesis では掴めない）。実行中に変えると、新しく作る点から効く")]
         [SerializeField] private GameObject _pointPrefab;  ///< 点を作るときのプレハブ。空なら見えない球を作る
 
+        [InspectorLabel("点をつなぐ線を見せる")]
         [Tooltip("オンにすると、ビームの実体の線（点どうしをつなぐ直線）を、見た目の波とは別に細い線で見せる（確かめる用）\n" +
                  "点そのものは、Scene ビューに印（水色: 掴める点、灰: 掴めない点、橙: 支点、赤: 掴まれている支点）で出る")]
         [SerializeField] private bool _isBodyLineVisible;  ///< ビームの実体の線を見せるか（確かめる用）

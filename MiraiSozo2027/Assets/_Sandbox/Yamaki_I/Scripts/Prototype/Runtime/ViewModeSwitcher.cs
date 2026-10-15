@@ -1,3 +1,4 @@
+using Aura.Inspector;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -7,20 +8,24 @@ namespace Aura.Prototype
     /// 視点ごとの GameObject を出し入れする。ビームの出る手や狙いは、ビームの側（InfoBeamEmitter）が、出ている方を選ぶ
     public sealed class ViewModeSwitcher : MonoBehaviour
     {
-        [Tooltip("今の視点。実行中に変えてもよい（Toggle Action のキーでも切り替わる）\n" +
-                 "First Person: 一人称。「一人称」の欄の物を出し、「三人称」の欄の物を隠す\n" +
-                 "Third Person: 三人称。「三人称」の欄の物を出し、「一人称」の欄の物を隠す")]
+        [InspectorLabel("今の視点")]
+        [Tooltip("今の視点。実行中に変えてもよい（「視点を入れ替える操作」のキーでも切り替わる）\n" +
+                 "一人称: 一人称。「一人称」の欄の物を出し、「三人称」の欄の物を隠す\n" +
+                 "三人称: 三人称。「三人称」の欄の物を出し、「一人称」の欄の物を隠す")]
         [SerializeField] private ViewMode _viewMode = ViewMode.FirstPerson;  ///< 今の視点。実行中に変えてもよい
 
         [Header("一人称")]
+        [InspectorLabel("一人称で出す物")]
         [Tooltip("一人称のときだけ出す GameObject（一人称のカメラ、手など）。三人称のときは非アクティブになる")]
         [SerializeField] private GameObject[] _firstPersonObjects;  ///< 一人称のときだけ出す物（カメラ、手）
 
         [Header("三人称")]
+        [InspectorLabel("三人称で出す物")]
         [Tooltip("三人称のときだけ出す GameObject（三人称のカメラ、体、手など）。一人称のときは非アクティブになる")]
         [SerializeField] private GameObject[] _thirdPersonObjects;  ///< 三人称のときだけ出す物（カメラ、体、手）
 
         [Header("入力")]
+        [InspectorLabel("視点を入れ替える操作")]
         [Tooltip("一人称と三人称を入れ替えるボタン。既定: V キー")]
         [SerializeField] private InputAction _toggleAction = new InputAction("ToggleView", InputActionType.Button, "<Keyboard>/v");  ///< 視点を入れ替える
 

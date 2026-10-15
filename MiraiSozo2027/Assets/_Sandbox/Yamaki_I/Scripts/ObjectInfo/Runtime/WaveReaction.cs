@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Aura.Inspector;
 using Aura.Wave;
 using UnityEngine;
 
@@ -11,13 +12,16 @@ namespace Aura.ObjectInfo
     [DisallowMultipleComponent]
     public sealed class WaveReaction : MonoBehaviour, IObjectInfo
     {
+        [InspectorLabel("反応する波の種類")]
         [Tooltip("反応する波の種類（WaveType のアセット）。電磁波だけ、超音波だけ、両方、など。ここにない種類の波には反応しない\n" +
-                 "空にすると、どの波にも反応しない。Can React To Any Type がオンなら使わない")]
+                 "空にすると、どの波にも反応しない。「どの波にも反応する」がオンなら使わない")]
         [SerializeField] private WaveType[] _reactiveTypes;                 ///< 反応する波の種類
 
-        [Tooltip("オンにすると、Reactive Types に関係なく、どの種類の波にも反応する")]
+        [InspectorLabel("どの波にも反応する")]
+        [Tooltip("オンにすると、「反応する波の種類」に関係なく、どの種類の波にも反応する")]
         [SerializeField] private bool _canReactToAnyType;                   ///< true なら種類に関係なく反応する
 
+        [InspectorLabel("動くまでの秒数（強さ 1）")]
         [Tooltip("動くまでに溜める量。強さ 1 のビームを当て続けたときの秒数で数える。例: 3 なら、強さ 1 のビームを 3 秒当てると動く\n" +
                  "強いビームほど早く動く（強さ 2 なら半分の時間）。0 なら、当たった瞬間に動く")]
         [SerializeField, Min(0.0f)] private float _requiredSeconds = 1.0f;  ///< 動くまでに溜める量（強さ 1 のビームで当てる秒数）

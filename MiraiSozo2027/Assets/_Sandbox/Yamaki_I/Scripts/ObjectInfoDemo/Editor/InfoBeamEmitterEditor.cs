@@ -1,4 +1,5 @@
 using System;
+using Aura.Inspector.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -73,7 +74,7 @@ namespace Aura.ObjectInfoDemo.Editor
         private static void DrawLayerField(SerializedProperty property)
         {
             // BeginProperty で囲み、プレハブの上書きの印と、右クリックの Revert などを、ふつうの欄と同じく使えるようにする
-            var label = new GUIContent(property.displayName, property.tooltip);
+            GUIContent label = InspectorLabelUtility.GetLabel(property);
             Rect rect = EditorGUILayout.GetControlRect();
             label = EditorGUI.BeginProperty(rect, label, property);
             EditorGUI.BeginChangeCheck();

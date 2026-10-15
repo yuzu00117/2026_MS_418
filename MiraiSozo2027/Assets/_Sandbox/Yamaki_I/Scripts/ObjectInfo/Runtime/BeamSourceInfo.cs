@@ -1,3 +1,4 @@
+using Aura.Inspector;
 using Aura.Wave;
 using UnityEngine;
 
@@ -9,17 +10,21 @@ namespace Aura.ObjectInfo
     [DisallowMultipleComponent]
     public sealed class BeamSourceInfo : MonoBehaviour, IObjectInfo
     {
+        [InspectorLabel("波の種類")]
         [Tooltip("出すビームの波の種類（WaveType のアセット）。超音波、電磁波など。種類はアセットを作れば増やせる\n" +
                  "空なら、ビームを出す機能の側が扱いを決める")]
         [SerializeField] private WaveType _waveType;                        ///< 波の種類
 
+        [InspectorLabel("強さ（1 秒あたり）")]
         [Tooltip("強さ。当てている間、1 秒あたりに与えるエネルギー。0 なら、当ててもエネルギーを与えない")]
         [SerializeField, Min(0.0f)] private float _energyPerSecond = 1.0f;  ///< 1 秒あたりに与えるエネルギー
 
-        [Tooltip("届く距離（m）。ビームの通り道に沿って数え、跳ね返った後の道のりも含む（今の WaveEmitter の Beam Range と同じ数え方）\n" +
+        [InspectorLabel("届く距離（m）")]
+        [Tooltip("届く距離（m）。ビームの通り道に沿って数え、跳ね返った後の道のりも含む（今の WaveEmitter の「ビームの届く距離（m）」と同じ数え方）\n" +
                  "0 なら届かない")]
         [SerializeField, Min(0.0f)] private float _range = 25.0f;           ///< 届く距離（m）。跳ね返った後の道のりも含む
 
+        [InspectorLabel("念力で曲げられる")]
         [Tooltip("オンにすると、念力で曲げられる（敵やギミックのビームなど）")]
         [SerializeField] private bool _isBendable = true;                   ///< 念力で曲げられるか
 
