@@ -28,8 +28,28 @@ public class PlayerController : MonoBehaviour
     private Vector3 _moveDirection = Vector3.zero;
     private bool _jumpRequested = false;
 
+    public static PlayerController Instance { get; private set;}
+
+    //プレイヤーがスポーンしたことを通知するイベント
+    public static event System.Action<PlayerController> OnPlayerSpawned;
+
     private void Awake()
     {
+        if(Instance != null && Instance != this)
+        {
+            Debug.LogWarning("プレイヤーが重複生成されたため破棄しました：" + gameObject.name);
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+
+        //コンポーネントの取得
+        _rb = GetComponent<Rigidbody>();
+        _animator = GetComponent<Animator>();
+        _waveEmitter = GetComponent<WaveEmitter>();
+        _echoController = GetComponent<EchoController>();
+        _phononkinesis = GetComponent<Phononkinesis>();
 
     }
 
@@ -46,29 +66,27 @@ public class PlayerController : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        _rb = GetComponent<Rigidbody>();
-        _animator = GetComponent<Animator>();
 
-        if(_cameraTransform == null)
-        {// カメラが未アサインの場合は自動取得
-            _cameraTransform = Camera.main.transform;
-        }
 
-        // Rigidbodyの回転を禁止
-        _rb.constraints = RigidbodyConstraints.FreezeRotation;
-
-        // 物理移動を滑らかにするための補間を有効化
-        _rb.interpolation = RigidbodyInterpolation.Interpolate;
-
-        // WaveEmitterとEchoControllerを取得
-        _waveEmitter = GetComponent<WaveEmitter>();
-        _echoController = GetComponent<EchoController>();
-        _phononkinesis = GetComponent<Phononkinesis>();
-
-        if(_waveEmitter != null && _cameraTransform != null)
+        Camera mainCam = Camera.main;
+        if(mainCam != null)
         {
-            //インスペクターで未設定ならカメラに照準を割り当て
+            _cameraTransform = mainCam.transform;
+
+            InjectCameraReference(mainCam);
         }
+
+        // プレイヤーがスポーンしたことを通知
+        OnPlayerSpawned?.Invoke(this);
+
+        if(_rb != null)
+        {
+            // Rigidbodyの回転を禁止
+            _rb.constraints = RigidbodyConstraints.FreezeRotation;
+            // 物理移動を滑らかにするための補間を有効化
+            _rb.interpolation = RigidbodyInterpolation.Interpolate;
+        }
+
     }
 
     // Update is called once per frame
@@ -188,6 +206,27 @@ public class PlayerController : MonoBehaviour
             _rb.linearVelocity = new Vector3(_rb.linearVelocity.x, 0f, _rb.linearVelocity.z);
             _rb.AddForce(Vector3.up * _jumpForce, ForceMode.Impulse);
             _jumpRequested = false;
+        }
+    }
+
+    private void InjectCameraReference(Camera cam)
+    {
+        // WaveEmitter へ照準カメラを渡す
+        if (_waveEmitter != null)
+        {
+            // ※WaveEmitter の Inspector フィールド _aimOrigin にカメラを注入
+            _waveEmitter.AimOrigin = cam.transform;
+        }
+        // EchoController へ描画カメラを渡す
+        if (_echoController != null)
+        {
+            _echoController.TargetCamera = cam;
+            _echoController.DirectionTransform = cam.transform; // 正面基準もカメラに
+        }
+        // Phononkinesis へカメラを渡す
+        if (_phononkinesis != null)
+        {
+            _phononkinesis.CameraTransform = cam.transform;
         }
     }
 }
