@@ -72,11 +72,12 @@ namespace Aura.ObjectInfoDemo
         {
             _text.Clear();
             AppendSource(_emitter.CurrentSource);
+            AppendBeamShape();
             AppendLastHits();
             _text.Append('\n');
             AppendAimedObject();
             _text.Append('\n')
-                .Append("左クリック: ビーム   Q/E: ビームの切り替え   V: 一人称/三人称\n")
+                .Append("左クリック: ビーム   Q/E: ビームの切り替え   B: ビームの形   V: 一人称/三人称\n")
                 .Append("WASD: 移動   Space: ジャンプ   Shift: 走る   Esc: カーソルを解放");
             _displayText = _text.ToString();
         }
@@ -95,6 +96,18 @@ namespace Aura.ObjectInfoDemo
                 .Append("届く距離 ").Append(source.Range.ToString("0.#")).Append("m   ")
                 .Append(source.IsBendable ? "念力で曲げられる" : "念力で曲げられない")
                 .Append('\n');
+        }
+
+        private void AppendBeamShape()
+        {
+            _text.Append("ビームの形: ");
+            if (_emitter.BeamShape != BeamShape.PointChain)
+            {
+                _text.Append("真っすぐ\n");
+                return;
+            }
+            _text.Append("点と線（点 ").Append(_emitter.Points.Count).Append(" 個、間隔 ")
+                .Append(_emitter.PointSpacing.ToString("0.##")).Append("m、支点 ").Append(_emitter.AnchorCount).Append(" 個）\n");
         }
 
         private void AppendLastHits()
@@ -161,7 +174,6 @@ namespace Aura.ObjectInfoDemo
             }
             _text.Append('\n');
             AppendSubstance(part);
-            AppendTelekinesis(part);
             AppendReaction(part);
             AppendWeakPoint(part);
             AppendConcealment(part);
@@ -179,25 +191,6 @@ namespace Aura.ObjectInfoDemo
             _text.Append(substanceType.DisplayName)
                 .Append(substanceType.IsWaveReflective ? "（波を跳ね返す・" : "（波を止める・")
                 .Append(substanceType.IsEchoBlocking ? "エコーをさえぎる）\n" : "エコーを通す）\n");
-        }
-
-        private void AppendTelekinesis(Component part)
-        {
-            _text.Append("  念力: ");
-            if (!ObjectInfoLookup.TryGet(part, out TelekinesisTarget target))
-            {
-                _text.Append("動かせない\n");
-                return;
-            }
-            WeightType weight = target.WeightType;
-            if (weight == null)
-            {
-                _text.Append("動かせる（重さは未設定）\n");
-                return;
-            }
-            _text.Append("動かせる（").Append(weight.DisplayName).Append(' ')
-                .Append(weight.Mass.ToString("0.##")).Append("kg、動かしやすさ ")
-                .Append(weight.Mobility.ToString("0.##")).Append("）\n");
         }
 
         private void AppendReaction(Component part)

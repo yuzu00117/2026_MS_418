@@ -5177,7 +5177,6 @@ GameObject:
   - component: {fileID: 1064921109}
   - component: {fileID: 1064921108}
   - component: {fileID: 1064921107}
-  - component: {fileID: 1064921106}
   m_Layer: 0
   m_Name: LightCrate_1
   m_TagString: Untagged
@@ -5200,19 +5199,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 485656540}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1064921106
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1064921104}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3528731a10fb498299f49311c05104a9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.TelekinesisTarget
-  _weightType: {fileID: 11400000, guid: 671f292ba0ae4c94abd3732886863679, type: 2}
 --- !u!23 &1064921107
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -6169,7 +6155,6 @@ GameObject:
   - component: {fileID: 1189922173}
   - component: {fileID: 1189922172}
   - component: {fileID: 1189922171}
-  - component: {fileID: 1189922170}
   m_Layer: 0
   m_Name: LightCrate_3
   m_TagString: Untagged
@@ -6192,19 +6177,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 485656540}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1189922170
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1189922168}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3528731a10fb498299f49311c05104a9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.TelekinesisTarget
-  _weightType: {fileID: 11400000, guid: 671f292ba0ae4c94abd3732886863679, type: 2}
 --- !u!23 &1189922171
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -6765,6 +6737,18 @@ MonoBehaviour:
   _radius: 0.1
   _maxReflections: 8
   _lineMaterial: {fileID: 0}
+  _beamShape: 1
+  _pointSpacing: 0.5
+  _bendMode: 1
+  _bendRange: 3
+  _bendReleaseMode: 0
+  _bendHoldSeconds: 2
+  _bendReturnSeconds: 1
+  _isAimLockedWhileHeld: 1
+  _pointRadius: 0.3
+  _pointLayer: 0
+  _pointPrefab: {fileID: 3311711355854517144, guid: 1362f66c5301bb64aab30b1147bfdf58, type: 3}
+  _isBodyLineVisible: 0
 --- !u!114 &1329153967
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7123,16 +7107,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Aura.Prototype::Aura.Prototype.ViewModeSwitcher
   _viewMode: 1
-  _emitter: {fileID: 0}
   _firstPersonObjects:
   - {fileID: 378657768}
-  _firstPersonCamera: {fileID: 535092855}
-  _firstPersonMuzzle: {fileID: 931553043}
   _thirdPersonObjects:
   - {fileID: 1967038492}
   - {fileID: 1823259160}
-  _thirdPersonCamera: {fileID: 677381466}
-  _thirdPersonMuzzle: {fileID: 1512246067}
   _toggleAction:
     m_Name: ToggleView
     m_Type: 1
@@ -7463,6 +7442,32 @@ MonoBehaviour:
       m_Flags: 0
     m_Flags: 0
     m_Priority: 0
+  _toggleBeamShapeAction:
+    m_Name: ToggleBeamShape
+    m_Type: 1
+    m_ExpectedControlType: 
+    m_Id: f0b390ca-4824-42c3-ae52-aaf469024e3e
+    m_Processors: 
+    m_Interactions: 
+    m_SingletonActionBindings:
+    - m_Name: 
+      m_Id: 7c0b465d-0042-4907-b357-0a0bb45b9535
+      m_Path: <Keyboard>/b
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: ToggleBeamShape
+      m_Flags: 0
+    - m_Name: 
+      m_Id: ee99d59f-bc6c-49b6-b24d-d1d01ec22849
+      m_Path: <Gamepad>/dpad/up
+      m_Interactions: 
+      m_Processors: 
+      m_Groups: 
+      m_Action: ToggleBeamShape
+      m_Flags: 0
+    m_Flags: 0
+    m_Priority: 0
 --- !u!114 &1364016967
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7495,6 +7500,18 @@ MonoBehaviour:
   _radius: 0.1
   _maxReflections: 8
   _lineMaterial: {fileID: 0}
+  _beamShape: 1
+  _pointSpacing: 0.5
+  _bendMode: 1
+  _bendRange: 3
+  _bendReleaseMode: 2
+  _bendHoldSeconds: 2
+  _bendReturnSeconds: 1
+  _isAimLockedWhileHeld: 1
+  _pointRadius: 0.3
+  _pointLayer: 0
+  _pointPrefab: {fileID: 3311711355854517144, guid: 1362f66c5301bb64aab30b1147bfdf58, type: 3}
+  _isBodyLineVisible: 0
 --- !u!1 &1372623967
 GameObject:
   m_ObjectHideFlags: 0
@@ -8321,7 +8338,6 @@ GameObject:
   - component: {fileID: 1452796891}
   - component: {fileID: 1452796890}
   - component: {fileID: 1452796889}
-  - component: {fileID: 1452796888}
   m_Layer: 0
   m_Name: LightCrate_2
   m_TagString: Untagged
@@ -8344,19 +8360,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 485656540}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1452796888
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1452796886}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3528731a10fb498299f49311c05104a9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.TelekinesisTarget
-  _weightType: {fileID: 11400000, guid: 671f292ba0ae4c94abd3732886863679, type: 2}
 --- !u!23 &1452796889
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -9132,7 +9135,6 @@ GameObject:
   - component: {fileID: 1628317579}
   - component: {fileID: 1628317578}
   - component: {fileID: 1628317577}
-  - component: {fileID: 1628317576}
   m_Layer: 0
   m_Name: LightCrate_3
   m_TagString: Untagged
@@ -9155,19 +9157,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1290543574}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1628317576
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1628317574}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3528731a10fb498299f49311c05104a9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.TelekinesisTarget
-  _weightType: {fileID: 11400000, guid: 671f292ba0ae4c94abd3732886863679, type: 2}
 --- !u!23 &1628317577
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -9259,7 +9248,6 @@ GameObject:
   - component: {fileID: 1647922447}
   - component: {fileID: 1647922446}
   - component: {fileID: 1647922445}
-  - component: {fileID: 1647922444}
   m_Layer: 0
   m_Name: HeavyMetalCrate
   m_TagString: Untagged
@@ -9282,19 +9270,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1290543574}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1647922444
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1647922442}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3528731a10fb498299f49311c05104a9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.TelekinesisTarget
-  _weightType: {fileID: 11400000, guid: 8819353583c149089bb421411bdbe496, type: 2}
 --- !u!114 &1647922445
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9488,7 +9463,6 @@ GameObject:
   - component: {fileID: 1679122757}
   - component: {fileID: 1679122756}
   - component: {fileID: 1679122755}
-  - component: {fileID: 1679122754}
   m_Layer: 0
   m_Name: LightCrate_1
   m_TagString: Untagged
@@ -9511,19 +9485,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1290543574}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1679122754
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1679122752}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3528731a10fb498299f49311c05104a9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.TelekinesisTarget
-  _weightType: {fileID: 11400000, guid: 671f292ba0ae4c94abd3732886863679, type: 2}
 --- !u!23 &1679122755
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -10162,6 +10123,84 @@ MonoBehaviour:
   _reactiveTypes: []
   _canReactToAnyType: 1
   _requiredSeconds: 3
+--- !u!1001 &1804507099
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2460484141462264743, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _cameraTransform
+      value: 
+      objectReference: {fileID: 2081914667}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _targetCamera
+      value: 
+      objectReference: {fileID: 2081914666}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _directionTransform
+      value: 
+      objectReference: {fileID: 2081914667}
+    - target: {fileID: 7052194452099235754, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _aimOrigin
+      value: 
+      objectReference: {fileID: 2081914667}
+    - target: {fileID: 8114588384119620780, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.55
+      objectReference: {fileID: 0}
+    - target: {fileID: 8114588384119620780, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.15
+      objectReference: {fileID: 0}
+    - target: {fileID: 8114588384119620780, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 33.40709
+      objectReference: {fileID: 0}
+    - target: {fileID: 8114588384119620780, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8114588384119620780, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8114588384119620780, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8114588384119620780, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8114588384119620780, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8114588384119620780, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8114588384119620780, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8923635859648306710, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: m_Name
+      value: Test_Player
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+--- !u!4 &1804507100 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8114588384119620780, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+  m_PrefabInstance: {fileID: 1804507099}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1823259160
 GameObject:
   m_ObjectHideFlags: 0
@@ -11009,7 +11048,6 @@ GameObject:
   - component: {fileID: 1981768099}
   - component: {fileID: 1981768098}
   - component: {fileID: 1981768097}
-  - component: {fileID: 1981768096}
   m_Layer: 0
   m_Name: LightCrate_2
   m_TagString: Untagged
@@ -11032,19 +11070,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1290543574}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1981768096
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1981768094}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3528731a10fb498299f49311c05104a9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.TelekinesisTarget
-  _weightType: {fileID: 11400000, guid: 671f292ba0ae4c94abd3732886863679, type: 2}
 --- !u!23 &1981768097
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -11444,6 +11469,77 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1095566300}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &2081914665
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 3032123786093622285, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3032123786093622285, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 3032123786093622285, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -10
+      objectReference: {fileID: 0}
+    - target: {fileID: 3032123786093622285, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3032123786093622285, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3032123786093622285, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3032123786093622285, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3032123786093622285, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3032123786093622285, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3032123786093622285, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5632928018133233129, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
+      propertyPath: m_Name
+      value: Main Camera
+      objectReference: {fileID: 0}
+    - target: {fileID: 7150550199315190158, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
+      propertyPath: _target
+      value: 
+      objectReference: {fileID: 1804507100}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
+--- !u!20 &2081914666 stripped
+Camera:
+  m_CorrespondingSourceObject: {fileID: 7957191697469318641, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
+  m_PrefabInstance: {fileID: 2081914665}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &2081914667 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3032123786093622285, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
+  m_PrefabInstance: {fileID: 2081914665}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2083254388
 GameObject:
   m_ObjectHideFlags: 0
@@ -11457,7 +11553,6 @@ GameObject:
   - component: {fileID: 2083254393}
   - component: {fileID: 2083254392}
   - component: {fileID: 2083254391}
-  - component: {fileID: 2083254390}
   m_Layer: 0
   m_Name: HeavyMetalCrate
   m_TagString: Untagged
@@ -11480,19 +11575,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 485656540}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2083254390
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2083254388}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3528731a10fb498299f49311c05104a9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.TelekinesisTarget
-  _weightType: {fileID: 11400000, guid: 8819353583c149089bb421411bdbe496, type: 2}
 --- !u!114 &2083254391
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11628,3 +11710,5 @@ SceneRoots:
   - {fileID: 1349013004}
   - {fileID: 1046727755}
   - {fileID: 1899090050}
+  - {fileID: 1804507099}
+  - {fileID: 2081914665}
