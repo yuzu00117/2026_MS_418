@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Aura.ObjectInfo;
-using Aura.Wave;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -25,7 +24,7 @@ namespace Aura.ObjectInfoDemo
                  "Latch: 起動したら、ずっと起動したまま（扉を開けるなど）\n" +
                  "Toggle: 起動するたびに ON と OFF が入れ替わる。ビームが一度途切れるまで次を数えない（スイッチ、電気など）\n" +
                  "Sustain: 起動した後、溜まった分が 0 まで減ると止まる。当てている間だけ動くギミックに使う（リフトなど）")]
-        [SerializeField] private WaveActivationMode _mode = WaveActivationMode.Latch;  ///< 起動のしかた
+        [SerializeField] private ReactionActivationMode _mode = ReactionActivationMode.Latch;  ///< 起動のしかた
 
         [Tooltip("ビームを受けていない間に、1 秒あたりに減る量（溜まった秒数で数える）。0 なら減らず、溜めた分が残る\n" +
                  "Sustain では、当てるのをやめてから止まるまでの時間がこれで決まる（Required Seconds ÷ これ）\n" +
@@ -56,7 +55,7 @@ namespace Aura.ObjectInfoDemo
         public bool IsReceiving => Time.time - _lastReceiveTime <= ReceivingGraceTime;
 
         /// @brief 起動のしかた
-        public WaveActivationMode Mode => _mode;
+        public ReactionActivationMode Mode => _mode;
 
         /// @brief 起動に要る量（WaveReaction の Required Seconds）に対する、溜まっている割合（0〜1）
         public float ChargeRatio
@@ -104,7 +103,7 @@ namespace Aura.ObjectInfoDemo
             BeamAccepted?.Invoke(hit);
 
             // Latch で起動済み、または Toggle でビームが途切れるのを待っている間は溜めない
-            bool isLatched = _mode == WaveActivationMode.Latch && IsActive;
+            bool isLatched = _mode == ReactionActivationMode.Latch && IsActive;
             if (isLatched || _isWaitingRelease)
             {
                 return true;
@@ -144,13 +143,13 @@ namespace Aura.ObjectInfoDemo
             }
 
             _isWaitingRelease = false;
-            if (_mode == WaveActivationMode.Latch && IsActive)
+            if (_mode == ReactionActivationMode.Latch && IsActive)
             {
                 return;
             }
 
             _charge = Mathf.Max(0.0f, _charge - _decayPerSecond * Time.deltaTime);
-            if (_mode == WaveActivationMode.Sustain && IsActive && _charge <= 0.0f)
+            if (_mode == ReactionActivationMode.Sustain && IsActive && _charge <= 0.0f)
             {
                 SetActiveState(false);
             }
@@ -171,11 +170,11 @@ namespace Aura.ObjectInfoDemo
         {
             switch (_mode)
             {
-                case WaveActivationMode.Latch:
-                case WaveActivationMode.Sustain:
+                case ReactionActivationMode.Latch:
+                case ReactionActivationMode.Sustain:
                     SetActiveState(true);
                     break;
-                case WaveActivationMode.Toggle:
+                case ReactionActivationMode.Toggle:
                     _charge = 0.0f;
                     _isWaitingRelease = true;
                     SetActiveState(!IsActive);

@@ -2,7 +2,6 @@
     "name": "Aura.Prototype",
     "rootNamespace": "Aura.Prototype",
     "references": [
-        "Aura.Wave",
         "Unity.InputSystem"
     ],
     "includePlatforms": [],

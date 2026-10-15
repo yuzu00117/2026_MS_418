@@ -1,11 +1,10 @@
-using Aura.Wave;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace Aura.Prototype
 {
     /// @brief 一人称と三人称を切り替える。Inspector の View Mode か V キーで切り替える
-    /// 視点ごとの GameObject を出し入れし、WaveEmitter の手（Muzzle）と視点（AimOrigin）を差し替える
+    /// 視点ごとの GameObject を出し入れする。ビームの出る手や狙いは、ビームの側（InfoBeamEmitter）が、出ている方を選ぶ
     public sealed class ViewModeSwitcher : MonoBehaviour
     {
         [Tooltip("今の視点。実行中に変えてもよい（Toggle Action のキーでも切り替わる）\n" +
@@ -13,30 +12,13 @@ namespace Aura.Prototype
                  "Third Person: 三人称。「三人称」の欄の物を出し、「一人称」の欄の物を隠す")]
         [SerializeField] private ViewMode _viewMode = ViewMode.FirstPerson;  ///< 今の視点。実行中に変えてもよい
 
-        [Tooltip("視点に合わせて、手（Muzzle）と狙いの視点（Aim Origin）を差し替える WaveEmitter。空なら差し替えない")]
-        [SerializeField] private WaveEmitter _emitter;                       ///< 手と視点を差し替える WaveEmitter
-
         [Header("一人称")]
         [Tooltip("一人称のときだけ出す GameObject（一人称のカメラ、手など）。三人称のときは非アクティブになる")]
         [SerializeField] private GameObject[] _firstPersonObjects;  ///< 一人称のときだけ出す物（カメラ、手）
 
-        [Tooltip("一人称のカメラ。一人称のとき、WaveEmitter の Aim Origin になる（空なら Muzzle の正面に撃つ）\n" +
-                 "ここに入れるだけでは表示は切り替わらない。カメラの GameObject は First Person Objects にも入れる")]
-        [SerializeField] private Transform _firstPersonCamera;      ///< 一人称のカメラ
-
-        [Tooltip("一人称の手の先。一人称のとき、WaveEmitter の Muzzle になる（空なら WaveEmitter の GameObject の位置から出る）")]
-        [SerializeField] private Transform _firstPersonMuzzle;      ///< 一人称の手の先
-
         [Header("三人称")]
         [Tooltip("三人称のときだけ出す GameObject（三人称のカメラ、体、手など）。一人称のときは非アクティブになる")]
         [SerializeField] private GameObject[] _thirdPersonObjects;  ///< 三人称のときだけ出す物（カメラ、体、手）
-
-        [Tooltip("三人称のカメラ。三人称のとき、WaveEmitter の Aim Origin になる（空なら Muzzle の正面に撃つ）\n" +
-                 "ここに入れるだけでは表示は切り替わらない。カメラの GameObject は Third Person Objects にも入れる")]
-        [SerializeField] private Transform _thirdPersonCamera;      ///< 三人称のカメラ
-
-        [Tooltip("三人称の手の先。三人称のとき、WaveEmitter の Muzzle になる（空なら WaveEmitter の GameObject の位置から出る）")]
-        [SerializeField] private Transform _thirdPersonMuzzle;      ///< 三人称の手の先
 
         [Header("入力")]
         [Tooltip("一人称と三人称を入れ替えるボタン。既定: V キー")]
@@ -96,12 +78,6 @@ namespace Aura.Prototype
             bool isFirstPerson = _viewMode == ViewMode.FirstPerson;
             SetObjectsActive(_firstPersonObjects, isFirstPerson);
             SetObjectsActive(_thirdPersonObjects, !isFirstPerson);
-
-            if (_emitter != null)
-            {
-                _emitter.Muzzle = isFirstPerson ? _firstPersonMuzzle : _thirdPersonMuzzle;
-                _emitter.AimOrigin = isFirstPerson ? _firstPersonCamera : _thirdPersonCamera;
-            }
         }
 
         private static void SetObjectsActive(GameObject[] targets, bool isActive)
