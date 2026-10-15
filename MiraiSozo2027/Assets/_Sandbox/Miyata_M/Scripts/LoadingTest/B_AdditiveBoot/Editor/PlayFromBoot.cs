@@ -10,7 +10,7 @@ namespace LoadingTest.B.Editor
     [InitializeOnLoad]
     public static class PlayFromBoot
     {
-        private const string BootScenePath = "Assets/_Sandbox/Miyata_M/Scenes/LoadingTest/Boot.unity"; // 環境に合わせて変更
+        private const string BootScenePath = "Assets/_Sandbox/Miyata_M/Scenes/LoadingTest/LT_B_Boot.unity"; // LoadingTestSetup が生成するシーン。環境に合わせて変更
         private const string MenuPath = "Tools/LoadingTest/Play From Boot";
         private const string PrefsKey = "LoadingTest.PlayFromBoot";
 
