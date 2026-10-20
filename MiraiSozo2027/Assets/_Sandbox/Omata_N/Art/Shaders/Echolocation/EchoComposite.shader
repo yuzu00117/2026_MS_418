@@ -12,6 +12,8 @@ Shader "Hidden/Echo/Composite"
     float4 _EchoOutlineColor;
     float _EchoOutlineWidth;
     float _EchoOriginalOpacity;
+    float _EchoOriginalOcclusion;
+    float _EchoOutlineOcclusion;
     ENDHLSL
     SubShader
     {
@@ -104,7 +106,8 @@ Shader "Hidden/Echo/Composite"
                     float2 uv=input.texcoord+float2(cos(angle),sin(angle))*_EchoOutlineWidth*_EchoSourceSize.zw;
                     inner=min(inner,SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_PointClamp,uv).r);
                 }
-                float alpha=center.r*center.b*(1-inner)*active*_EchoOutlineColor.a;
+                float visible=_EchoOutlineOcclusion>.5?center.b:center.r;
+                float alpha=center.r*visible*(1-inner)*active*_EchoOutlineColor.a;
                 return half4(_EchoOutlineColor.rgb*alpha,alpha);
             }
             ENDHLSL
@@ -119,7 +122,8 @@ Shader "Hidden/Echo/Composite"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 float active=SAMPLE_TEXTURE2D_X(_EchoHistory,sampler_PointClamp,float2(.5,.5)).z;
-                float visible=SAMPLE_TEXTURE2D_X(_EchoObjectMask,sampler_PointClamp,input.texcoord).b;
+                float4 mask=SAMPLE_TEXTURE2D_X(_EchoObjectMask,sampler_PointClamp,input.texcoord);
+                float visible=_EchoOriginalOcclusion>.5?mask.b:mask.r;
                 float4 scene=SAMPLE_TEXTURE2D_X(_EchoSceneColor,sampler_LinearClamp,input.texcoord);
                 float4 original=SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_LinearClamp,input.texcoord);
                 return lerp(scene,original,active*visible*_EchoOriginalOpacity);

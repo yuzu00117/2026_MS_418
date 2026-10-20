@@ -78,6 +78,40 @@ namespace Echo.Echolocation.Tests
             Assert.False(c.IsScanRequested, "Eとパッドを押したままでも別入力で切り替わる");
         }
 
+        [Test]
+        public void TeamPlayerSuspendsPrototypeAndRestoresOnlyPreviouslyEnabledInputs()
+        {
+            // チームのAssembly-CSharpにはasmdefから直接参照できないため型を実行時に取得する。
+            var teamType = System.Type.GetType("PlayerController, Assembly-CSharp", true);
+            var bridgeType = System.Type.GetType("EchoTeamInputIntegration, Assembly-CSharp", true);
+            var host = new GameObject("Team input integration test");
+            var team = new GameObject("Team player test");
+            var inactiveInput = new GameObject("Intentionally disabled input");
+            try
+            {
+                inactiveInput.AddComponent<EchoController>();
+                var disabled = inactiveInput.AddComponent<EchoPrototypeInput>();
+                disabled.enabled = false;
+                var bridge = host.AddComponent(bridgeType);
+                var refresh = bridgeType.GetMethod("Refresh", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var player = (Behaviour)team.AddComponent(teamType);
+                refresh.Invoke(bridge, null);
+                Assert.False(_go.GetComponent<EchoPrototypeInput>().enabled);
+                Assert.False(disabled.enabled);
+                Assert.True(_go.GetComponent<EchoController>().enabled, "描画・スキャン本体は停止しない");
+                player.enabled = false;
+                refresh.Invoke(bridge, null);
+                Assert.True(_go.GetComponent<EchoPrototypeInput>().enabled);
+                Assert.False(disabled.enabled, "手動で無効にしていた入力を勝手に有効化しない");
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(team);
+                Object.DestroyImmediate(inactiveInput);
+            }
+        }
+
         [UnityTest]
         public IEnumerator QuickTapWithinOneFrameIsNotLost()
         {

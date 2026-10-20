@@ -7,6 +7,32 @@ namespace Echo.Echolocation.Tests
     public sealed class EchoTagResolverTests
     {
         [Test]
+        public void PerEffectOcclusionInheritsAndCopiesIndependently()
+        {
+            var settings = new EchoSettings();
+            var rule = new EchoTagColorRule();
+            Assert.That(rule.FillOcclusion, Is.EqualTo(EchoEffectOcclusionMode.Inherit));
+            Assert.That(rule.OutlineOcclusion, Is.EqualTo(EchoEffectOcclusionMode.Inherit));
+            Assert.That(rule.OriginalOcclusion, Is.EqualTo(EchoEffectOcclusionMode.Inherit));
+            foreach (var common in new[] { EchoOcclusionMode.ThroughWalls, EchoOcclusionMode.VisibleOnly })
+            {
+                Assert.That(EchoTagColorRule.ResolveOcclusion(EchoEffectOcclusionMode.Inherit, common), Is.EqualTo(common));
+                Assert.That(EchoTagColorRule.ResolveOcclusion(EchoEffectOcclusionMode.ThroughWalls, common), Is.EqualTo(EchoOcclusionMode.ThroughWalls));
+                Assert.That(EchoTagColorRule.ResolveOcclusion(EchoEffectOcclusionMode.VisibleOnly, common), Is.EqualTo(EchoOcclusionMode.VisibleOnly));
+            }
+            rule.FillOcclusion = EchoEffectOcclusionMode.ThroughWalls;
+            rule.OutlineOcclusion = EchoEffectOcclusionMode.ThroughWalls;
+            rule.OriginalOcclusion = EchoEffectOcclusionMode.VisibleOnly;
+            settings.TagColorRules.Add(rule);
+            var copy = settings.Copy().TagColorRules[0];
+            Assert.That(copy.FillOcclusion, Is.EqualTo(rule.FillOcclusion));
+            Assert.That(copy.OutlineOcclusion, Is.EqualTo(rule.OutlineOcclusion));
+            Assert.That(copy.OriginalOcclusion, Is.EqualTo(rule.OriginalOcclusion));
+            copy.OriginalOcclusion = EchoEffectOcclusionMode.ThroughWalls;
+            Assert.That(rule.OriginalOcclusion, Is.EqualTo(EchoEffectOcclusionMode.VisibleOnly));
+        }
+
+        [Test]
         public void HiddenMaterialsPreservePartialEditsAndMultipleOwners()
         {
             var target = GameObject.CreatePrimitive(PrimitiveType.Cube);

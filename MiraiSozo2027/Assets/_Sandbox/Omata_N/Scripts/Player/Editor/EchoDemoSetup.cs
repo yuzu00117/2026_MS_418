@@ -78,8 +78,6 @@ namespace Echo.Echolocation.Samples.Editor
             else
                 EditorSceneManager.OpenScene(Root + "/Scenes/Scene_EchoDemo.unity");
             UpgradeOpenDemo();
-            UnityEngine.InputSystem.InputSystem.settings.updateMode = InputSettings.UpdateMode.ProcessEventsInDynamicUpdate;
-            EditorUtility.SetDirty(UnityEngine.InputSystem.InputSystem.settings);
             AssetDatabase.SaveAssets();
             Debug.Log("エコー：デモ準備完了。Scene_EchoDemoを開いて再生しEキーを押してください。");
         }
