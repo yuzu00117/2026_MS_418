@@ -1,3 +1,4 @@
+using Aura.Inspector;
 using UnityEngine;
 
 namespace Aura.Prototype
@@ -6,10 +7,12 @@ namespace Aura.Prototype
     /// WaveReceiver の On Activated に Activate、On Deactivated に Deactivate をつなぐ
     public sealed class DemoGimmickMover : MonoBehaviour
     {
+        [InspectorLabel("起動で動く量（m）")]
         [Tooltip("起動したときに動く量（m）。ゲーム開始時の位置から、この分だけずらした位置まで動く\n" +
                  "向きは親の GameObject から見た向き（親がなければワールドの向き）。例: (0, 3, 0) なら 3 m 上がる")]
         [SerializeField] private Vector3 _activeOffset = new Vector3(0.0f, 3.0f, 0.0f);  ///< 起動したときに動く量（ローカル座標、m）
 
+        [InspectorLabel("動く速さ（m/s）")]
         [Tooltip("動く速さ（m/s）。起動したときも、元の位置に戻るときも、この速さで動く。0.01 以上")]
         [SerializeField, Min(0.01f)] private float _speed = 2.0f;                        ///< 動く速さ（m/s）
 

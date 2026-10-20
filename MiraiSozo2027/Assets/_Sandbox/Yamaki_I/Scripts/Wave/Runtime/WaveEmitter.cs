@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Aura.Inspector;
 using UnityEngine;
 
 namespace Aura.Wave
@@ -16,110 +17,134 @@ namespace Aura.Wave
         private const float MinTargetSqrDistance = 0.0001f;         ///< 手の先から狙う先までの距離の 2 乗（m^2）がこれより小さければ、向きが決まらないとみなす
 
         [Header("波の種類と撃ち方")]
+        [InspectorLabel("撃てる波の種類")]
         [Tooltip("撃てる波の種類（WaveType のアセット）。切り替えると上から順に入れ替わり、最後の次は最初に戻る。空だと撃てない")]
         [SerializeField] private WaveType[] _waveTypes;                    ///< 撃てる波の種類。上から順に切り替える
 
-        [Tooltip("今の波の種類の番号（Wave Types の何番目か。0 から数える）。最初に持っている種類になる\n" +
+        [InspectorLabel("今の種類の番号")]
+        [Tooltip("今の波の種類の番号（「撃てる波の種類」の何番目か。0 から数える）。最初に持っている種類になる\n" +
                  "実行中に変えると、その種類に切り替わる。範囲の外なら最後の種類になる")]
         [SerializeField, Min(0)] private int _typeIndex;                   ///< 今の波の種類の番号
 
+        [InspectorLabel("種類を切り替えられる")]
         [Tooltip("オフにすると、波の種類を切り替えられない（Q / E などの切り替えが効かない）。決まった波しか撃てない場面に使う\n" +
-                 "Type Index を Inspector で直接変えたときは、オフでも切り替わる")]
+                 "「今の種類の番号」を Inspector で直接変えたときは、オフでも切り替わる")]
         [SerializeField] private bool _canSwitchType = true;               ///< 波の種類を切り替えられるか
 
+        [InspectorLabel("撃ち方")]
         [Tooltip("撃ち方。実行中に変えてもよい\n" +
-                 "Pulse: 押した瞬間に、波の塊を 1 発飛ばす（設定は「単発」の欄）\n" +
-                 "Beam: 押している間、ビームを当て続ける（設定は「連続」の欄）")]
+                 "単発: 押した瞬間に、波の塊を 1 発飛ばす（設定は「単発」の欄）\n" +
+                 "連続（ビーム）: 押している間、ビームを当て続ける（設定は「連続」の欄）")]
         [SerializeField] private WaveFireMode _fireMode = WaveFireMode.Pulse;  ///< 撃ち方。実行中に変えてもよい
 
         [Header("狙い")]
-        [Tooltip("波が出る位置（手の先に置いた空の GameObject など）。Aim Origin が空のときは、この正面（青い矢印の向き）に撃つ\n" +
+        [InspectorLabel("波が出る位置")]
+        [Tooltip("波が出る位置（手の先に置いた空の GameObject など）。「狙いを決める視点」が空のときは、この正面（青い矢印の向き）に撃つ\n" +
                  "空なら、この GameObject の位置から出る")]
         [SerializeField] private Transform _muzzle;                        ///< 波が出る位置（手の先）。空なら自分
 
-        [Tooltip("狙いを決める視点（ふつうはカメラ）。視点の正面で最初に当たる位置へ向けて Muzzle から撃つので、画面の中心（照準）に飛ぶ\n" +
-                 "空なら、Muzzle の正面に撃つ")]
+        [InspectorLabel("狙いを決める視点")]
+        [Tooltip("狙いを決める視点（ふつうはカメラ）。視点の正面で最初に当たる位置へ向けて「波が出る位置」から撃つので、画面の中心（照準）に飛ぶ\n" +
+                 "空なら、「波が出る位置」の正面に撃つ")]
         [SerializeField] private Transform _aimOrigin;                     ///< 狙いを決める視点（カメラ）。空なら Muzzle の正面に撃つ
 
+        [InspectorLabel("当たらない自分の体")]
         [Tooltip("この GameObject とその子のコライダーには、波が当たらない（自分の体に当たらないようにする）。ふつうはプレイヤーのいちばん上の GameObject を入れる\n" +
                  "跳ね返って戻ってきた波は、ここの下のコライダーに当たると止まる（受け手が付いていても波は渡さない）\n" +
                  "空なら、この GameObject のいちばん上の親を使う")]
         [SerializeField] private Transform _ignoreRoot;                    ///< この下のコライダーに当たらない（自分の体。跳ね返って戻った波はここで止まる）。空なら transform.root
 
+        [InspectorLabel("当たるレイヤー")]
         [Tooltip("波が当たるレイヤー。チェックを外したレイヤーの物は、波が素通りする（受け手にも届かない）")]
         [SerializeField] private LayerMask _hitMask = ~0;                  ///< 波が当たるレイヤー
 
+        [InspectorLabel("トリガーに当たるか")]
         [Tooltip("Is Trigger をオンにしたコライダーに、波が当たるか\n" +
                  "Use Global: Project Settings > Physics の Queries Hit Triggers に従う\n" +
                  "Ignore: 当たらない（素通りする）\n" +
                  "Collide: 当たる。受け手のコライダーをトリガーにするときは、これにする\n" +
-                 "当たったトリガーでは、WaveSurface の Response を Reflect にしない限り跳ね返らずに止まる")]
+                 "当たったトリガーでは、WaveSurface の「当たった波の扱い」を「跳ね返す」にしない限り跳ね返らずに止まる")]
         [SerializeField] private QueryTriggerInteraction _triggerInteraction = QueryTriggerInteraction.Ignore;  ///< トリガーに当たるか
 
         [Header("反射（単発とビームの両方）")]
+        [InspectorLabel("反射のしかた")]
         [Tooltip("波が物に当たったときに跳ね返るか。実行中に変えてもよい（ビームはすぐ、単発は次に撃つ波から効く）\n" +
-                 "None: 跳ね返らない。最初に当たった物で止まる（反射を入れる前と同じ動き。比べる用）\n" +
-                 "All Surfaces: どの物でも跳ね返る。WaveSurface の Response を Absorb にした物と、トリガーのコライダーでは止まる\n" +
-                 "Reflectors Only: 反射板（WaveSurface の Response を Reflect にした物）でだけ跳ね返り、ほかの物では止まる\n" +
+                 "跳ね返らない: 跳ね返らない。最初に当たった物で止まる（反射を入れる前と同じ動き。比べる用）\n" +
+                 "どの物でも跳ね返る: どの物でも跳ね返る。WaveSurface の「当たった波の扱い」を「止める」にした物と、トリガーのコライダーでは止まる\n" +
+                 "反射板でだけ跳ね返る: 反射板（WaveSurface の「当たった波の扱い」を「跳ね返す」にした物）でだけ跳ね返り、ほかの物では止まる\n" +
                  "受け手に当たったときも、波を渡したうえで同じ決まりで跳ね返るか止まる（1 発で複数の受け手を起動できる）\n" +
-                 "跳ね返るかは当たった瞬間（受け手に渡す前）に決まるので、受け手の On Activated などで鏡を切り替えても、次の波から効く")]
+                 "跳ね返るかは当たった瞬間（受け手に渡す前）に決まるので、受け手の「起動したときの処理」などで鏡を切り替えても、次の波から効く")]
         [SerializeField] private WaveReflectionMode _reflectionMode = WaveReflectionMode.None;  ///< 跳ね返るかどうかの決め方。None なら反射なし
 
+        [InspectorLabel("跳ね返る回数の上限")]
         [Tooltip("1 発（ビームは 1 本）が跳ね返る回数の上限（回。1〜16）。この回数だけ跳ね返った後は、次に当たった物で止まる（受け手なら波は届く）\n" +
-                 "例: 1 なら、1 回跳ね返った先の物まで届く。Reflection Mode が None のときは使わない\n" +
+                 "例: 1 なら、1 回跳ね返った先の物まで届く。「反射のしかた」が「跳ね返らない」のときは使わない\n" +
                  "同じ受け手には、1 発（ビームは 1 フレーム）で 1 回だけ届く。跳ね返って同じ受け手にまた当たっても、エネルギーは増えない")]
         [SerializeField, Range(1, MaxReflectionLimit)] private int _maxReflections = 3;  ///< 跳ね返る回数の上限
 
-        [Tooltip("1 回跳ね返るごとに、波のエネルギー（Pulse Energy、Beam Energy Per Second）に掛ける割合（0.05〜1）。1 なら減らない\n" +
+        [InspectorLabel("反射ごとに残る割合")]
+        [Tooltip("1 回跳ね返るごとに、波のエネルギー（「1 発で渡すエネルギー」、「1 秒で渡すエネルギー」）に掛ける割合（0.05〜1）。1 なら減らない\n" +
                  "例: 0.5 なら 1 回で半分、2 回で 4 分の 1。跳ね返った先の受け手を、単発 1 発では起動させたくないときに下げる\n" +
                  "ビームを当てている間は受け手のエネルギーが減らないので、ビームでは下げても起動までの時間が延びるだけ")]
         [SerializeField, Range(MinReflectionEnergyMultiplier, 1.0f)] private float _reflectionEnergyMultiplier = 1.0f;  ///< 跳ね返るたびにエネルギーに掛ける割合
 
+        [InspectorLabel("予測線を出す")]
         [Tooltip("オンにすると、撃つ前から、跳ね返りを含めた波の通り道を細い線（予測線）で見せる。実行中に変えてもよい\n" +
-                 "Reflection Mode が None でないときだけ使う（None のときは、この項目は Inspector に出ない）\n" +
-                 "今の撃ち方（Fire Mode）の届く距離と当たり判定の太さで求める。ビームを出している間は、ビームと重なるので出さない\n" +
+                 "「反射のしかた」が「跳ね返らない」でないときだけ使う（「跳ね返らない」のときは、この項目は Inspector に出ない）\n" +
+                 "今の「撃ち方」の届く距離と当たり判定の太さで求める。ビームを出している間は、ビームと重なるので出さない\n" +
                  "予測線は見せるだけで、受け手に波は届かない")]
         [SerializeField] private bool _isReflectionPreviewEnabled = true;  ///< 跳ね返りを含めた通り道の予測線を出すか（Reflection Mode が None でないときだけ）
 
-        [Header("単発（Fire Mode が Pulse のとき）")]
-        [Tooltip("1 発が当たったときに、受け手へ渡すエネルギー。受け手は Required Energy まで溜まると起動する\n" +
+        [Header("単発（「撃ち方」が「単発」のとき）")]
+        [InspectorLabel("1 発で渡すエネルギー")]
+        [Tooltip("1 発が当たったときに、受け手へ渡すエネルギー。受け手は「起動に要るエネルギー」まで溜まると起動する\n" +
                  "例: どちらも既定の 1 なら 1 発で起動する\n" +
-                 "受け手のエネルギーは撃つ間にも Decay Per Second で減るので、1 発で足りないときは「Required Energy ÷ これ」発より多く要る\n" +
-                 "跳ね返った後は、跳ね返るたびに Reflection Energy Multiplier を掛けた量になる")]
+                 "受け手のエネルギーは撃つ間にも「1 秒で減る量」で減るので、1 発で足りないときは「起動に要るエネルギー ÷ これ」発より多く要る\n" +
+                 "跳ね返った後は、跳ね返るたびに「反射ごとに残る割合」を掛けた量になる")]
         [SerializeField, Min(0.0f)] private float _pulseEnergy = 1.0f;     ///< 1 発で渡すエネルギー
 
+        [InspectorLabel("飛ぶ速さ（m/s）")]
         [Tooltip("波の塊が飛ぶ速さ（m/s）。大きいほど、撃ってからすぐに当たる。0.1 以上")]
         [SerializeField, Min(0.1f)] private float _pulseSpeed = 30.0f;     ///< 進む速さ（m/s）
 
+        [InspectorLabel("単発の届く距離（m）")]
         [Tooltip("波の塊が届く距離（m）。跳ね返った後の道のりも合わせて数える。これだけ進むか、跳ね返らない物に当たると消える。0.1 以上")]
         [SerializeField, Min(0.1f)] private float _pulseRange = 40.0f;     ///< 届く距離（m）。跳ね返った後の道のりも含む
 
+        [InspectorLabel("単発の判定の半径（m）")]
         [Tooltip("当たり判定の太さ（球の半径、m）。大きいほど、狙いが少しずれても当たる。0 なら太さのない線で判定する")]
         [SerializeField, Min(0.0f)] private float _pulseRadius = 0.15f;    ///< 当たり判定の半径（m）
 
+        [InspectorLabel("見た目の塊の長さ（m）")]
         [Tooltip("見た目の波の塊の長さ（m）。当たり判定には影響しない。0.1 以上")]
         [SerializeField, Min(0.1f)] private float _pulseLength = 1.2f;     ///< 見た目の波の塊の長さ（m）
 
+        [InspectorLabel("次を撃てるまで（秒）")]
         [Tooltip("1 発撃ってから、次を撃てるまでの時間（秒）。連打しても、この間隔より速くは撃てない。0 なら制限なし")]
         [SerializeField, Min(0.0f)] private float _pulseInterval = 0.25f;  ///< 次を撃てるまでの時間（秒）
 
-        [Tooltip("オンにすると、押し続けている間 Pulse Interval ごとに撃ち続ける（連射）。オフなら押すたびに 1 発")]
+        [InspectorLabel("押し続けて連射する")]
+        [Tooltip("オンにすると、押し続けている間「次を撃てるまで（秒）」ごとに撃ち続ける（連射）。オフなら押すたびに 1 発")]
         [SerializeField] private bool _isPulseAutoFire;                    ///< 押し続けている間、間隔ごとに撃ち続けるか
 
-        [Header("連続（Fire Mode が Beam のとき）")]
-        [Tooltip("当て続けたとき、1 秒あたりに受け手へ渡すエネルギー。受け手は Required Energy まで溜まると起動する\n" +
+        [Header("連続（「撃ち方」が「連続（ビーム）」のとき）")]
+        [InspectorLabel("1 秒で渡すエネルギー")]
+        [Tooltip("当て続けたとき、1 秒あたりに受け手へ渡すエネルギー。受け手は「起動に要るエネルギー」まで溜まると起動する\n" +
                  "例: どちらも既定の 1 なら 1 秒当てると起動する。これを 2 にすると 0.5 秒で起動する\n" +
-                 "跳ね返った後は、跳ね返るたびに Reflection Energy Multiplier を掛けた量になる")]
+                 "跳ね返った後は、跳ね返るたびに「反射ごとに残る割合」を掛けた量になる")]
         [SerializeField, Min(0.0f)] private float _beamEnergyPerSecond = 1.0f;  ///< 1 秒あたりに渡すエネルギー
 
+        [InspectorLabel("ビームの届く距離（m）")]
         [Tooltip("ビームが届く距離（m）。跳ね返った後の道のりも合わせて数える。0.1 以上")]
         [SerializeField, Min(0.1f)] private float _beamRange = 25.0f;      ///< 届く距離（m）。跳ね返った後の道のりも含む
 
+        [InspectorLabel("ビームの判定の半径（m）")]
         [Tooltip("当たり判定の太さ（球の半径、m）。大きいほど、狙いが少しずれても当たる。0 なら太さのない線で判定する")]
         [SerializeField, Min(0.0f)] private float _beamRadius = 0.1f;      ///< 当たり判定の半径（m）
 
         [Header("見た目")]
-        [Tooltip("波の線（単発、ビーム、予測線）のマテリアル。空なら既定のマテリアルを使い、WaveType の Color で色を付ける\n" +
+        [InspectorLabel("線のマテリアル")]
+        [Tooltip("波の線（単発、ビーム、予測線）のマテリアル。空なら既定のマテリアルを使い、WaveType の「波の色」で色を付ける\n" +
                  "自分で用意するなら、頂点カラーを使うシェーダーにすると WaveType の色が付く（予測線を薄く見せるのにも、頂点カラーのアルファを使う）\n" +
                  "実行中に変えると単発にだけ反映され、ビームと予測線には反映されない")]
         [SerializeField] private Material _lineMaterial;                   ///< 波の線のマテリアル。空なら頂点カラーの既定のもの

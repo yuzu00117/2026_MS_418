@@ -1,3 +1,4 @@
+using Aura.Inspector;
 using UnityEngine;
 
 namespace Aura.ObjectInfo
@@ -7,17 +8,20 @@ namespace Aura.ObjectInfo
     [CreateAssetMenu(fileName = "SO_Substance_New", menuName = "Aura/Object Info/Substance Type")]
     public sealed class SubstanceType : ScriptableObject
     {
+        [InspectorLabel("画面に出す名前")]
         [Tooltip("画面（HUD など）に出す名前。空なら、このアセットのファイル名を使う")]
         [SerializeField] private string _displayName;                ///< 画面に出す名前。空ならアセットの名前
 
+        [InspectorLabel("当たった波の扱い")]
         [Tooltip("波（ビーム）が当たったときの扱い。波の種類によらず同じ\n" +
-                 "Absorb: 止める（コンクリート、吸音材など）\n" +
-                 "Reflect: 跳ね返す（鏡、金属など）")]
+                 "止める: 止める（コンクリート、吸音材など）\n" +
+                 "跳ね返す: 跳ね返す（鏡、金属など）")]
         [SerializeField] private SubstanceWaveResponse _waveResponse; ///< 波が当たったときの扱い
 
+        [InspectorLabel("エコーの扱い")]
         [Tooltip("エコーロケーションの扱い\n" +
-                 "Block: さえぎる。この物の向こうは見つけられない（壁など）\n" +
-                 "Pass Through: 通す。この物の向こうも見つけられる（ガラスなど）")]
+                 "さえぎる: さえぎる。この物の向こうは見つけられない（壁など）\n" +
+                 "通す: 通す。この物の向こうも見つけられる（ガラスなど）")]
         [SerializeField] private SubstanceEchoResponse _echoResponse; ///< エコーロケーションの扱い
 
         /// @brief 画面に出す名前

@@ -1,3 +1,4 @@
+using Aura.Inspector;
 using UnityEngine;
 
 namespace Aura.Wave
@@ -7,23 +8,29 @@ namespace Aura.Wave
     [CreateAssetMenu(fileName = "WaveType", menuName = "Aura/Wave/Wave Type")]
     public sealed class WaveType : ScriptableObject
     {
+        [InspectorLabel("画面に出す名前")]
         [Tooltip("画面（HUD など）に出す名前。空なら、このアセットのファイル名を使う")]
         [SerializeField] private string _displayName;                   ///< 画面に出す名前。空ならアセットの名前
 
+        [InspectorLabel("波の色")]
         [Tooltip("波の線の色。ビームは先へ行くほど半透明になる。アルファ（不透明度）も効く")]
         [SerializeField] private Color _color = Color.cyan;             ///< 波の見た目の色
 
         [Header("見た目（当たり判定には影響しない）")]
+        [InspectorLabel("見た目の波長（m）")]
         [Tooltip("見た目の波の、山から山までの長さ（m）。短いほど細かく揺れる。0.01 以上")]
         [SerializeField, Min(0.01f)] private float _wavelength = 0.5f;  ///< 見た目の波長（m）
 
+        [InspectorLabel("見た目の揺れ幅（m）")]
         [Tooltip("見た目の波の揺れ幅（m）。中心から片側までの幅。0 なら真っすぐな線になる")]
         [SerializeField, Min(0.0f)] private float _amplitude = 0.08f;   ///< 見た目の振幅（m）
 
+        [InspectorLabel("模様が流れる速さ（m/s）")]
         [Tooltip("見た目の波の模様が流れる速さ（m/s）。正なら先へ、負なら手元へ流れる。0 なら止まって見える\n" +
-                 "波そのものが飛ぶ速さは、WaveEmitter の Pulse Speed で決める")]
+                 "波そのものが飛ぶ速さは、WaveEmitter の「飛ぶ速さ（m/s）」で決める")]
         [SerializeField] private float _scrollSpeed = 6.0f;             ///< 見た目の波が流れる速さ（m/s）
 
+        [InspectorLabel("線の太さ（m）")]
         [Tooltip("波の線の太さ（m）")]
         [SerializeField, Min(0.001f)] private float _lineWidth = 0.04f; ///< 見た目の線の太さ（m）
 

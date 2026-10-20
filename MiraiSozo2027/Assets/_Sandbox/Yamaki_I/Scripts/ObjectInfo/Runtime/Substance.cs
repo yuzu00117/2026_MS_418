@@ -1,3 +1,4 @@
+using Aura.Inspector;
 using UnityEngine;
 
 namespace Aura.ObjectInfo
@@ -9,6 +10,7 @@ namespace Aura.ObjectInfo
     [DisallowMultipleComponent]
     public sealed class Substance : MonoBehaviour, IObjectInfo
     {
+        [InspectorLabel("素材の種類")]
         [Tooltip("素材の種類（SubstanceType のアセット）。金属、コンクリート、ガラスなど\n" +
                  "これで、波を跳ね返すか止めるかと、エコーをさえぎるか通すかが決まる\n" +
                  "この GameObject と子に効く。子にも Substance があれば、いちばん近いものが効く\n" +

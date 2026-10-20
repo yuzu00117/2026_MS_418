@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using Aura.Inspector;
 using Aura.ObjectInfo;
 using Aura.Wave;
 using UnityEngine;
@@ -19,6 +20,7 @@ namespace Aura.ObjectInfoDemo
         private const float TextWhiteBlend = 0.4f;   ///< 文字の色を、ビームの色から白へ寄せる割合
         private const string Separator = " → ";
 
+        [InspectorLabel("ビームを出す部品")]
         [Tooltip("状態（今のビーム、最後のビームが当たった物）を出す InfoBeamEmitter。照準の先も、これの視点から調べる\n" +
                  "空なら照準だけを出す")]
         [SerializeField] private InfoBeamEmitter _emitter;  ///< 状態を出す InfoBeamEmitter
@@ -72,6 +74,7 @@ namespace Aura.ObjectInfoDemo
         {
             _text.Clear();
             AppendSource(_emitter.CurrentSource);
+            AppendPoints();
             AppendLastHits();
             _text.Append('\n');
             AppendAimedObject();
@@ -95,6 +98,12 @@ namespace Aura.ObjectInfoDemo
                 .Append("届く距離 ").Append(source.Range.ToString("0.#")).Append("m   ")
                 .Append(source.IsBendable ? "念力で曲げられる" : "念力で曲げられない")
                 .Append('\n');
+        }
+
+        private void AppendPoints()
+        {
+            _text.Append("ビームの点: ").Append(_emitter.Points.Count).Append(" 個、間隔 ")
+                .Append(_emitter.PointSpacing.ToString("0.##")).Append("m、支点 ").Append(_emitter.AnchorCount).Append(" 個\n");
         }
 
         private void AppendLastHits()
@@ -161,7 +170,6 @@ namespace Aura.ObjectInfoDemo
             }
             _text.Append('\n');
             AppendSubstance(part);
-            AppendTelekinesis(part);
             AppendReaction(part);
             AppendWeakPoint(part);
             AppendConcealment(part);
@@ -179,25 +187,6 @@ namespace Aura.ObjectInfoDemo
             _text.Append(substanceType.DisplayName)
                 .Append(substanceType.IsWaveReflective ? "（波を跳ね返す・" : "（波を止める・")
                 .Append(substanceType.IsEchoBlocking ? "エコーをさえぎる）\n" : "エコーを通す）\n");
-        }
-
-        private void AppendTelekinesis(Component part)
-        {
-            _text.Append("  念力: ");
-            if (!ObjectInfoLookup.TryGet(part, out TelekinesisTarget target))
-            {
-                _text.Append("動かせない\n");
-                return;
-            }
-            WeightType weight = target.WeightType;
-            if (weight == null)
-            {
-                _text.Append("動かせる（重さは未設定）\n");
-                return;
-            }
-            _text.Append("動かせる（").Append(weight.DisplayName).Append(' ')
-                .Append(weight.Mass.ToString("0.##")).Append("kg、動かしやすさ ")
-                .Append(weight.Mobility.ToString("0.##")).Append("）\n");
         }
 
         private void AppendReaction(Component part)

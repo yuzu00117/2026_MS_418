@@ -1,0 +1,19 @@
+{
+    "name": "Aura.ObjectInfoDemo.Editor",
+    "rootNamespace": "Aura.ObjectInfoDemo.Editor",
+    "references": [
+        "Aura.ObjectInfoDemo",
+        "Aura.Inspector.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

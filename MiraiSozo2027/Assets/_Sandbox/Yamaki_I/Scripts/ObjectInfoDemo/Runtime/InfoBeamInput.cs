@@ -1,3 +1,4 @@
+using Aura.Inspector;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -7,18 +8,22 @@ namespace Aura.ObjectInfoDemo
     /// アクションをこの部品の中に持つので、プロジェクトの .inputactions に依存しない。キーは Inspector で変えられる
     public sealed class InfoBeamInput : MonoBehaviour
     {
+        [InspectorLabel("ビームを出す部品")]
         [Tooltip("操作する InfoBeamEmitter。空なら、同じ GameObject の InfoBeamEmitter を使う")]
         [SerializeField] private InfoBeamEmitter _emitter;  ///< 操作する InfoBeamEmitter。空なら同じ GameObject から探す
 
+        [InspectorLabel("ビームを出す操作")]
         [Tooltip("ビームを出すボタン。押している間ずっと出す\n" +
                  "既定: マウスの左ボタン、ゲームパッドの右トリガー")]
         [SerializeField] private InputAction _fireAction = CreateButton("Fire", "<Mouse>/leftButton", "<Gamepad>/rightTrigger");           ///< 出す
 
-        [Tooltip("次のビーム（InfoBeamEmitter の Sources の 1 つ下）に切り替えるボタン\n" +
+        [InspectorLabel("次のビームへ切り替える操作")]
+        [Tooltip("次のビーム（InfoBeamEmitter の「出せるビーム」の 1 つ下）に切り替えるボタン\n" +
                  "既定: E キー、ゲームパッドの RB")]
         [SerializeField] private InputAction _nextTypeAction = CreateButton("NextType", "<Keyboard>/e", "<Gamepad>/rightShoulder");        ///< 次のビーム
 
-        [Tooltip("前のビーム（InfoBeamEmitter の Sources の 1 つ上）に切り替えるボタン\n" +
+        [InspectorLabel("前のビームへ切り替える操作")]
+        [Tooltip("前のビーム（InfoBeamEmitter の「出せるビーム」の 1 つ上）に切り替えるボタン\n" +
                  "既定: Q キー、ゲームパッドの LB")]
         [SerializeField] private InputAction _previousTypeAction = CreateButton("PreviousType", "<Keyboard>/q", "<Gamepad>/leftShoulder"); ///< 前のビーム
 
