@@ -47,6 +47,8 @@ namespace Echo.Echolocation
         static readonly int TimingId = Shader.PropertyToID("_EchoEffectTiming");
         static readonly int MaskId = Shader.PropertyToID("_EchoObjectMask");
         static readonly int SceneId = Shader.PropertyToID("_EchoSceneColor");
+        static readonly int OriginalOcclusionId = Shader.PropertyToID("_EchoOriginalOcclusion");
+        static readonly int OutlineOcclusionId = Shader.PropertyToID("_EchoOutlineOcclusion");
         static readonly int OpacityId = Shader.PropertyToID("_EchoOriginalOpacity");
         static readonly int OutlineColorId = Shader.PropertyToID("_EchoOutlineColor");
         static readonly int OutlineWidthId = Shader.PropertyToID("_EchoOutlineWidth");
@@ -291,7 +293,7 @@ namespace Echo.Echolocation
                     {
                         ctx.cmd.SetGlobalTexture(HistoryId, d.Previous);
                         ctx.cmd.SetGlobalTexture(MaskId, d.Mask);
-                        ctx.cmd.SetGlobalFloat("_EchoOriginalOcclusion", d.Occlusion == EchoOcclusionMode.VisibleOnly ? 1 : 0);
+                        ctx.cmd.SetGlobalFloat(OriginalOcclusionId, d.Occlusion == EchoOcclusionMode.VisibleOnly ? 1 : 0);
                         ctx.cmd.SetGlobalTexture(SceneId, d.Scene);
                         ctx.cmd.SetGlobalFloat(OpacityId, d.Item.Rule.OriginalOpacity);
                         Blitter.BlitTexture(ctx.cmd, d.Source, new Vector4(1, 1, 0, 0), d.Material, 5);
@@ -320,7 +322,7 @@ namespace Echo.Echolocation
                     ctx.cmd.SetGlobalVector(SizeId, d.Size);
                     ctx.cmd.SetGlobalVector(OutlineColorId, c);
                     ctx.cmd.SetGlobalFloat(OutlineWidthId, d.Item.Rule.OutlineWidth);
-                    ctx.cmd.SetGlobalFloat("_EchoOutlineOcclusion", d.Occlusion == EchoOcclusionMode.VisibleOnly ? 1 : 0);
+                    ctx.cmd.SetGlobalFloat(OutlineOcclusionId, d.Occlusion == EchoOcclusionMode.VisibleOnly ? 1 : 0);
                     Blitter.BlitTexture(ctx.cmd, d.Source, new Vector4(1, 1, 0, 0), d.Material, 4);
                 });
             }

@@ -57,16 +57,12 @@ Controllerの無効化、タグ変更、設定解除時には元の参照を復�
 
 検証用テストは `EchoRenderingTests` と `EchoTagResolverTests` にあります。
 
-## チーム操作との連携
+## チーム操作
 
-チームの `PlayerController` が有効な間は、`EchoTeamInputIntegration` が試作用の `EchoPrototypeInput` と `EchoDemoPlayer` を実行時だけ停止します。シーンへの手動追加は不要です。エコーはチームの `Player/EchoScan`、移動・視点・ポーズもチーム側の操作を使います。キー割り当ては共有の `InputSystem_Actions.inputactions` で管理してください。
+操作は共有の `PlayerController` と `InputSystem_Actions.inputactions` に統一しています。試作用入力・移動・操作案内・旧プレイヤーPrefab・入力を停止する常駐連携処理は撤去しました。エコーは `Player/EchoScan` から `EchoController.ToggleScan()` を呼びます。チーム入力の初期化には `GameManager` が必要です。
 
-チームプレイヤーには `EchoController` が必要です。現在の共有 `Test_Player` には付いています。`GameManager` がないとチーム入力は初期化されません。チームプレイヤーがいない独立したデモでは従来のデモ操作を使えます。連携処理は共有InputActionを生成・Enable/Disableせず、デモのセットアップも共有のInput System Update Modeを変更しません。
+`Scene_EchoDemo` は `_Project/Scenes/TestScene` の `Test_Player`・`Main Camera`・`GameManager`（GameSettings付き）・`Canvas`・`EventSystem` を使用します。共有Prefabへの参照を維持し、エコーのタグ別表示・遮蔽・残存時間・範囲表示・FPS上限はシーンのOverrideとして保持しています。
 
-### Scene_EchoDemo のプレイヤー
+調整先はシーン内 `Test_Player` の `EchoController` です。個人の調整は共有PrefabにApplyせず、シーンのOverrideとして保存してください。Wで移動、EでエコーON/OFF、Escでポーズ／復帰します。
 
-`_Project/Scenes/TestScene` の `Test_Player`・`Main Camera`・`GameManager`（GameSettings付き）・`Canvas`・`EventSystem` を再現しています。共有プレイヤー／カメラPrefabへの参照を維持し、開始位置は従来のエコーシーンの位置です。旧デモプレイヤー・旧カメラ・試作用入力は配置していません。
-
-エコーのタグ別表示・遮蔽・残存時間・範囲表示・FPS上限設定は従来のエコーシーンから引き継いでいます。調整先はシーン内 `Test_Player` の `EchoController` です。共有PrefabにApplyせず、シーンのOverrideとして保存してください。
-
-操作確認：Wで移動、EでエコーON/OFF、Escでポーズ／復帰。`Tools/エコーロケーション/デモと描画設定を作成` など旧デモ生成メニューは、デモプレイヤーを再追加するためこのシーンには実行しないでください。
+旧デモ生成メニューは撤去しました。「移植先の初期設定」「Renderer Featureを設定」は描画設定用として残しています。

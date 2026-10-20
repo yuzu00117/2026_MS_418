@@ -7,14 +7,21 @@ namespace Echo.Echolocation.Editor
     [CustomPropertyDrawer(typeof(EchoTagColorRule))]
     public sealed class EchoTagColorRuleDrawer : PropertyDrawer
     {
+        private const int BaseLineCount = 4;
+        private const int FillLineCount = 2;
+        private const int OutlineLineCount = 4;
+        private const int OriginalLineCount = 4;
+        private const int ContactLineCount = 1;
+        private const float LineSpacing = 4;
+
         public override float GetPropertyHeight(SerializedProperty p, GUIContent l)
         {
-            int lines = 4;
-            if (p.FindPropertyRelative("_fillEnabled").boolValue) lines += 2;
-            if (p.FindPropertyRelative("_outlineEnabled").boolValue) lines += 4;
-            if (p.FindPropertyRelative("_originalEnabled").boolValue) lines += 4;
-            if (p.FindPropertyRelative("_originalEnabled").boolValue || p.FindPropertyRelative("_outlineEnabled").boolValue) lines++;
-            return lines * (EditorGUIUtility.singleLineHeight + 4);
+            int lines = BaseLineCount;
+            if (p.FindPropertyRelative("_fillEnabled").boolValue) lines += FillLineCount;
+            if (p.FindPropertyRelative("_outlineEnabled").boolValue) lines += OutlineLineCount;
+            if (p.FindPropertyRelative("_originalEnabled").boolValue) lines += OriginalLineCount;
+            if (p.FindPropertyRelative("_originalEnabled").boolValue || p.FindPropertyRelative("_outlineEnabled").boolValue) lines += ContactLineCount;
+            return lines * (EditorGUIUtility.singleLineHeight + LineSpacing);
         }
         public override void OnGUI(Rect rect, SerializedProperty p, GUIContent label)
         {
@@ -28,7 +35,7 @@ namespace Echo.Echolocation.Editor
                 tag.stringValue = value;
             void Field(string path, string title)
             {
-                rect.y += EditorGUIUtility.singleLineHeight + 4;
+                rect.y += EditorGUIUtility.singleLineHeight + LineSpacing;
                 EditorGUI.PropertyField(rect, p.FindPropertyRelative(path), new GUIContent(title), true);
             }
             Field("_fillEnabled", "表面を色で塗る");
