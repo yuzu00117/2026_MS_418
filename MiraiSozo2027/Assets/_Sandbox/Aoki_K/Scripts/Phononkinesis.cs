@@ -55,6 +55,7 @@ public class Phononkinesis : MonoBehaviour
     [Header("References")]
     [Tooltip("追従の基準となるカメラ（未アサイン時はメインカメラ）")]
     [SerializeField] private Transform _cameraTransform;
+    public Transform CameraTransform { get => _cameraTransform; set => _cameraTransform = value; }
     [Tooltip("プレイヤーの頭（三人称時の基準点）")]
     [SerializeField] private Transform _targetHeadTransform;
 
