@@ -12,7 +12,7 @@ namespace MiraiSozo.Options.Editor
     {
         public const string Root = "Assets/_Sandbox/Hirakawa_R";
         public const string ScenePath = Root + "/Scenes/OptionTestScene.unity";
-        public const string PrefabPath = "Assets/_Project/Prehubs/InGameOptions.prefab";
+        public const string PrefabPath = "Assets/_Project/Prefabs/InGameOptions.prefab";
 
         [MenuItem("Tools/Hirakawa R/Options/Setup OptionTestScene")]
         public static void Setup()

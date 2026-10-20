@@ -9,8 +9,8 @@ Canvas、ポーズメニュー、4タブのオプション、設定保存をま�
 ## ゲーム側の接続
 
 - **カメラ**：`Assets/_Sandbox/Hirakawa_R/Scripts/OptionCameraBehavior.cs` を使用し、Targetをプレイヤーへ設定します。感度と反転はこのコピー版へ反映します。視野角・明度はMainCameraの付いた透視投影カメラにも反映します。
-- **ゲーム入力**：`MiraiSozo.Options.OptionGameManager.Actions` を参照します。OptionGameManagerは必要な場合にPrefab内へ自動生成します。ポーズとキー変更はこの入力インスタンスへ反映します。
-- **ポーズ担当**：ESCを処理する既存のGameManagerとは併用せず、Scene内の該当コンポーネントを無効にしてコピー版に揃えます。既存のCSを編集する必要はありません。
+- **ゲーム入力**：`MiraiSozo.Options.OptionGameManager.Actions` を使用します。既存のGameManagerの入力とは独立しています。
+- **ポーズ担当**：OptionGameManagerはPrefab内へ自動生成します。既存GameManagerとの入力共有や自動無効化は行いません。既存の管理を使うSceneへの導入時の調整は別途必要です。
 - **音源**：AudioSourceに `MiraiSozo.Options.OptionAudioChannel` を付け、CategoryをSE / BGM / Voiceから選びます。
 - **画面揺れ**：カメラに `MiraiSozo.Options.OptionCameraShake` を付け、演出から `Play()` を呼びます。
 

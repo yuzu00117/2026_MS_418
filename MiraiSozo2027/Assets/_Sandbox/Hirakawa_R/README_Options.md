@@ -12,7 +12,7 @@ ESC（ゲームパッドでは Start）でメニューを開きます。
 
 | タブ | 内容 |
 | --- | --- |
-| システム | FPS：30 / 60 / 120 / 144 / 無制限、明度：露出 -2～+2 EV、視野角：40～100度 |
+| システム | FPS：30 / 60 / 120 / 144 / 無制限、明度：-2～+2、視野角：40～100度 |
 | カメラ | 横・縦感度：0.02～1.00、左右・上下反転、画面揺れ軽減：0～100%、揺れの試演 |
 | 音量 | マスター・SE・BGM・ボイス音量：0～100%、各カテゴリーのテスト音 |
 | 操作 | Input System によるキーボード・マウスボタンの変更。移動のWASD／矢印キーも個別変更可 |
@@ -24,7 +24,7 @@ ESC（ゲームパッドでは Start）でメニューを開きます。
 
 ## 他のゲームシーンへ配置する
 
-`Assets/_Project/Prehubs/InGameOptions.prefab` をSceneのHierarchy直下に置きます。Canvas・設定保存・メニュー処理をまとめたPrefabです。複数シーンで配置されても、実行時には1つを保持します。
+`Assets/_Project/Prefabs/InGameOptions.prefab` をSceneのHierarchy直下に置きます。Canvas・設定保存・メニュー処理をまとめたPrefabです。複数シーンで配置されても、実行時には1つを保持します。
 `OptionGameManager` がなければ自動生成し、`OptionGameManager.Actions` をこのSandboxのゲーム操作・キー変更の共通入力として使用します。
 ポーズ中は Player アクションマップと時間進行を止め、終了時に元の時間倍率・入力の有効状態・カーソル状態を復元します。
 
@@ -37,8 +37,8 @@ ESC（ゲームパッドでは Start）でメニューを開きます。
 | Aoki_K/Scripts/GameSettings.cs | Scripts/OptionGameSettings.cs |
 
 `OptionTestScene`のカメラとテストプレイヤーはコピー版を参照します。入力定義は既存の `InputSystem_Actions` を読み取り利用し、オプション専用のインスタンスを生成します。
-別のシーンへ導入する際も、カメラ・ゲーム管理・プレイヤー入力の参照をコピー版に揃えてください。元のGameManagerを使うシーンへPrefabを追加するだけでは、別々の入力・ポーズ処理が動作します。
-ESCによるポーズ処理の担当は1つに揃えます。既存のGameManagerが同じESCを処理する場合は、そのScene内でコンポーネントを無効にしてコピー版へ接続します。元のスクリプトの編集は不要です。
+既存の `GameManager` とは入力・ポーズ処理が独立しており、入力の共有やコンポーネントの自動無効化は行いません。既存の管理を使うSceneへの導入時の調整は、別途行う必要があります。
+カメラ感度・反転は `OptionCameraBehavior` を使用するカメラに反映します。
 
 共通Prefabではテスト用HUDは非表示です。EventSystemがあるSceneでは既存のものを使い、ないSceneでは自動生成します。Scene移動時はメニューを閉じ、移動先のEventSystemへ切り替えます。PrefabのGUIDを保持して移動したため、OptionTestSceneの参照も同じPrefabを使用します。
 

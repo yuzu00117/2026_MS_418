@@ -194,6 +194,7 @@ namespace MiraiSozo.Options
             _pause.SetActive(true);
             _settings.SetActive(false);
             _confirmation.SetActive(false);
+            SetDialogInteraction(true);
             View<Text>("Pause Status").text = "ESC  ゲームに戻る";
             Focus("Open Options");
         }
@@ -244,6 +245,10 @@ namespace MiraiSozo.Options
             if (!IsOpen) return;
             CancelRebind();
             StopPreviews();
+            _confirmation.SetActive(false);
+            SetDialogInteraction(true);
+            _confirmAction = null;
+            _confirmationOrigin = null;
             _options.Save();
             _overlay.SetActive(false);
             View("Test HUD").gameObject.SetActive(_showTestHud);
@@ -256,7 +261,7 @@ namespace MiraiSozo.Options
             if (_options == null) return;
             var v = _options.Values;
             View<Text>("FPS Value").text = v.frameRate < 0 ? "無制限" : v.frameRate + " FPS";
-            SetSlider("Brightness", v.brightness, v.brightness.ToString("+0.0;-0.0;0.0") + " EV");
+            SetSlider("Brightness", v.brightness, v.brightness.ToString("+0.0;-0.0;0.0"));
             SetSlider("FOV", v.fieldOfView, Mathf.RoundToInt(v.fieldOfView) + "°");
             SetSlider("Sensitivity X", v.sensitivityX, v.sensitivityX.ToString("0.00"));
             SetSlider("Sensitivity Y", v.sensitivityY, v.sensitivityY.ToString("0.00"));

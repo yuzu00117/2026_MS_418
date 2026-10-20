@@ -57,13 +57,21 @@ namespace MiraiSozo.Options.Editor
             Checks.Clear();
             Backup(GameOptions.SettingsKey);
             Backup(GameOptions.BindingsKey);
-            PlayerPrefs.DeleteKey(GameOptions.SettingsKey);
-            PlayerPrefs.DeleteKey(GameOptions.BindingsKey);
-            PlayerPrefs.Save();
-            SessionState.SetBool(Pending, true);
-            SessionState.SetBool(Success, false);
-            Directory.CreateDirectory(Output);
-            EditorApplication.isPlaying = true;
+            try
+            {
+                PlayerPrefs.DeleteKey(GameOptions.SettingsKey);
+                PlayerPrefs.DeleteKey(GameOptions.BindingsKey);
+                PlayerPrefs.Save();
+                SessionState.SetBool(Pending, true);
+                SessionState.SetBool(Success, false);
+                Directory.CreateDirectory(Output);
+                EditorApplication.isPlaying = true;
+            }
+            catch
+            {
+                RestorePlayerPrefs();
+                throw;
+            }
         }
 
         private static void Backup(string key)
@@ -81,16 +89,21 @@ namespace MiraiSozo.Options.Editor
         private static void OnPlayModeChanged(PlayModeStateChange change)
         {
             if (change != PlayModeStateChange.EnteredEditMode || !SessionState.GetBool(Pending, false)) return;
-            Restore(GameOptions.SettingsKey);
-            Restore(GameOptions.BindingsKey);
-            PlayerPrefs.Save();
-            SessionState.SetBool(Pending, false);
+            RestorePlayerPrefs();
             var fixturePath = SessionState.GetString(FixtureKey, "");
             if (fixturePath.StartsWith(OptionSceneSetup.Root + "/Scenes/OptionPrefabValidation_", StringComparison.Ordinal))
                 AssetDatabase.DeleteAsset(fixturePath);
             SessionState.EraseString(FixtureKey);
             bool success = SessionState.GetBool(Success, false);
             if (Application.isBatchMode) EditorApplication.Exit(success ? 0 : 1);
+        }
+
+        private static void RestorePlayerPrefs()
+        {
+            Restore(GameOptions.SettingsKey);
+            Restore(GameOptions.BindingsKey);
+            PlayerPrefs.Save();
+            SessionState.SetBool(Pending, false);
         }
 
         private static void Tick()
@@ -236,6 +249,10 @@ namespace MiraiSozo.Options.Editor
                         Assert(All<Transform>("Confirmation").gameObject.activeInHierarchy, "終了ボタンは確認画面を表示");
                         All<Button>("Confirm Cancel").onClick.Invoke();
                         Assert(!All<Transform>("Confirmation").gameObject.activeSelf && menu.IsOpen, "終了キャンセルでゲームを保持");
+                        All<Button>("Quit").onClick.Invoke();
+                        menu.CloseMenu();
+                        menu.OpenMenu();
+                        Assert(!All<Transform>("Confirmation").gameObject.activeSelf && All<Button>("Open Options").IsInteractable(), "確認画面の途中で閉じても次回のメニューを操作できる");
                         Capture(Output + "/pause-menu.png");
                         Next(0.5);
                         break;
@@ -288,6 +305,9 @@ namespace MiraiSozo.Options.Editor
                     case 16:
                         Assert(menu.IsOpen && Time.timeScale == 0f, "移動先でもESCメニューが機能");
                         Queue();
+                        menu.OpenOptions();
+                        All<Button>("Reset Tab").onClick.Invoke();
+                        Assert(All<Transform>("Confirmation").gameObject.activeSelf, "確認画面を開いた状態でScene移動を開始");
                         LoadFixture();
                         Next(0.5);
                         break;
@@ -295,6 +315,9 @@ namespace MiraiSozo.Options.Editor
                         Assert(!menu.IsOpen && !OptionGameManager.Instance.IsPaused && Mathf.Approximately(Time.timeScale, 1f), "メニュー表示中のScene移動でポーズを解除");
                         Assert(UnityEngine.Object.FindObjectsByType<EventSystem>().Length == 1 && !EventSystem.current.transform.IsChildOf(menu.transform), "再移動先のEventSystemに切り替えて重複を防止");
                         Assert(menu.gameObject == _portableRoot && UnityEngine.Object.FindObjectsByType<InGameOptionMenu>().Length == 1, "往復後もPrefabを1つだけ保持");
+                        menu.OpenMenu();
+                        Assert(!All<Transform>("Confirmation").gameObject.activeSelf && All<Button>("Open Options").IsInteractable(), "確認画面からScene移動しても次回のメニューを操作できる");
+                        menu.CloseMenu();
                         Finish(true, "OPTION_PLAY_CHECKS_OK");
                         break;
                 }
@@ -395,17 +418,28 @@ namespace MiraiSozo.Options.Editor
         private static void Finish(bool success, string message)
         {
             _finishing = true;
-            SessionState.SetBool(Success, success);
-            InputSystem.onBeforeUpdate -= FeedKeys;
-            if (_keyboard != null) InputSystem.RemoveDevice(_keyboard);
-            InputSystem.settings.backgroundBehavior = _previousBackground;
-            InputSystem.settings.editorInputBehaviorInPlayMode = _previousEditorInput;
-            Checks.Add(message);
-            Directory.CreateDirectory(Output);
-            File.WriteAllLines(Output + "/PlayChecks.txt", Checks);
-            if (success) Debug.Log(message + " (" + Checks.Count + " checks)");
-            else Debug.LogError(message);
-            EditorApplication.isPlaying = false;
+            try
+            {
+                SessionState.SetBool(Success, success);
+                InputSystem.onBeforeUpdate -= FeedKeys;
+                if (_keyboard != null) InputSystem.RemoveDevice(_keyboard);
+                InputSystem.settings.backgroundBehavior = _previousBackground;
+                InputSystem.settings.editorInputBehaviorInPlayMode = _previousEditorInput;
+                Checks.Add(message);
+                Directory.CreateDirectory(Output);
+                File.WriteAllLines(Output + "/PlayChecks.txt", Checks);
+                if (success) Debug.Log(message + " (" + Checks.Count + " checks)");
+                else Debug.LogError(message);
+            }
+            catch (Exception e)
+            {
+                SessionState.SetBool(Success, false);
+                Debug.LogError("オプション検証の終了処理に失敗しました: " + e);
+            }
+            finally
+            {
+                EditorApplication.isPlaying = false;
+            }
         }
     }
 }
