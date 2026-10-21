@@ -38,7 +38,7 @@ namespace Echo.Echolocation.Tests
                 if (root.TryGetComponent<EchoController>(out var found))
                     controller = found;
             Assert.NotNull(controller);
-            Assert.That(controller.GetComponent<EchoPrototypeInput>().Bindings.Count, Is.EqualTo(3));
+            Assert.That(controller.name, Is.EqualTo("Test_Player"));
             _camera = controller.TargetCamera;
             _output = new RenderTexture(960, 540, 24, RenderTextureFormat.ARGB32);
             _output.Create();

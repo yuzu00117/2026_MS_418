@@ -36,6 +36,7 @@ namespace Echo.Echolocation
             public Material Material;
             public Vector4 Size, Timing;
             public EchoRenderItem Item;
+            public EchoOcclusionMode Occlusion;
             public RendererListHandle[] RendererLists;
         }
 
@@ -46,6 +47,8 @@ namespace Echo.Echolocation
         static readonly int TimingId = Shader.PropertyToID("_EchoEffectTiming");
         static readonly int MaskId = Shader.PropertyToID("_EchoObjectMask");
         static readonly int SceneId = Shader.PropertyToID("_EchoSceneColor");
+        static readonly int OriginalOcclusionId = Shader.PropertyToID("_EchoOriginalOcclusion");
+        static readonly int OutlineOcclusionId = Shader.PropertyToID("_EchoOutlineOcclusion");
         static readonly int OpacityId = Shader.PropertyToID("_EchoOriginalOpacity");
         static readonly int OutlineColorId = Shader.PropertyToID("_EchoOutlineColor");
         static readonly int OutlineWidthId = Shader.PropertyToID("_EchoOutlineWidth");
@@ -110,7 +113,8 @@ namespace Echo.Echolocation
                 data.Item = item;
                 data.Items = items;
                 data.Material = backend.Highlight;
-                data.Occlusion = controller.Settings.OcclusionMode;
+                // Rは全体、Bはカメラ深度で見える部分。各機能が合成時に独立して選ぶ。
+                data.Occlusion = EchoOcclusionMode.VisibleOnly;
                 if (shadows.IsValid()) builder.UseTexture(shadows, AccessFlags.Read);
                 if (resources.cameraDepthTexture.IsValid()) builder.UseTexture(resources.cameraDepthTexture, AccessFlags.Read);
                 builder.SetRenderAttachment(mask, 0, AccessFlags.Write);
@@ -275,6 +279,7 @@ namespace Echo.Echolocation
                     data.Source = original;
                     data.Scene = scene;
                     data.Mask = mask;
+                    data.Occlusion = EchoTagColorRule.ResolveOcclusion(rule.OriginalOcclusion, controller.Settings.OcclusionMode);
                     data.Previous = current;
                     data.Material = backend.Composite;
                     data.Item = item;
@@ -288,6 +293,7 @@ namespace Echo.Echolocation
                     {
                         ctx.cmd.SetGlobalTexture(HistoryId, d.Previous);
                         ctx.cmd.SetGlobalTexture(MaskId, d.Mask);
+                        ctx.cmd.SetGlobalFloat(OriginalOcclusionId, d.Occlusion == EchoOcclusionMode.VisibleOnly ? 1 : 0);
                         ctx.cmd.SetGlobalTexture(SceneId, d.Scene);
                         ctx.cmd.SetGlobalFloat(OpacityId, d.Item.Rule.OriginalOpacity);
                         Blitter.BlitTexture(ctx.cmd, d.Source, new Vector4(1, 1, 0, 0), d.Material, 5);
@@ -303,6 +309,7 @@ namespace Echo.Echolocation
                 data.Material = backend.Composite;
                 data.Item = item;
                 data.Size = new Vector4(desc.width, desc.height, 1f / desc.width, 1f / desc.height);
+                data.Occlusion = EchoTagColorRule.ResolveOcclusion(rule.OutlineOcclusion, controller.Settings.OcclusionMode);
                 builder.UseTexture(mask, AccessFlags.Read);
                 builder.UseTexture(current, AccessFlags.Read);
                 builder.SetRenderAttachment(accumulated, 0, AccessFlags.ReadWrite);
@@ -315,6 +322,7 @@ namespace Echo.Echolocation
                     ctx.cmd.SetGlobalVector(SizeId, d.Size);
                     ctx.cmd.SetGlobalVector(OutlineColorId, c);
                     ctx.cmd.SetGlobalFloat(OutlineWidthId, d.Item.Rule.OutlineWidth);
+                    ctx.cmd.SetGlobalFloat(OutlineOcclusionId, d.Occlusion == EchoOcclusionMode.VisibleOnly ? 1 : 0);
                     Blitter.BlitTexture(ctx.cmd, d.Source, new Vector4(1, 1, 0, 0), d.Material, 4);
                 });
             }

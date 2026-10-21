@@ -29,6 +29,16 @@ namespace Echo.Echolocation
         [SerializeField, Tooltip("従来の、波が届いた表面の色塗りです。")]
         private bool _fillEnabled = true;
         public bool FillEnabled { get => _fillEnabled; set => _fillEnabled = value; }
+        [SerializeField] private EchoEffectOcclusionMode _fillOcclusion;
+        public EchoEffectOcclusionMode FillOcclusion { get => _fillOcclusion; set => _fillOcclusion = value; }
+        [SerializeField] private EchoEffectOcclusionMode _outlineOcclusion;
+        public EchoEffectOcclusionMode OutlineOcclusion { get => _outlineOcclusion; set => _outlineOcclusion = value; }
+        [SerializeField] private EchoEffectOcclusionMode _originalOcclusion;
+        public EchoEffectOcclusionMode OriginalOcclusion { get => _originalOcclusion; set => _originalOcclusion = value; }
+
+        public static EchoOcclusionMode ResolveOcclusion(EchoEffectOcclusionMode mode, EchoOcclusionMode common) =>
+            mode == EchoEffectOcclusionMode.ThroughWalls ? EchoOcclusionMode.ThroughWalls :
+            mode == EchoEffectOcclusionMode.VisibleOnly ? EchoOcclusionMode.VisibleOnly : common;
         [SerializeField] private bool _outlineEnabled;
         public bool OutlineEnabled { get => _outlineEnabled; set => _outlineEnabled = value; }
         [SerializeField] private Color _outlineColor = Color.cyan;

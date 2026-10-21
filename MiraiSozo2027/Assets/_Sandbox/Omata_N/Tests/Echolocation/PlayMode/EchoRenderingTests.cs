@@ -111,6 +111,70 @@ namespace Echo.Echolocation.Tests
         }
 
         [UnityTest]
+        public IEnumerator EachEffectChoosesWallVisibilityIndependently()
+        {
+            CreateShadowWall(new Vector3(0, 0, 2.5f), new Vector3(20, 20, .2f));
+            _controller.Settings.Shadow.IsEnabled = false;
+            // 壁はカメラだけを遮る。エコーの遮断設定とは独立に検証する。
+            var red = new Material(_mat);
+            red.SetColor("_BaseColor", Color.red);
+            _target.GetComponent<Renderer>().sharedMaterial = red;
+            try
+            {
+                var rule = _controller.Settings.TagColorRules[0];
+                rule.FillEnabled = false;
+                rule.OutlineEnabled = true;
+                rule.OutlineColor = Color.green;
+                rule.OriginalEnabled = true;
+                rule.OutlineOcclusion = EchoEffectOcclusionMode.ThroughWalls;
+                rule.OriginalOcclusion = EchoEffectOcclusionMode.VisibleOnly;
+                _controller.Settings.OcclusionMode = EchoOcclusionMode.VisibleOnly;
+                _controller.SetScanEnabled(true);
+                yield return null;
+                yield return null;
+                yield return null;
+                var image = Read();
+                Assert.That(image.GetPixel(128, 128).r, Is.LessThan(.7f), "元マテリアルは壁で隠す");
+                int green = 0;
+                foreach (var c in image.GetPixels32()) if (c.g > 180 && c.r < 80) green++;
+                Object.Destroy(image);
+                Assert.That(green, Is.GreaterThan(100), "輪郭のみ壁越しに表示");
+
+                rule.OutlineOcclusion = EchoEffectOcclusionMode.VisibleOnly;
+                rule.OriginalOcclusion = EchoEffectOcclusionMode.ThroughWalls;
+                yield return null;
+                yield return null;
+                image = Read();
+                Assert.That(image.GetPixel(128, 128).r, Is.GreaterThan(.9f), "元マテリアルのみ壁越しに表示");
+                green = 0;
+                foreach (var c in image.GetPixels32()) if (c.g > 180 && c.r < 80) green++;
+                Object.Destroy(image);
+                Assert.That(green, Is.Zero, "輪郭は壁で隠す");
+
+                rule.OriginalOcclusion = EchoEffectOcclusionMode.VisibleOnly;
+                rule.FillEnabled = true;
+                rule.FillOcclusion = EchoEffectOcclusionMode.ThroughWalls;
+                yield return null;
+                yield return null;
+                image = Read();
+                Assert.That(image.GetPixel(128, 128).g, Is.GreaterThan(.9f), "塗りだけ壁越しに表示");
+                Object.Destroy(image);
+                _controller.Settings.OcclusionMode = EchoOcclusionMode.ThroughWalls;
+                rule.FillOcclusion = EchoEffectOcclusionMode.VisibleOnly;
+                yield return null;
+                yield return null;
+                image = Read();
+                Assert.That(image.GetPixel(128, 128).g, Is.LessThan(.7f), "共通設定が壁越しでも機能別設定を優先");
+                Object.Destroy(image);
+            }
+            finally
+            {
+                _controller.enabled = false;
+                Object.Destroy(red);
+            }
+        }
+
+        [UnityTest]
         public IEnumerator FullyBlockedObjectNeverActivatesWholeOutline()
         {
             var rule = _controller.Settings.TagColorRules[0];

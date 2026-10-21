@@ -70,7 +70,7 @@ namespace Echo.Echolocation
                 using (var builder = graph.AddRasterRenderPass<EchoHighlightDrawData>("Echo.Draw", out EchoHighlightDrawData data))
                 {
                     data.Waves.Capture(controller);
-                    data.Occlusion = controller.Settings.OcclusionMode;
+                    data.Occlusion = EchoTagColorRule.ResolveOcclusion(item.Rule.FillOcclusion, controller.Settings.OcclusionMode);
                     data.Item = item;
                     data.Material = _backend.Highlight;
                     data.Waves.Shadows = paths;
