@@ -5,6 +5,10 @@ reviews:
     enabled: true
     base_branches: ["^develop$", "^main$"]
   high_level_summary: true
+  profile: "chill"
+  poem: false
+  sequence_diagrams: false
+  request_changes_workflow: false
   path_filters:
     - "!**/*.meta"                       # prefab/sceneの追加はその本体ファイルで検出できる
     - "!**/Library/**"
@@ -23,9 +27,22 @@ reviews:
         - 1ファイル1クラスで、ファイル名とクラス名を一致させる。メソッドは目安30行以内。シングルトンは最小限にする。
         - コメントは「何をしているか」ではなく「なぜそうするか」を書く。
         - docs/CONTRIBUTING.md も参照し、1コミット1目的、.meta は必ずコミットする、Library/Temp/Logs/obj/UserSettings はコミットしない、を確認する。
+        汎用的なバグ指摘よりも、docs/coding-rules.md の規約違反の指摘を優先し、違反箇所にはどの規約(章)に反するかを明記してください。
     - path: "**"
       instructions: |
         docs/CONTRIBUTING.md を参照して、次の点を確認してください(ルールの詳細は同ファイルを参照)。
         - PRタイトルが `<種別>: <要約>` の形式であること(種別は feat/fix/docs/style/refactor/chore、要約は日本語)。
         - マージ先が develop であること(develop から main へのPRは対象外)。
         - PRテンプレートの「動作確認」が埋められていること。
+        - アセットは種類の接頭辞(PF_/M_/T_/AC_/AN_/SO_/SE_/BGM_/Scene_)が付いていること。
+        - Misc フォルダを作成していないこと。
+        - _Sandbox/_Template に個人の作業物を置いていないこと。
+        - 他メンバーの個人フォルダ(_Sandbox/<名前>/)や共有アセット・シーン・Prefabを無断で変更していないこと。
+        - APIキー等の秘匿情報をコミットしていないこと。
+        - 外部素材を追加した場合は CREDITS.md に出典・ライセンスが記録されていること。
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "docs/coding-rules.md"
+      - "docs/CONTRIBUTING.md"
