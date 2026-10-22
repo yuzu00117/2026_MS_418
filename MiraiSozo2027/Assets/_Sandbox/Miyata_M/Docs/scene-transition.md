@@ -17,7 +17,7 @@ Title / StageSelect / Game の間の遷移を、`SceneTransition.Go(SceneReferen
 
 ## 構成
 ```
-SceneTransitionButton ─▶ SceneTransition.Go(scene)      4001: 検証・二重遷移防止・前後通知
+SceneTransitionButton / SceneTransitionTrigger ─▶ SceneTransition.Go(scene)      4001: 検証・二重遷移防止・前後通知
                                 │  ISceneLoader(窓口)
                                 ▼
                          SceneLoader(方式C)               2006: フェード・ロード画面・読み込み
@@ -45,6 +45,7 @@ ISceneLoader.Load(path, onLoaded)
 | 項目 | 決定 |
 |---|---|
 | 呼び出し | `SceneTransition.Go(sceneReference)`(static、どこからでも)。ボタンは `SceneTransitionButton` に遷移先をドラッグ |
+| ボタン以外 | クリア判定などのイベントからは `SceneTransitionTrigger` の `Go()` を UnityEvent に接続、またはコードで `SceneTransition.Go` を呼ぶ |
 | 読み込み方式 | Single(Additive は未対応。2006 の結論待ち) |
 | ロード画面 | 遷移に必ず挟む。2006 の方式C(`SceneLoader`)を `ISceneLoader` 経由で使う |
 | 常駐 | `SceneTransition` は static(常駐物なし)。ロード画面の常駐は `SceneLoader.prefab`(2006 側)が担当 |

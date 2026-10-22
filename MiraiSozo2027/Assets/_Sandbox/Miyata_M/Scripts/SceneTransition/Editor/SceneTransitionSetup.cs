@@ -73,8 +73,18 @@ namespace SceneFlow.EditorTools
                 AssignScene(new SerializedObject(comp), "_target", ScenePath(target));
                 y -= 130f;
             }
+            // ボタン以外(クリア判定などのイベント)から遷移する例。Game から Title へ戻る
+            if (name == GameName) AddTrigger("ClearTrigger", TitleName);
+
             CreateEventSystem(); // ロード画面の prefab 側には EventSystem を持たせない
             EditorSceneManager.SaveScene(scene, ScenePath(name));
+        }
+
+        private static void AddTrigger(string objectName, string targetScene)
+        {
+            var go = new GameObject(objectName);
+            var trigger = go.AddComponent<SceneTransitionTrigger>();
+            AssignScene(new SerializedObject(trigger), "_target", ScenePath(targetScene));
         }
 
         // SceneReference の各フィールドを設定する(Inspector でシーンをドラッグした状態と同じにする)

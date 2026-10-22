@@ -103,10 +103,19 @@ namespace SceneFlow.EditorTools
             }
         }
 
-        // 現在のシーンから目的のシーンへ遷移するボタンを探し、実際に押す
+        // 現在のシーンから目的のシーンへ遷移する要素を探して実行する。
+        // SceneTransitionTrigger(イベント用)があればそれを優先し、無ければボタンを実際に押す
         private static void RequestClick(string targetScene, bool alsoDouble)
         {
             ResetDeadline();
+            foreach (var t in Object.FindObjectsByType<SceneTransitionTrigger>())
+            {
+                if (t.Target.SceneName != targetScene) continue;
+                Debug.Log(Tag + $"{targetScene} へ Trigger で遷移");
+                t.Go();
+                if (alsoDouble) t.Go();
+                return;
+            }
             foreach (var b in Object.FindObjectsByType<SceneTransitionButton>())
             {
                 if (b.Target.SceneName != targetScene) continue;
@@ -115,7 +124,7 @@ namespace SceneFlow.EditorTools
                 if (alsoDouble) button.onClick.Invoke(); // 二重遷移が無視されること(通知が増えない)を確認する
                 return;
             }
-            Finish(false, $"{targetScene} へのボタンが見つからない");
+            Finish(false, $"{targetScene} への遷移要素が見つからない");
         }
 
         private static void ResetDeadline()
