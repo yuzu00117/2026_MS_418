@@ -78,7 +78,11 @@ namespace SceneFlow.EditorTools
                     SceneTransition.OnBeforeTransition += _ => _beforeCount++;
                     SceneTransition.OnAfterTransition += _ => _afterCount++;
                     _testKeyboard = InputSystem.AddDevice<Keyboard>("STVerifyKeyboard");
-                    SceneTransition.OnAfterTransition += _ => _blockedDuringTransition |= !_testKeyboard.enabled;
+                    SceneTransition.OnAfterTransition += _ =>
+                    {
+                        if (!_testKeyboard.added) return; // 抜いた後は判定しない
+                        _blockedDuringTransition |= !_testKeyboard.enabled;
+                    };
                     // 遷移中(OnAfterTransition はまだ入力停止中)にデバイスを新たに接続し、止まることを確認する
                     SceneTransition.OnAfterTransition += _ =>
                     {
@@ -95,6 +99,11 @@ namespace SceneFlow.EditorTools
                         Finish(false, "遷移先が未指定でも遷移が始まった");
                         return;
                     }
+                    // 遷移中(入力停止中)にデバイスを抜く。判定用の購読より後に登録し、抜く前の状態を先に見せる
+                    SceneTransition.OnAfterTransition += _ =>
+                    {
+                        if (_testKeyboard.added) InputSystem.RemoveDevice(_testKeyboard);
+                    };
                     RequestClick(Sequence[_index], true);
                     SessionState.SetInt(KeyStage, 2);
                     break;
@@ -127,9 +136,21 @@ namespace SceneFlow.EditorTools
                         Finish(false, "遷移中に接続されたデバイスが止まっていない");
                         return;
                     }
-                    if (!_testKeyboard.enabled || !_lateKeyboard.enabled)
+                    if (!_lateKeyboard.enabled)
                     {
                         Finish(false, "遷移完了後にキーボード入力が戻っていない");
+                        return;
+                    }
+                    // 遷移中に抜かれたデバイスは、完了後に再接続された時点で有効に戻ること
+                    if (_testKeyboard.added)
+                    {
+                        Finish(false, "遷移中に抜いたデバイスが残っている");
+                        return;
+                    }
+                    InputSystem.AddDevice(_testKeyboard);
+                    if (!_testKeyboard.enabled)
+                    {
+                        Finish(false, "遷移中に抜かれたデバイスが、再接続後も無効のまま");
                         return;
                     }
                     InputSystem.RemoveDevice(_testKeyboard);

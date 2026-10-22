@@ -106,6 +106,7 @@ private void OnDisable()
 - 止めたくない場合は `SceneTransition.BlockInputDuringTransition = false;`(遷移の前に設定する)。
 - 仕組みは `TransitionInputBlocker`(Input System のデバイスを無効化・復帰)。Input System を使わない入力(旧 Input Manager)は止まらない。
 - 遷移中に接続・再接続されたデバイスも、接続の通知(`InputSystem.onDeviceChange`)を受けてその場で止め、完了時に戻す。
+- 遷移中に抜かれたデバイス: 抜かれている間は戻せない(Input System は、抜かれたデバイスへの有効化で例外を出し、無効にしたデバイスは再接続後も無効のまま)。保留にして、再接続された時点で有効に戻す。
 
 ### 注意
 - 遷移中の再呼び出し、遷移先の未指定、Build Settings 未登録のときは、警告を出して何もしない。
