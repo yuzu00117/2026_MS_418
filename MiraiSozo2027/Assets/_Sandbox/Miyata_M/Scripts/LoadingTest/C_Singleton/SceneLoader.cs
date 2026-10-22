@@ -62,13 +62,13 @@ namespace LoadingTest.C
         // ISceneLoader: static の Load と同名のため明示実装にする
         bool ISceneLoader.IsLoading => _isLoading;
 
-        void ISceneLoader.Load(string scenePath, Action onLoaded)
+        void ISceneLoader.Load(string scenePath, Action onLoaded, Action onCompleted)
         {
             if (_isLoading) return;
-            StartCoroutine(LoadRoutine(scenePath, onLoaded));
+            StartCoroutine(LoadRoutine(scenePath, onLoaded, onCompleted));
         }
 
-        private IEnumerator LoadRoutine(string sceneName, Action onLoaded)
+        private IEnumerator LoadRoutine(string sceneName, Action onLoaded, Action onCompleted = null)
         {
             _isLoading = true;
             yield return Fade(0f, 1f);
@@ -98,6 +98,7 @@ namespace LoadingTest.C
 
             yield return Fade(1f, 0f);
             _isLoading = false;
+            onCompleted?.Invoke();
         }
 
         private IEnumerator Fade(float from, float to)

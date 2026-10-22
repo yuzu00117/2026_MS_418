@@ -33,6 +33,8 @@ Go(sceneReference)
   ▼
 OnBeforeTransition(scene) 通知
   ▼
+入力デバイスを無効化
+  ▼
 ISceneLoader.Load(path, onLoaded)
   ├ ロード画面フェードイン(入力を遮断)
   ├ LoadSceneAsync(Single) ─ バーを進捗に追従(最低 _minDisplayTime 秒)
@@ -98,6 +100,13 @@ private void OnDisable()
 4. `Scene_Game` では「クリアまで N 秒」が減り、0 になると自動でタイトルへ戻る(`CountdownEvent` → `SceneTransitionTrigger.Go` の接続例)。
 5. 自動確認はバッチで `-executeMethod SceneFlow.EditorTools.SceneTransitionVerify.Run`(`-quit` は付けない)。終了コード 0 なら OK。
 
+### 遷移中の入力停止
+- 既定で、遷移の開始からロード画面が消えるまで、キーボード・マウス・パッドなどの Input System のデバイスを無効化する。
+- 戻すタイミング: 遷移の完了、ローダーの破棄、アプリ(Play)の終了のいずれでも必ず戻す。
+- 止めたくない場合は `SceneTransition.BlockInputDuringTransition = false;`(遷移の前に設定する)。
+- 仕組みは `TransitionInputBlocker`(Input System のデバイスを無効化・復帰)。Input System を使わない入力(旧 Input Manager)は止まらない。
+- 遷移中に接続されたデバイスは止めない。
+
 ### 注意
 - 遷移中の再呼び出し、遷移先の未指定、Build Settings 未登録のときは、警告を出して何もしない。
 - ロード画面が無い環境では「ISceneLoader が登録されていません」と警告が出て、遷移しない。
@@ -111,14 +120,15 @@ private void OnDisable()
 | 読み込み方式 | Single(Additive は未対応。2006 の結論待ち) |
 | ロード画面 | 遷移に必ず挟む。2006 の方式C(`SceneLoader`)を `ISceneLoader` 経由で使う |
 | 常駐 | `SceneTransition` は static(常駐物なし)。ロード画面の常駐は `SceneLoader.prefab`(2006 側)が担当 |
-| 入力 | 遷移中はロード画面の Canvas が入力を遮断。二重遷移は無視 |
+| 入力 | 遷移中は、UI はロード画面の Canvas が遮断し、キーボード・マウス・パッドはデバイス単位で無効化する(完了時に必ず戻す)。二重遷移は無視 |
 | フック | `OnBeforeTransition` / `OnAfterTransition`(引数 `SceneReference`) |
 | 調整値 | フェード時間・最低表示時間は `SceneLoader` の Inspector |
 
 ## ファイル構成(`Scripts/SceneTransition/`)
 | 場所 | ファイル | 役割 |
 |---|---|---|
-| 本体 | `SceneTransition` | 遷移の窓口(static)。検証・二重遷移防止・前後通知 |
+| 本体 | `SceneTransition` | 遷移の窓口(static)。検証・二重遷移防止・前後通知・入力停止 |
+| 本体 | `TransitionInputBlocker` | 遷移中の入力デバイスの無効化と復帰 |
 | 本体 | `ISceneLoader` | ロード画面側が満たす窓口 |
 | 本体 | `SceneReference` | シーンのドラッグ指定用の参照型 |
 | 本体 | `SceneTransitionButton` / `SceneTransitionTrigger` | ボタン / UnityEvent から遷移する部品 |

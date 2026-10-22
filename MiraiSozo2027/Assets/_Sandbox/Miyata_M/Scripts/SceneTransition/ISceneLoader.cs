@@ -14,7 +14,8 @@ namespace SceneFlow
         /// <summary>
         /// ロード画面を挟んでシーンを読み込む。
         /// onLoaded は新シーンの初期化が一巡し、ロード画面が消え始める直前に呼ぶ。
+        /// onCompleted はロード画面が完全に消え、遷移が終わったときに呼ぶ。
         /// </summary>
-        void Load(string scenePath, Action onLoaded);
+        void Load(string scenePath, Action onLoaded, Action onCompleted);
     }
 }

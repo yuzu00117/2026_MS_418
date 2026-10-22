@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 namespace SceneFlow.EditorTools
@@ -29,6 +30,8 @@ namespace SceneFlow.EditorTools
         private static int _index;
         private static int _beforeCount;
         private static int _afterCount;
+        private static Keyboard _testKeyboard;       // 入力停止の確認用の仮想キーボード
+        private static bool _blockedDuringTransition; // 遷移中(OnAfterTransition 時点)に無効になっていたか
 
         static SceneTransitionVerify()
         {
@@ -72,6 +75,8 @@ namespace SceneFlow.EditorTools
                     SceneTransition.OnAfterTransition += _ => throw new System.InvalidOperationException("意図的な例外(自己診断)");
                     SceneTransition.OnBeforeTransition += _ => _beforeCount++;
                     SceneTransition.OnAfterTransition += _ => _afterCount++;
+                    _testKeyboard = InputSystem.AddDevice<Keyboard>("STVerifyKeyboard");
+                    SceneTransition.OnAfterTransition += _ => _blockedDuringTransition |= !_testKeyboard.enabled;
 
                     // 異常系: 遷移先が未指定なら遷移せず、通知も出ないこと
                     SceneTransition.Go(null);
@@ -102,6 +107,18 @@ namespace SceneFlow.EditorTools
                         Finish(false, $"通知回数が不正 before={_beforeCount} after={_afterCount}");
                         return;
                     }
+                    // 遷移中は入力が止まり、完了後は戻っていること
+                    if (!_blockedDuringTransition)
+                    {
+                        Finish(false, "遷移中にキーボード入力が止まっていない");
+                        return;
+                    }
+                    if (!_testKeyboard.enabled)
+                    {
+                        Finish(false, "遷移完了後にキーボード入力が戻っていない");
+                        return;
+                    }
+                    InputSystem.RemoveDevice(_testKeyboard);
                     EditorApplication.isPlaying = false;
                     SessionState.SetInt(KeyStage, 90);
                     break;
