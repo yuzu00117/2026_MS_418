@@ -7,7 +7,7 @@ namespace Echo.Echolocation.Editor
     [CustomPropertyDrawer(typeof(EchoBlockingRule))]
     public sealed class EchoBlockingRuleDrawer : PropertyDrawer
     {
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label) => EditorGUIUtility.singleLineHeight + 4;
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label) => (EditorGUIUtility.singleLineHeight + 4) * 2;
         public override void OnGUI(Rect rect, SerializedProperty p, GUIContent label)
         {
             EditorGUI.BeginProperty(rect, label, p);
@@ -23,6 +23,8 @@ namespace Echo.Echolocation.Editor
             int selected = EditorGUI.Popup(new Rect(rect.x + rect.width * .6f + 4, rect.y, rect.width * .4f - 4, rect.height), blocks.boolValue ? 0 : 1, new[] { "遮断する", "遮断しない（透過）" });
             if (EditorGUI.EndChangeCheck())
                 blocks.boolValue = selected == 0;
+            rect.y += EditorGUIUtility.singleLineHeight + 4;
+            EditorGUI.PropertyField(rect, p.FindPropertyRelative("_definition"), new GUIContent("専用タグ（未設定は旧Unityタグ）"));
             EditorGUI.EndProperty();
         }
     }

@@ -48,7 +48,7 @@ namespace Echo.Echolocation.Editor
                 DrawField("_settings._shadow._rules", "タグと遮断設定");
                 DrawField("_settings._shadow._resolution", "影の解像度（1方向）");
                 DrawField("_settings._shadow._bias", "表面の誤判定を防ぐ距離（m）");
-                EditorGUILayout.HelpBox("各エコーの発生地点から6方向の影を計算します。遮断しないタグは距離を減らさず通過し、その先の遮断物で止まります。Renderer自身のタグを使用します。遮断する面自体は強調できます。除外ルート配下は遮断しません。", MessageType.Info);
+                EditorGUILayout.HelpBox("各エコーの発生地点から6方向の影を計算します。遮断しないタグは距離を減らさず通過し、その先の遮断物で止まります。EchoOccluderの明示設定、所有者の専用タグ、移行前のRenderer自身のUnityタグの順で判定します。遮断する面自体は強調できます。除外ルート配下は遮断しません。", MessageType.Info);
             }
 
             EditorGUILayout.Space();
@@ -57,7 +57,7 @@ namespace Echo.Echolocation.Editor
             DrawField("_excludedRoot", "除外するルート");
             DrawField("_settings._isAutoDiscoveryEnabled", "対象を自動収集");
             DrawField("_settings._tagColorRules", "タグと表示設定");
-            EditorGUILayout.HelpBox("タグごとに塗り・全体の輪郭・元マテリアル表示を併用できます。残存時間は最後の接触から計測し、再接触で延長します。元マテリアル表示の通常時非表示は、Controller無効化時に復元します。", MessageType.Info);
+            EditorGUILayout.HelpBox("専用タグごとに塗り・全体の輪郭・元マテリアル表示を併用できます。部分表示と状態APIにはEchoRevealWorld / EchoRevealStateを設定してください。残存時間は最後の接触から計測し、再接触で延長します。元マテリアル表示の通常時非表示は、Controller無効化時に復元します。", MessageType.Info);
             DrawEnum("_settings._occlusionMode", "共通の壁越し表示", new[] { "表示する", "深度で隠す" });
             EditorGUILayout.HelpBox("タグ行の塗り・輪郭・元マテリアルで壁越し表示を個別に指定できます。「共通設定に従う」の機能だけ、この共通設定を使用します。波が届くかどうかは「エコー地点からの遮蔽」で別に判定します。", MessageType.Info);
             DrawField("_isGizmoVisible", "範囲をScene Viewに表示");

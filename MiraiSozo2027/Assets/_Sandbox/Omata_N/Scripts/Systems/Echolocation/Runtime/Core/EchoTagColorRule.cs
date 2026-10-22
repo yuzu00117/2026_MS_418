@@ -12,6 +12,10 @@ namespace Echo.Echolocation
         [UnityEngine.SerializeField]
         [UnityEngine.Serialization.FormerlySerializedAs("Enabled")]
         private bool _isEnabled = true;
+        [SerializeField] private EchoTagDefinition _definition;
+        public EchoTagDefinition Definition { get => _definition; set => _definition = value; }
+        [SerializeField] private EchoOriginalRevealMode _revealMode;
+        public EchoOriginalRevealMode RevealMode { get => _revealMode; set => _revealMode = value; }
         public bool IsEnabled { get => _isEnabled; set => _isEnabled = value; }
 
         [Tooltip("対象GameObjectのタグ。子へは自動継承しません。")]

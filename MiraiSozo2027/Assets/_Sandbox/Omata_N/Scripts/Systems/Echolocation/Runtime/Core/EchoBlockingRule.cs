@@ -11,6 +11,8 @@ namespace Echo.Echolocation
         [UnityEngine.SerializeField]
         [UnityEngine.Serialization.FormerlySerializedAs("Enabled")]
         private bool _isEnabled = true;
+        [SerializeField] private EchoTagDefinition _definition;
+        public EchoTagDefinition Definition { get => _definition; set => _definition = value; }
         public bool IsEnabled { get => _isEnabled; set => _isEnabled = value; }
 
         [UnityEngine.SerializeField]

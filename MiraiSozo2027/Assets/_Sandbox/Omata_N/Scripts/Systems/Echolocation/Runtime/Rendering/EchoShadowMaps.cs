@@ -26,6 +26,24 @@ namespace Echo.Echolocation
             Vector3.up,
             Vector3.up
         };
+        private readonly Dictionary<Renderer, Mesh> _meshes = new Dictionary<Renderer, Mesh>();
+        private readonly Dictionary<Renderer, EchoOccluder> _occluders = new Dictionary<Renderer, EchoOccluder>();
+        private readonly Dictionary<Renderer, EchoTag> _tags = new Dictionary<Renderer, EchoTag>();
+        public void Refresh()
+        {
+            _meshes.Clear(); _occluders.Clear(); _tags.Clear();
+            foreach (var renderer in Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include))
+            {
+                if (renderer.GetComponent<EchoRevealProxy>()) continue;
+                Mesh mesh = renderer is SkinnedMeshRenderer skin ? skin.sharedMesh :
+                    renderer.TryGetComponent<MeshFilter>(out var filter) ? filter.sharedMesh : null;
+                if (!mesh) continue;
+                _meshes.Add(renderer, mesh);
+                _occluders.Add(renderer, renderer.GetComponent<EchoOccluder>());
+                var owner = renderer.GetComponentInParent<EchoTarget>(true);
+                _tags.Add(renderer, owner ? owner.GetComponent<EchoTag>() : null);
+            }
+        }
         private readonly List<Renderer> _blockers = new List<Renderer>();
         private readonly List<Vector3> _origins = new List<Vector3>();
         private readonly Plane[] _planes = new Plane[6];
@@ -151,16 +169,19 @@ namespace Echo.Echolocation
 
             Allocate(_origins.Count, settings.Shadow.Resolution);
             _blockers.Clear();
-            foreach (var r in Object.FindObjectsByType<Renderer>())
+            foreach (var pair in _meshes)
             {
+                var r = pair.Key;
+                if (!r) continue;
                 if (!r.enabled || !r.gameObject.activeInHierarchy || (excluded && r.transform.IsChildOf(excluded)))
                     continue;
-                if ((settings.Shadow.Layers.value & (1 << r.gameObject.layer)) == 0 || !settings.Shadow.IsBlockingTag(r.tag))
+                var occluder = _occluders[r];
+                var tag = _tags[r];
+                bool isBlocking = occluder && occluder.isActiveAndEnabled ? occluder.IsBlocking :
+                    tag && tag.isActiveAndEnabled ? settings.Shadow.IsBlockingDefinition(tag.Definition) : settings.Shadow.IsBlockingTag(r.tag);
+                if ((settings.Shadow.Layers.value & (1 << r.gameObject.layer)) == 0 || !isBlocking)
                     continue;
-                if (r is SkinnedMeshRenderer skin && skin.sharedMesh)
-                    _blockers.Add(r);
-                else if (r is MeshRenderer && r.TryGetComponent<MeshFilter>(out var mf) && mf.sharedMesh)
-                    _blockers.Add(r);
+                _blockers.Add(r);
             }
 
             // Unityのネイティブ資源はMonoBehaviourのフィールド初期化中に作らない。
@@ -189,7 +210,7 @@ namespace Echo.Echolocation
                     {
                         if (!GeometryUtility.TestPlanesAABB(_planes, r.bounds))
                             continue;
-                        Mesh mesh = r is SkinnedMeshRenderer s ? s.sharedMesh : r.GetComponent<MeshFilter>().sharedMesh;
+                        Mesh mesh = _meshes[r];
                         for (int sub = 0; sub < mesh.subMeshCount; sub++)
                         {
                             _commands.DrawRenderer(r, _material, sub, 0);

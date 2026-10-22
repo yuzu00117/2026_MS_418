@@ -12,6 +12,7 @@ Shader "Hidden/Echo/Composite"
     float4 _EchoOutlineColor;
     float _EchoOutlineWidth;
     float _EchoOriginalOpacity;
+    float _EchoCommittedOriginal;
     float _EchoOriginalOcclusion;
     float _EchoOutlineOcclusion;
     ENDHLSL
@@ -121,7 +122,7 @@ Shader "Hidden/Echo/Composite"
             half4 Original(Varyings input):SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                float active=SAMPLE_TEXTURE2D_X(_EchoHistory,sampler_PointClamp,float2(.5,.5)).z;
+                float active=_EchoCommittedOriginal>.5?1:SAMPLE_TEXTURE2D_X(_EchoHistory,sampler_PointClamp,float2(.5,.5)).z;
                 float4 mask=SAMPLE_TEXTURE2D_X(_EchoObjectMask,sampler_PointClamp,input.texcoord);
                 float visible=_EchoOriginalOcclusion>.5?mask.b:mask.r;
                 float4 scene=SAMPLE_TEXTURE2D_X(_EchoSceneColor,sampler_LinearClamp,input.texcoord);

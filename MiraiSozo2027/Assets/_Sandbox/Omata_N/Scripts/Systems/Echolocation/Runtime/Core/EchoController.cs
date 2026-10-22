@@ -165,7 +165,11 @@ namespace Echo.Echolocation
         }
 
         /// <summary>ロード済みシーンの描画対象を再収集する。</summary>
-        public void RefreshTargets() => _registry.Refresh(_settings.IsAutoDiscoveryEnabled);
+        public void RefreshTargets()
+        {
+            _registry.Refresh(_settings.IsAutoDiscoveryEnabled);
+            _shadowMaps.Refresh();
+        }
         /// <summary>独自の形状取得を追加する。標準DrawRendererに適合するRenderer用。</summary>
         public void RegisterGeometryAdapter(IEchoGeometryAdapter adapter)
         {
@@ -205,6 +209,7 @@ namespace Echo.Echolocation
         void BeginReveal()
         {
             _shadowMaps.Clear();
+            _shadowMaps.Refresh();
             _elapsed = 0;
             CurrentOuterRadius = CurrentEraseRadius = 0;
             _hasPendingClockReset = true;
