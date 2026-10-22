@@ -27,6 +27,8 @@ namespace SceneFlow
                 BlockedDevices.Add(device);
                 InputSystem.DisableDevice(device);
             }
+            // 遷移中に接続・再接続されたデバイスも止める(止めないとパッドの入力が通ってしまう)
+            InputSystem.onDeviceChange += OnDeviceChange;
             // Play 終了時に無効のまま残らないようにする
             Application.quitting += Release;
         }
@@ -37,12 +39,22 @@ namespace SceneFlow
             if (!_isBlocking) return;
             _isBlocking = false;
             Application.quitting -= Release;
+            InputSystem.onDeviceChange -= OnDeviceChange;
 
             foreach (var device in BlockedDevices)
             {
                 if (device.added) InputSystem.EnableDevice(device); // 遷移中に抜かれたデバイスは除く
             }
             BlockedDevices.Clear();
+        }
+
+        private static void OnDeviceChange(InputDevice device, InputDeviceChange change)
+        {
+            if (change != InputDeviceChange.Added && change != InputDeviceChange.Reconnected) return;
+            if (!device.enabled) return;
+
+            BlockedDevices.Add(device);
+            InputSystem.DisableDevice(device);
         }
     }
 }

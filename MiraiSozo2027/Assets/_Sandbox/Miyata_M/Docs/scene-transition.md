@@ -105,7 +105,7 @@ private void OnDisable()
 - 戻すタイミング: 遷移の完了、ローダーの破棄、アプリ(Play)の終了のいずれでも必ず戻す。
 - 止めたくない場合は `SceneTransition.BlockInputDuringTransition = false;`(遷移の前に設定する)。
 - 仕組みは `TransitionInputBlocker`(Input System のデバイスを無効化・復帰)。Input System を使わない入力(旧 Input Manager)は止まらない。
-- 遷移中に接続されたデバイスは止めない。
+- 遷移中に接続・再接続されたデバイスも、接続の通知(`InputSystem.onDeviceChange`)を受けてその場で止め、完了時に戻す。
 
 ### 注意
 - 遷移中の再呼び出し、遷移先の未指定、Build Settings 未登録のときは、警告を出して何もしない。

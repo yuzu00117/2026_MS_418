@@ -31,6 +31,8 @@ namespace SceneFlow.EditorTools
         private static int _beforeCount;
         private static int _afterCount;
         private static Keyboard _testKeyboard;       // 入力停止の確認用の仮想キーボード
+        private static Keyboard _lateKeyboard;       // 遷移中に接続されるデバイスの確認用
+        private static bool _lateBlocked;             // 遷移中に接続されたデバイスが無効になったか
         private static bool _blockedDuringTransition; // 遷移中(OnAfterTransition 時点)に無効になっていたか
 
         static SceneTransitionVerify()
@@ -77,6 +79,13 @@ namespace SceneFlow.EditorTools
                     SceneTransition.OnAfterTransition += _ => _afterCount++;
                     _testKeyboard = InputSystem.AddDevice<Keyboard>("STVerifyKeyboard");
                     SceneTransition.OnAfterTransition += _ => _blockedDuringTransition |= !_testKeyboard.enabled;
+                    // 遷移中(OnAfterTransition はまだ入力停止中)にデバイスを新たに接続し、止まることを確認する
+                    SceneTransition.OnAfterTransition += _ =>
+                    {
+                        if (_lateKeyboard != null) return;
+                        _lateKeyboard = InputSystem.AddDevice<Keyboard>("STVerifyLateKeyboard");
+                        _lateBlocked = !_lateKeyboard.enabled;
+                    };
 
                     // 異常系: 遷移先が未指定なら遷移せず、通知も出ないこと
                     SceneTransition.Go(null);
@@ -113,12 +122,18 @@ namespace SceneFlow.EditorTools
                         Finish(false, "遷移中にキーボード入力が止まっていない");
                         return;
                     }
-                    if (!_testKeyboard.enabled)
+                    if (!_lateBlocked)
+                    {
+                        Finish(false, "遷移中に接続されたデバイスが止まっていない");
+                        return;
+                    }
+                    if (!_testKeyboard.enabled || !_lateKeyboard.enabled)
                     {
                         Finish(false, "遷移完了後にキーボード入力が戻っていない");
                         return;
                     }
                     InputSystem.RemoveDevice(_testKeyboard);
+                    InputSystem.RemoveDevice(_lateKeyboard);
                     EditorApplication.isPlaying = false;
                     SessionState.SetInt(KeyStage, 90);
                     break;
