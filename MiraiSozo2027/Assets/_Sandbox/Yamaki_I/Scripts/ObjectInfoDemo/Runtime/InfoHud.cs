@@ -21,9 +21,9 @@ namespace Aura.ObjectInfoDemo
         private const string Separator = " → ";
 
         [InspectorLabel("ビームを出す部品")]
-        [Tooltip("状態（今のビーム、最後のビームが当たった物）を出す InfoBeamEmitter。照準の先も、これの視点から調べる\n" +
+        [Tooltip("状態（今のビーム、最後のビームが当たった物）を出す WaveEmitter。照準の先も、これの視点から調べる\n" +
                  "空なら照準だけを出す")]
-        [SerializeField] private InfoBeamEmitter _emitter;  ///< 状態を出す InfoBeamEmitter
+        [SerializeField] private WaveEmitter _emitter;  ///< 状態を出す WaveEmitter
 
         private readonly StringBuilder _text = new StringBuilder();
         private readonly List<IObjectInfo> _infos = new List<IObjectInfo>();  ///< 情報の持ち主を探すときの使い回しのリスト
@@ -152,7 +152,7 @@ namespace Aura.ObjectInfoDemo
 
         private void AppendAimedObject()
         {
-            Transform aimOrigin = _emitter.CurrentAimOrigin != null ? _emitter.CurrentAimOrigin : _emitter.CurrentMuzzle;
+            Transform aimOrigin = _emitter.Muzzle;
             if (!BeamPhysics.TryCast(aimOrigin.position, aimOrigin.forward, 0.0f, InspectRange, Physics.DefaultRaycastLayers,
                     QueryTriggerInteraction.Ignore, _emitter.IgnoreRoot, out RaycastHit hit))
             {

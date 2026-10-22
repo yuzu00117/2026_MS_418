@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Aura.ObjectInfoDemo
 {
-    /// @brief ビームの点。InfoBeamEmitter が作って一定の間隔で並べる（自分で付けるものではない）
+    /// @brief ビームの点。WaveEmitter が作って一定の間隔で並べる（自分で付けるものではない）
     /// 見えない Object で、念力で掴む対象を選ぶときに、ふつうの Object と同じように選べるようにするためにある
     /// （コライダーと Rigidbody を持つ。念力の側の印（Phononkinesis の PhononkinesisTarget など）は、Point Prefab に付けておく。ビームの実体は、点どうしをつなぐ直線の方）
     /// 掴まれたかは、次のどちらかで決める
@@ -26,10 +26,10 @@ namespace Aura.ObjectInfoDemo
         private Rigidbody _rigidbody;
         private bool _isGrabbable;
 
-        /// @brief この点を作った InfoBeamEmitter
-        public InfoBeamEmitter Emitter { get; private set; }
+        /// @brief この点を作った WaveEmitter
+        public WaveEmitter Emitter { get; private set; }
 
-        /// @brief ビームの点の List（InfoBeamEmitter.Points）での番号。出る位置が 0。今のビームに使っていなければ -1
+        /// @brief ビームの点の List（WaveEmitter.Points）での番号。出る位置が 0。今のビームに使っていなければ -1
         public int Index { get; internal set; } = -1;
 
         /// @brief ビームのどこにある点か
@@ -64,11 +64,11 @@ namespace Aura.ObjectInfoDemo
         internal bool IsDropped => _rigidbody != null && !_rigidbody.isKinematic && _rigidbody.useGravity;
 
         //============================================================
-        // InfoBeamEmitter から使う操作
+        // WaveEmitter から使う操作
         //============================================================
 
         /// @brief 作った直後に、持ち主と部品を覚える
-        internal void Initialize(InfoBeamEmitter emitter)
+        internal void Initialize(WaveEmitter emitter)
         {
             Emitter = emitter;
             _rigidbody = GetComponent<Rigidbody>();

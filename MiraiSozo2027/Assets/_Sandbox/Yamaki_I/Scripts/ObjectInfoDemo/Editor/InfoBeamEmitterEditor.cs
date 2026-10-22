@@ -8,7 +8,7 @@ namespace Aura.ObjectInfoDemo.Editor
     /// @brief InfoBeamEmitter の Inspector。ふつうの Inspector と同じ順に全項目を出すが、
     /// ・離した後に戻るまでの時間（Bend Hold Seconds、Bend Return Seconds）は、Bend Release Mode が Hold Then Return のときだけ出す
     /// ・点のレイヤー（Point Layer）は、レイヤーを選ぶ欄で出す
-    [CustomEditor(typeof(InfoBeamEmitter))]
+    [CustomEditor(typeof(WaveEmitter))]
     [CanEditMultipleObjects]
     public sealed class InfoBeamEmitterEditor : UnityEditor.Editor
     {

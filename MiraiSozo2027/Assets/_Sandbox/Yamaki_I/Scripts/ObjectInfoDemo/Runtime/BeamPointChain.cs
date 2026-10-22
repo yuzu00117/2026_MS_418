@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 
 namespace Aura.ObjectInfoDemo
 {
-    /// @brief 点と線のビームの、点の管理と曲げ方。InfoBeamEmitter が 1 つ持つ
+    /// @brief 点と線のビームの、点の管理と曲げ方。WaveEmitter が 1 つ持つ
     /// ・点（BeamPoint）は、出る位置から順に List に並べる。跳ね返った位置や支点は、順番どおりの位置に入る
     /// ・念力で掴まれた点が「支点」になる。支点の前後 Bend Range の範囲の点が、支点を通るようになめらかに曲がり、その外は元の線のまま
     /// ・曲げる基準の線（元の線）は、出る位置（跳ね返った後は跳ね返った位置）から真っすぐ伸ばした線で、壁などの向こうまで伸ばして考える
@@ -16,7 +16,7 @@ namespace Aura.ObjectInfoDemo
     ///         支点が複数あれば、ビームに沿って手前から順に、同じことをくり返す
     ///         離した支点の曲がりは「手前から進んできた向きに対して、どちらへ何度曲がるか」として覚える。手前の支点が動いたり
     ///         真っすぐに戻ったりしても、後ろの曲がりはその向きから見て同じだけ曲がる（鎖のように一緒に動く）
-    /// 当たり判定と受け手への受け渡しは InfoBeamEmitter が行い、ここは点と線の形だけを扱う
+    /// 当たり判定と受け手への受け渡しは WaveEmitter が行い、ここは点と線の形だけを扱う
     internal sealed class BeamPointChain
     {
         private const int MaxPathPoints = 1024;           ///< 1 本のビームの点の数の上限。これを超える分は作らず、ビームはそこで終わる
@@ -38,7 +38,7 @@ namespace Aura.ObjectInfoDemo
         private const int KnotPriorityReleased = 1;   ///< 近すぎる支点のどちらを残すかの順位: 離された支点
         private const int KnotPriorityHeld = 2;       ///< 近すぎる支点のどちらを残すかの順位: 掴まれている支点
 
-        private readonly InfoBeamEmitter _emitter;
+        private readonly WaveEmitter _emitter;
         private readonly List<BeamPoint> _pool = new List<BeamPoint>();         ///< 支点でない点（今のビームに使っていない作り置きも含む）
         private readonly List<Anchor> _anchors = new List<Anchor>();            ///< 支点
         private readonly List<Anchor> _suppressedAnchors = new List<Anchor>();  ///< 掴まれた支点のすぐ近くにあるため、組み立ての後に消す、離された支点
@@ -67,8 +67,8 @@ namespace Aura.ObjectInfoDemo
         private float _bendRange;       ///< 支点の前後で曲げる範囲（m）
 
         /// @brief 点を管理する部品を作る
-        /// @param emitter 持ち主の InfoBeamEmitter
-        public BeamPointChain(InfoBeamEmitter emitter)
+        /// @param emitter 持ち主の WaveEmitter
+        public BeamPointChain(WaveEmitter emitter)
         {
             _emitter = emitter;
         }

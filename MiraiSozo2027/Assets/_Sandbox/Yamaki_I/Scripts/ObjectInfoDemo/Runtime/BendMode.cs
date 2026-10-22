@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Aura.ObjectInfoDemo
 {
-    /// @brief 念力で掴んだ点（支点）で、点と線のビームをどう曲げるか。InfoBeamEmitter の Bend Mode で選ぶ
+    /// @brief 念力で掴んだ点（支点）で、点と線のビームをどう曲げるか。WaveEmitter の Bend Mode で選ぶ
     public enum BendMode
     {
         [InspectorName("山のように曲げる")]
