@@ -55,8 +55,28 @@ namespace SceneFlow
                 return;
             }
 
-            OnBeforeTransition?.Invoke(scene);
-            _loader.Load(scene.ScenePath, () => OnAfterTransition?.Invoke(scene));
+            Notify(OnBeforeTransition, scene);
+            _loader.Load(scene.ScenePath, () => Notify(OnAfterTransition, scene));
+        }
+
+        // 購読側の例外で遷移が止まらないよう、購読者ごとに例外を捕まえてログに出す。
+        // OnAfterTransition はローダーのコルーチン内で呼ばれるため、例外が漏れると
+        // 「遷移中」のまま戻らず、ロード画面が消えなくなる。
+        // コスト: GetInvocationList で購読者数ぶんの配列を確保する(遷移1回につき O(購読者数)、遷移時のみ)
+        private static void Notify(Action<SceneReference> handlers, SceneReference scene)
+        {
+            if (handlers == null) return;
+            foreach (Action<SceneReference> handler in handlers.GetInvocationList())
+            {
+                try
+                {
+                    handler(scene);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
+            }
         }
     }
 }

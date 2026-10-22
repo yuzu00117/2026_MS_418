@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 namespace SceneFlow.EditorTools
 {
     /// <summary>
-    /// Title → StageSelect → Game → Title を、画面のボタンを押して実際に遷移させて確認する自己診断。
+    /// Title -> StageSelect -> Game -> Title を、画面のボタンを押して実際に遷移させて確認する自己診断。
     /// バッチ: -executeMethod SceneFlow.EditorTools.SceneTransitionVerify.Run (-quit は付けない)
     /// 終了コード 0=OK / 1=失敗。Play 開始でドメインが再読み込みされるため進行状況は SessionState に持つ。
     /// </summary>
@@ -68,8 +68,19 @@ namespace SceneFlow.EditorTools
                     _index = 0;
                     _beforeCount = 0;
                     _afterCount = 0;
+                    // 通知側の例外で遷移が止まらないこと(後続の購読者にも通知が届くこと)の確認用。先に登録する
+                    SceneTransition.OnAfterTransition += _ => throw new System.InvalidOperationException("意図的な例外(自己診断)");
                     SceneTransition.OnBeforeTransition += _ => _beforeCount++;
                     SceneTransition.OnAfterTransition += _ => _afterCount++;
+
+                    // 異常系: 遷移先が未指定なら遷移せず、通知も出ないこと
+                    SceneTransition.Go(null);
+                    SceneTransition.Go(new SceneReference());
+                    if (SceneTransition.IsTransitioning || _beforeCount != 0)
+                    {
+                        Finish(false, "遷移先が未指定でも遷移が始まった");
+                        return;
+                    }
                     RequestClick(Sequence[_index], true);
                     SessionState.SetInt(KeyStage, 2);
                     break;
@@ -107,7 +118,7 @@ namespace SceneFlow.EditorTools
         private static void RequestClick(string targetScene, bool alsoDouble)
         {
             ResetDeadline();
-            // カウントダウン(UnityEvent → Trigger.Go の接続)があるシーンでは、押さずにイベントでの遷移を待つ
+            // カウントダウン(UnityEvent -> Trigger.Go の接続)があるシーンでは、押さずにイベントでの遷移を待つ
             if (Object.FindAnyObjectByType<CountdownEvent>() != null)
             {
                 Debug.Log(Tag + $"{targetScene} へ CountdownEvent の発火で遷移するのを待つ");
