@@ -20,7 +20,7 @@ namespace LoadingTest.EditorTools
     {
         private const string SceneDir = "Assets/_Sandbox/Miyata_M/Scenes/LoadingTest";
         private const string ResourcesDir = "Assets/_Sandbox/Miyata_M/Resources";
-        private const string PrefabPath = ResourcesDir + "/SceneLoader.prefab";
+        private const string PrefabPath = ResourcesDir + "/PF_SceneLoader.prefab";
 
         // 方式A / B / C のシーン名(Build Settings へ登録する)
         private const string SceneA1 = "LT_A_Start";
@@ -119,7 +119,7 @@ namespace LoadingTest.EditorTools
             BuildCScene(SceneC2, "シーンC2(-> C1へ)", SceneC1, new Color(0.4f, 0.2f, 0.4f));
         }
 
-        /// <summary>方式C の SceneLoader.prefab を生成する(シーン遷移の Setup からも使う)。</summary>
+        /// <summary>方式C の PF_SceneLoader.prefab を生成する(シーン遷移の Setup からも使う)。</summary>
         public static void BuildSceneLoaderPrefab()
         {
             Directory.CreateDirectory(ResourcesDir);

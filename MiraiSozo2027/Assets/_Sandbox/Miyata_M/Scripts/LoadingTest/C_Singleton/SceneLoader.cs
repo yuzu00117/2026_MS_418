@@ -9,11 +9,11 @@ namespace LoadingTest.C
 {
     /// <summary>
     /// 方式C: DontDestroyOnLoad で常駐するシングルトン。SceneLoader.Load("Game") で呼べる。
-    /// Resources/SceneLoader.prefab にアタッチする。prefab が無い場合は何もしない。
+    /// Resources/PF_SceneLoader.prefab にアタッチする。prefab が無い場合は何もしない。
     /// </summary>
     public class SceneLoader : MonoBehaviour, ISceneLoader
     {
-        private const string PrefabPath = "SceneLoader"; // Resources/SceneLoader.prefab
+        private const string PrefabPath = "PF_SceneLoader"; // Resources/PF_SceneLoader.prefab
         private const float ProgressLoadedThreshold = 0.9f;
         private const float MinFillSeconds = 0.01f; // 0除算防止
 
