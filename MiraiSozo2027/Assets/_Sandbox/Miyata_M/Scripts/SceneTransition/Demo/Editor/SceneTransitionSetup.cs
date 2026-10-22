@@ -6,7 +6,6 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace SceneFlow.EditorTools
@@ -18,17 +17,14 @@ namespace SceneFlow.EditorTools
     /// </summary>
     public static class SceneTransitionSetup
     {
-        private const string SceneDir = "Assets/_Sandbox/Miyata_M/Scenes/SceneTransition";
-
-        // テスト用シーン名(本番のシーンとは無関係。遷移先は SceneReference で指定する)
-        private const string TitleName = "Scene_Title";
-        private const string StageSelectName = "Scene_StageSelect";
-        private const string GameName = "Scene_Game";
+        private const string TitleName = DemoScenes.TitleName;
+        private const string StageSelectName = DemoScenes.StageSelectName;
+        private const string GameName = DemoScenes.GameName;
 
         [MenuItem("Tools/SceneTransition/Setup")]
         public static void Build()
         {
-            Directory.CreateDirectory(SceneDir);
+            Directory.CreateDirectory(DemoScenes.Directory);
 
             // ロード画面は遷移の外側(2006 の方式C)。SceneLoader.prefab が無ければ生成する
             LoadingTest.EditorTools.LoadingTestSetup.BuildSceneLoaderPrefab();
@@ -54,7 +50,7 @@ namespace SceneFlow.EditorTools
         private static void CreatePlaceholderScene(string name)
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            EditorSceneManager.SaveScene(scene, ScenePath(name));
+            EditorSceneManager.SaveScene(scene, DemoScenes.PathOf(name));
         }
 
         private static void BuildScene(string name, Color bgColor, params (string target, string label)[] buttons)
@@ -71,14 +67,14 @@ namespace SceneFlow.EditorTools
             {
                 var button = CreateButton(canvas.transform, label, new Vector2(0, y));
                 var comp = button.gameObject.AddComponent<SceneTransitionButton>();
-                AssignScene(new SerializedObject(comp), "_target", ScenePath(target));
+                AssignScene(new SerializedObject(comp), "_target", DemoScenes.PathOf(target));
                 y -= 130f;
             }
             // ボタン以外(クリア判定などのイベント)から遷移する例。Game から Title へ戻る
             if (name == GameName) AddTrigger(canvas.transform, "ClearTrigger", TitleName);
 
             CreateEventSystem(); // ロード画面の prefab 側には EventSystem を持たせない
-            EditorSceneManager.SaveScene(scene, ScenePath(name));
+            EditorSceneManager.SaveScene(scene, DemoScenes.PathOf(name));
         }
 
         // クリア判定の代わりにカウントダウンを置き、終了イベントを Trigger.Go に接続する(動作確認用)
@@ -86,7 +82,7 @@ namespace SceneFlow.EditorTools
         {
             var go = new GameObject(objectName);
             var trigger = go.AddComponent<SceneTransitionTrigger>();
-            AssignScene(new SerializedObject(trigger), "_target", ScenePath(targetScene));
+            AssignScene(new SerializedObject(trigger), "_target", DemoScenes.PathOf(targetScene));
 
             var label = CreateLabel(canvas, "", new Vector2(0, 320));
             var countdown = go.AddComponent<CountdownEvent>();
@@ -106,11 +102,6 @@ namespace SceneFlow.EditorTools
             prop.FindPropertyRelative("_scenePath").stringValue = scenePath;
             prop.FindPropertyRelative("_sceneName").stringValue = Path.GetFileNameWithoutExtension(scenePath);
             so.ApplyModifiedPropertiesWithoutUndo();
-        }
-
-        private static string ScenePath(string name)
-        {
-            return $"{SceneDir}/{name}.unity";
         }
 
         // ---- 共通ヘルパー ----
@@ -194,7 +185,7 @@ namespace SceneFlow.EditorTools
             var list = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
             foreach (var n in names)
             {
-                string path = $"{SceneDir}/{n}.unity";
+                string path = DemoScenes.PathOf(n);
                 if (!list.Exists(s => s.path == path)) list.Add(new EditorBuildSettingsScene(path, true));
             }
             EditorBuildSettings.scenes = list.ToArray();

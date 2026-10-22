@@ -12,7 +12,6 @@ namespace SceneFlow.EditorTools
     public class SceneReferenceDrawer : PropertyDrawer
     {
         private const string AssetFieldName = "_sceneAsset";
-        private const float ButtonHeightRatio = 1f;
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
@@ -37,7 +36,7 @@ namespace SceneFlow.EditorTools
             var helpRect = new Rect(position.x, fieldRect.yMax + space, position.width, line * 2);
             EditorGUI.HelpBox(helpRect, "Build Settings に登録されていません。このままでは遷移できません。", MessageType.Warning);
 
-            var buttonRect = new Rect(position.x, helpRect.yMax + space, position.width, line * ButtonHeightRatio);
+            var buttonRect = new Rect(position.x, helpRect.yMax + space, position.width, line);
             if (GUI.Button(buttonRect, "Build Settings に追加"))
             {
                 AddToBuildSettings(AssetDatabase.GetAssetPath(assetProp.objectReferenceValue));

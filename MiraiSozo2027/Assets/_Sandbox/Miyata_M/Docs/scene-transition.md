@@ -53,6 +53,19 @@ ISceneLoader.Load(path, onLoaded)
 | フック | `OnBeforeTransition` / `OnAfterTransition`(引数 `SceneReference`) |
 | 調整値 | フェード時間・最低表示時間は `SceneLoader` の Inspector |
 
+## ファイル構成(`Scripts/SceneTransition/`)
+| 場所 | ファイル | 役割 |
+|---|---|---|
+| 本体 | `SceneTransition` | 遷移の窓口(static)。検証・二重遷移防止・前後通知 |
+| 本体 | `ISceneLoader` | ロード画面側が満たす窓口 |
+| 本体 | `SceneReference` | シーンのドラッグ指定用の参照型 |
+| 本体 | `SceneTransitionButton` / `SceneTransitionTrigger` | ボタン / UnityEvent から遷移する部品 |
+| `Editor/` | `SceneReferenceDrawer` | Inspector 表示(Build Settings 未登録の警告と追加ボタン) |
+| `Demo/` | `CountdownEvent` | 動作確認用。N秒後にUnityEventを発火する(本番では不要) |
+| `Demo/Editor/` | `SceneTransitionSetup` / `SceneTransitionVerify` / `DemoScenes` | テスト用シーンの生成と自己診断(本番では不要) |
+
+本番へ移すときは、`Demo/` 以外を移し、`Demo/` は削除する。
+
 ## 範囲外(今回やらない)
 - ステージ選択 → Game への「選んだステージ」の受け渡し(ステージ選択の担当が決める)
 - ロード中のミニゲーム・ムービー(2006 の `ILoadingContent` 案で別途)

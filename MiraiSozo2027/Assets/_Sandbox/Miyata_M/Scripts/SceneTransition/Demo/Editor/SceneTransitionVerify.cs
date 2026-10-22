@@ -13,15 +13,14 @@ namespace SceneFlow.EditorTools
     [InitializeOnLoad]
     public static class SceneTransitionVerify
     {
-        private const string SceneDir = "Assets/_Sandbox/Miyata_M/Scenes/SceneTransition/";
         private const string KeyRun = "SceneTransitionVerify.Run";
         private const string KeyStage = "SceneTransitionVerify.Stage";
         private const string KeyDeadline = "SceneTransitionVerify.Deadline";
         private const double TimeoutSeconds = 30.0;
         private const string Tag = "STVERIFY: ";
-        private const string TitleName = "Scene_Title";
-        private const string StageSelectName = "Scene_StageSelect";
-        private const string GameName = "Scene_Game";
+        private const string TitleName = DemoScenes.TitleName;
+        private const string StageSelectName = DemoScenes.StageSelectName;
+        private const string GameName = DemoScenes.GameName;
 
         // 遷移の順序。現在のシーン上の該当ボタンを押し、そのシーンがアクティブになるまで待つ
         private static readonly string[] Sequence = { StageSelectName, GameName, TitleName };
@@ -55,7 +54,7 @@ namespace SceneFlow.EditorTools
             switch (stage)
             {
                 case 0: // Title を開いて Play 開始
-                    EditorSceneManager.OpenScene(SceneDir + TitleName + ".unity");
+                    EditorSceneManager.OpenScene(DemoScenes.PathOf(TitleName));
                     ResetDeadline();
                     EditorApplication.isPlaying = true;
                     SessionState.SetInt(KeyStage, 1);
