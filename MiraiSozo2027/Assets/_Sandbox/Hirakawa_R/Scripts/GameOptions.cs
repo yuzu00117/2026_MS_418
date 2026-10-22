@@ -58,7 +58,8 @@ namespace MiraiSozo.Options
 
         private void EnsureOptionManager()
         {
-            if (OptionGameManager.Instance != null) return;
+            // シーン側のAwakeは後で実行されるため、配置済みのマネージャーを優先する。
+            if (OptionGameManager.Instance != null || FindAnyObjectByType<OptionGameManager>() != null) return;
             var managerObject = new GameObject("OptionGameManager");
             managerObject.AddComponent<OptionGameManager>();
             managerObject.transform.SetParent(transform, false);
