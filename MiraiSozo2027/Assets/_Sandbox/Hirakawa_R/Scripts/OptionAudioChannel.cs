@@ -2,8 +2,6 @@ using UnityEngine;
 
 namespace MiraiSozo.Options
 {
-    public enum OptionAudioCategory { SE, BGM, Voice }
-
     /// <summary>AudioSourceごとの元音量を保ちながら、カテゴリー音量を掛ける。</summary>
     [RequireComponent(typeof(AudioSource))]
     public sealed class OptionAudioChannel : MonoBehaviour
@@ -21,29 +19,33 @@ namespace MiraiSozo.Options
             _baseVolume = _source.volume;
         }
 
-        private void OnEnable() => Connect();
-        private void Update() { if (_options == null) Connect(); }
-
-        private void Connect()
+        private void OnEnable()
         {
-            if (_options == GameOptions.Instance) return;
-            if (_options != null) _options.Changed -= Apply;
-            _options = GameOptions.Instance;
-            if (_options != null) _options.Changed += Apply;
+            GameOptions.InstanceChanged += Connect;
+            Connect(GameOptions.Instance);
+        }
+
+        private void Connect(GameOptions options)
+        {
+            if (_options != null) _options.AudioChanged -= Apply;
+            _options = options;
+            if (_options != null) _options.AudioChanged += Apply;
             Apply();
         }
 
         private void OnDisable()
         {
-            if (_options != null) _options.Changed -= Apply;
+            GameOptions.InstanceChanged -= Connect;
+            if (_options != null) _options.AudioChanged -= Apply;
             _options = null;
             if (_source != null) _source.volume = _baseVolume;
         }
 
         public void Apply()
         {
-            if (_source == null || GameOptions.Instance == null) return;
-            var values = GameOptions.Instance.Values;
+            if (_source == null) return;
+            if (_options == null) { _source.volume = _baseVolume; return; }
+            var values = _options.Values;
             float volume = _category == OptionAudioCategory.BGM ? values.bgmVolume :
                 _category == OptionAudioCategory.Voice ? values.voiceVolume : values.seVolume;
             _source.volume = _baseVolume * volume;

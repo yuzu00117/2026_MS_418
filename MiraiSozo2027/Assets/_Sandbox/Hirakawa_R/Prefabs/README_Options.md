@@ -1,8 +1,8 @@
-# InGameOptions.prefab
+# PF_InGameOptions.prefab
 
 Canvas、ポーズメニュー、4タブのオプション、設定保存をまとめたPrefabです。
 
-1. `InGameOptions.prefab` を使いたいSceneのHierarchy直下へドラッグします。
+1. `PF_InGameOptions.prefab` を使いたいSceneのHierarchy直下へドラッグします。
 2. Play中に **ESC**（ゲームパッドではStart）でメニューを開きます。
 3. ゲーム側のカメラ・入力・音源を以下の方法で接続します。
 
@@ -14,10 +14,10 @@ Canvas、ポーズメニュー、4タブのオプション、設定保存をま�
 - **音源**：AudioSourceに `MiraiSozo.Options.OptionAudioChannel` を付け、CategoryをSE / BGM / Voiceから選びます。
 - **画面揺れ**：カメラに `MiraiSozo.Options.OptionCameraShake` を付け、演出から `Play()` を呼びます。
 
-EventSystemの追加は不要です。Sceneにあれば既存のものを使用し、なければ自動生成します。
+SceneにEventSystemがあればモジュール構成や有効状態を変更せず使用し、なければ自動生成します。既存のEventSystemには、そのSceneのUIを操作できる入力モジュールを設定してください。
 Sceneを移動しても設定とメニューを保持し、各SceneにPrefabを置いた場合は重複するインスタンスを除去します。
 テスト用HUDは既定で非表示です。
 
 タイトル・ステージセレクトのボタンは将来の接続用で、シーン移動は行いません。
 依存スクリプトは `Assets/_Sandbox/Hirakawa_R/Scripts` 内にあります。Prefabと併せて管理してください。
-動作例は `Assets/_Sandbox/Hirakawa_R/Scenes/OptionTestScene.unity`、詳細は `Assets/_Sandbox/Hirakawa_R/README_Options.md` を参照してください。
+動作例は `Assets/_Sandbox/Hirakawa_R/Scenes/Scene_OptionTestScene.unity`、詳細は `Assets/_Sandbox/Hirakawa_R/README_Options.md` を参照してください。

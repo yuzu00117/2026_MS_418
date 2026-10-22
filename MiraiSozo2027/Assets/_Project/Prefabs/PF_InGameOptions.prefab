@@ -478,7 +478,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "ESC  \u30E1\u30CB\u30E5\u30FC\u3092\u958B\u304F    /    WASD  \u79FB\u52D5    /    \u30DE\u30A6\u30B9  \u8996\u70B9"
+  m_Text: "ESC  \u30E1\u30CB\u30E5\u30FC\u3092\u958B\u304F    \uFF0F    WASD  \u79FB\u52D5    \uFF0F    \u30DE\u30A6\u30B9  \u8996\u70B9"
 --- !u!1 &698172095764641994
 GameObject:
   m_ObjectHideFlags: 0
@@ -2235,7 +2235,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: OPTION TEST
+  m_Text: "\u30AA\u30D7\u30B7\u30E7\u30F3\u78BA\u8A8D"
 --- !u!1 &1631181834925227181
 GameObject:
   m_ObjectHideFlags: 0
@@ -3953,7 +3953,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: "\u30DC\u30A4\u30B9\u7528\u30C6\u30B9\u30C8\u97F3"
+  m_Text: "\u30DC\u30A4\u30B9\u3092\u8A66\u8074"
 --- !u!1 &3131225224456338294
 GameObject:
   m_ObjectHideFlags: 0
@@ -4659,7 +4659,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: GAME SETTINGS
+  m_Text: "\u30B2\u30FC\u30E0\u8A2D\u5B9A"
 --- !u!1 &3709488027590327126
 GameObject:
   m_ObjectHideFlags: 0
@@ -8297,7 +8297,7 @@ GameObject:
   - component: {fileID: 6640298474514579445}
   - component: {fileID: 3567982552952702879}
   m_Layer: 0
-  m_Name: InGameOptions
+  m_Name: PF_InGameOptions
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10879,7 +10879,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: PAUSED
+  m_Text: "\u4E00\u6642\u505C\u6B62"
 --- !u!1 &7807635389055619588
 GameObject:
   m_ObjectHideFlags: 0

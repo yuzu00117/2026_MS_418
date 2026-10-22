@@ -14,7 +14,7 @@ namespace MiraiSozo.Options
             public Entry(InputAction action, int index, string label) { Action = action; Index = index; Label = label; }
         }
 
-        public static List<Entry> Entries(InputActionMap map)
+        public static List<Entry> GetEntries(InputActionMap map)
         {
             var entries = new List<Entry>();
             foreach (var action in map.actions)
@@ -23,8 +23,8 @@ namespace MiraiSozo.Options
                 {
                     var binding = action.bindings[i];
                     if (binding.isComposite || !IsKeyboardOrMouseButton(binding.path)) continue;
-                    string part = binding.isPartOfComposite ? " / " + PartName(binding.name) : "";
-                    entries.Add(new Entry(action, i, ActionName(action.name) + part));
+                    string part = binding.isPartOfComposite ? " ／ " + GetPartName(binding.name) : "";
+                    entries.Add(new Entry(action, i, GetActionName(action.name) + part));
                 }
             }
             return entries;
@@ -40,7 +40,7 @@ namespace MiraiSozo.Options
             string original = entry.Action.bindings[entry.Index].effectivePath;
             if (!string.Equals(original, path, StringComparison.OrdinalIgnoreCase))
             {
-                foreach (var other in Entries(entry.Action.actionMap))
+                foreach (var other in GetEntries(entry.Action.actionMap))
                 {
                     if (other.Action == entry.Action && other.Index == entry.Index) continue;
                     if (!string.Equals(other.Action.bindings[other.Index].effectivePath, path, StringComparison.OrdinalIgnoreCase)) continue;
@@ -60,7 +60,7 @@ namespace MiraiSozo.Options
                 (path.StartsWith("<Mouse>/", StringComparison.OrdinalIgnoreCase) && path.EndsWith("Button", StringComparison.OrdinalIgnoreCase));
         }
 
-        private static string PartName(string name)
+        private static string GetPartName(string name)
         {
             switch (name)
             {
@@ -72,7 +72,7 @@ namespace MiraiSozo.Options
             }
         }
 
-        private static string ActionName(string name)
+        private static string GetActionName(string name)
         {
             switch (name)
             {

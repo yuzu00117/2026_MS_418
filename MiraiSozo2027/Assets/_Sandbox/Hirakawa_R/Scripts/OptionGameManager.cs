@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -22,6 +23,7 @@ namespace MiraiSozo.Options
 
         //ゲームで使用する用のInput
         public static InputSystem_Actions Actions { get; private set; }
+        public static event Action ActionsChanged;
 
         private void Awake()
         {
@@ -31,6 +33,7 @@ namespace MiraiSozo.Options
                 DontDestroyOnLoad(gameObject);
                 Actions = new InputSystem_Actions();
                 Actions.Enable();
+                ActionsChanged?.Invoke();
             }
             else
             {
@@ -45,20 +48,15 @@ namespace MiraiSozo.Options
             if(Instance == this)
             {
                 SetPaused(false);
+                Actions?.Disable();
                 Actions?.Dispose();
                 Actions = null;
+                ActionsChanged?.Invoke();
                 Instance = null;
             }
         }
 
-        // Start is called once before the first execution of Update after the MonoBehaviour is created
-        void Start()
-        {
-            
-        }
-
-        // Update is called once per frame
-        void Update()
+        private void Update()
         {
             if(Actions.All.Pause.triggered)
             {
@@ -79,14 +77,7 @@ namespace MiraiSozo.Options
         public void SetPaused(bool paused)
         {
             if (_isPaused == paused || Actions == null) return;
-            if (paused)
-            {
-                _resumeTimeScale = Time.timeScale;
-                _resumeCursorLock = Cursor.lockState;
-                _resumeCursorVisible = Cursor.visible;
-                _resumePlayerEnabled = Actions.Player.enabled;
-                _resumeUIEnabled = Actions.UI.enabled;
-            }
+            if (paused) CacheResumeState();
             _isPaused = paused;
 
             Time.timeScale = _isPaused ? 0f : _resumeTimeScale;
@@ -98,6 +89,20 @@ namespace MiraiSozo.Options
                 _menuUI.SetActive(_isPaused && InGameOptionMenu.Instance == null);
             }
 
+            ApplyPausedInput();
+        }
+
+        private void CacheResumeState()
+        {
+            _resumeTimeScale = Time.timeScale;
+            _resumeCursorLock = Cursor.lockState;
+            _resumeCursorVisible = Cursor.visible;
+            _resumePlayerEnabled = Actions.Player.enabled;
+            _resumeUIEnabled = Actions.UI.enabled;
+        }
+
+        private void ApplyPausedInput()
+        {
             if(_isPaused)
             {
                 Actions.Player.Disable();

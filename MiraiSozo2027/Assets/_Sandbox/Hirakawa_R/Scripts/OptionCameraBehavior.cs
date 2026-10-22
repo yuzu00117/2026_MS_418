@@ -38,50 +38,28 @@ namespace MiraiSozo.Options
             _invertX = invertX;
             _invertY = invertY;
         }
-        // Start is called once before the first execution of Update after the MonoBehaviour is created
-        
-        private void Awake()
+        private void Start()
         {
-
-        }
-
-        private void OnEnable()
-        {
-        }
-
-        private void OnDisable()
-        {
-
-        }
-        
-        void Start()
-        {
-            //マウスカーソル非表示
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
 
-            //現在のカメラの向きを初期角度として取得
+            // 初回入力でカメラの向きが飛ばないよう、配置時の角度を引き継ぐ。
             Vector3 angles = transform.eulerAngles;
             _yaw = angles.y;
             _pitch = angles.x;
         }
 
-        void LateUpdate()
+        private void LateUpdate()
         {
             if (_target == null || _actions == null || (OptionGameManager.Instance != null && OptionGameManager.Instance.IsPaused)) return;
-            // 1. Input System から Look（マウス移動 / 右スティック）を取得
             Vector2 lookInput = _actions.Player.Look.ReadValue<Vector2>();
-            // 2. 角度の加算
             _yaw += lookInput.x * _sensitivityX * (_invertX ? -1f : 1f);
             float verticalDelta = lookInput.y * _sensitivityY * (_invertY ? 1f : -1f);
             _pitch += verticalDelta;
-            // 3. 上下角度を制限（地面への潜り込みや真上反転を防止）
+            // 地面への潜り込みや真上での反転を避ける。
             _pitch = Mathf.Clamp(_pitch, _minPitch, _maxPitch);
-            // 4. 回転クォータニオンの生成
             Quaternion cameraRotation = Quaternion.Euler(_pitch, _yaw, 0f);
-            // 5. 注視点（キャラクターの胸付近）の座標
             Vector3 targetFocusPosition = _target.position + Vector3.up * _targetHeight;
-            // 6. カメラの位置を算出（注視点から後ろへ _distance だけ下がった位置）
             if(OptionGameSettings.Instance != null && OptionGameSettings.Instance.IsFirstPersonMode)
             {
                 transform.position = _target.position + _targetHeight * Vector3.up;
@@ -92,7 +70,6 @@ namespace MiraiSozo.Options
                                 - (cameraRotation * Vector3.forward * _distance);
                 transform.position = targetFocusPosition + offset;
             }
-            // 7. カメラの向きを適用
             transform.rotation = cameraRotation;
         }
     }
