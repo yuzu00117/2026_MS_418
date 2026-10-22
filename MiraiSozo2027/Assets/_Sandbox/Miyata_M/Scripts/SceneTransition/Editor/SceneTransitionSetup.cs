@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
+using UnityEditor.Events;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -74,17 +75,26 @@ namespace SceneFlow.EditorTools
                 y -= 130f;
             }
             // ボタン以外(クリア判定などのイベント)から遷移する例。Game から Title へ戻る
-            if (name == GameName) AddTrigger("ClearTrigger", TitleName);
+            if (name == GameName) AddTrigger(canvas.transform, "ClearTrigger", TitleName);
 
             CreateEventSystem(); // ロード画面の prefab 側には EventSystem を持たせない
             EditorSceneManager.SaveScene(scene, ScenePath(name));
         }
 
-        private static void AddTrigger(string objectName, string targetScene)
+        // クリア判定の代わりにカウントダウンを置き、終了イベントを Trigger.Go に接続する(動作確認用)
+        private static void AddTrigger(Transform canvas, string objectName, string targetScene)
         {
             var go = new GameObject(objectName);
             var trigger = go.AddComponent<SceneTransitionTrigger>();
             AssignScene(new SerializedObject(trigger), "_target", ScenePath(targetScene));
+
+            var label = CreateLabel(canvas, "", new Vector2(0, 320));
+            var countdown = go.AddComponent<CountdownEvent>();
+            var so = new SerializedObject(countdown);
+            so.FindProperty("_label").objectReferenceValue = label;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            UnityEventTools.AddPersistentListener(countdown.OnFinished, trigger.Go);
+            EditorUtility.SetDirty(countdown);
         }
 
         // SceneReference の各フィールドを設定する(Inspector でシーンをドラッグした状態と同じにする)

@@ -108,6 +108,12 @@ namespace SceneFlow.EditorTools
         private static void RequestClick(string targetScene, bool alsoDouble)
         {
             ResetDeadline();
+            // カウントダウン(UnityEvent → Trigger.Go の接続)があるシーンでは、押さずにイベントでの遷移を待つ
+            if (Object.FindAnyObjectByType<CountdownEvent>() != null)
+            {
+                Debug.Log(Tag + $"{targetScene} へ CountdownEvent の発火で遷移するのを待つ");
+                return;
+            }
             foreach (var t in Object.FindObjectsByType<SceneTransitionTrigger>())
             {
                 if (t.Target.SceneName != targetScene) continue;
