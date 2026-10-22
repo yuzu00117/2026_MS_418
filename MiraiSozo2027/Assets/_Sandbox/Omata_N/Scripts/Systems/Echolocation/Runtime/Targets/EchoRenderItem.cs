@@ -11,6 +11,7 @@ namespace Echo.Echolocation
         public int SubMeshCount { get; }
         public EchoTagColorRule Rule { get; }
         public Object EffectGroup { get; }
+        public EchoRevealState Reveal { get; }
 
         /// <summary>対象・色・サブメッシュ数を固定する。</summary>
         public EchoRenderItem(Renderer renderer, Color color, int count)
@@ -20,15 +21,17 @@ namespace Echo.Echolocation
             SubMeshCount = count;
             Rule = new EchoTagColorRule { Color = color };
             EffectGroup = renderer;
+            Reveal = null;
         }
 
-        public EchoRenderItem(Renderer renderer, EchoTagColorRule rule, int count, Object effectGroup = null)
+        public EchoRenderItem(Renderer renderer, EchoTagColorRule rule, int count, Object effectGroup = null, EchoRevealState reveal = null)
         {
             Renderer = renderer;
             Color = rule.Color;
             SubMeshCount = count;
             Rule = rule;
             EffectGroup = effectGroup ? effectGroup : renderer;
+            Reveal = reveal;
         }
     }
 }

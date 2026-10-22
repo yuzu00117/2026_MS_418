@@ -17,11 +17,19 @@ namespace Echo.Echolocation
         private List<Renderer> _renderers = new List<Renderer>();
         /// <summary>登録・構造変更の通知。</summary>
         public static event Action Changed;
+        private bool _hasPendingRefresh;
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() => Changed = null;
         void OnEnable() => RefreshRenderers();
         void OnDisable() => RefreshRenderers();
         void OnDestroy() => RefreshRenderers();
+        void OnValidate() => _hasPendingRefresh = true;
+        void LateUpdate()
+        {
+            if (!_hasPendingRefresh) return;
+            _hasPendingRefresh = false;
+            RefreshRenderers();
+        }
         /// <summary>子の変更後に登録を更新する。</summary>
         public void RefreshRenderers() => Changed?.Invoke();
         /// <summary>最も近い所有者と手動一覧の双方を満たすRendererだけを受け付ける。</summary>

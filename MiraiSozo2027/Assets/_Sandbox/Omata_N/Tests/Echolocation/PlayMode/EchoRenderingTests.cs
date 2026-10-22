@@ -463,6 +463,7 @@ namespace Echo.Echolocation.Tests
             second.transform.localScale = new Vector3(20, 20, .2f);
             second.transform.SetParent(_wall.transform, true);
             second.GetComponent<Renderer>().sharedMaterial = _mat;
+            second.AddComponent<EchoOccluder>(); // 動的な遮蔽物を登録する。
             yield return null;
             yield return null;
             yield return null;

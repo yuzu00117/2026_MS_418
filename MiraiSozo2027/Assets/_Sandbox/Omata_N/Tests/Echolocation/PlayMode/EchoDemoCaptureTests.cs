@@ -16,6 +16,7 @@ namespace Echo.Echolocation.Tests
         [UnityTearDown]
         public IEnumerator Cleanup()
         {
+            EchoTestSceneLoader.StopTeamInput();
             if (_camera)
                 _camera.targetTexture = null;
             if (_output)
@@ -31,7 +32,7 @@ namespace Echo.Echolocation.Tests
         [UnityTest]
         public IEnumerator DemoCanBeOpenedAndScanned()
         {
-            yield return SceneManager.LoadSceneAsync("Scene_EchoDemo", LoadSceneMode.Additive);
+            yield return EchoTestSceneLoader.Load("Scene_EchoDemo");
             _demo = SceneManager.GetSceneByName("Scene_EchoDemo");
             EchoController controller = null;
             foreach (var root in _demo.GetRootGameObjects())

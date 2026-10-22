@@ -38,10 +38,12 @@ namespace Echo.Echolocation
             public EchoRenderItem Item;
             public EchoOcclusionMode Occlusion;
             public RendererListHandle[] RendererLists;
+            public bool IsCommitted;
         }
 
         readonly Dictionary<(EchoController, UnityEngine.Object), History> _histories = new Dictionary<(EchoController, UnityEngine.Object), History>();
         readonly List<(EchoController, UnityEngine.Object)> _stale = new List<(EchoController, UnityEngine.Object)>();
+        static readonly int CommittedId = Shader.PropertyToID("_EchoCommittedOriginal");
         static readonly int HistoryId = Shader.PropertyToID("_EchoHistory");
         static readonly int SizeId = Shader.PropertyToID("_EchoSourceSize");
         static readonly int TimingId = Shader.PropertyToID("_EchoEffectTiming");
@@ -97,7 +99,7 @@ namespace Echo.Echolocation
             foreach (var wave in controller.Frames)
                 if (EchoVolumeMath.Intersects(bounds, wave.Origin, wave.OuterRadius)) { possibleContact = true; break; }
             _histories.TryGetValue(key, out var history);
-            if (!possibleContact && (history == null || history.EnableVersion != controller.EnableVersion ||
+            if (!(item.Reveal && item.Reveal.IsActive) && !possibleContact && (history == null || history.EnableVersion != controller.EnableVersion ||
                 now - history.LatestPossibleContact > Mathf.Max(rule.OriginalHoldDuration, rule.OutlineHoldDuration)))
             {
                 if (history != null) { history.Dispose(); _histories.Remove(key); }
@@ -225,8 +227,29 @@ namespace Echo.Echolocation
             history.Rule = rule;
             if (possibleContact) history.LatestPossibleContact = now;
 
-            if (rule.OriginalEnabled && rule.HideOriginalOutsideEcho)
+            if (rule.OriginalEnabled && rule.HideOriginalOutsideEcho &&
+                (item.Reveal ? item.Reveal.IsActive && item.Reveal.World && item.Reveal.World.Controller == controller :
+                    rule.RevealMode == EchoOriginalRevealMode.WholeObject))
             {
+                IReadOnlyList<EchoRenderItem> originalItems = item.Reveal ? item.Reveal.OriginalItems : items;
+                var originalMask = mask;
+                if (item.Reveal)
+                {
+                    originalMask = graph.CreateTexture(maskDesc);
+                    using var maskBuilder = graph.AddRasterRenderPass<EchoHighlightDrawData>("Echo.CommittedRegionMask", out var maskData);
+                    maskData.Items = originalItems;
+                    maskData.Material = backend.Highlight;
+                    if (resources.cameraDepthTexture.IsValid()) maskBuilder.UseTexture(resources.cameraDepthTexture, AccessFlags.Read);
+                    maskBuilder.SetRenderAttachment(originalMask, 0, AccessFlags.Write);
+                    maskBuilder.AllowGlobalStateModification(true);
+                    maskBuilder.SetRenderFunc((EchoHighlightDrawData d, RasterGraphContext ctx) =>
+                    {
+                        ctx.cmd.SetGlobalFloat("_EchoOcclusion", 1);
+                        foreach (var member in d.Items)
+                            if (member.Renderer)
+                                for (int s = 0; s < member.SubMeshCount; s++) ctx.cmd.DrawRenderer(member.Renderer, d.Material, s, 1);
+                    });
+                }
                 var originalDesc = desc;
                 originalDesc.name = "Echo original material background";
                 var scene = graph.CreateTexture(originalDesc);
@@ -243,7 +266,7 @@ namespace Echo.Echolocation
                 var cameraData = context.Get<UniversalCameraData>();
                 var lightData = context.Get<UniversalLightData>();
                 var lists = new List<RendererListHandle>();
-                foreach (var member in items)
+                foreach (var member in originalItems)
                 {
                     var originals = EchoTargetRegistry.GetOriginalMaterials(member.Renderer);
                     var invisible = EchoTargetRegistry.GetInvisibleMaterials(member.Renderer);
@@ -278,14 +301,15 @@ namespace Echo.Echolocation
                 {
                     data.Source = original;
                     data.Scene = scene;
-                    data.Mask = mask;
+                    data.Mask = originalMask;
+                    data.IsCommitted = item.Reveal;
                     data.Occlusion = EchoTagColorRule.ResolveOcclusion(rule.OriginalOcclusion, controller.Settings.OcclusionMode);
                     data.Previous = current;
                     data.Material = backend.Composite;
                     data.Item = item;
                     builder.UseTexture(original, AccessFlags.Read);
                     builder.UseTexture(scene, AccessFlags.Read);
-                    builder.UseTexture(mask, AccessFlags.Read);
+                    builder.UseTexture(originalMask, AccessFlags.Read);
                     builder.UseTexture(current, AccessFlags.Read);
                     builder.SetRenderAttachment(resources.activeColorTexture, 0, AccessFlags.Write);
                     builder.AllowGlobalStateModification(true);
@@ -295,6 +319,7 @@ namespace Echo.Echolocation
                         ctx.cmd.SetGlobalTexture(MaskId, d.Mask);
                         ctx.cmd.SetGlobalFloat(OriginalOcclusionId, d.Occlusion == EchoOcclusionMode.VisibleOnly ? 1 : 0);
                         ctx.cmd.SetGlobalTexture(SceneId, d.Scene);
+                        ctx.cmd.SetGlobalFloat(CommittedId, d.IsCommitted ? 1 : 0);
                         ctx.cmd.SetGlobalFloat(OpacityId, d.Item.Rule.OriginalOpacity);
                         Blitter.BlitTexture(ctx.cmd, d.Source, new Vector4(1, 1, 0, 0), d.Material, 5);
                     });

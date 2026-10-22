@@ -10,13 +10,14 @@ namespace Echo.Echolocation.Editor
         private const int BaseLineCount = 4;
         private const int FillLineCount = 2;
         private const int OutlineLineCount = 4;
-        private const int OriginalLineCount = 4;
+        private const int OriginalLineCount = 5;
         private const int ContactLineCount = 1;
         private const float LineSpacing = 4;
 
         public override float GetPropertyHeight(SerializedProperty p, GUIContent l)
         {
             int lines = BaseLineCount;
+            if (!p.FindPropertyRelative("_definition").objectReferenceValue) lines++;
             if (p.FindPropertyRelative("_fillEnabled").boolValue) lines += FillLineCount;
             if (p.FindPropertyRelative("_outlineEnabled").boolValue) lines += OutlineLineCount;
             if (p.FindPropertyRelative("_originalEnabled").boolValue) lines += OriginalLineCount;
@@ -28,11 +29,16 @@ namespace Echo.Echolocation.Editor
             EditorGUI.BeginProperty(rect, label, p);
             rect.height = EditorGUIUtility.singleLineHeight;
             EditorGUI.PropertyField(new Rect(rect.x, rect.y, 20, rect.height), p.FindPropertyRelative("_isEnabled"), GUIContent.none);
-            var tag = p.FindPropertyRelative("_tagName");
-            EditorGUI.BeginChangeCheck();
-            string value = EditorGUI.TagField(new Rect(rect.x + 24, rect.y, rect.width - 24, rect.height), tag.stringValue);
-            if (EditorGUI.EndChangeCheck())
-                tag.stringValue = value;
+            EditorGUI.PropertyField(new Rect(rect.x + 24, rect.y, rect.width - 24, rect.height),
+                p.FindPropertyRelative("_definition"), new GUIContent("専用タグ"));
+            if (!p.FindPropertyRelative("_definition").objectReferenceValue)
+            {
+                rect.y += EditorGUIUtility.singleLineHeight + LineSpacing;
+                var tag = p.FindPropertyRelative("_tagName");
+                EditorGUI.BeginChangeCheck();
+                string value = EditorGUI.TagField(rect, "旧Unityタグ（移行用）", tag.stringValue);
+                if (EditorGUI.EndChangeCheck()) tag.stringValue = value;
+            }
             void Field(string path, string title)
             {
                 rect.y += EditorGUIUtility.singleLineHeight + LineSpacing;
@@ -55,6 +61,7 @@ namespace Echo.Echolocation.Editor
             Field("_originalEnabled", "元のマテリアルを表示");
             if (p.FindPropertyRelative("_originalEnabled").boolValue)
             {
+                Field("_revealMode", "表示範囲（EchoRevealState）");
                 Field("_hideOriginalOutsideEcho", "通常時は非表示にする");
                 Field("_originalHoldDuration", "接触後の表示残存（秒）");
                 Field("_originalOpacity", "元の見た目の不透明度");

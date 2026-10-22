@@ -48,10 +48,16 @@ namespace Echo.Echolocation
         }
 
         /// <summary>Renderer自身のタグで照合する。重複時は有効な先頭行を優先する。</summary>
+        public bool IsBlockingDefinition(EchoTagDefinition definition)
+        {
+            foreach (var rule in Rules)
+                if (rule != null && rule.IsEnabled && rule.Definition && rule.Definition == definition) return rule.IsBlocking;
+            return IsBlockingByDefault;
+        }
         public bool IsBlockingTag(string tag)
         {
             foreach (var rule in Rules)
-                if (rule != null && rule.IsEnabled && rule.TagName == tag)
+                if (rule != null && rule.IsEnabled && !rule.Definition && rule.TagName == tag)
                     return rule.IsBlocking;
             return IsBlockingByDefault;
         }
@@ -63,7 +69,7 @@ namespace Echo.Echolocation
             if (Rules != null)
                 foreach (var r in Rules)
                     if (r != null)
-                        copy.Rules.Add(new EchoBlockingRule { IsEnabled = r.IsEnabled, TagName = r.TagName, IsBlocking = r.IsBlocking });
+                        copy.Rules.Add(new EchoBlockingRule { IsEnabled = r.IsEnabled, Definition = r.Definition, TagName = r.TagName, IsBlocking = r.IsBlocking });
             copy.Validate();
             return copy;
         }

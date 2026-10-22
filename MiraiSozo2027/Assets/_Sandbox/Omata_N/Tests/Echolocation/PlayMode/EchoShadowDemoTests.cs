@@ -14,9 +14,16 @@ namespace Echo.Echolocation.Tests
         private Scene _scene;
         private Camera _camera;
         private RenderTexture _output;
+        private int CountSceneTransforms()
+        {
+            int count = 0;
+            foreach (var root in _scene.GetRootGameObjects()) count += root.GetComponentsInChildren<Transform>(true).Length;
+            return count;
+        }
         [UnityTearDown]
         public IEnumerator Cleanup()
         {
+            EchoTestSceneLoader.StopTeamInput();
             if (_camera)
                 _camera.targetTexture = null;
             if (_output)
@@ -32,14 +39,16 @@ namespace Echo.Echolocation.Tests
         [UnityTest]
         public IEnumerator SourceShadowDemoRendersWithoutAddingHierarchyObjects()
         {
-            yield return SceneManager.LoadSceneAsync("Scene_EchoDemo", LoadSceneMode.Additive);
+            yield return EchoTestSceneLoader.Load("Scene_EchoDemo");
             _scene = SceneManager.GetSceneByName("Scene_EchoDemo");
+            yield return null;
+            yield return null;
             EchoController controller = null;
             foreach (var root in _scene.GetRootGameObjects())
                 if (root.TryGetComponent<EchoController>(out var found))
                     controller = found;
             Assert.NotNull(controller);
-            int initialObjects = Object.FindObjectsByType<Transform>().Length;
+            int initialObjects = CountSceneTransforms();
             Assert.True(controller.Settings.Shadow.IsEnabled);
             controller.Settings.Duration = 4;
             controller.Settings.PulseInterval = 6;
@@ -63,7 +72,7 @@ namespace Echo.Echolocation.Tests
             while (controller.CurrentOuterRadius < 12 && Time.unscaledTime < timeout);
             Assert.True(controller.ShadowMaps.IsReady);
             Assert.That(controller.ShadowMaps.DrawCalls, Is.GreaterThan(0));
-            Assert.That(Object.FindObjectsByType<Transform>().Length, Is.EqualTo(initialObjects));
+            Assert.That(CountSceneTransforms(), Is.EqualTo(initialObjects));
             var previous = RenderTexture.active;
             RenderTexture.active = _output;
             var image = new Texture2D(640, 360, TextureFormat.RGB24, false);

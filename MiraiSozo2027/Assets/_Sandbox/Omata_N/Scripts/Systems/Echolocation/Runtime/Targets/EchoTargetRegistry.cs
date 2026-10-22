@@ -33,6 +33,17 @@ namespace Echo.Echolocation
         public static Material[] GetInvisibleMaterials(Renderer renderer) =>
             _hiddenOwners.TryGetValue(renderer, out var state) ? state.Invisible : null;
 
+        public static void AcquireHidden(Renderer renderer)
+        {
+            if (_hiddenOwners.TryGetValue(renderer, out var state)) { state.Count++; return; }
+            var shader = Resources.Load<Shader>("EchoInvisible");
+            if (!shader) throw new System.InvalidOperationException("EchoInvisible shader is missing.");
+            var originals = renderer.sharedMaterials;
+            var invisible = CreateInvisible(shader, originals.Length);
+            _hiddenOwners.Add(renderer, new HiddenState { Count = 1, Originals = originals, Invisible = invisible });
+            renderer.sharedMaterials = invisible;
+        }
+
         static void DestroyInvisible(HiddenState state)
         {
             foreach (var material in state.Invisible)
@@ -63,6 +74,12 @@ namespace Echo.Echolocation
         private static readonly ProfilerMarker _marker = new ProfilerMarker("Echo.Candidates");
         /// <summary>登録されたRenderer数。</summary>
         public int Count => _entries.Count;
+        private static bool TryGetRule(EchoTagResolver tags, EchoTargetEntry entry, GameObject owner, out EchoTagColorRule rule)
+        {
+            if (entry.Tag) return tags.TryGetRule(entry.Tag, out rule);
+            // 専用タグ設定済みのルールはUnityタグにはフォールバックしない。
+            return tags.TryGetRule(owner.tag, out rule) && !rule.Definition;
+        }
 
         /// <summary>専用形状取得を追加する。再収集前に登録する。</summary>
         public void AddAdapter(IEchoGeometryAdapter adapter)
@@ -81,7 +98,7 @@ namespace Echo.Echolocation
             _entries.Clear();
         }
 
-        static void ReleaseHidden(Renderer r)
+        public static void ReleaseHidden(Renderer r)
         {
             if (!_hiddenOwners.TryGetValue(r, out var state)) return;
             if (state.Count > 1) state.Count--;
@@ -121,10 +138,11 @@ namespace Echo.Echolocation
                 var r = e.Renderer;
                 if (!r || !r.enabled || r.forceRenderingOff || !r.gameObject.activeInHierarchy || !camera) continue;
                 if (excluded && r.transform.IsChildOf(excluded)) continue;
-                if (e.Owner && !e.Owner.Owns(r)) continue;
+                if (e.Owner && (!e.Owner.isActiveAndEnabled || !e.IsOwned)) continue;
                 var owner = e.Owner ? e.Owner.gameObject : r.gameObject;
                 if ((layers & (1 << owner.layer)) == 0 || (camera.cullingMask & (1 << r.gameObject.layer)) == 0) continue;
-                if (!tags.TryGetRule(owner.tag, out var rule) || !rule.OriginalEnabled || !rule.HideOriginalOutsideEcho) continue;
+                if (!TryGetRule(tags, e, owner, out var rule) || !rule.OriginalEnabled || !rule.HideOriginalOutsideEcho) continue;
+                if (e.Reveal && (!e.Reveal.isActiveAndEnabled || !e.Reveal.World || !e.Reveal.World.isActiveAndEnabled)) continue;
                 bool supported = false;
                 foreach (var adapter in _adapters)
                     if (adapter.TryGetGeometry(r, out _)) { supported = true; break; }
@@ -166,13 +184,13 @@ namespace Echo.Echolocation
             System.Array.Sort(foundRenderers, (a, b) => string.CompareOrdinal(a.GetEntityId().ToString(), b.GetEntityId().ToString()));
             foreach (var r in foundRenderers)
             {
-                if (!r.gameObject.scene.IsValid())
+                if (!r.gameObject.scene.IsValid() || r.GetComponent<EchoRevealProxy>())
                     continue;
                 var owner = r.GetComponentInParent<EchoTarget>(true);
                 if (!isAuto && !owner)
                     continue;
                 var group = r.GetComponentInParent<LODGroup>(true);
-                _entries.Add(new EchoTargetEntry { Renderer = r, Owner = owner, Group = group, Lods = group ? group.GetLODs() : null });
+                _entries.Add(new EchoTargetEntry { Renderer = r, Owner = owner, IsOwned = !owner || owner.Owns(r), Tag = owner ? owner.GetComponent<EchoTag>() : null, Reveal = owner ? owner.GetComponent<EchoRevealState>() : null, Group = group, Lods = group ? group.GetLODs() : null });
             }
         }
 
@@ -189,12 +207,12 @@ namespace Echo.Echolocation
                         continue;
                     if (excluded && r.transform.IsChildOf(excluded))
                         continue;
-                    if (e.Owner && !e.Owner.Owns(r))
+                    if (e.Owner && (!e.Owner.isActiveAndEnabled || !e.IsOwned))
                         continue;
                     GameObject owner = e.Owner ? e.Owner.gameObject : r.gameObject;
                     if ((layers & (1 << owner.layer)) == 0 || (camera.cullingMask & (1 << r.gameObject.layer)) == 0)
                         continue;
-                    if (!tags.TryGetRule(owner.tag, out var rule) || (!rule.OriginalEnabled && !rule.OutlineEnabled && (!rule.FillEnabled || rule.Color.a <= 0)))
+                    if (!TryGetRule(tags, e, owner, out var rule) || (!rule.OriginalEnabled && !rule.OutlineEnabled && (!rule.FillEnabled || rule.Color.a <= 0)))
                         continue;
                     bool isIntersects = false;
                     for (int i = 0; i < frames.Count; i++)
@@ -212,7 +230,7 @@ namespace Echo.Echolocation
                     foreach (var adapter in _adapters)
                         if (adapter.TryGetGeometry(r, out var mesh))
                         {
-                            outputItems.Add(new EchoRenderItem(r, rule, mesh.subMeshCount, e.Owner));
+                            outputItems.Add(new EchoRenderItem(r, rule, mesh.subMeshCount, e.Owner, e.Reveal));
                             break;
                         }
                 }
