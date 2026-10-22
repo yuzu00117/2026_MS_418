@@ -61,9 +61,9 @@ namespace SceneFlow.EditorTools
                     SessionState.SetInt(KeyStage, 1);
                     break;
 
-                case 1: // 常駐 prefab が生成され Title が出たら、最初の遷移を要求する
+                case 1: // ロード画面(SceneLoader)が生成・登録され Title が出たら、最初の遷移を要求する
                     if (!EditorApplication.isPlaying || EditorApplication.isCompiling) return;
-                    if (Object.FindAnyObjectByType<SceneTransition>() == null) return;
+                    if (!SceneTransition.HasLoader) return;
                     if (SceneManager.GetActiveScene().name != TitleName) return;
 
                     _index = 0;

@@ -1,30 +1,16 @@
 using System;
-using System.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
 namespace SceneFlow
 {
     /// <summary>
-    /// シーン遷移の窓口。SceneTransition.Go(sceneReference) で、ロード画面を挟んで遷移する。
-    /// DontDestroyOnLoad で常駐し、Resources/SceneTransition.prefab を起動時に自動生成する。
-    /// prefab が無い環境(他メンバー)では何もしない。
+    /// シーン遷移の窓口。SceneTransition.Go(sceneReference) で遷移する。
+    /// ロード画面は持たず、登録された ISceneLoader(ロード画面側)に読み込みを任せる。
+    /// 担当は「遷移先の検証」「二重遷移の防止」「前後の通知」だけ。
     /// </summary>
-    public class SceneTransition : MonoBehaviour
+    public static class SceneTransition
     {
-        private const string PrefabPath = "SceneTransition"; // Resources/SceneTransition.prefab
-        private const float ProgressLoadedThreshold = 0.9f;  // allowSceneActivation = false の間は 0.9 で止まる
-        private const float MinFillSeconds = 0.01f;          // 0除算防止
-
-        private static SceneTransition _instance;
-
-        [SerializeField] private CanvasGroup _canvasGroup; // ロード画面のルート(Sort Order 大)
-        [SerializeField] private Slider _progressBar;
-        [SerializeField] private float _fadeTime = 0.3f;
-        [SerializeField] private float _minDisplayTime = 1.0f; // バーが 0→1 になるまでの最低秒数
-
-        private bool _isTransitioning;
+        private static ISceneLoader _loader;
 
         /// <summary>遷移を始める直前に通知する。</summary>
         public static event Action<SceneReference> OnBeforeTransition;
@@ -32,36 +18,31 @@ namespace SceneFlow
         /// <summary>新シーンの初期化が一巡し、ロード画面が消え始める直前に通知する。</summary>
         public static event Action<SceneReference> OnAfterTransition;
 
-        public static bool IsTransitioning => _instance != null && _instance._isTransitioning;
+        public static bool HasLoader => _loader != null;
 
-        private void Awake()
+        public static bool IsTransitioning => _loader != null && _loader.IsLoading;
+
+        /// <summary>ロード画面側が起動時に自分を登録する。</summary>
+        public static void RegisterLoader(ISceneLoader loader)
         {
-            // _canvasGroup のオブジェクトは SetActive(false) しない
-            // (同じオブジェクトにこのスクリプトがあるとコルーチンが止まる)
-            _canvasGroup.alpha = 0f;
-            _canvasGroup.blocksRaycasts = false;
+            _loader = loader;
         }
 
-        // 起動時に自動生成する(どのシーンから Play しても存在する)
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void Bootstrap()
+        /// <summary>登録中のローダーと同一の場合だけ解除する(別のローダーに差し替わっていたら何もしない)。</summary>
+        public static void UnregisterLoader(ISceneLoader loader)
         {
-            var prefab = Resources.Load<SceneTransition>(PrefabPath);
-            if (prefab == null) return;
-
-            _instance = Instantiate(prefab);
-            DontDestroyOnLoad(_instance.gameObject);
+            if (_loader == loader) _loader = null;
         }
 
-        /// <summary>指定シーンへ遷移する。遷移中・未指定・未登録シーンの場合は無視する。</summary>
+        /// <summary>指定シーンへ遷移する。ローダー未登録・遷移中・未指定・未登録シーンの場合は無視する。</summary>
         public static void Go(SceneReference scene)
         {
-            if (_instance == null)
+            if (_loader == null)
             {
-                Debug.LogWarning("SceneTransition が存在しません。Resources/SceneTransition.prefab を確認してください。");
+                Debug.LogWarning("ISceneLoader が登録されていません。ロード画面側の初期化を確認してください。");
                 return;
             }
-            if (_instance._isTransitioning) return;
+            if (_loader.IsLoading) return;
 
             if (scene == null || !scene.IsAssigned)
             {
@@ -73,55 +54,9 @@ namespace SceneFlow
                 Debug.LogWarning($"シーン {scene.SceneName} が Build Settings に登録されていません。");
                 return;
             }
-            _instance.StartCoroutine(_instance.TransitionRoutine(scene));
-        }
 
-        private IEnumerator TransitionRoutine(SceneReference scene)
-        {
-            _isTransitioning = true;
             OnBeforeTransition?.Invoke(scene);
-
-            yield return Fade(0f, 1f);
-            _progressBar.value = 0f;
-
-            AsyncOperation op = SceneManager.LoadSceneAsync(scene.ScenePath);
-            op.allowSceneActivation = false;
-
-            // 実読み込みが一瞬で終わってもバーが見えるよう、表示値を一定速度で追従させる。
-            // timeScale = 0 でも進むよう unscaledDeltaTime を使う
-            float shown = 0f;
-            float fillSpeed = 1f / Mathf.Max(_minDisplayTime, MinFillSeconds);
-            while (op.progress < ProgressLoadedThreshold || shown < 1f)
-            {
-                float target = Mathf.Clamp01(op.progress / ProgressLoadedThreshold);
-                shown = Mathf.MoveTowards(shown, target, fillSpeed * Time.unscaledDeltaTime);
-                _progressBar.value = shown;
-                yield return null;
-            }
-
-            _progressBar.value = 1f;
-            op.allowSceneActivation = true;
-            while (!op.isDone) yield return null;
-
-            yield return null; // 新シーンの初期化が一巡するのを1フレーム待つ
-            OnAfterTransition?.Invoke(scene);
-
-            yield return Fade(1f, 0f);
-            _isTransitioning = false;
-        }
-
-        private IEnumerator Fade(float from, float to)
-        {
-            _canvasGroup.blocksRaycasts = true; // 遷移中はクリックを遮断
-            float t = 0f;
-            while (t < _fadeTime)
-            {
-                t += Time.unscaledDeltaTime;
-                _canvasGroup.alpha = Mathf.Lerp(from, to, t / _fadeTime);
-                yield return null;
-            }
-            _canvasGroup.alpha = to;
-            _canvasGroup.blocksRaycasts = to > 0f; // 非表示時は遮断を解除
+            _loader.Load(scene.ScenePath, () => OnAfterTransition?.Invoke(scene));
         }
     }
 }

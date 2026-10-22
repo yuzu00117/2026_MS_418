@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using SceneFlow;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -10,7 +11,7 @@ namespace LoadingTest.C
     /// 方式C: DontDestroyOnLoad で常駐するシングルトン。SceneLoader.Load("Game") で呼べる。
     /// Resources/SceneLoader.prefab にアタッチする。prefab が無い場合は何もしない。
     /// </summary>
-    public class SceneLoader : MonoBehaviour
+    public class SceneLoader : MonoBehaviour, ISceneLoader
     {
         private const string PrefabPath = "SceneLoader"; // Resources/SceneLoader.prefab
         private const float ProgressLoadedThreshold = 0.9f;
@@ -43,6 +44,12 @@ namespace LoadingTest.C
 
             _instance = Instantiate(prefab);
             DontDestroyOnLoad(_instance.gameObject);
+            SceneTransition.RegisterLoader(_instance); // 遷移の窓口(SceneTransition)から使えるようにする
+        }
+
+        private void OnDestroy()
+        {
+            SceneTransition.UnregisterLoader(this);
         }
 
         /// <summary>どこからでも呼べる。ロード中の多重呼び出しは無視する。</summary>
@@ -50,6 +57,15 @@ namespace LoadingTest.C
         {
             if (_instance == null || _instance._isLoading) return;
             _instance.StartCoroutine(_instance.LoadRoutine(sceneName, onLoaded));
+        }
+
+        // ISceneLoader: static の Load と同名のため明示実装にする
+        bool ISceneLoader.IsLoading => _isLoading;
+
+        void ISceneLoader.Load(string scenePath, Action onLoaded)
+        {
+            if (_isLoading) return;
+            StartCoroutine(LoadRoutine(scenePath, onLoaded));
         }
 
         private IEnumerator LoadRoutine(string sceneName, Action onLoaded)

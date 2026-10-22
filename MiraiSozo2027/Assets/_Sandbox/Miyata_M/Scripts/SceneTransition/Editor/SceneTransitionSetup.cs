@@ -11,15 +11,13 @@ using UnityEngine.UI;
 namespace SceneFlow.EditorTools
 {
     /// <summary>
-    /// 遷移用の Scene(Title / StageSelect / Game)と SceneTransition.prefab を生成する。
+    /// 遷移用の Scene(Title / StageSelect / Game)を生成する。ロード画面(SceneLoader.prefab)は 2006 の方式C のものを使う。
     /// メニュー: Tools/SceneTransition/Setup、またはバッチ -executeMethod SceneFlow.EditorTools.SceneTransitionSetup.Build
     /// 何度実行しても同じ結果になる(上書き生成)。
     /// </summary>
     public static class SceneTransitionSetup
     {
         private const string SceneDir = "Assets/_Sandbox/Miyata_M/Scenes/SceneTransition";
-        private const string ResourcesDir = "Assets/_Sandbox/Miyata_M/Resources";
-        private const string PrefabPath = ResourcesDir + "/SceneTransition.prefab";
 
         // テスト用シーン名(本番のシーンとは無関係。遷移先は SceneReference で指定する)
         private const string TitleName = "Scene_Title";
@@ -30,9 +28,9 @@ namespace SceneFlow.EditorTools
         public static void Build()
         {
             Directory.CreateDirectory(SceneDir);
-            Directory.CreateDirectory(ResourcesDir);
 
-            BuildPrefab();
+            // ロード画面は遷移の外側(2006 の方式C)。SceneLoader.prefab が無ければ生成する
+            LoadingTest.EditorTools.LoadingTestSetup.BuildSceneLoaderPrefab();
 
             // 遷移先をアセット参照で指定するため、先に空シーンを保存してアセットとして取り込む
             var names = new List<string> { TitleName, StageSelectName, GameName };
@@ -49,24 +47,6 @@ namespace SceneFlow.EditorTools
             RegisterBuildSettings(names);
             AssetDatabase.SaveAssets();
             Debug.Log("SceneTransition: セットアップ完了");
-        }
-
-        // ---- ロード画面を含む常駐 prefab ----
-        private static void BuildPrefab()
-        {
-            var root = new GameObject("SceneTransition");
-            var canvas = CreateCanvas("LoadingCanvas", 100, root.transform);
-            var group = canvas.gameObject.AddComponent<CanvasGroup>();
-            var bg = CreateImage(canvas.transform, "Background", new Color(0, 0, 0, 0.95f));
-            Stretch(bg.rectTransform);
-            CreateLabel(canvas.transform, "Loading...", new Vector2(0, 40));
-            var slider = CreateSlider(canvas.transform, new Vector2(0, -20));
-
-            var transition = root.AddComponent<SceneTransition>();
-            SetObject(transition, "_canvasGroup", group);
-            SetObject(transition, "_progressBar", slider);
-            PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
-            Object.DestroyImmediate(root);
         }
 
         // ---- 遷移元シーン ----
@@ -186,37 +166,6 @@ namespace SceneFlow.EditorTools
             text.color = Color.black;
             text.rectTransform.sizeDelta = rt.sizeDelta;
             return go.GetComponent<Button>();
-        }
-
-        private static Slider CreateSlider(Transform parent, Vector2 pos)
-        {
-            var root = new GameObject("ProgressBar", typeof(Slider));
-            root.transform.SetParent(parent, false);
-            var rt = (RectTransform)root.transform;
-            rt.sizeDelta = new Vector2(800, 30);
-            rt.anchoredPosition = pos;
-
-            var bg = CreateImage(root.transform, "Background", new Color(0.3f, 0.3f, 0.3f));
-            Stretch(bg.rectTransform);
-            var fillArea = new GameObject("FillArea", typeof(RectTransform));
-            fillArea.transform.SetParent(root.transform, false);
-            Stretch((RectTransform)fillArea.transform);
-            var fill = CreateImage(fillArea.transform, "Fill", Color.cyan);
-            Stretch(fill.rectTransform);
-
-            var slider = root.GetComponent<Slider>();
-            slider.fillRect = fill.rectTransform;
-            slider.interactable = false; // 表示専用
-            slider.minValue = 0f;
-            slider.maxValue = 1f;
-            return slider;
-        }
-
-        private static void SetObject(Object target, string field, Object value)
-        {
-            var so = new SerializedObject(target);
-            so.FindProperty(field).objectReferenceValue = value;
-            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         // 既存の登録は維持し、未登録のものだけ末尾へ追加する

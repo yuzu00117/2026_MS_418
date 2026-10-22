@@ -113,6 +113,16 @@ namespace LoadingTest.EditorTools
         // ---- 方式C: シングルトン ----
         private static void BuildC()
         {
+            BuildSceneLoaderPrefab();
+
+            BuildCScene(SceneC1, "シーンC1(→ C2へ)", SceneC2, new Color(0.2f, 0.4f, 0.2f));
+            BuildCScene(SceneC2, "シーンC2(→ C1へ)", SceneC1, new Color(0.4f, 0.2f, 0.4f));
+        }
+
+        /// <summary>方式C の SceneLoader.prefab を生成する(シーン遷移の Setup からも使う)。</summary>
+        public static void BuildSceneLoaderPrefab()
+        {
+            Directory.CreateDirectory(ResourcesDir);
             var root = new GameObject("SceneLoader");
             var canvas = CreateCanvas("LoadingCanvas", 100, root.transform);
             var group = canvas.gameObject.AddComponent<CanvasGroup>();
@@ -125,9 +135,6 @@ namespace LoadingTest.EditorTools
             SetObject(loader, "_progressBar", slider);
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             Object.DestroyImmediate(root);
-
-            BuildCScene(SceneC1, "シーンC1(→ C2へ)", SceneC2, new Color(0.2f, 0.4f, 0.2f));
-            BuildCScene(SceneC2, "シーンC2(→ C1へ)", SceneC1, new Color(0.4f, 0.2f, 0.4f));
         }
 
         private static void BuildCScene(string name, string label, string target, Color bgColor)
