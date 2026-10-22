@@ -1,7 +1,8 @@
-using UnityEngine;
-using UnityEngine.InputSystem;
+using Aura.ObjectInfoDemo;
 using Aura.Wave;
 using Echo.Echolocation;
+using UnityEngine;
+using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
@@ -170,12 +171,12 @@ public class PlayerController : MonoBehaviour
 
             if(_actions.Player.SwitchWave.triggered)
              {
-                _waveEmitter.SelectNextType();
+                _waveEmitter.SelectNextSource();
              }
-            if(_actions.Player.ToggleFireMode.triggered)
-            {
-                _waveEmitter.FireMode = _waveEmitter.FireMode == WaveFireMode.Pulse ? WaveFireMode.Beam : WaveFireMode.Pulse;
-            }
+            //if(_actions.Player.ToggleFireMode.triggered)
+            //{
+            //    _waveEmitter.FireMode = _waveEmitter.FireMode == WaveFireMode.Pulse ? WaveFireMode.Beam : WaveFireMode.Pulse;
+            //}
 
         }
 
