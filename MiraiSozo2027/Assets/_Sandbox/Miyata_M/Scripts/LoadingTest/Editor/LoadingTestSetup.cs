@@ -48,8 +48,8 @@ namespace LoadingTest.EditorTools
         // ---- 方式A: 各シーンにロードUI ----
         private static void BuildA()
         {
-            BuildASceneWithLoader(SceneA1, "シーンA1(→ A2へ)", SceneA2);
-            BuildASceneWithLoader(SceneA2, "シーンA2(→ A1へ)", SceneA1);
+            BuildASceneWithLoader(SceneA1, "シーンA1(-> A2へ)", SceneA2);
+            BuildASceneWithLoader(SceneA2, "シーンA2(-> A1へ)", SceneA1);
         }
 
         private static void BuildASceneWithLoader(string name, string label, string target)
@@ -91,8 +91,8 @@ namespace LoadingTest.EditorTools
             CreateEventSystem();
             Save(boot, SceneBoot);
 
-            BuildBGameScene(SceneTitle, "タイトル(→ Gameへ)", SceneGame, new Color(0.15f, 0.25f, 0.45f));
-            BuildBGameScene(SceneGame, "ゲーム(→ Titleへ)", SceneTitle, new Color(0.45f, 0.25f, 0.15f));
+            BuildBGameScene(SceneTitle, "タイトル(-> Gameへ)", SceneGame, new Color(0.15f, 0.25f, 0.45f));
+            BuildBGameScene(SceneGame, "ゲーム(-> Titleへ)", SceneTitle, new Color(0.45f, 0.25f, 0.15f));
         }
 
         private static void BuildBGameScene(string name, string label, string target, Color bgColor)
@@ -115,8 +115,8 @@ namespace LoadingTest.EditorTools
         {
             BuildSceneLoaderPrefab();
 
-            BuildCScene(SceneC1, "シーンC1(→ C2へ)", SceneC2, new Color(0.2f, 0.4f, 0.2f));
-            BuildCScene(SceneC2, "シーンC2(→ C1へ)", SceneC1, new Color(0.4f, 0.2f, 0.4f));
+            BuildCScene(SceneC1, "シーンC1(-> C2へ)", SceneC2, new Color(0.2f, 0.4f, 0.2f));
+            BuildCScene(SceneC2, "シーンC2(-> C1へ)", SceneC1, new Color(0.4f, 0.2f, 0.4f));
         }
 
         /// <summary>方式C の SceneLoader.prefab を生成する(シーン遷移の Setup からも使う)。</summary>

@@ -78,7 +78,7 @@ namespace LoadingTest.C
             op.allowSceneActivation = false;
 
             // 実読み込みが一瞬で終わってもバーが見えるよう、表示値を一定速度で追従させる。
-            // 0→1 に最低 _minDisplayTime 秒かかる(timeScale = 0 でも進むよう unscaledDeltaTime を使う)
+            // 0->1 に最低 _minDisplayTime 秒かかる(timeScale = 0 でも進むよう unscaledDeltaTime を使う)
             float shown = 0f;
             float fillSpeed = 1f / Mathf.Max(_minDisplayTime, MinFillSeconds);
             while (op.progress < ProgressLoadedThreshold || shown < 1f)
