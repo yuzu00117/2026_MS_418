@@ -14,7 +14,7 @@ namespace Aura.ObjectInfoDemo
     /// ・ビームは、一定の間隔の点（BeamPoint）と点どうしをつなぐ直線で作る。
     ///   点を念力で掴んで動かすと、掴んだ点の前後が曲がる（BeamSourceInfo の Is Bendable がオンのときだけ）
     /// 今ある WaveEmitter（Aura.Wave）とは別物で、WaveSurface や WaveReceiver は見ない
-    public sealed class InfoBeamEmitter : MonoBehaviour
+    public sealed class WaveEmitter : MonoBehaviour
     {
         private const int MaxReflectionLimit = 16;           ///< Max Reflections に決められる最大の回数
         private const float SurfaceOffset = 0.01f;           ///< 跳ね返った後、次の判定を始める位置を面から離す距離（m）
@@ -51,12 +51,24 @@ namespace Aura.ObjectInfoDemo
         [Tooltip("ビームが出る位置の候補（手の先に置いた空の GameObject など）。上から見て、アクティブな最初のものを使う\n" +
                  "一人称と三人称で手が変わるときは両方入れておく（ViewModeSwitcher が出し入れした方が使われる）\n" +
                  "「狙いを決める視点の候補」が空のときは、この正面（青い矢印の向き）に出す。空なら、この GameObject の位置から出る")]
-        [SerializeField] private Transform[] _muzzles;                ///< ビームが出る位置の候補
+        [SerializeField] private Transform _muzzle;                ///< ビームが出る位置の候補
 
         [InspectorLabel("狙いを決める視点の候補")]
         [Tooltip("狙いを決める視点の候補（ふつうはカメラ）。アクティブな最初のものの正面で最初に当たる位置へ向けて出すので、画面の中心（照準）に飛ぶ\n" +
                  "空なら、「ビームが出る位置の候補」の正面に出す（ギミックのビームはこちら）")]
-        [SerializeField] private Transform[] _aimOrigins;             ///< 狙いを決める視点の候補
+        [SerializeField] private Transform _aimOrigin;             ///< 狙いを決める視点の候補
+
+                                                                    /// @brief 波が出る位置（手の先）。一人称と三人称で手が変わるときに差し替える
+        public Transform Muzzle {
+            get => _muzzle != null ? _muzzle : transform;
+            set => _muzzle = value;
+        }
+
+        /// @brief 狙いを決める視点（カメラ）。null なら Muzzle の正面に撃つ
+        public Transform AimOrigin {
+            get => _aimOrigin;
+            set => _aimOrigin = value;
+        }
 
         [InspectorLabel("当たらない自分の体")]
         [Tooltip("この GameObject とその子のコライダーには、ビームが当たらない（自分の体に当たらないようにする）\n" +
@@ -185,11 +197,11 @@ namespace Aura.ObjectInfoDemo
         /// @brief 最後のフレームでビームが当たった物（当たった順）。出していないときは空
         public IReadOnlyList<InfoBeamHit> LastHits => _lastHits;
 
-        /// @brief 今ビームが出る位置
-        public Transform CurrentMuzzle => FindFirstActive(_muzzles) ?? transform;
+        ///// @brief 今ビームが出る位置
+        //public Transform CurrentMuzzle => FindFirstActive(_muzzle) ?? transform;
 
-        /// @brief 今の狙いを決める視点。無ければ null
-        public Transform CurrentAimOrigin => FindFirstActive(_aimOrigins);
+        ///// @brief 今の狙いを決める視点。無ければ null
+        //public Transform CurrentAimOrigin => FindFirstActive(_aimOrigin);
 
         /// @brief この下のコライダーには、ビームが当たらない
         public Transform IgnoreRoot => _ignoreRoot != null ? _ignoreRoot : transform;
@@ -360,7 +372,7 @@ namespace Aura.ObjectInfoDemo
         private void UpdateBeam(float deltaTime)
         {
             BeamSourceInfo source = CurrentSource;
-            Transform muzzle = CurrentMuzzle;
+            Transform muzzle = Muzzle;
             float range = source.Range;
             Vector3 direction = GetAimDirection(muzzle, range);
             float energy = source.EnergyPerSecond * deltaTime;
@@ -553,14 +565,12 @@ namespace Aura.ObjectInfoDemo
         /// @brief ビームを出す向きを決める。視点があれば、視点の正面で当たる位置へ Muzzle から向ける
         private Vector3 GetAimDirection(Transform muzzle, float range)
         {
-            Transform aimOrigin = CurrentAimOrigin;
-            if (aimOrigin == null)
-            {
+            if (_aimOrigin == null) {
                 return muzzle.forward;
             }
 
-            Vector3 aimPosition = aimOrigin.position;
-            Vector3 aimForward = aimOrigin.forward;
+            Vector3 aimPosition = _aimOrigin.position;
+            Vector3 aimForward = _aimOrigin.forward;
             float aimRange = range + Vector3.Distance(aimPosition, muzzle.position);
             Vector3 target = BeamPhysics.TryCast(aimPosition, aimForward, 0.0f, aimRange, _hitMask,
                 _triggerInteraction, IgnoreRoot, out RaycastHit hit)
@@ -568,9 +578,8 @@ namespace Aura.ObjectInfoDemo
                 : aimPosition + aimForward * aimRange;
 
             Vector3 toTarget = target - muzzle.position;
-            // 狙う先が手より後ろ（壁に張り付いているときなど）なら、視点の向きにそのまま出す
-            if (toTarget.sqrMagnitude < MinTargetSqrDistance || Vector3.Dot(toTarget, aimForward) <= 0.0f)
-            {
+            // 狙う先が手より後ろ（壁に張り付いているときなど）なら、視点の向きにそのまま撃つ
+            if (toTarget.sqrMagnitude < MinTargetSqrDistance || Vector3.Dot(toTarget, aimForward) <= 0.0f) {
                 return aimForward;
             }
             return toTarget.normalized;

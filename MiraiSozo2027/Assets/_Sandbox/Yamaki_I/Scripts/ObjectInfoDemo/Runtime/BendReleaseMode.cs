@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Aura.ObjectInfoDemo
 {
-    /// @brief 念力で掴んだ点を離した後の、ビームの曲がりの扱い。InfoBeamEmitter の Bend Release Mode で選ぶ
+    /// @brief 念力で掴んだ点を離した後の、ビームの曲がりの扱い。WaveEmitter の Bend Release Mode で選ぶ
     public enum BendReleaseMode
     {
         [InspectorName("曲がったまま")]

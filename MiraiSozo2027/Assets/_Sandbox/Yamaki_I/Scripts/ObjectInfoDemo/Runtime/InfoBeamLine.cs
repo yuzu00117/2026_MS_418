@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 
 namespace Aura.ObjectInfoDemo
 {
-    /// @brief LineRenderer で、折れ線に沿って正弦波の線を描く。InfoBeamEmitter のビームの見た目に使う
+    /// @brief LineRenderer で、折れ線に沿って正弦波の線を描く。WaveEmitter のビームの見た目に使う
     /// 今ある WaveLine（Aura.Wave）と同じ描き方に、「揺れを 0 にする曲がり目」を選べるようにしたもの
     /// 点と線のビームでは、跳ね返った位置だけ揺れを 0 にし、点どうしの小さな曲がり目では揺らしたまま、線に沿って流す
     /// 揺らさない折れ線（DrawStraight）も描ける。ビームの実体の線（点どうしをつなぐ直線）を見せるのに使う
