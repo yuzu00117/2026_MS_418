@@ -19,12 +19,18 @@ namespace SceneFlow.EditorTools
         private const string KeyDeadline = "SceneTransitionVerify.Deadline";
         private const double TimeoutSeconds = 30.0;
         private const string Tag = "STVERIFY: ";
+
+        // 進行状況(Play 開始でドメインが再読み込みされるため、SessionState に保存する)
+        private const int StageOpen = 0;  // Title を開いて Play を始める
+        private const int StageStart = 1; // 最初の遷移を要求する
+        private const int StageWait = 2;  // 遷移の完了を待つ
+        private const int StageStop = 90; // Play の終了を待つ
         private const string TitleName = DemoScenes.TitleName;
         private const string StageSelectName = DemoScenes.StageSelectName;
         private const string GameName = DemoScenes.GameName;
 
         // 遷移の順序。現在のシーン上の該当ボタンを押し、そのシーンがアクティブになるまで待つ
-        private static readonly string[] Sequence = { StageSelectName, GameName, TitleName };
+        private static readonly string[] TargetScenes = { StageSelectName, GameName, TitleName };
 
         // Play 中のみ有効(ドメインは Play 開始時に再読み込みされ、Play 中は維持される)
         private static int _index;
@@ -32,8 +38,8 @@ namespace SceneFlow.EditorTools
         private static int _afterCount;
         private static Keyboard _testKeyboard;       // 入力停止の確認用の仮想キーボード
         private static Keyboard _lateKeyboard;       // 遷移中に接続されるデバイスの確認用
-        private static bool _lateBlocked;             // 遷移中に接続されたデバイスが無効になったか
-        private static bool _blockedDuringTransition; // 遷移中(OnAfterTransition 時点)に無効になっていたか
+        private static bool _isLateKeyboardBlocked;             // 遷移中に接続されたデバイスが無効になったか
+        private static bool _hasBlockedDuringTransition; // 遷移中(OnAfterTransition 時点)に無効になっていたか
 
         static SceneTransitionVerify()
         {
@@ -49,8 +55,8 @@ namespace SceneFlow.EditorTools
 
         private static void Tick()
         {
-            int stage = SessionState.GetInt(KeyStage, 0);
-            if (stage > 0 && EditorApplication.timeSinceStartup > SessionState.GetFloat(KeyDeadline, float.MaxValue))
+            int stage = SessionState.GetInt(KeyStage, StageOpen);
+            if (HasTimedOut(stage))
             {
                 Finish(false, $"stage{stage} index{_index} timeout");
                 return;
@@ -58,112 +64,126 @@ namespace SceneFlow.EditorTools
 
             switch (stage)
             {
-                case 0: // Title を開いて Play 開始
-                    EditorSceneManager.OpenScene(DemoScenes.PathOf(TitleName));
-                    ResetDeadline();
-                    EditorApplication.isPlaying = true;
-                    SessionState.SetInt(KeyStage, 1);
-                    break;
-
-                case 1: // ロード画面(SceneLoader)が生成・登録され Title が出たら、最初の遷移を要求する
-                    if (!EditorApplication.isPlaying || EditorApplication.isCompiling) return;
-                    if (!SceneTransition.HasLoader) return;
-                    if (SceneManager.GetActiveScene().name != TitleName) return;
-
-                    _index = 0;
-                    _beforeCount = 0;
-                    _afterCount = 0;
-                    // 通知側の例外で遷移が止まらないこと(後続の購読者にも通知が届くこと)の確認用。先に登録する
-                    SceneTransition.OnAfterTransition += _ => throw new System.InvalidOperationException("意図的な例外(自己診断)");
-                    SceneTransition.OnBeforeTransition += _ => _beforeCount++;
-                    SceneTransition.OnAfterTransition += _ => _afterCount++;
-                    _testKeyboard = InputSystem.AddDevice<Keyboard>("STVerifyKeyboard");
-                    SceneTransition.OnAfterTransition += _ =>
-                    {
-                        if (!_testKeyboard.added) return; // 抜いた後は判定しない
-                        _blockedDuringTransition |= !_testKeyboard.enabled;
-                    };
-                    // 遷移中(OnAfterTransition はまだ入力停止中)にデバイスを新たに接続し、止まることを確認する
-                    SceneTransition.OnAfterTransition += _ =>
-                    {
-                        if (_lateKeyboard != null) return;
-                        _lateKeyboard = InputSystem.AddDevice<Keyboard>("STVerifyLateKeyboard");
-                        _lateBlocked = !_lateKeyboard.enabled;
-                    };
-
-                    // 異常系: 遷移先が未指定なら遷移せず、通知も出ないこと
-                    SceneTransition.Go(null);
-                    SceneTransition.Go(new SceneReference());
-                    if (SceneTransition.IsTransitioning || _beforeCount != 0)
-                    {
-                        Finish(false, "遷移先が未指定でも遷移が始まった");
-                        return;
-                    }
-                    // 遷移中(入力停止中)にデバイスを抜く。判定用の購読より後に登録し、抜く前の状態を先に見せる
-                    SceneTransition.OnAfterTransition += _ =>
-                    {
-                        if (_testKeyboard.added) InputSystem.RemoveDevice(_testKeyboard);
-                    };
-                    RequestClick(Sequence[_index], true);
-                    SessionState.SetInt(KeyStage, 2);
-                    break;
-
-                case 2: // 遷移の完了(シーン到着 + ロード画面が消える)を待つ
-                    if (SceneTransition.IsTransitioning) return;
-                    if (SceneManager.GetActiveScene().name != Sequence[_index]) return;
-
-                    Debug.Log(Tag + $"{Sequence[_index]} OK");
-                    _index++;
-                    if (_index < Sequence.Length)
-                    {
-                        RequestClick(Sequence[_index], false);
-                        return;
-                    }
-                    // 二重呼び出しは無視されるため、通知は遷移回数ちょうどになる
-                    if (_beforeCount != Sequence.Length || _afterCount != Sequence.Length)
-                    {
-                        Finish(false, $"通知回数が不正 before={_beforeCount} after={_afterCount}");
-                        return;
-                    }
-                    // 遷移中は入力が止まり、完了後は戻っていること
-                    if (!_blockedDuringTransition)
-                    {
-                        Finish(false, "遷移中にキーボード入力が止まっていない");
-                        return;
-                    }
-                    if (!_lateBlocked)
-                    {
-                        Finish(false, "遷移中に接続されたデバイスが止まっていない");
-                        return;
-                    }
-                    if (!_lateKeyboard.enabled)
-                    {
-                        Finish(false, "遷移完了後にキーボード入力が戻っていない");
-                        return;
-                    }
-                    // 遷移中に抜かれたデバイスは、完了後に再接続された時点で有効に戻ること
-                    if (_testKeyboard.added)
-                    {
-                        Finish(false, "遷移中に抜いたデバイスが残っている");
-                        return;
-                    }
-                    InputSystem.AddDevice(_testKeyboard);
-                    if (!_testKeyboard.enabled)
-                    {
-                        Finish(false, "遷移中に抜かれたデバイスが、再接続後も無効のまま");
-                        return;
-                    }
-                    InputSystem.RemoveDevice(_testKeyboard);
-                    InputSystem.RemoveDevice(_lateKeyboard);
-                    EditorApplication.isPlaying = false;
-                    SessionState.SetInt(KeyStage, 90);
-                    break;
-
-                case 90: // Play 終了を待って完了
-                    if (EditorApplication.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode) return;
-                    Finish(true, "ALL OK");
-                    break;
+                case StageOpen: OpenTitleAndPlay(); break;
+                case StageStart: StartFirstTransition(); break;
+                case StageWait: WaitTransition(); break;
+                case StageStop: WaitPlayStopped(); break;
             }
+        }
+
+        private static bool HasTimedOut(int stage)
+        {
+            return stage > StageOpen
+                && EditorApplication.timeSinceStartup > SessionState.GetFloat(KeyDeadline, float.MaxValue);
+        }
+
+        private static void OpenTitleAndPlay()
+        {
+            EditorSceneManager.OpenScene(DemoScenes.PathOf(TitleName));
+            ResetDeadline();
+            EditorApplication.isPlaying = true;
+            SessionState.SetInt(KeyStage, StageStart);
+        }
+
+        // ロード画面(SceneLoader)が生成・登録され Title が出たら、最初の遷移を要求する
+        private static void StartFirstTransition()
+        {
+            if (!EditorApplication.isPlaying || EditorApplication.isCompiling) return;
+            if (!SceneTransition.HasLoader) return;
+            if (SceneManager.GetActiveScene().name != TitleName) return;
+
+            _index = 0;
+            _beforeCount = 0;
+            _afterCount = 0;
+            SubscribeTestHandlers();
+
+            // 異常系: 遷移先が未指定なら遷移せず、通知も出ないこと
+            SceneTransition.Go(null);
+            SceneTransition.Go(new SceneReference());
+            if (SceneTransition.IsTransitioning || _beforeCount != 0)
+            {
+                Finish(false, "遷移先が未指定でも遷移が始まった");
+                return;
+            }
+            RequestClick(TargetScenes[_index], true);
+            SessionState.SetInt(KeyStage, StageWait);
+        }
+
+        // 通知の購読。登録順が意味を持つ(例外 -> 件数 -> 入力停止の判定 -> 抜く、の順)
+        private static void SubscribeTestHandlers()
+        {
+            // 通知側の例外で遷移が止まらないこと(後続の購読者にも通知が届くこと)の確認用。先に登録する
+            SceneTransition.OnAfterTransition += _ => throw new System.InvalidOperationException("意図的な例外(自己診断)");
+            SceneTransition.OnBeforeTransition += _ => _beforeCount++;
+            SceneTransition.OnAfterTransition += _ => _afterCount++;
+            _testKeyboard = InputSystem.AddDevice<Keyboard>("STVerifyKeyboard");
+            SceneTransition.OnAfterTransition += _ =>
+            {
+                if (!_testKeyboard.added) return; // 抜いた後は判定しない
+                _hasBlockedDuringTransition |= !_testKeyboard.enabled;
+            };
+            // 遷移中(OnAfterTransition はまだ入力停止中)にデバイスを新たに接続し、止まることを確認する
+            SceneTransition.OnAfterTransition += _ =>
+            {
+                if (_lateKeyboard != null) return;
+                _lateKeyboard = InputSystem.AddDevice<Keyboard>("STVerifyLateKeyboard");
+                _isLateKeyboardBlocked = !_lateKeyboard.enabled;
+            };
+            // 遷移中(入力停止中)にデバイスを抜く。判定用の購読より後に登録し、抜く前の状態を先に見せる
+            SceneTransition.OnAfterTransition += _ =>
+            {
+                if (_testKeyboard.added) InputSystem.RemoveDevice(_testKeyboard);
+            };
+        }
+
+        // 遷移の完了(シーン到着 + ロード画面が消える)を待つ
+        private static void WaitTransition()
+        {
+            if (SceneTransition.IsTransitioning) return;
+            if (SceneManager.GetActiveScene().name != TargetScenes[_index]) return;
+
+            Debug.Log(Tag + $"{TargetScenes[_index]} OK");
+            _index++;
+            if (_index < TargetScenes.Length)
+            {
+                RequestClick(TargetScenes[_index], false);
+                return;
+            }
+
+            string error = CheckFinalResults();
+            if (error != null)
+            {
+                Finish(false, error);
+                return;
+            }
+            InputSystem.RemoveDevice(_testKeyboard);
+            InputSystem.RemoveDevice(_lateKeyboard);
+            EditorApplication.isPlaying = false;
+            SessionState.SetInt(KeyStage, StageStop);
+        }
+
+        // 全遷移の後の確認。問題があればその内容を返す(なければ null)
+        private static string CheckFinalResults()
+        {
+            // 二重呼び出しは無視されるため、通知は遷移回数ちょうどになる
+            if (_beforeCount != TargetScenes.Length || _afterCount != TargetScenes.Length)
+                return $"通知回数が不正 before={_beforeCount} after={_afterCount}";
+            // 遷移中は入力が止まり、完了後は戻っていること
+            if (!_hasBlockedDuringTransition) return "遷移中にキーボード入力が止まっていない";
+            if (!_isLateKeyboardBlocked) return "遷移中に接続されたデバイスが止まっていない";
+            if (!_lateKeyboard.enabled) return "遷移完了後にキーボード入力が戻っていない";
+            // 遷移中に抜かれたデバイスは、完了後に再接続された時点で有効に戻ること
+            if (_testKeyboard.added) return "遷移中に抜いたデバイスが残っている";
+            InputSystem.AddDevice(_testKeyboard);
+            if (!_testKeyboard.enabled) return "遷移中に抜かれたデバイスが、再接続後も無効のまま";
+            return null;
+        }
+
+        // Play 終了を待って完了
+        private static void WaitPlayStopped()
+        {
+            if (EditorApplication.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode) return;
+            Finish(true, "ALL OK");
         }
 
         // 現在のシーンから目的のシーンへ遷移する要素を探して実行する。

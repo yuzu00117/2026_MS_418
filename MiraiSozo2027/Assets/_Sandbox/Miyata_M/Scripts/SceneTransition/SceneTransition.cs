@@ -19,7 +19,7 @@ namespace SceneFlow
         public static event Action<SceneReference> OnAfterTransition;
 
         /// <summary>遷移中にゲーム入力(キーボード・マウス・パッド)を止めるか。既定は true。</summary>
-        public static bool BlockInputDuringTransition { get; set; } = true;
+        public static bool IsInputBlockEnabled { get; set; } = true;
 
         public static bool HasLoader => _loader != null;
 
@@ -61,7 +61,7 @@ namespace SceneFlow
             }
 
             Notify(OnBeforeTransition, scene);
-            if (BlockInputDuringTransition) TransitionInputBlocker.Block();
+            if (IsInputBlockEnabled) TransitionInputBlocker.Block();
             _loader.Load(
                 scene.ScenePath,
                 () => Notify(OnAfterTransition, scene),

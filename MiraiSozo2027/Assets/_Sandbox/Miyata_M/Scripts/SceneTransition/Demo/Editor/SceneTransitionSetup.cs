@@ -11,12 +11,25 @@ using UnityEngine.UI;
 namespace SceneFlow.EditorTools
 {
     /// <summary>
-    /// 遷移用の Scene(Title / StageSelect / Game)を生成する。ロード画面(SceneLoader.prefab)は 2006 の方式C のものを使う。
+    /// 遷移用の Scene(Title / StageSelect / Game)を生成する。ロード画面(PF_SceneLoader.prefab)は 2006 の方式C のものを使う。
     /// メニュー: Tools/SceneTransition/Setup、またはバッチ -executeMethod SceneFlow.EditorTools.SceneTransitionSetup.Build
     /// 何度実行しても同じ結果になる(上書き生成)。
     /// </summary>
     public static class SceneTransitionSetup
     {
+        // 画面レイアウト(テスト用シーンの見た目)
+        private const float TitleLabelY = 200f;
+        private const float CountdownLabelY = 320f;
+        private const float FirstButtonY = 40f;
+        private const float ButtonSpacing = 130f;
+        private const int LabelFontSize = 48;
+        private static readonly Vector2 ReferenceResolution = new Vector2(1920, 1080);
+        private static readonly Vector2 LabelSize = new Vector2(900, 100);
+        private static readonly Vector2 ButtonSize = new Vector2(500, 100);
+        private static readonly Color TitleColor = new Color(0.15f, 0.25f, 0.45f);
+        private static readonly Color StageSelectColor = new Color(0.2f, 0.4f, 0.2f);
+        private static readonly Color GameColor = new Color(0.45f, 0.25f, 0.15f);
+
         private const string TitleName = DemoScenes.TitleName;
         private const string StageSelectName = DemoScenes.StageSelectName;
         private const string GameName = DemoScenes.GameName;
@@ -26,7 +39,7 @@ namespace SceneFlow.EditorTools
         {
             Directory.CreateDirectory(DemoScenes.Directory);
 
-            // ロード画面は遷移の外側(2006 の方式C)。SceneLoader.prefab が無ければ生成する
+            // ロード画面は遷移の外側(2006 の方式C)。PF_SceneLoader.prefab が無ければ生成する
             LoadingTest.EditorTools.LoadingTestSetup.BuildSceneLoaderPrefab();
 
             // 遷移先をアセット参照で指定するため、先に空シーンを保存してアセットとして取り込む
@@ -34,11 +47,11 @@ namespace SceneFlow.EditorTools
             foreach (var n in names) CreatePlaceholderScene(n);
             AssetDatabase.Refresh();
 
-            BuildScene(TitleName, new Color(0.15f, 0.25f, 0.45f),
+            BuildScene(TitleName, TitleColor,
                 (StageSelectName, "ステージ選択へ"));
-            BuildScene(StageSelectName, new Color(0.2f, 0.4f, 0.2f),
+            BuildScene(StageSelectName, StageSelectColor,
                 (GameName, "ゲーム開始"), (TitleName, "タイトルへ"));
-            BuildScene(GameName, new Color(0.45f, 0.25f, 0.15f),
+            BuildScene(GameName, GameColor,
                 (StageSelectName, "ステージ選択へ"), (TitleName, "タイトルへ"));
 
             RegisterBuildSettings(names);
@@ -60,15 +73,15 @@ namespace SceneFlow.EditorTools
             var canvas = CreateCanvas("Canvas");
             var bg = CreateImage(canvas.transform, "Background", bgColor);
             Stretch(bg.rectTransform);
-            CreateLabel(canvas.transform, name, new Vector2(0, 200));
+            CreateLabel(canvas.transform, name, new Vector2(0, TitleLabelY));
 
-            float y = 40f;
+            float y = FirstButtonY;
             foreach (var (target, label) in buttons)
             {
                 var button = CreateButton(canvas.transform, label, new Vector2(0, y));
                 var comp = button.gameObject.AddComponent<SceneTransitionButton>();
                 AssignScene(new SerializedObject(comp), "_target", DemoScenes.PathOf(target));
-                y -= 130f;
+                y -= ButtonSpacing;
             }
             // ボタン以外(クリア判定などのイベント)から遷移する例。Game から Title へ戻る
             if (name == GameName) AddTrigger(canvas.transform, "ClearTrigger", TitleName);
@@ -84,7 +97,7 @@ namespace SceneFlow.EditorTools
             var trigger = go.AddComponent<SceneTransitionTrigger>();
             AssignScene(new SerializedObject(trigger), "_target", DemoScenes.PathOf(targetScene));
 
-            var label = CreateLabel(canvas, "", new Vector2(0, 320));
+            var label = CreateLabel(canvas, "", new Vector2(0, CountdownLabelY));
             var countdown = go.AddComponent<CountdownEvent>();
             var so = new SerializedObject(countdown);
             so.FindProperty("_label").objectReferenceValue = label;
@@ -114,7 +127,7 @@ namespace SceneFlow.EditorTools
             canvas.sortingOrder = sortOrder;
             var scaler = go.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920, 1080);
+            scaler.referenceResolution = ReferenceResolution;
             return canvas;
         }
 
@@ -157,11 +170,11 @@ namespace SceneFlow.EditorTools
             var t = go.GetComponent<Text>();
             t.text = text;
             t.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            t.fontSize = 48;
+            t.fontSize = LabelFontSize;
             t.alignment = TextAnchor.MiddleCenter;
             t.color = Color.white;
             var rt = t.rectTransform;
-            rt.sizeDelta = new Vector2(900, 100);
+            rt.sizeDelta = LabelSize;
             rt.anchoredPosition = pos;
             return t;
         }
@@ -171,7 +184,7 @@ namespace SceneFlow.EditorTools
             var go = new GameObject("Button", typeof(Image), typeof(Button));
             go.transform.SetParent(parent, false);
             var rt = (RectTransform)go.transform;
-            rt.sizeDelta = new Vector2(500, 100);
+            rt.sizeDelta = ButtonSize;
             rt.anchoredPosition = pos;
             var text = CreateLabel(go.transform, label, Vector2.zero);
             text.color = Color.black;

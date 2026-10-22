@@ -46,7 +46,7 @@ ISceneLoader.Load(path, onLoaded)
 ## 使い方
 
 ### 前提
-- ロード画面(`Resources/SceneLoader.prefab`、2006 の方式C)があること。起動時に自動生成され、`SceneTransition` に自分を登録する。
+- ロード画面(`Resources/PF_SceneLoader.prefab`、2006 の方式C)があること。起動時に自動生成され、`SceneTransition` に自分を登録する。
 - 遷移先のシーンが Build Settings に登録されていること。
 
 ### 1. ボタンで遷移する
@@ -103,7 +103,7 @@ private void OnDisable()
 ### 遷移中の入力停止
 - 既定で、遷移の開始からロード画面が消えるまで、キーボード・マウス・パッドなどの Input System のデバイスを無効化する。
 - 戻すタイミング: 遷移の完了、ローダーの破棄、アプリ(Play)の終了のいずれでも必ず戻す。
-- 止めたくない場合は `SceneTransition.BlockInputDuringTransition = false;`(遷移の前に設定する)。
+- 止めたくない場合は `SceneTransition.IsInputBlockEnabled = false;`(遷移の前に設定する)。
 - 仕組みは `TransitionInputBlocker`(Input System のデバイスを無効化・復帰)。Input System を使わない入力(旧 Input Manager)は止まらない。
 - 遷移中に接続・再接続されたデバイスも、接続の通知(`InputSystem.onDeviceChange`)を受けてその場で止め、完了時に戻す。
 - 遷移中に抜かれたデバイス: 抜かれている間は戻せない(Input System は、抜かれたデバイスへの有効化で例外を出し、無効にしたデバイスは再接続後も無効のまま)。保留にして、再接続された時点で有効に戻す。
@@ -120,7 +120,7 @@ private void OnDisable()
 | ボタン以外 | クリア判定などのイベントからは `SceneTransitionTrigger` の `Go()` を UnityEvent に接続、またはコードで `SceneTransition.Go` を呼ぶ |
 | 読み込み方式 | Single(Additive は未対応。2006 の結論待ち) |
 | ロード画面 | 遷移に必ず挟む。2006 の方式C(`SceneLoader`)を `ISceneLoader` 経由で使う |
-| 常駐 | `SceneTransition` は static(常駐物なし)。ロード画面の常駐は `SceneLoader.prefab`(2006 側)が担当 |
+| 常駐 | `SceneTransition` は static(常駐物なし)。ロード画面の常駐は `PF_SceneLoader.prefab`(2006 側)が担当 |
 | 入力 | 遷移中は、UI はロード画面の Canvas が遮断し、キーボード・マウス・パッドはデバイス単位で無効化する(完了時に必ず戻す)。二重遷移は無視 |
 | フック | `OnBeforeTransition` / `OnAfterTransition`(引数 `SceneReference`) |
 | 調整値 | フェード時間・最低表示時間は `SceneLoader` の Inspector |

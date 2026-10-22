@@ -63,27 +63,27 @@ namespace SceneFlow
         {
             if (_isListening) return;
             _isListening = true;
-            InputSystem.onDeviceChange += OnDeviceChange;
+            InputSystem.onDeviceChange += HandleDeviceChange;
             // Play 終了時に無効のまま残らないようにする
-            Application.quitting += OnQuit;
+            Application.quitting += HandleQuit;
         }
 
         private static void StopListening()
         {
             if (!_isListening) return;
             _isListening = false;
-            InputSystem.onDeviceChange -= OnDeviceChange;
-            Application.quitting -= OnQuit;
+            InputSystem.onDeviceChange -= HandleDeviceChange;
+            Application.quitting -= HandleQuit;
         }
 
-        private static void OnQuit()
+        private static void HandleQuit()
         {
             Release();
             PendingDevices.Clear();
             StopListening();
         }
 
-        private static void OnDeviceChange(InputDevice device, InputDeviceChange change)
+        private static void HandleDeviceChange(InputDevice device, InputDeviceChange change)
         {
             if (change != InputDeviceChange.Added && change != InputDeviceChange.Reconnected) return;
 
