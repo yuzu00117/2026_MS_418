@@ -41,6 +41,68 @@ ISceneLoader.Load(path, onLoaded)
   └ ロード画面フェードアウト(入力遮断を解除)
 ```
 
+## 使い方
+
+### 前提
+- ロード画面(`Resources/SceneLoader.prefab`、2006 の方式C)があること。起動時に自動生成され、`SceneTransition` に自分を登録する。
+- 遷移先のシーンが Build Settings に登録されていること。
+
+### 1. ボタンで遷移する
+1. ボタンに `SceneTransitionButton` を付ける。
+2. Inspector の `Target` に、遷移先のシーンアセットをドラッグする。
+3. 「Build Settings に登録されていません」と出たら、「Build Settings に追加」を押す。
+
+### 2. クリア判定などのイベントで遷移する
+1. 空のオブジェクトに `SceneTransitionTrigger` を付け、`Target` に遷移先をドラッグする。
+2. クリア判定などのイベント(UnityEvent)の `+` を押し、このオブジェクトの `SceneTransitionTrigger.Go` を選ぶ。
+
+### 3. コードから遷移する
+```csharp
+using SceneFlow;
+using UnityEngine;
+
+public class StageClearJudge : MonoBehaviour
+{
+    [SerializeField] private SceneReference _nextScene; // Inspector でシーンをドラッグ
+
+    // 条件を満たした瞬間に1回だけ呼ぶ(毎フレーム呼ばない)
+    public void OnStageCleared()
+    {
+        SceneTransition.Go(_nextScene);
+    }
+}
+```
+- 遷移先を分けたい場合(クリア時はリザルト、失敗時はタイトルなど)は、`SceneReference` を複数持たせる。
+
+### 4. 遷移の前後で処理する
+```csharp
+private void OnEnable()
+{
+    SceneTransition.OnBeforeTransition += HandleBefore; // セーブ、音の停止など
+    SceneTransition.OnAfterTransition += HandleAfter;   // 新シーンの初期化通知
+}
+
+private void OnDisable()
+{
+    SceneTransition.OnBeforeTransition -= HandleBefore;
+    SceneTransition.OnAfterTransition -= HandleAfter;
+}
+```
+- 購読したら、`OnDisable` で必ず解除する(解除し忘れるとリークする)。
+- 遷移中かどうかは `SceneTransition.IsTransitioning` で確認できる。
+
+### 5. 動作を確かめる
+1. `Tools/SceneTransition/Setup` でテスト用シーンを生成する(`Scenes/SceneTransition/`)。
+2. `Scene_Title` を開いて Play する。
+3. ボタンで `Scene_StageSelect` → `Scene_Game` へ進む。
+4. `Scene_Game` では「クリアまで N 秒」が減り、0 になると自動でタイトルへ戻る(`CountdownEvent` → `SceneTransitionTrigger.Go` の接続例)。
+5. 自動確認はバッチで `-executeMethod SceneFlow.EditorTools.SceneTransitionVerify.Run`(`-quit` は付けない)。終了コード 0 なら OK。
+
+### 注意
+- 遷移中の再呼び出し、遷移先の未指定、Build Settings 未登録のときは、警告を出して何もしない。
+- ロード画面が無い環境では「ISceneLoader が登録されていません」と警告が出て、遷移しない。
+- シーンを増やすときは、コードの修正は不要。ボタンやトリガーにシーンをドラッグするだけ。
+
 ## 決定事項
 | 項目 | 決定 |
 |---|---|
