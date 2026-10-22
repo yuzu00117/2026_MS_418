@@ -21,6 +21,11 @@ namespace SceneFlow.EditorTools
         private const string ResourcesDir = "Assets/_Sandbox/Miyata_M/Resources";
         private const string PrefabPath = ResourcesDir + "/SceneTransition.prefab";
 
+        // テスト用シーン名(本番のシーンとは無関係。遷移先は SceneReference で指定する)
+        private const string TitleName = "Scene_Title";
+        private const string StageSelectName = "Scene_StageSelect";
+        private const string GameName = "Scene_Game";
+
         [MenuItem("Tools/SceneTransition/Setup")]
         public static void Build()
         {
@@ -28,16 +33,20 @@ namespace SceneFlow.EditorTools
             Directory.CreateDirectory(ResourcesDir);
 
             BuildPrefab();
-            BuildScene(SceneId.Title, new Color(0.15f, 0.25f, 0.45f),
-                (SceneId.StageSelect, "ステージ選択へ"));
-            BuildScene(SceneId.StageSelect, new Color(0.2f, 0.4f, 0.2f),
-                (SceneId.Game, "ゲーム開始"), (SceneId.Title, "タイトルへ"));
-            BuildScene(SceneId.Game, new Color(0.45f, 0.25f, 0.15f),
-                (SceneId.StageSelect, "ステージ選択へ"), (SceneId.Title, "タイトルへ"));
 
-            var ids = new List<string>();
-            foreach (SceneId id in System.Enum.GetValues(typeof(SceneId))) ids.Add(id.ToSceneName());
-            RegisterBuildSettings(ids);
+            // 遷移先をアセット参照で指定するため、先に空シーンを保存してアセットとして取り込む
+            var names = new List<string> { TitleName, StageSelectName, GameName };
+            foreach (var n in names) CreatePlaceholderScene(n);
+            AssetDatabase.Refresh();
+
+            BuildScene(TitleName, new Color(0.15f, 0.25f, 0.45f),
+                (StageSelectName, "ステージ選択へ"));
+            BuildScene(StageSelectName, new Color(0.2f, 0.4f, 0.2f),
+                (GameName, "ゲーム開始"), (TitleName, "タイトルへ"));
+            BuildScene(GameName, new Color(0.45f, 0.25f, 0.15f),
+                (StageSelectName, "ステージ選択へ"), (TitleName, "タイトルへ"));
+
+            RegisterBuildSettings(names);
             AssetDatabase.SaveAssets();
             Debug.Log("SceneTransition: セットアップ完了");
         }
@@ -61,27 +70,47 @@ namespace SceneFlow.EditorTools
         }
 
         // ---- 遷移元シーン ----
-        private static void BuildScene(SceneId id, Color bgColor, params (SceneId target, string label)[] buttons)
+        private static void CreatePlaceholderScene(string name)
+        {
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            EditorSceneManager.SaveScene(scene, ScenePath(name));
+        }
+
+        private static void BuildScene(string name, Color bgColor, params (string target, string label)[] buttons)
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             CreateCamera();
             var canvas = CreateCanvas("Canvas");
             var bg = CreateImage(canvas.transform, "Background", bgColor);
             Stretch(bg.rectTransform);
-            CreateLabel(canvas.transform, id.ToSceneName(), new Vector2(0, 200));
+            CreateLabel(canvas.transform, name, new Vector2(0, 200));
 
             float y = 40f;
             foreach (var (target, label) in buttons)
             {
                 var button = CreateButton(canvas.transform, label, new Vector2(0, y));
                 var comp = button.gameObject.AddComponent<SceneTransitionButton>();
-                var so = new SerializedObject(comp);
-                so.FindProperty("_target").enumValueIndex = (int)target;
-                so.ApplyModifiedPropertiesWithoutUndo();
+                AssignScene(new SerializedObject(comp), "_target", ScenePath(target));
                 y -= 130f;
             }
             CreateEventSystem(); // ロード画面の prefab 側には EventSystem を持たせない
-            EditorSceneManager.SaveScene(scene, $"{SceneDir}/{id.ToSceneName()}.unity");
+            EditorSceneManager.SaveScene(scene, ScenePath(name));
+        }
+
+        // SceneReference の各フィールドを設定する(Inspector でシーンをドラッグした状態と同じにする)
+        private static void AssignScene(SerializedObject so, string field, string scenePath)
+        {
+            var prop = so.FindProperty(field);
+            prop.FindPropertyRelative("_sceneAsset").objectReferenceValue =
+                AssetDatabase.LoadAssetAtPath<SceneAsset>(scenePath);
+            prop.FindPropertyRelative("_scenePath").stringValue = scenePath;
+            prop.FindPropertyRelative("_sceneName").stringValue = Path.GetFileNameWithoutExtension(scenePath);
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static string ScenePath(string name)
+        {
+            return $"{SceneDir}/{name}.unity";
         }
 
         // ---- 共通ヘルパー ----

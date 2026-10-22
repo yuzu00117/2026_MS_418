@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 namespace SceneFlow.EditorTools
 {
     /// <summary>
-    /// Title → StageSelect → Game → Title を実際に Play して遷移まで確認する自己診断。
+    /// Title → StageSelect → Game → Title を、画面のボタンを押して実際に遷移させて確認する自己診断。
     /// バッチ: -executeMethod SceneFlow.EditorTools.SceneTransitionVerify.Run (-quit は付けない)
     /// 終了コード 0=OK / 1=失敗。Play 開始でドメインが再読み込みされるため進行状況は SessionState に持つ。
     /// </summary>
@@ -19,9 +19,12 @@ namespace SceneFlow.EditorTools
         private const string KeyDeadline = "SceneTransitionVerify.Deadline";
         private const double TimeoutSeconds = 30.0;
         private const string Tag = "STVERIFY: ";
+        private const string TitleName = "Scene_Title";
+        private const string StageSelectName = "Scene_StageSelect";
+        private const string GameName = "Scene_Game";
 
-        // 遷移の順序。各要素へ Go し、そのシーンがアクティブになるまで待つ
-        private static readonly SceneId[] Sequence = { SceneId.StageSelect, SceneId.Game, SceneId.Title };
+        // 遷移の順序。現在のシーン上の該当ボタンを押し、そのシーンがアクティブになるまで待つ
+        private static readonly string[] Sequence = { StageSelectName, GameName, TitleName };
 
         // Play 中のみ有効(ドメインは Play 開始時に再読み込みされ、Play 中は維持される)
         private static int _index;
@@ -52,7 +55,7 @@ namespace SceneFlow.EditorTools
             switch (stage)
             {
                 case 0: // Title を開いて Play 開始
-                    EditorSceneManager.OpenScene(SceneDir + SceneId.Title.ToSceneName() + ".unity");
+                    EditorSceneManager.OpenScene(SceneDir + TitleName + ".unity");
                     ResetDeadline();
                     EditorApplication.isPlaying = true;
                     SessionState.SetInt(KeyStage, 1);
@@ -61,26 +64,26 @@ namespace SceneFlow.EditorTools
                 case 1: // 常駐 prefab が生成され Title が出たら、最初の遷移を要求する
                     if (!EditorApplication.isPlaying || EditorApplication.isCompiling) return;
                     if (Object.FindAnyObjectByType<SceneTransition>() == null) return;
-                    if (SceneManager.GetActiveScene().name != SceneId.Title.ToSceneName()) return;
+                    if (SceneManager.GetActiveScene().name != TitleName) return;
 
                     _index = 0;
                     _beforeCount = 0;
                     _afterCount = 0;
                     SceneTransition.OnBeforeTransition += _ => _beforeCount++;
                     SceneTransition.OnAfterTransition += _ => _afterCount++;
-                    RequestGo(Sequence[_index], true);
+                    RequestClick(Sequence[_index], true);
                     SessionState.SetInt(KeyStage, 2);
                     break;
 
                 case 2: // 遷移の完了(シーン到着 + ロード画面が消える)を待つ
                     if (SceneTransition.IsTransitioning) return;
-                    if (SceneManager.GetActiveScene().name != Sequence[_index].ToSceneName()) return;
+                    if (SceneManager.GetActiveScene().name != Sequence[_index]) return;
 
                     Debug.Log(Tag + $"{Sequence[_index]} OK");
                     _index++;
                     if (_index < Sequence.Length)
                     {
-                        RequestGo(Sequence[_index], false);
+                        RequestClick(Sequence[_index], false);
                         return;
                     }
                     // 二重呼び出しは無視されるため、通知は遷移回数ちょうどになる
@@ -100,11 +103,19 @@ namespace SceneFlow.EditorTools
             }
         }
 
-        private static void RequestGo(SceneId id, bool alsoDouble)
+        // 現在のシーンから目的のシーンへ遷移するボタンを探し、実際に押す
+        private static void RequestClick(string targetScene, bool alsoDouble)
         {
             ResetDeadline();
-            SceneTransition.Go(id);
-            if (alsoDouble) SceneTransition.Go(id); // 二重遷移が無視されること(通知が増えない)を確認する
+            foreach (var b in Object.FindObjectsByType<SceneTransitionButton>())
+            {
+                if (b.Target.SceneName != targetScene) continue;
+                var button = b.GetComponent<UnityEngine.UI.Button>();
+                button.onClick.Invoke();
+                if (alsoDouble) button.onClick.Invoke(); // 二重遷移が無視されること(通知が増えない)を確認する
+                return;
+            }
+            Finish(false, $"{targetScene} へのボタンが見つからない");
         }
 
         private static void ResetDeadline()

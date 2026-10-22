@@ -7,7 +7,7 @@ using UnityEngine.UI;
 namespace SceneFlow
 {
     /// <summary>
-    /// シーン遷移の窓口。SceneTransition.Go(SceneId.Game) で、ロード画面を挟んで遷移する。
+    /// シーン遷移の窓口。SceneTransition.Go(sceneReference) で、ロード画面を挟んで遷移する。
     /// DontDestroyOnLoad で常駐し、Resources/SceneTransition.prefab を起動時に自動生成する。
     /// prefab が無い環境(他メンバー)では何もしない。
     /// </summary>
@@ -27,10 +27,10 @@ namespace SceneFlow
         private bool _isTransitioning;
 
         /// <summary>遷移を始める直前に通知する。</summary>
-        public static event Action<SceneId> OnBeforeTransition;
+        public static event Action<SceneReference> OnBeforeTransition;
 
         /// <summary>新シーンの初期化が一巡し、ロード画面が消え始める直前に通知する。</summary>
-        public static event Action<SceneId> OnAfterTransition;
+        public static event Action<SceneReference> OnAfterTransition;
 
         public static bool IsTransitioning => _instance != null && _instance._isTransitioning;
 
@@ -53,8 +53,8 @@ namespace SceneFlow
             DontDestroyOnLoad(_instance.gameObject);
         }
 
-        /// <summary>指定シーンへ遷移する。遷移中・未登録シーンの場合は無視する。</summary>
-        public static void Go(SceneId id)
+        /// <summary>指定シーンへ遷移する。遷移中・未指定・未登録シーンの場合は無視する。</summary>
+        public static void Go(SceneReference scene)
         {
             if (_instance == null)
             {
@@ -63,24 +63,28 @@ namespace SceneFlow
             }
             if (_instance._isTransitioning) return;
 
-            string sceneName = id.ToSceneName();
-            if (!Application.CanStreamedLevelBeLoaded(sceneName))
+            if (scene == null || !scene.IsAssigned)
             {
-                Debug.LogWarning($"シーン {sceneName} が Build Settings に登録されていません。");
+                Debug.LogWarning("遷移先のシーンが指定されていません。");
                 return;
             }
-            _instance.StartCoroutine(_instance.TransitionRoutine(id, sceneName));
+            if (!Application.CanStreamedLevelBeLoaded(scene.ScenePath))
+            {
+                Debug.LogWarning($"シーン {scene.SceneName} が Build Settings に登録されていません。");
+                return;
+            }
+            _instance.StartCoroutine(_instance.TransitionRoutine(scene));
         }
 
-        private IEnumerator TransitionRoutine(SceneId id, string sceneName)
+        private IEnumerator TransitionRoutine(SceneReference scene)
         {
             _isTransitioning = true;
-            OnBeforeTransition?.Invoke(id);
+            OnBeforeTransition?.Invoke(scene);
 
             yield return Fade(0f, 1f);
             _progressBar.value = 0f;
 
-            AsyncOperation op = SceneManager.LoadSceneAsync(sceneName);
+            AsyncOperation op = SceneManager.LoadSceneAsync(scene.ScenePath);
             op.allowSceneActivation = false;
 
             // 実読み込みが一瞬で終わってもバーが見えるよう、表示値を一定速度で追従させる。
@@ -100,7 +104,7 @@ namespace SceneFlow
             while (!op.isDone) yield return null;
 
             yield return null; // 新シーンの初期化が一巡するのを1フレーム待つ
-            OnAfterTransition?.Invoke(id);
+            OnAfterTransition?.Invoke(scene);
 
             yield return Fade(1f, 0f);
             _isTransitioning = false;

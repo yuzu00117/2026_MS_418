@@ -3,11 +3,13 @@ using UnityEngine.UI;
 
 namespace SceneFlow
 {
-    /// <summary>ボタン押下で指定シーンへ遷移する。Inspector で遷移先を選ぶ。</summary>
+    /// <summary>ボタン押下で指定シーンへ遷移する。Inspector で遷移先のシーンをドラッグして指定する。</summary>
     [RequireComponent(typeof(Button))]
     public class SceneTransitionButton : MonoBehaviour
     {
-        [SerializeField] private SceneId _target;
+        [SerializeField] private SceneReference _target;
+
+        public SceneReference Target => _target;
 
         private void Awake()
         {
