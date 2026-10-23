@@ -3,6 +3,7 @@
 // - ライティング処理は Includes/ProjectLighting.hlsl に集約。絵作りを変える場合は基本そちらを触る。
 // - 全体の見た目は _Global* (ToonStyleProfile -> ToonStyleApplier) で一括変更できる。
 //   マテリアルの "Use Global Style" をオフにすると、そのマテリアルだけ個別値で動く。
+//   共通値の対応: リム(色・絞り・強さ)は Use Global Style、輪郭線(色・太さ・ZPull)は Use Global Outline で切り替わる。
 // - Mobile 向け: "Lite" をオンにすると 法線マップ / リム / スペキュラ / 追加ライト を無効化する。
 // - 輪郭線・ポスト用に DepthOnly / DepthNormals パスを持つ。
 // - 裏面押し出し法の Outline パスを持つ(処理は Includes/ToonOutline.hlsl)。
@@ -47,6 +48,7 @@ Shader "MS/Toon"
         _SpecularIntensity ("Specular Intensity", Range(0, 2)) = 0.5
 
         [Header(Outline)]
+        [Toggle] _UseGlobalOutline ("Use Global Outline", Float) = 1
         _OutlineColor ("Outline Color", Color) = (0.1, 0.1, 0.1, 1)
         _OutlineWidth ("Outline Width", Range(0, 0.01)) = 0.002
         _OutlineZPull ("Outline Z Pull", Range(-10, 10)) = 2
@@ -94,6 +96,7 @@ Shader "MS/Toon"
             float  _SpecularSize;
             float  _SpecularIntensity;
             float  _UseGlobalStyle;
+            float  _UseGlobalOutline;
             float4 _OutlineColor;
             float  _OutlineWidth;
             float  _OutlineZPull;
@@ -231,7 +234,7 @@ Shader "MS/Toon"
                 float3 viewDirWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
 
                 ToonStyle style = ToonResolveStyle(_UseGlobalStyle, _Smoothness, _ShadowColor.rgb, _ShadowStrength,
-                                                   _RimColor.rgb, _RimPower);
+                                                   _RimColor.rgb, _RimPower, _RimIntensity);
                 float aa = ToonRampAA(normalWS); // 一様な制御フローで計算しておく
 
                 // --- Main light ---
@@ -286,7 +289,7 @@ Shader "MS/Toon"
 
                 #if defined(_TOON_RIM) && !defined(_TOON_LITE)
                     color += ToonRim(normalWS, viewDirWS, style.rimColor, style.rimPower, style.smoothness,
-                                     saturate(mainNdotL * 0.5 + 0.5)) * _RimIntensity;
+                                     saturate(mainNdotL * 0.5 + 0.5)) * style.rimIntensity;
                 #endif
 
                 #if defined(_EMISSION)
@@ -317,6 +320,7 @@ Shader "MS/Toon"
             #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
             #pragma multi_compile_instancing
 
+            #include "../Includes/ProjectLighting.hlsl"
             #include "../Includes/ToonOutline.hlsl"
 
             struct Attributes
@@ -335,6 +339,13 @@ Shader "MS/Toon"
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
+            // 共通値(プロファイル)かマテリアル値かを解決した輪郭線の設定を返す。
+            ToonOutlineStyle ResolveMaterialOutline()
+            {
+                return ToonResolveOutline(_UseGlobalOutline, _OutlineColor.rgb, _OutlineWidth,
+                                          _OutlineZPull, _OutlineZPullMin, _OutlineZPullMax);
+            }
+
             Varyings OutlineVertex(Attributes input)
             {
                 Varyings output = (Varyings)0;
@@ -342,8 +353,10 @@ Shader "MS/Toon"
                 UNITY_TRANSFER_INSTANCE_ID(input, output);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-                // 太さ 0 のときは画面外に飛ばして描画しない
-                if (_OutlineWidth <= 0.0)
+                ToonOutlineStyle outline = ResolveMaterialOutline();
+
+                // 太さ 0 のときは画面外に飛ばして描画しない(解決後の太さで判定)
+                if (outline.width <= 0.0)
                 {
                     output.positionCS = float4(2, 2, 2, 1);
                     return output;
@@ -356,11 +369,11 @@ Shader "MS/Toon"
 
                 float3 positionVS = TransformWorldToView(TransformObjectToWorld(input.positionOS.xyz));
                 float viewDepth = -positionVS.z; // ビュー空間の前方は -z
-                positionVS.z += ComputeOutlineZPull(viewDepth, focalLength, _OutlineWidth,
-                                                    _OutlineZPull, _OutlineZPullMin, _OutlineZPullMax);
+                positionVS.z += ComputeOutlineZPull(viewDepth, focalLength, outline.width,
+                                                    outline.zPull, outline.zPullMin, outline.zPullMax);
 
                 float4 positionCS = TransformWViewToHClip(positionVS);
-                output.positionCS = ExtrudeOutlineCS(positionCS, normalVS, focalLength, _OutlineWidth);
+                output.positionCS = ExtrudeOutlineCS(positionCS, normalVS, focalLength, outline.width);
                 output.fogFactor = ComputeFogFactor(output.positionCS.z);
                 return output;
             }
@@ -370,7 +383,8 @@ Shader "MS/Toon"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                float3 color = MixFog(_OutlineColor.rgb, input.fogFactor);
+                // 色は全ピクセル共通の値なので Fragment で解決する(Varyings を増やさない)
+                float3 color = MixFog(ResolveMaterialOutline().color, input.fogFactor);
                 return half4(color, 1.0);
             }
             ENDHLSL

@@ -11,6 +11,7 @@
 //      ToonShadowTint                    : 影色(任意)
 //      ToonAmbient                       : 環境光(任意)
 //      ToonRim                           : リムライト(任意)
+//      ToonResolveOutline                : 輪郭線の共通値/マテリアル値の解決
 //      ToonSpecular                      : スペキュラ(任意)
 //  - グローバル値(_Global*)はプロファイル(ScriptableObject)から C# が設定する。
 //    未設定だと全て 0 になるため、_GlobalProfileEnabled == 0 のときは
@@ -44,6 +45,12 @@ CBUFFER_START(MSToonGlobals)
     float4 _GlobalRimColor;         // rgb: リム色
     float  _GlobalRimPower;         // リムの絞り
     float  _GlobalRampWidth;        // グローバルランプの幅(px)。0 ならグローバルランプなし
+    float  _GlobalRimIntensity;     // リムの強さ
+    float4 _GlobalOutlineColor;     // rgb: 輪郭線の色
+    float  _GlobalOutlineWidth;     // 輪郭線の太さ(画面高に対する比率)
+    float  _GlobalOutlineZPull;     // 輪郭線のカメラ側への引き寄せ量
+    float  _GlobalOutlineZPullMin;  // 引き寄せ量の下限
+    float  _GlobalOutlineZPullMax;  // 引き寄せ量の上限
 CBUFFER_END
 
 TEXTURE2D(_GlobalRampMap);
@@ -61,6 +68,7 @@ struct ToonStyle
     float  ambientStrength;
     float3 rimColor;
     float  rimPower;
+    float  rimIntensity;
     bool   useGlobalRamp;
     float  globalRampWidth;
 };
@@ -68,7 +76,7 @@ struct ToonStyle
 // useGlobalStyle: マテリアル側の「グローバルスタイルを使う」トグル(0/1)
 ToonStyle ToonResolveStyle(float useGlobalStyle,
                            float localSmoothness, float3 localShadowColor, float localShadowStrength,
-                           float3 localRimColor, float localRimPower)
+                           float3 localRimColor, float localRimPower, float localRimIntensity)
 {
     ToonStyle s;
     bool g = (useGlobalStyle > 0.5) && (_GlobalProfileEnabled > 0.5);
@@ -80,9 +88,39 @@ ToonStyle ToonResolveStyle(float useGlobalStyle,
     s.ambientStrength = g ? _GlobalAmbientTint.a   : MS_TOON_DEFAULT_AMBIENT_STRENGTH;
     s.rimColor        = g ? _GlobalRimColor.rgb    : localRimColor;
     s.rimPower        = g ? _GlobalRimPower        : localRimPower;
+    s.rimIntensity    = g ? _GlobalRimIntensity    : localRimIntensity;
     s.useGlobalRamp   = g && (_GlobalRampWidth > 0.5);
     s.globalRampWidth = _GlobalRampWidth;
     return s;
+}
+
+// ---------------------------------------------------------------------------
+// 輪郭線の解決: グローバル(プロファイル) or マテリアル値
+// 焼き込み法線の使用有無は共通化しない(マテリアル個別)ため含めない。
+// ---------------------------------------------------------------------------
+struct ToonOutlineStyle
+{
+    float3 color;
+    float  width;
+    float  zPull;
+    float  zPullMin;
+    float  zPullMax;
+};
+
+// useGlobalOutline: マテリアル側の「グローバル輪郭線を使う」トグル(0/1)
+ToonOutlineStyle ToonResolveOutline(float useGlobalOutline,
+                                    float3 localColor, float localWidth,
+                                    float localZPull, float localZPullMin, float localZPullMax)
+{
+    ToonOutlineStyle o;
+    bool g = (useGlobalOutline > 0.5) && (_GlobalProfileEnabled > 0.5);
+
+    o.color    = g ? _GlobalOutlineColor.rgb : localColor;
+    o.width    = g ? _GlobalOutlineWidth     : localWidth;
+    o.zPull    = g ? _GlobalOutlineZPull     : localZPull;
+    o.zPullMin = g ? _GlobalOutlineZPullMin  : localZPullMin;
+    o.zPullMax = g ? _GlobalOutlineZPullMax  : localZPullMax;
+    return o;
 }
 
 // ---------------------------------------------------------------------------
