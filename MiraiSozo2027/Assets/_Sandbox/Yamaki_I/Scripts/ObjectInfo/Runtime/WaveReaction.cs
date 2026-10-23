@@ -14,11 +14,11 @@ namespace Aura.ObjectInfo
         [Tooltip("オンにすると、電磁波のビームに反応する。「超音波に反応する」と両方オンなら、どちらの波にも反応する\n" +
                  "両方オフなら、どの波にも反応しない\n" +
                  "ゲームの途中で反応する波が変わる敵・ギミックは、React Only To Electromagnetic / React Only To Ultrasound（UnityEvent からも呼べる）か、コードの Set Reaction で切り替える")]
-        [SerializeField] private bool _reactsToElectromagnetic;  ///< 電磁波に反応するか
+        [SerializeField, ShowWaveTypeAsset(WaveKind.Electromagnetic)] private bool _reactsToElectromagnetic;  ///< 電磁波に反応するか
 
         [InspectorLabel("超音波に反応する")]
         [Tooltip("オンにすると、超音波のビームに反応する")]
-        [SerializeField] private bool _reactsToUltrasound;       ///< 超音波に反応するか
+        [SerializeField, ShowWaveTypeAsset(WaveKind.Ultrasound)] private bool _reactsToUltrasound;  ///< 超音波に反応するか
 
         [InspectorLabel("動くまでの秒数（強さ 1）")]
         [Tooltip("動くまでに溜める量。強さ 1 のビームを当て続けたときの秒数で数える。例: 3 なら、強さ 1 のビームを 3 秒当てると動く\n" +

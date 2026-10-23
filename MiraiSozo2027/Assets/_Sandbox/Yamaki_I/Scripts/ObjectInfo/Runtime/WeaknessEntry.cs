@@ -10,8 +10,8 @@ namespace Aura.ObjectInfo
     public struct WeaknessEntry
     {
         [InspectorLabel("波の種類")]
-        [Tooltip("弱点になる波の種類（電磁波/超音波）")]
-        [SerializeField] private WaveKind _waveKind;            ///< 弱点になる波の種類
+        [Tooltip("弱点になる波の種類（電磁波/超音波）。横に、実際に使われるアセットが薄く出る")]
+        [SerializeField, ShowWaveTypeAsset] private WaveKind _waveKind;  ///< 弱点になる波の種類
 
         [InspectorLabel("効き目（倍率）")]
         [Tooltip("この種類の波の効き目（倍率）。2 なら 2 倍効く。1 なら普通、0 なら効かない")]

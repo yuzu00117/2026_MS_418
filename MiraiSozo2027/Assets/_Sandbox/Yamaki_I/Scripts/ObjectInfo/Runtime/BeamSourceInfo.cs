@@ -12,8 +12,9 @@ namespace Aura.ObjectInfo
     {
         [InspectorLabel("波の種類")]
         [Tooltip("出すビームの波の種類。電磁波か超音波を選ぶ\n" +
-                 "WaveType のアセットはここでは選ばない（種類とアセットの対応は、Resources/SO_WaveTypeInfo の枠で 1 か所に決める）")]
-        [SerializeField] private WaveKind _waveKind = WaveKind.Electromagnetic;  ///< 波の種類
+                 "WaveType のアセットはここでは選ばない（種類とアセットの対応は、Resources/SO_WaveTypeInfo の枠で 1 か所に決める）\n" +
+                 "横に、実際に使われるアセットが薄く出る（クリックすると Project ウィンドウで場所が光る）")]
+        [SerializeField, ShowWaveTypeAsset] private WaveKind _waveKind = WaveKind.Electromagnetic;  ///< 波の種類
 
         // 旧: WaveType のアセットを直接選んでいた欄。読み込んだときに「波の種類」へ写して空にする（移行用に隠して残す）
         [SerializeField, HideInInspector] private WaveType _waveType;
