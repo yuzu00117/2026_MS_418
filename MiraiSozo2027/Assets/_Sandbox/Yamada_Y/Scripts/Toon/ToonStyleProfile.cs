@@ -26,6 +26,10 @@ namespace MS.Toon
         private static readonly int OutlineZPullMinId = Shader.PropertyToID("_GlobalOutlineZPullMin");
         private static readonly int OutlineZPullMaxId = Shader.PropertyToID("_GlobalOutlineZPullMax");
 
+        // インスペクタで開いた時点で、そのスタイルが何を狙った設定か分かるようにするための説明文
+        [Header("Description")]
+        [SerializeField, TextArea(2, 6)] private string _description;
+
         [Header("Ramp")]
         [Tooltip("NdotL を色に変換する1D階調画像。Bilinear / Clamp / ミップなし推奨。未設定なら各マテリアルのランプを使う")]
         [SerializeField] private Texture2D _ramp;
@@ -59,6 +63,7 @@ namespace MS.Toon
         /// <summary>インスペクターで値が変わったときに通知する(Applier が再反映する)。</summary>
         public event Action Changed;
 
+        public string Description => _description;
         public Texture2D Ramp => _ramp;
         public float Smoothness => _smoothness;
         public Color ShadowColor => _shadowColor;

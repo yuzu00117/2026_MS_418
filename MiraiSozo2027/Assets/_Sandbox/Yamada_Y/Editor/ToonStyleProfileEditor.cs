@@ -17,6 +17,12 @@ namespace MS.Toon.Editor
         {
             // 説明は標準項目より上に出す。DrawDefaultInspector は Header/Tooltip など既存の表示をそのまま残すため、自前で描画しない
             EditorGUILayout.HelpBox(HelpText, MessageType.Info);
+            // 共通ヘルプとは別に、この Profile 固有の説明があれば続けて出す
+            var profile = (ToonStyleProfile)target;
+            if (!string.IsNullOrEmpty(profile.Description))
+            {
+                EditorGUILayout.HelpBox(profile.Description, MessageType.None);
+            }
             DrawDefaultInspector();
         }
     }
