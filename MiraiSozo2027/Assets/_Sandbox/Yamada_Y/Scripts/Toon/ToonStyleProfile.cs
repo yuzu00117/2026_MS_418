@@ -82,12 +82,12 @@ namespace MS.Toon
         {
             Shader.SetGlobalFloat(ProfileEnabledId, 1f);
             Shader.SetGlobalFloat(SmoothnessId, _smoothness);
-            Shader.SetGlobalVector(ShadowColorId, new Vector4(_shadowColor.r, _shadowColor.g, _shadowColor.b, _shadowStrength));
-            Shader.SetGlobalVector(AmbientTintId, new Vector4(_ambientTint.r, _ambientTint.g, _ambientTint.b, _ambientStrength));
-            Shader.SetGlobalVector(RimColorId, new Vector4(_rimColor.r, _rimColor.g, _rimColor.b, 1f));
+            Shader.SetGlobalVector(ShadowColorId, ToVector(_shadowColor, _shadowStrength));
+            Shader.SetGlobalVector(AmbientTintId, ToVector(_ambientTint, _ambientStrength));
+            Shader.SetGlobalVector(RimColorId, ToVector(_rimColor, 1f));
             Shader.SetGlobalFloat(RimPowerId, _rimPower);
             Shader.SetGlobalFloat(RimIntensityId, _rimIntensity);
-            Shader.SetGlobalVector(OutlineColorId, new Vector4(_outlineColor.r, _outlineColor.g, _outlineColor.b, _outlineColor.a));
+            Shader.SetGlobalVector(OutlineColorId, ToVector(_outlineColor, _outlineColor.a));
             Shader.SetGlobalFloat(OutlineWidthId, _outlineWidth);
             Shader.SetGlobalFloat(OutlineZPullId, _outlineZPull);
             Shader.SetGlobalFloat(OutlineZPullMinId, _outlineZPullMin);
@@ -110,6 +110,12 @@ namespace MS.Toon
         {
             Shader.SetGlobalFloat(ProfileEnabledId, 0f);
             Shader.SetGlobalFloat(RampWidthId, 0f);
+        }
+
+        // 色のRGBに、シェーダー側が同じ変数で受ける強さ(w)を詰めて送るための変換
+        private static Vector4 ToVector(Color color, float w)
+        {
+            return new Vector4(color.r, color.g, color.b, w);
         }
 
         private void OnValidate()
