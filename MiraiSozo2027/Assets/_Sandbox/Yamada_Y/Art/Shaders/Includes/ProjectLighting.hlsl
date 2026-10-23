@@ -24,15 +24,11 @@
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
 // ---------------------------------------------------------------------------
-// プロファイル未設定時のデフォルト値(ここを変えると全体のデフォルトが変わる)
+// 環境光はマテリアル側に調整項目が無いため、プロファイル無効時の値をここで持つ。
+// 他の項目のデフォルトはマテリアルのプロパティ初期値が担う。
 // ---------------------------------------------------------------------------
-#define MS_TOON_DEFAULT_SMOOTHNESS      0.05
-#define MS_TOON_DEFAULT_SHADOW_COLOR    float3(0.55, 0.55, 0.72)
-#define MS_TOON_DEFAULT_SHADOW_STRENGTH 1.0
 #define MS_TOON_DEFAULT_AMBIENT_TINT    float3(1.0, 1.0, 1.0)
 #define MS_TOON_DEFAULT_AMBIENT_STRENGTH 1.0
-#define MS_TOON_DEFAULT_RIM_COLOR       float3(1.0, 1.0, 1.0)
-#define MS_TOON_DEFAULT_RIM_POWER       3.0
 
 // ---------------------------------------------------------------------------
 // グローバル入力(Shader.SetGlobal* で設定。マテリアルのプロパティではない)
@@ -55,6 +51,12 @@ CBUFFER_END
 
 TEXTURE2D(_GlobalRampMap);
 SAMPLER(sampler_GlobalRampMap);
+
+// マテリアル側のトグルがオンで、かつプロファイルが有効なときだけ共通値を使う
+bool ToonUseGlobal(float materialToggle)
+{
+    return (materialToggle > 0.5) && (_GlobalProfileEnabled > 0.5);
+}
 
 // ---------------------------------------------------------------------------
 // スタイル解決: グローバル(プロファイル) or マテリアル値 or デフォルト
@@ -79,7 +81,7 @@ ToonStyle ToonResolveStyle(float useGlobalStyle,
                            float3 localRimColor, float localRimPower, float localRimIntensity)
 {
     ToonStyle s;
-    bool g = (useGlobalStyle > 0.5) && (_GlobalProfileEnabled > 0.5);
+    bool g = ToonUseGlobal(useGlobalStyle);
 
     s.smoothness      = g ? _GlobalSmoothness     : localSmoothness;
     s.shadowColor     = g ? _GlobalShadowColor.rgb : localShadowColor;
@@ -113,7 +115,7 @@ ToonOutlineStyle ToonResolveOutline(float useGlobalOutline,
                                     float localZPull, float localZPullMin, float localZPullMax)
 {
     ToonOutlineStyle o;
-    bool g = (useGlobalOutline > 0.5) && (_GlobalProfileEnabled > 0.5);
+    bool g = ToonUseGlobal(useGlobalOutline);
 
     o.color    = g ? _GlobalOutlineColor.rgb : localColor;
     o.width    = g ? _GlobalOutlineWidth     : localWidth;
