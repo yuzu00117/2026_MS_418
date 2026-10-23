@@ -13,7 +13,6 @@ namespace Aura.ObjectInfoDemo
     /// ・当たった物に WaveReaction（O3、O4）と ReactionTrigger があれば、ビームを渡す。弱点（WeakPoint、O5）なら強さに倍率を掛ける
     /// ・ビームは、一定の間隔の点（BeamPoint）と点どうしをつなぐ直線で作る。
     ///   点を念力で掴んで動かすと、掴んだ点の前後が曲がる（BeamSourceInfo の Is Bendable がオンのときだけ）
-    /// 今ある WaveEmitter（Aura.Wave）とは別物で、WaveSurface や WaveReceiver は見ない
     public sealed class WaveEmitter : MonoBehaviour
     {
         private const int MaxReflectionLimit = 16;           ///< Max Reflections に決められる最大の回数
@@ -49,7 +48,7 @@ namespace Aura.ObjectInfoDemo
         [Header("狙い")]
         [InspectorLabel("ビームが出る位置の候補")]
         [Tooltip("ビームが出る位置の候補（手の先に置いた空の GameObject など）。上から見て、アクティブな最初のものを使う\n" +
-                 "一人称と三人称で手が変わるときは両方入れておく（ViewModeSwitcher が出し入れした方が使われる）\n" +
+                 "一人称と三人称で手が変わるときは両方入れておく（視点の切り替えでアクティブになっている方が使われる）\n" +
                  "「狙いを決める視点の候補」が空のときは、この正面（青い矢印の向き）に出す。空なら、この GameObject の位置から出る")]
         [SerializeField] private Transform _muzzle;                ///< ビームが出る位置の候補
 
