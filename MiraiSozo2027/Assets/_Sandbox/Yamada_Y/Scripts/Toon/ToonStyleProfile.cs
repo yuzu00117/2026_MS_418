@@ -19,6 +19,12 @@ namespace MS.Toon
         private static readonly int RimPowerId = Shader.PropertyToID("_GlobalRimPower");
         private static readonly int RampMapId = Shader.PropertyToID("_GlobalRampMap");
         private static readonly int RampWidthId = Shader.PropertyToID("_GlobalRampWidth");
+        private static readonly int RimIntensityId = Shader.PropertyToID("_GlobalRimIntensity");
+        private static readonly int OutlineColorId = Shader.PropertyToID("_GlobalOutlineColor");
+        private static readonly int OutlineWidthId = Shader.PropertyToID("_GlobalOutlineWidth");
+        private static readonly int OutlineZPullId = Shader.PropertyToID("_GlobalOutlineZPull");
+        private static readonly int OutlineZPullMinId = Shader.PropertyToID("_GlobalOutlineZPullMin");
+        private static readonly int OutlineZPullMaxId = Shader.PropertyToID("_GlobalOutlineZPullMax");
 
         [Header("Ramp")]
         [Tooltip("NdotL を色に変換する1D階調画像。Bilinear / Clamp / ミップなし推奨。未設定なら各マテリアルのランプを使う")]
@@ -37,12 +43,34 @@ namespace MS.Toon
         [Header("Rim")]
         [SerializeField] private Color _rimColor = Color.white;
         [SerializeField, Range(0.5f, 8f)] private float _rimPower = 3f;
+        [Tooltip("リムライトの強さ。MS_Toon の _RimIntensity と同じ範囲")]
+        [SerializeField, Range(0f, 2f)] private float _rimIntensity = 0.5f;
+
+        // 範囲と既定値は MS_Toon.shader の _Outline* マテリアルプロパティに合わせている
+        [Header("Outline")]
+        [SerializeField] private Color _outlineColor = new Color(0.1f, 0.1f, 0.1f, 1f);
+        [Tooltip("輪郭線の幅")]
+        [SerializeField, Range(0f, 0.01f)] private float _outlineWidth = 0.002f;
+        [Tooltip("輪郭線をカメラ側へ引き寄せる量。地面等との深度干渉を避ける")]
+        [SerializeField, Range(-10f, 10f)] private float _outlineZPull = 2f;
+        [SerializeField, Range(0f, 0.1f)] private float _outlineZPullMin = 0.005f;
+        [SerializeField, Range(0f, 1f)] private float _outlineZPullMax = 0.2f;
 
         /// <summary>インスペクターで値が変わったときに通知する(Applier が再反映する)。</summary>
         public event Action Changed;
 
         public Texture2D Ramp => _ramp;
         public float Smoothness => _smoothness;
+        public Color ShadowColor => _shadowColor;
+        public float ShadowStrength => _shadowStrength;
+        public Color RimColor => _rimColor;
+        public float RimPower => _rimPower;
+        public float RimIntensity => _rimIntensity;
+        public Color OutlineColor => _outlineColor;
+        public float OutlineWidth => _outlineWidth;
+        public float OutlineZPull => _outlineZPull;
+        public float OutlineZPullMin => _outlineZPullMin;
+        public float OutlineZPullMax => _outlineZPullMax;
 
         /// <summary>この内容を _Global* としてシェーダーへ設定する。</summary>
         public void ApplyToGlobals()
@@ -53,6 +81,12 @@ namespace MS.Toon
             Shader.SetGlobalVector(AmbientTintId, new Vector4(_ambientTint.r, _ambientTint.g, _ambientTint.b, _ambientStrength));
             Shader.SetGlobalVector(RimColorId, new Vector4(_rimColor.r, _rimColor.g, _rimColor.b, 1f));
             Shader.SetGlobalFloat(RimPowerId, _rimPower);
+            Shader.SetGlobalFloat(RimIntensityId, _rimIntensity);
+            Shader.SetGlobalVector(OutlineColorId, new Vector4(_outlineColor.r, _outlineColor.g, _outlineColor.b, _outlineColor.a));
+            Shader.SetGlobalFloat(OutlineWidthId, _outlineWidth);
+            Shader.SetGlobalFloat(OutlineZPullId, _outlineZPull);
+            Shader.SetGlobalFloat(OutlineZPullMinId, _outlineZPullMin);
+            Shader.SetGlobalFloat(OutlineZPullMaxId, _outlineZPullMax);
 
             // ランプ未設定のときは幅0を送り、シェーダー側でマテリアルのランプにフォールバックさせる
             if (_ramp != null)

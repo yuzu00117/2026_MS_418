@@ -18,25 +18,55 @@ namespace MS.Toon
         private ToonStyleProfile _subscribedProfile;
         private int _currentIndex;
 
+        /// <summary>現在有効な1つ。マテリアルのインスペクタが共通値を表示するために参照する。</summary>
+        public static ToonStyleApplier Active { get; private set; }
+
         public ToonStyleProfile Profile => _profile;
+
+        /// <summary>有効だが Active ではない(=別の Applier が先に有効化されている)ときに true。</summary>
+        public bool IsDuplicate => isActiveAndEnabled && IsActiveExistingOther();
 
         private void OnEnable()
         {
+            // コンパイル後は static が初期化されるので、OnEnable の再実行で Active が復元される
+            if (IsActiveExistingOther())
+            {
+                Debug.LogWarning($"ToonStyleApplier が重複しています: '{name}' は反映されません。シーン内の Applier は1つにしてください。", this);
+                return;
+            }
+            Active = this;
             Apply();
         }
 
         private void OnDisable()
         {
+            // 重複側がグローバルを消すと Active の設定まで巻き込むため、触らない
+            if (!IsActive())
+            {
+                return;
+            }
             Unsubscribe();
             ToonStyleProfile.ClearGlobals();
+            Active = null;
         }
 
         private void OnValidate()
         {
-            if (isActiveAndEnabled)
+            if (isActiveAndEnabled && IsActive())
             {
                 Apply();
             }
+        }
+
+        // Unity の == で比較し、破棄済みオブジェクトを指す static 参照を null として扱う
+        private bool IsActiveExistingOther()
+        {
+            return Active != null && Active != this;
+        }
+
+        private bool IsActive()
+        {
+            return Active == this;
         }
 
         public void SetProfile(ToonStyleProfile profile)
@@ -63,6 +93,10 @@ namespace MS.Toon
 
         private void Apply()
         {
+            if (!IsActive())
+            {
+                return;
+            }
             Subscribe();
             if (_profile != null)
             {
