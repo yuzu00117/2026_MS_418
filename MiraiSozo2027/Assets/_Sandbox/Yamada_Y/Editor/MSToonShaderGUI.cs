@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditorInternal;
 using UnityEngine;
 
 namespace MS.Toon.Editor
@@ -46,6 +47,7 @@ namespace MS.Toon.Editor
             { "_SpecularIntensity", "ハイライトの明るさ。上げるほど反射が強く出る。" },
 
             // Outline
+            { "_UseGlobalOutline", "プロジェクト共通の輪郭線設定(ToonStyleProfile)を使う。オフにするとこのマテリアルの個別値で描く。" },
             { "_OutlineColor", "輪郭線の色。" },
             { "_OutlineWidth", "輪郭線の太さ(画面高に対する比率)。距離に関係なく画面上で一定の太さになり、0 で輪郭線を描かない。" },
             { "_OutlineZPull", "地面などに輪郭線が隠れるのを防ぐため、輪郭線をカメラ側に引き寄せる倍率(輪郭幅に比例)。上げるほど隠れにくいが、他の物体に食い込んで見えることがある。負の値で逆向きになる。" },
@@ -64,14 +66,249 @@ namespace MS.Toon.Editor
             { "_Cull", "ポリゴンのどちら側の面を描かないか。Back で裏面を省略(通常)、Off で両面描画、Front で表面を省略。" },
         };
 
+        private const float ToggleOnThreshold = 0.5f;
+        private const string UseGlobalOutlineName = "_UseGlobalOutline";
+        private const string UseGlobalStyleName = "_UseGlobalStyle";
+        private const string RampMapName = "_RampMap";
+        private const string UndoName = "共通設定から個別設定へ切り替え";
+        private const string NoticeUsingGlobal = "共通設定を使用中です(値を変えると個別設定に切り替わります)";
+        private const string WarnNoApplier = "シーンに ToonStyleApplier が無いため、共通設定は反映されません(このマテリアルの値で描画されます)";
+        private const string WarnNoProfile = "ToonStyleApplier に Profile が設定されていないため、共通設定は反映されません(このマテリアルの値で描画されます)";
+
+        private static readonly string[] OutlineGroup =
+        {
+            "_OutlineColor", "_OutlineWidth", "_OutlineZPull", "_OutlineZPullMin", "_OutlineZPullMax",
+        };
+
+        private static readonly string[] StyleGroup =
+        {
+            "_ShadowColor", "_ShadowStrength", "_RimColor", "_RimPower", "_RimIntensity", "_Smoothness", RampMapName,
+        };
+
+        // Profile.Changed の購読は static で1つだけ持つ。インスタンスごとに登録するとインスペクタを閉じた後に残るため
+        private static ToonStyleProfile s_subscribedProfile;
+
         public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
         {
+            ToonStyleProfile profile = GetActiveProfile();
+            SubscribeProfile(profile);
+
+            bool outlineOn = IsToggleOn(FindProperty(UseGlobalOutlineName, properties, false));
+            bool styleOn = IsToggleOn(FindProperty(UseGlobalStyleName, properties, false));
+
+            // グループ見出しの通知は、各グループで最初に現れたプロパティの手前に1回だけ出す
+            bool outlineNoticeShown = false;
+            bool styleNoticeShown = false;
+
             foreach (MaterialProperty property in properties)
             {
-                DrawProperty(materialEditor, property);
+                if (IsHidden(property))
+                {
+                    continue;
+                }
+
+                string name = property.name;
+                bool inOutlineGroup = System.Array.IndexOf(OutlineGroup, name) >= 0;
+                bool inStyleGroup = System.Array.IndexOf(StyleGroup, name) >= 0;
+
+                if ((inOutlineGroup || name == UseGlobalOutlineName) && !outlineNoticeShown)
+                {
+                    outlineNoticeShown = true;
+                    DrawNotice(outlineOn, profile);
+                }
+                if ((inStyleGroup || name == UseGlobalStyleName) && !styleNoticeShown)
+                {
+                    styleNoticeShown = true;
+                    DrawNotice(styleOn, profile);
+                }
+
+                bool replace = profile != null && ((outlineOn && inOutlineGroup) || (styleOn && inStyleGroup));
+                // Ramp は Profile 側が未設定ならマテリアル自身の値を見せる
+                if (replace && name == RampMapName && profile.Ramp == null)
+                {
+                    replace = false;
+                }
+
+                if (replace)
+                {
+                    DrawReplaced(materialEditor, properties, property, profile, inOutlineGroup);
+                }
+                else
+                {
+                    DrawProperty(materialEditor, property);
+                }
             }
 
             DrawStandardFooter(materialEditor);
+        }
+
+        private static ToonStyleProfile GetActiveProfile()
+        {
+            ToonStyleApplier applier = ToonStyleApplier.Active;
+            if (applier == null || !applier.isActiveAndEnabled)
+            {
+                return null;
+            }
+            return applier.Profile;
+        }
+
+        // 複数選択で値が割れているトグルは「共通使用中」と断定できないので、置換しない
+        private static bool IsToggleOn(MaterialProperty toggle)
+        {
+            return toggle != null && !toggle.hasMixedValue && toggle.floatValue > ToggleOnThreshold;
+        }
+
+        private static void SubscribeProfile(ToonStyleProfile profile)
+        {
+            if (s_subscribedProfile == profile)
+            {
+                return;
+            }
+            if (s_subscribedProfile != null)
+            {
+                s_subscribedProfile.Changed -= OnProfileChanged;
+            }
+            s_subscribedProfile = profile;
+            if (profile != null)
+            {
+                profile.Changed += OnProfileChanged;
+            }
+        }
+
+        // Profile の値が変わったら、表示中の共通値を最新にするため全ビューを再描画する
+        private static void OnProfileChanged()
+        {
+            InternalEditorUtility.RepaintAllViews();
+        }
+
+        private static void DrawNotice(bool toggleOn, ToonStyleProfile profile)
+        {
+            if (!toggleOn)
+            {
+                return;
+            }
+            ToonStyleApplier applier = ToonStyleApplier.Active;
+            if (applier == null || !applier.isActiveAndEnabled)
+            {
+                EditorGUILayout.HelpBox(WarnNoApplier, MessageType.Warning);
+            }
+            else if (profile == null)
+            {
+                EditorGUILayout.HelpBox(WarnNoProfile, MessageType.Warning);
+            }
+            else
+            {
+                EditorGUILayout.HelpBox(NoticeUsingGlobal, MessageType.Info);
+            }
+        }
+
+        // MaterialProperty へ一時書き込みすると全ターゲットのアセットが変わるため、表示は自前のフィールドで描く。
+        // 編集された時だけマテリアルへ確定する
+        private static void DrawReplaced(MaterialEditor materialEditor, MaterialProperty[] properties, MaterialProperty property, ToonStyleProfile profile, bool isOutline)
+        {
+            GUIContent label = CreateLabel(property);
+            Color newColor = Color.white;
+            Texture newTexture = null;
+            float newFloat = 0f;
+
+            EditorGUI.BeginChangeCheck();
+            switch (property.propertyType)
+            {
+                case UnityEngine.Rendering.ShaderPropertyType.Color:
+                    newColor = EditorGUILayout.ColorField(label, GetProfileColor(property.name, profile));
+                    break;
+                case UnityEngine.Rendering.ShaderPropertyType.Texture:
+                    newTexture = (Texture)EditorGUILayout.ObjectField(label, profile.Ramp, typeof(Texture), false);
+                    break;
+                case UnityEngine.Rendering.ShaderPropertyType.Range:
+                    Vector2 limits = property.rangeLimits;
+                    newFloat = EditorGUILayout.Slider(label, GetProfileFloat(property.name, profile), limits.x, limits.y);
+                    break;
+                default:
+                    newFloat = EditorGUILayout.FloatField(label, GetProfileFloat(property.name, profile));
+                    break;
+            }
+            if (!EditorGUI.EndChangeCheck())
+            {
+                return;
+            }
+
+            materialEditor.RegisterPropertyChangeUndo(UndoName);
+
+            // (1) グループ全体に現在の共通値をコピーして見た目を保ち、(2) 編集値を上書きし、(3) 個別設定へ切り替える
+            foreach (string groupName in isOutline ? OutlineGroup : StyleGroup)
+            {
+                MaterialProperty target = FindProperty(groupName, properties, false);
+                if (target != null)
+                {
+                    CopyProfileValue(target, profile);
+                }
+            }
+
+            switch (property.propertyType)
+            {
+                case UnityEngine.Rendering.ShaderPropertyType.Color:
+                    // アルファは使わない項目があるため、元のアルファを保つ
+                    property.colorValue = new Color(newColor.r, newColor.g, newColor.b, property.colorValue.a);
+                    break;
+                case UnityEngine.Rendering.ShaderPropertyType.Texture:
+                    property.textureValue = newTexture;
+                    break;
+                default:
+                    property.floatValue = newFloat;
+                    break;
+            }
+
+            MaterialProperty toggle = FindProperty(isOutline ? UseGlobalOutlineName : UseGlobalStyleName, properties, false);
+            if (toggle != null)
+            {
+                toggle.floatValue = 0f;
+            }
+        }
+
+        private static void CopyProfileValue(MaterialProperty target, ToonStyleProfile profile)
+        {
+            switch (target.propertyType)
+            {
+                case UnityEngine.Rendering.ShaderPropertyType.Color:
+                    Color c = GetProfileColor(target.name, profile);
+                    target.colorValue = new Color(c.r, c.g, c.b, target.colorValue.a);
+                    break;
+                case UnityEngine.Rendering.ShaderPropertyType.Texture:
+                    if (profile.Ramp != null)
+                    {
+                        target.textureValue = profile.Ramp;
+                    }
+                    break;
+                default:
+                    target.floatValue = GetProfileFloat(target.name, profile);
+                    break;
+            }
+        }
+
+        private static Color GetProfileColor(string name, ToonStyleProfile profile)
+        {
+            switch (name)
+            {
+                case "_ShadowColor": return profile.ShadowColor;
+                case "_RimColor": return profile.RimColor;
+                default: return profile.OutlineColor;
+            }
+        }
+
+        private static float GetProfileFloat(string name, ToonStyleProfile profile)
+        {
+            switch (name)
+            {
+                case "_ShadowStrength": return profile.ShadowStrength;
+                case "_RimPower": return profile.RimPower;
+                case "_RimIntensity": return profile.RimIntensity;
+                case "_Smoothness": return profile.Smoothness;
+                case "_OutlineWidth": return profile.OutlineWidth;
+                case "_OutlineZPull": return profile.OutlineZPull;
+                case "_OutlineZPullMin": return profile.OutlineZPullMin;
+                default: return profile.OutlineZPullMax;
+            }
         }
 
         // HideInInspector を尊重しないと内部用プロパティまで表示されてしまうため、ここで弾く
