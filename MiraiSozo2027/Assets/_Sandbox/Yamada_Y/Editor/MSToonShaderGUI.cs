@@ -75,15 +75,63 @@ namespace MS.Toon.Editor
         private const string WarnNoApplier = "シーンに ToonStyleApplier が無いため、共通設定は反映されません(このマテリアルの値で描画されます)";
         private const string WarnNoProfile = "ToonStyleApplier に Profile が設定されていないため、共通設定は反映されません(このマテリアルの値で描画されます)";
 
-        private static readonly string[] OutlineGroup =
+        // 共通値で置換表示するグループ。トグルと、そのトグルがオンの間に置換されるプロパティ名を束ねる
+        private sealed class GlobalGroup
         {
-            "_OutlineColor", "_OutlineWidth", "_OutlineZPull", "_OutlineZPullMin", "_OutlineZPullMax",
+            public readonly string ToggleName;
+            public readonly string[] MemberNames;
+
+            public GlobalGroup(string toggleName, string[] memberNames)
+            {
+                ToggleName = toggleName;
+                MemberNames = memberNames;
+            }
+
+            public bool Contains(string propertyName)
+            {
+                return System.Array.IndexOf(MemberNames, propertyName) >= 0;
+            }
+
+            // 通知はトグル自身かメンバーのうち最初に現れた行の手前に出す
+            public bool Owns(string propertyName)
+            {
+                return propertyName == ToggleName || Contains(propertyName);
+            }
+        }
+
+        private static readonly GlobalGroup[] Groups =
+        {
+            new GlobalGroup(UseGlobalOutlineName, new[]
+            {
+                "_OutlineColor", "_OutlineWidth", "_OutlineZPull", "_OutlineZPullMin", "_OutlineZPullMax",
+            }),
+            new GlobalGroup(UseGlobalStyleName, new[]
+            {
+                "_ShadowColor", "_ShadowStrength", "_RimColor", "_RimPower", "_RimIntensity", "_Smoothness", RampMapName,
+            }),
         };
 
-        private static readonly string[] StyleGroup =
-        {
-            "_ShadowColor", "_ShadowStrength", "_RimColor", "_RimPower", "_RimIntensity", "_Smoothness", RampMapName,
-        };
+        // プロパティ名 -> Profile の値。置換表示とコピーで同じ対応を使うためテーブルにまとめる
+        private static readonly Dictionary<string, System.Func<ToonStyleProfile, Color>> ProfileColors =
+            new Dictionary<string, System.Func<ToonStyleProfile, Color>>
+            {
+                { "_ShadowColor", p => p.ShadowColor },
+                { "_RimColor", p => p.RimColor },
+                { "_OutlineColor", p => p.OutlineColor },
+            };
+
+        private static readonly Dictionary<string, System.Func<ToonStyleProfile, float>> ProfileFloats =
+            new Dictionary<string, System.Func<ToonStyleProfile, float>>
+            {
+                { "_ShadowStrength", p => p.ShadowStrength },
+                { "_RimPower", p => p.RimPower },
+                { "_RimIntensity", p => p.RimIntensity },
+                { "_Smoothness", p => p.Smoothness },
+                { "_OutlineWidth", p => p.OutlineWidth },
+                { "_OutlineZPull", p => p.OutlineZPull },
+                { "_OutlineZPullMin", p => p.OutlineZPullMin },
+                { "_OutlineZPullMax", p => p.OutlineZPullMax },
+            };
 
         // Profile.Changed の購読は static で1つだけ持つ。インスタンスごとに登録するとインスペクタを閉じた後に残るため
         private static ToonStyleProfile s_subscribedProfile;
@@ -93,12 +141,13 @@ namespace MS.Toon.Editor
             ToonStyleProfile profile = GetActiveProfile();
             SubscribeProfile(profile);
 
-            bool outlineOn = IsToggleOn(FindProperty(UseGlobalOutlineName, properties, false));
-            bool styleOn = IsToggleOn(FindProperty(UseGlobalStyleName, properties, false));
-
             // グループ見出しの通知は、各グループで最初に現れたプロパティの手前に1回だけ出す
-            bool outlineNoticeShown = false;
-            bool styleNoticeShown = false;
+            bool[] toggleOn = new bool[Groups.Length];
+            bool[] noticeShown = new bool[Groups.Length];
+            for (int i = 0; i < Groups.Length; i++)
+            {
+                toggleOn[i] = IsToggleOn(FindProperty(Groups[i].ToggleName, properties, false));
+            }
 
             foreach (MaterialProperty property in properties)
             {
@@ -108,21 +157,16 @@ namespace MS.Toon.Editor
                 }
 
                 string name = property.name;
-                bool inOutlineGroup = System.Array.IndexOf(OutlineGroup, name) >= 0;
-                bool inStyleGroup = System.Array.IndexOf(StyleGroup, name) >= 0;
+                int groupIndex = FindGroupIndex(name);
+                GlobalGroup group = groupIndex >= 0 ? Groups[groupIndex] : null;
 
-                if ((inOutlineGroup || name == UseGlobalOutlineName) && !outlineNoticeShown)
+                if (group != null && !noticeShown[groupIndex])
                 {
-                    outlineNoticeShown = true;
-                    DrawNotice(outlineOn, profile);
-                }
-                if ((inStyleGroup || name == UseGlobalStyleName) && !styleNoticeShown)
-                {
-                    styleNoticeShown = true;
-                    DrawNotice(styleOn, profile);
+                    noticeShown[groupIndex] = true;
+                    DrawNotice(toggleOn[groupIndex], profile);
                 }
 
-                bool replace = profile != null && ((outlineOn && inOutlineGroup) || (styleOn && inStyleGroup));
+                bool replace = profile != null && group != null && toggleOn[groupIndex] && group.Contains(name);
                 // Ramp は Profile 側が未設定ならマテリアル自身の値を見せる
                 if (replace && name == RampMapName && profile.Ramp == null)
                 {
@@ -131,7 +175,7 @@ namespace MS.Toon.Editor
 
                 if (replace)
                 {
-                    DrawReplaced(materialEditor, properties, property, profile, inOutlineGroup);
+                    DrawReplaced(materialEditor, properties, property, profile, group);
                 }
                 else
                 {
@@ -140,6 +184,18 @@ namespace MS.Toon.Editor
             }
 
             DrawStandardFooter(materialEditor);
+        }
+
+        private static int FindGroupIndex(string propertyName)
+        {
+            for (int i = 0; i < Groups.Length; i++)
+            {
+                if (Groups[i].Owns(propertyName))
+                {
+                    return i;
+                }
+            }
+            return -1;
         }
 
         private static ToonStyleProfile GetActiveProfile()
@@ -204,7 +260,7 @@ namespace MS.Toon.Editor
 
         // MaterialProperty へ一時書き込みすると全ターゲットのアセットが変わるため、表示は自前のフィールドで描く。
         // 編集された時だけマテリアルへ確定する
-        private static void DrawReplaced(MaterialEditor materialEditor, MaterialProperty[] properties, MaterialProperty property, ToonStyleProfile profile, bool isOutline)
+        private static void DrawReplaced(MaterialEditor materialEditor, MaterialProperty[] properties, MaterialProperty property, ToonStyleProfile profile, GlobalGroup group)
         {
             GUIContent label = CreateLabel(property);
             Color newColor = Color.white;
@@ -236,7 +292,7 @@ namespace MS.Toon.Editor
             materialEditor.RegisterPropertyChangeUndo(UndoName);
 
             // (1) グループ全体に現在の共通値をコピーして見た目を保ち、(2) 編集値を上書きし、(3) 個別設定へ切り替える
-            foreach (string groupName in isOutline ? OutlineGroup : StyleGroup)
+            foreach (string groupName in group.MemberNames)
             {
                 MaterialProperty target = FindProperty(groupName, properties, false);
                 if (target != null)
@@ -259,7 +315,7 @@ namespace MS.Toon.Editor
                     break;
             }
 
-            MaterialProperty toggle = FindProperty(isOutline ? UseGlobalOutlineName : UseGlobalStyleName, properties, false);
+            MaterialProperty toggle = FindProperty(group.ToggleName, properties, false);
             if (toggle != null)
             {
                 toggle.floatValue = 0f;
@@ -288,27 +344,12 @@ namespace MS.Toon.Editor
 
         private static Color GetProfileColor(string name, ToonStyleProfile profile)
         {
-            switch (name)
-            {
-                case "_ShadowColor": return profile.ShadowColor;
-                case "_RimColor": return profile.RimColor;
-                default: return profile.OutlineColor;
-            }
+            return ProfileColors[name](profile);
         }
 
         private static float GetProfileFloat(string name, ToonStyleProfile profile)
         {
-            switch (name)
-            {
-                case "_ShadowStrength": return profile.ShadowStrength;
-                case "_RimPower": return profile.RimPower;
-                case "_RimIntensity": return profile.RimIntensity;
-                case "_Smoothness": return profile.Smoothness;
-                case "_OutlineWidth": return profile.OutlineWidth;
-                case "_OutlineZPull": return profile.OutlineZPull;
-                case "_OutlineZPullMin": return profile.OutlineZPullMin;
-                default: return profile.OutlineZPullMax;
-            }
+            return ProfileFloats[name](profile);
         }
 
         // HideInInspector を尊重しないと内部用プロパティまで表示されてしまうため、ここで弾く
