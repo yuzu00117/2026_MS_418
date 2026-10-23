@@ -6,7 +6,7 @@ namespace Aura.ObjectInfo
 {
     /// @brief ビームを出す物の情報。シートの B1〜B5（種類、強さ、届く距離、念力で曲げられるか、出したもの）
     /// フィールドのギミック・敵・プレイヤーのどれがビームを出す場合も、同じ項目を持つ
-    /// ビームを出す処理は持たない（ビームを出す機能の側が、これを読んで出す）。今ある WaveEmitter（Aura.Wave）は、これをまだ読まない
+    /// ビームを出す処理は持たない（WaveEmitter（Aura.ObjectInfoDemo）が、これを読んで出す）
     [DisallowMultipleComponent]
     public sealed class BeamSourceInfo : MonoBehaviour, IObjectInfo
     {
@@ -20,7 +20,7 @@ namespace Aura.ObjectInfo
         [SerializeField, Min(0.0f)] private float _energyPerSecond = 1.0f;  ///< 1 秒あたりに与えるエネルギー
 
         [InspectorLabel("届く距離（m）")]
-        [Tooltip("届く距離（m）。ビームの通り道に沿って数え、跳ね返った後の道のりも含む（今の WaveEmitter の「ビームの届く距離（m）」と同じ数え方）\n" +
+        [Tooltip("届く距離（m）。ビームの通り道に沿って数え、跳ね返った後の道のりも含む\n" +
                  "0 なら届かない")]
         [SerializeField, Min(0.0f)] private float _range = 25.0f;           ///< 届く距離（m）。跳ね返った後の道のりも含む
 

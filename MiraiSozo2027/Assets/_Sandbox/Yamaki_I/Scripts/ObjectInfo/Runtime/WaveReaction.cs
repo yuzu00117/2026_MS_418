@@ -8,7 +8,7 @@ namespace Aura.ObjectInfo
 {
     /// @brief 波で動く物の情報。シートの O3「反応する波の種類」と O4「動くまでに当てる時間」
     /// 反応は波の種類だけで決まり、誰が出したビーム（ギミック・敵・プレイヤー）かは見ない
-    /// 動かす処理は持たない。今ある WaveReceiver（Aura.Wave）は、この情報をまだ読まない
+    /// 動かす処理は持たない（ReactionTrigger が、これを読んで動かす）
     [DisallowMultipleComponent]
     public sealed class WaveReaction : MonoBehaviour, IObjectInfo
     {
