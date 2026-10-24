@@ -36,7 +36,7 @@ namespace Aura.Wave
         [InspectorLabel("入力で波の種類を切り替える")]
         [Tooltip("オンにすると、Select Next Source / Select Previous Source（チームの PlayerController では Q キー／ゲームパッドの LT）で、" +
                  "「ビームの情報」の「波の種類」を電磁波⇔超音波に入れ替える（プレイヤー用）\n" +
-                 "オフなら、入力では変わらない（決まった種類だけを出すタレットや敵）。コードや UnityEvent からの Switch Wave Kind / Select Wave Kind は、オフでも効く")]
+                 "オフなら、入力では変わらない（決まった種類だけを出すタレットや敵）。UnityEvent やコードからの Switch Wave Kind と、コードからの Select Wave Kind は、オフでも効く")]
         [SerializeField] private bool _canSwitchWaveKindByInput;      ///< 入力で波の種類を切り替えるか
 
         [InspectorLabel("（古い形）出せるビーム")]
@@ -325,6 +325,7 @@ namespace Aura.Wave
         /// @brief 引き金の状態を伝える。入力の部品から毎フレーム呼んでよい。押している間ビームを出す
         /// ギミックのビームなら、UnityEvent（スイッチの On Activated など）から呼んで、出す・止めるを切り替える
         /// @param isHeld 引き金を引いているか
+        [ShowInEventMenu]
         public void SetTriggerHeld(bool isHeld)
         {
             if (_isTriggerHeld == isHeld)
@@ -371,20 +372,20 @@ namespace Aura.Wave
             }
         }
 
-        /// @brief 「ビームの情報」の波の種類を、電磁波⇔超音波で入れ替える。UnityEvent からも呼べる
+        /// @brief 「ビームの情報」の波の種類を、電磁波⇔超音波で入れ替える。UnityEvent からも呼べる（戻り値が無いので、メニューに出る）
         /// 「入力で波の種類を切り替える」がオフでも効く。古い形の「出せるビーム」で動いているときは何もしない
-        /// @return 入れ替えたら true
-        public bool SwitchWaveKind()
+        [ShowInEventMenu]
+        public void SwitchWaveKind()
         {
             BeamSourceInfo source = CurrentSource;
             if (HasSources || source == null)
             {
-                return false;
+                return;
             }
-            return SelectWaveKind(source.WaveKind == WaveKind.Electromagnetic ? WaveKind.Ultrasound : WaveKind.Electromagnetic);
+            SelectWaveKind(source.WaveKind == WaveKind.Electromagnetic ? WaveKind.Ultrasound : WaveKind.Electromagnetic);
         }
 
-        /// @brief 「ビームの情報」の波の種類を、指定した種類にする
+        /// @brief 「ビームの情報」の波の種類を、指定した種類にする。コードから呼ぶ（引数が選択肢なので、UnityEvent のメニューには出ない）
         /// 「入力で波の種類を切り替える」がオフでも効く。古い形の「出せるビーム」で動いているときは何もしない
         /// @param kind 波の種類
         /// @return 種類が変わったら true（もともとその種類なら false）
@@ -415,6 +416,7 @@ namespace Aura.Wave
         }
 
         /// @brief 撃ち方をビーム⇔扇で入れ替える。入力の部品や UnityEvent から呼ぶ
+        [ShowInEventMenu]
         public void ToggleFireShape()
         {
             FireShape = _fireShape == WaveFireShape.Beam ? WaveFireShape.Fan : WaveFireShape.Beam;

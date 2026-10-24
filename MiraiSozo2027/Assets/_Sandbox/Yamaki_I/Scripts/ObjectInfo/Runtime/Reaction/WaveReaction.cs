@@ -30,6 +30,7 @@ namespace Aura.ObjectInfo
         [SerializeField, HideInInspector] private bool _canReactToAnyType;
 
         /// @brief 電磁波に反応するか。実行中に変えてもよい
+        [ShowInEventMenu]
         public bool ReactsToElectromagnetic
         {
             get => _reactsToElectromagnetic;
@@ -37,6 +38,7 @@ namespace Aura.ObjectInfo
         }
 
         /// @brief 超音波に反応するか。実行中に変えてもよい
+        [ShowInEventMenu]
         public bool ReactsToUltrasound
         {
             get => _reactsToUltrasound;
@@ -78,6 +80,7 @@ namespace Aura.ObjectInfo
         }
 
         /// @brief 電磁波だけに反応するようにする。途中で反応する波が変わる敵・ギミック用（UnityEvent からも呼べる）
+        [ShowInEventMenu]
         public void ReactOnlyToElectromagnetic()
         {
             _reactsToElectromagnetic = true;
@@ -85,6 +88,7 @@ namespace Aura.ObjectInfo
         }
 
         /// @brief 超音波だけに反応するようにする。途中で反応する波が変わる敵・ギミック用（UnityEvent からも呼べる）
+        [ShowInEventMenu]
         public void ReactOnlyToUltrasound()
         {
             _reactsToUltrasound = true;

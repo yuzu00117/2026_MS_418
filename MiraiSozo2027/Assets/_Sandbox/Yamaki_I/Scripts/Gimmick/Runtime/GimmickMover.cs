@@ -20,18 +20,21 @@ namespace Aura.Gimmick
         private bool _isActive;             ///< 起動しているか
 
         /// @brief 起動した位置へ動かす
+        [ShowInEventMenu]
         public void Activate()
         {
             _isActive = true;
         }
 
         /// @brief 元の位置へ戻す
+        [ShowInEventMenu]
         public void Deactivate()
         {
             _isActive = false;
         }
 
         /// @brief 起動と停止を入れ替える
+        [ShowInEventMenu]
         public void Toggle()
         {
             _isActive = !_isActive;

@@ -43,12 +43,12 @@ namespace Aura.Wave
         [Header("イベント")]
         [InspectorLabel("起動したときの処理")]
         [Tooltip("起動したときに呼ぶ処理。扉を開ける、リフトを上げるなど、ギミックの処理をつなぐ")]
-        [SerializeField] private UnityEvent _onActivated = new UnityEvent();    ///< 起動した後に呼ぶ
+        [SerializeField, FilteredEventMenu] private UnityEvent _onActivated = new UnityEvent();    ///< 起動した後に呼ぶ
 
         [InspectorLabel("止まったときの処理")]
         [Tooltip("止まったときに呼ぶ処理。「オンとオフを交互に」で OFF になったときと、「減りきると止まる」でエネルギーが 0 になったときに呼ばれる\n" +
                  "「起動したまま」では、コードから戻したとき（ResetState、SetActive(false)）だけ呼ばれる")]
-        [SerializeField] private UnityEvent _onDeactivated = new UnityEvent();  ///< 止まった後に呼ぶ
+        [SerializeField, FilteredEventMenu] private UnityEvent _onDeactivated = new UnityEvent();  ///< 止まった後に呼ぶ
 
         private float _energy;          ///< 溜まっているエネルギー
         private float _lastReceiveTime = float.NegativeInfinity;  ///< 最後に波を受け付けた時刻
