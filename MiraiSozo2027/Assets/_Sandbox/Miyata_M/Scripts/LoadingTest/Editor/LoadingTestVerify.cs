@@ -98,21 +98,21 @@ namespace LoadingTest.EditorTools
             switch (c)
             {
                 case 0:
-                    var a = Object.FindFirstObjectByType<LoadingTest.A.LoadingScreen>(FindObjectsInactive.Include);
+                    var a = Object.FindAnyObjectByType<LoadingTest.A.LoadingScreen>(FindObjectsInactive.Include);
                     if (a == null) return false;
                     a.LoadScene("LT_A_Next");
                     return true;
                 case 1:
                     // Boot が起動時に Title を読み込み終えるまで待つ。Title 到着後に Game へ遷移する
                     if (SceneManager.GetActiveScene().name != "LT_B_Title") return false;
-                    var b = Object.FindFirstObjectByType<LoadingTest.B.AdditiveSceneLoader>();
+                    var b = Object.FindAnyObjectByType<LoadingTest.B.AdditiveSceneLoader>();
                     if (b == null) return false;
                     // 初回ロードのフェードアウト完了前に呼ぶと isLoading で無視されるため待つ
                     if (b.GetComponent<CanvasGroup>().blocksRaycasts) return false;
                     b.Load("LT_B_Game");
                     return true;
                 default:
-                    if (Object.FindFirstObjectByType<LoadingTest.C.SceneLoader>() == null) return false;
+                    if (Object.FindAnyObjectByType<LoadingTest.C.SceneLoader>() == null) return false;
                     LoadingTest.C.SceneLoader.Load("LT_C_Next");
                     return true;
             }
@@ -127,7 +127,7 @@ namespace LoadingTest.EditorTools
                     return SceneManager.GetActiveScene().name == "LT_A_Next";
                 case 1:
                     if (SceneManager.GetActiveScene().name != "LT_B_Game") return false;
-                    var group = Object.FindFirstObjectByType<LoadingTest.B.AdditiveSceneLoader>()
+                    var group = Object.FindAnyObjectByType<LoadingTest.B.AdditiveSceneLoader>()
                         .GetComponent<CanvasGroup>();
                     if (group.alpha > 0f) return false; // フェードアウト完了まで待つ
                     // Boot + Game のみ残り、旧 Title は破棄されていること
@@ -136,7 +136,7 @@ namespace LoadingTest.EditorTools
                     return error == null;
                 default:
                     if (SceneManager.GetActiveScene().name != "LT_C_Next") return false;
-                    var loader = Object.FindFirstObjectByType<LoadingTest.C.SceneLoader>();
+                    var loader = Object.FindAnyObjectByType<LoadingTest.C.SceneLoader>();
                     if (loader == null) { error = "SceneLoader が遷移後に消えた"; return false; }
                     return loader.GetComponent<Transform>().GetComponentInChildren<CanvasGroup>().alpha <= 0f;
             }
