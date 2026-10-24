@@ -3,7 +3,6 @@
     "rootNamespace": "Aura.ObjectInfoDemo",
     "references": [
         "Aura.ObjectInfo",
-        "Unity.InputSystem",
         "Aura.Inspector"
     ],
     "includePlatforms": [],

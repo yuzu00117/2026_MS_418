@@ -173,10 +173,10 @@ public class PlayerController : MonoBehaviour
              {
                 _waveEmitter.SelectNextSource();
              }
-            //if(_actions.Player.ToggleFireMode.triggered)
-            //{
-            //    _waveEmitter.FireMode = _waveEmitter.FireMode == WaveFireMode.Pulse ? WaveFireMode.Beam : WaveFireMode.Pulse;
-            //}
+            if(_actions.Player.ToggleFireMode.triggered)
+            {
+                _waveEmitter.ToggleFireShape();
+            }
 
         }
 

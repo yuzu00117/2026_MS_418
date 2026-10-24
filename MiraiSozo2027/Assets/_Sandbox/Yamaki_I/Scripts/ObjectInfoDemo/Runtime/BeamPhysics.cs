@@ -2,12 +2,13 @@ using UnityEngine;
 
 namespace Aura.ObjectInfoDemo
 {
-    /// @brief ビームと照準の当たり判定をまとめたもの
+    /// @brief ビーム・扇・照準の当たり判定をまとめたもの
     /// 点と線のビームの点（BeamPoint）は、念力で掴むためだけにあるので、ビームと照準には当たらない（どのビームの点でも素通りする）
     internal static class BeamPhysics
     {
         private const int MaxCastHits = 32;
         private static RaycastHit[] _castHits = new RaycastHit[MaxCastHits];  ///< 判定の結果を受ける使い回しの配列。埋まったら大きくしてやり直す
+        private static Collider[] _overlapHits = new Collider[MaxCastHits];   ///< 扇の候補を受ける使い回しの配列。埋まったら大きくしてやり直す
 
         /// @brief 球（radius が 0 なら線）を飛ばし、ignoreRoot の下を除いた一番近い当たりを返す
         /// @param origin 始点
@@ -72,6 +73,49 @@ namespace Aura.ObjectInfoDemo
                 }
             }
             return hasHit;
+        }
+
+        /// @brief 球の中のコライダーを集める。ignoreRoot の下と、ビームの点（BeamPoint）は除く
+        /// @param center 球の中心
+        /// @param radius 球の半径（m）
+        /// @param mask 当たるレイヤー
+        /// @param triggerInteraction トリガーに当たるか
+        /// @param ignoreRoot この Transform の下のコライダーは集めない。null なら除かない
+        /// @param outColliders 集めたコライダーが入る使い回しの配列（次に呼ぶと中身が変わる）
+        /// @return 集めた数（outColliders の先頭からこの数だけが有効）
+        public static int OverlapSphere(Vector3 center, float radius, LayerMask mask,
+            QueryTriggerInteraction triggerInteraction, Transform ignoreRoot, out Collider[] outColliders)
+        {
+            int count;
+            while (true)
+            {
+                count = Physics.OverlapSphereNonAlloc(center, radius, _overlapHits, mask, triggerInteraction);
+                // 受け皿が埋まったときは、取りこぼしがあるかもしれないので、大きくしてやり直す
+                if (count < _overlapHits.Length)
+                {
+                    break;
+                }
+                _overlapHits = new Collider[_overlapHits.Length * 2];
+            }
+
+            // 除く物を飛ばして、前へ詰める
+            int kept = 0;
+            for (int i = 0; i < count; ++i)
+            {
+                Collider candidate = _overlapHits[i];
+                if (ignoreRoot != null && candidate.transform.IsChildOf(ignoreRoot))
+                {
+                    continue;
+                }
+                if (IsBeamPoint(candidate))
+                {
+                    continue;
+                }
+                _overlapHits[kept] = candidate;
+                ++kept;
+            }
+            outColliders = _overlapHits;
+            return kept;
         }
 
         /// @brief ビームの点（BeamPoint）のコライダーか。点の Rigidbody に BeamPoint が付いているかで見分ける

@@ -13,6 +13,8 @@ namespace Aura.ObjectInfoDemo
     /// ・当たった物に WaveReaction（O3、O4）と ReactionTrigger があれば、ビームを渡す。弱点（WeakPoint、O5）なら強さに倍率を掛ける
     /// ・ビームは、一定の間隔の点（BeamPoint）と点どうしをつなぐ直線で作る。
     ///   点を念力で掴んで動かすと、掴んだ点の前後が曲がる（BeamSourceInfo の Is Bendable がオンのときだけ）
+    /// ・撃ち方は「ビーム（点と線）」と「扇（近距離）」の 2 つ（Fire Shape）。扇は正面から「扇の半角（度）」以内の物すべてに
+    ///   同時に波を渡す。曲げ・跳ね返りはせず、壁の裏には届かない
     public sealed class WaveEmitter : MonoBehaviour
     {
         private const int MaxReflectionLimit = 16;           ///< Max Reflections に決められる最大の回数
@@ -44,6 +46,24 @@ namespace Aura.ObjectInfoDemo
         [Tooltip("オンにすると、始めからビームを出し続ける（フィールドのギミック用）。入力の部品が無くても出る\n" +
                  "Set Trigger Held を UnityEvent から呼ぶと、出す・止めるを切り替えられる")]
         [SerializeField] private bool _isFiringOnStart;               ///< 始めからビームを出し続けるか
+
+        [Header("撃ち方")]
+        [InspectorLabel("撃ち方")]
+        [Tooltip("波の出し方。実行中に変えてもよい（引き金を引いたままなら、次のフレームから新しい撃ち方で出る）\n" +
+                 "ビーム（点と線）: 長射程。素材で跳ね返り、点を念力で掴んで曲げられる\n" +
+                 "扇（近距離）: 低射程・広範囲。「扇の届く距離（m）」の中で、正面から「扇の半角（度）」以内の物すべてに同時に波を渡す。曲げ・跳ね返りはせず、壁の裏には届かない\n" +
+                 "切り替えの入力は、ゲームの側から Toggle Fire Shape を呼ぶ（チームの PlayerController では B キー／ゲームパッドの十字キーの上）")]
+        [SerializeField] private WaveFireShape _fireShape = WaveFireShape.Beam;  ///< 撃ち方
+
+        [InspectorLabel("扇の届く距離（m）")]
+        [Tooltip("扇が届く距離（m）。ビームの届く距離（BeamSourceInfo の「届く距離（m）」）とは別で、扇は近距離の設計。0 なら届かない\n" +
+                 "波の種類と強さは、ビームと同じく BeamSourceInfo（「出せるビーム」の今の番号）から読む")]
+        [SerializeField, Min(0.0f)] private float _fanRange = 6.0f;  ///< 扇の届く距離（m）
+
+        [InspectorLabel("扇の半角（度）")]
+        [Tooltip("扇の広がりの半分の角度（度）。正面からこの角度以内の物に当たる（例: 40 なら全体で 80 度の扇）。見た目の弧も同じ広がりで描く\n" +
+                 "当たるかは、出る位置から見た「候補のいちばん近い点」の向きで決める（大きい物は、端が扇に入っていても、いちばん近い点が外なら当たらない）")]
+        [SerializeField, Range(1.0f, 89.0f)] private float _fanHalfAngle = 40.0f;  ///< 扇の半角（度）
 
         [Header("狙い")]
         [InspectorLabel("ビームが出る位置")]
@@ -93,8 +113,8 @@ namespace Aura.ObjectInfoDemo
         [SerializeField, Range(1, MaxReflectionLimit)] private int _maxReflections = 8;  ///< 跳ね返る回数の上限
 
         [InspectorLabel("線のマテリアル")]
-        [Tooltip("ビームの線のマテリアル。空なら既定のマテリアルを使い、WaveType の「波の色」で色を付ける")]
-        [SerializeField] private Material _lineMaterial;              ///< ビームの線のマテリアル。空なら既定のもの
+        [Tooltip("ビームの線と扇の弧のマテリアル。空なら既定のマテリアルを使い、WaveType の「波の色」で色を付ける")]
+        [SerializeField] private Material _lineMaterial;              ///< ビームの線と扇の弧のマテリアル。空なら既定のもの
 
         [Header("点と線")]
         [InspectorLabel("点の間隔（m）")]
@@ -172,14 +192,19 @@ namespace Aura.ObjectInfoDemo
         private readonly HashSet<ReactionTrigger> _deliveredTriggers = new HashSet<ReactionTrigger>();  ///< このフレームで、もうビームを渡した受け手
         private InfoBeamLine _beamLine;
         private InfoBeamLine _bodyLine;      ///< ビームの実体の線（確かめる用）
+        private FanWaveLine _fanLine;        ///< 扇の見た目（Wi-Fi 風の弧）
         private BeamPointChain _chain;       ///< 点と線のビームの点と曲げ方。Chain から使う
         private Vector3 _lockedAimDirection; ///< 止めているビームを出す向き（Is Aim Locked While Held）
         private bool _hasLockedAim;          ///< ビームを出す向きを止めているか
         private int _appliedSourceIndex;     ///< 最後に反映したビームの番号。Inspector での変更に気付くために持つ
+        private WaveFireShape _appliedFireShape;  ///< 最後に反映した撃ち方。Inspector での変更に気付くために持つ
         private bool _isTriggerHeld;         ///< 引き金を引いているか
 
         /// @brief ビームを選び直した後に起きる
         public event Action<BeamSourceInfo> SourceChanged;
+
+        /// @brief 撃ち方を切り替えた後に起きる
+        public event Action<WaveFireShape> FireShapeChanged;
 
         /// @brief 今のビーム（BeamSourceInfo）。1 つもなければ null
         public BeamSourceInfo CurrentSource => HasSources ? _sources[_sourceIndex] : null;
@@ -189,6 +214,17 @@ namespace Aura.ObjectInfoDemo
 
         /// @brief 出せるビームの数
         public int SourceCount => _sources != null ? _sources.Length : 0;
+
+        /// @brief 撃ち方（ビーム/扇）。変えると今の波を片付け、引き金を引いたままなら次のフレームから新しい撃ち方で出る
+        public WaveFireShape FireShape
+        {
+            get => _fireShape;
+            set
+            {
+                _fireShape = value;
+                ApplyFireShape();
+            }
+        }
 
         /// @brief ビームを出しているか
         public bool IsFiring => _isTriggerHeld && CurrentType != null && isActiveAndEnabled;
@@ -303,6 +339,12 @@ namespace Aura.ObjectInfoDemo
             return true;
         }
 
+        /// @brief 撃ち方をビーム⇔扇で入れ替える。入力の部品や UnityEvent から呼ぶ
+        public void ToggleFireShape()
+        {
+            FireShape = _fireShape == WaveFireShape.Beam ? WaveFireShape.Fan : WaveFireShape.Beam;
+        }
+
         //============================================================
         // Unity のメッセージ
         //============================================================
@@ -313,8 +355,11 @@ namespace Aura.ObjectInfoDemo
             _beamLine.Hide();
             _bodyLine = InfoBeamLine.Create("InfoBeamBody", transform, _lineMaterial);
             _bodyLine.Hide();
+            _fanLine = FanWaveLine.Create("FanWave", transform, _lineMaterial);
+            _fanLine.Hide();
             _sourceIndex = HasSources ? Mathf.Clamp(_sourceIndex, 0, _sources.Length - 1) : 0;
             _appliedSourceIndex = _sourceIndex;
+            _appliedFireShape = _fireShape;
         }
 
         private void OnDestroy()
@@ -343,14 +388,25 @@ namespace Aura.ObjectInfoDemo
                 _sourceIndex = HasSources ? Mathf.Clamp(_sourceIndex, 0, _sources.Length - 1) : 0;
                 ApplySourceIndex();
             }
+            if (_fireShape != _appliedFireShape)
+            {
+                ApplyFireShape();
+            }
         }
 
         private void LateUpdate()
         {
-            // カメラと手が動いた後に、ビームの判定と見た目を合わせる
+            // カメラと手が動いた後に、波の判定と見た目を合わせる
             if (IsFiring)
             {
-                UpdateBeam(Time.deltaTime);
+                if (_fireShape == WaveFireShape.Fan)
+                {
+                    UpdateFan(Time.deltaTime);
+                }
+                else
+                {
+                    UpdateBeam(Time.deltaTime);
+                }
             }
             else
             {
@@ -392,6 +448,72 @@ namespace Aura.ObjectInfoDemo
             {
                 _bodyLine.Hide();
             }
+        }
+
+        private void UpdateFan(float deltaTime)
+        {
+            BeamSourceInfo source = CurrentSource;
+            Transform muzzle = Muzzle;
+            Vector3 direction = GetAimDirection(muzzle, _fanRange);
+            float energy = source.EnergyPerSecond * deltaTime;
+            TraceFanWave(source.WaveType, muzzle.position, direction, energy);
+
+            // 受け手の処理で波が止められた（この部品が無効にされたなど）ときは、弧を出し直さない
+            if (!IsFiring)
+            {
+                _fanLine.Hide();
+                return;
+            }
+            WaveType type = source.WaveType;
+            float phase = Time.time * type.ScrollSpeed;
+            _fanLine.Draw(muzzle.position, direction, muzzle.up, _fanHalfAngle, _fanRange, type, phase);
+        }
+
+        /// @brief 扇の中の物を調べて、ビームと同じ決まりで波を渡す。曲げ・跳ね返りはしない
+        /// 近くの候補を球で集め、正面から「扇の半角（度）」以内に絞り、最後に出る位置から遮蔽のレイを 1 本飛ばして、壁の裏の物を除く
+        private void TraceFanWave(WaveType type, Vector3 origin, Vector3 direction, float energy)
+        {
+            _lastHits.Clear();
+            _deliveredTriggers.Clear();
+            int count = BeamPhysics.OverlapSphere(origin, _fanRange, _hitMask, _triggerInteraction, IgnoreRoot,
+                out Collider[] candidates);
+            for (int i = 0; i < count; ++i)
+            {
+                Collider candidate = candidates[i];
+                // 出る位置から見た「候補のいちばん近い点」の向きで、扇の中かを見る
+                // 大きい物は、端が扇に入っていても、いちばん近い点が半角の外なら当たらない（判定はこの 1 点の近似）
+                Vector3 target = GetClosestPoint(candidate, origin);
+                Vector3 toTarget = target - origin;
+                if (toTarget.sqrMagnitude < MinTargetSqrDistance)
+                {
+                    // 出る位置が候補の中にある物には渡さない（内側からのレイは本人に当たらず、遮蔽を確かめられない）
+                    continue;
+                }
+                if (Vector3.Angle(direction, toTarget) > _fanHalfAngle)
+                {
+                    continue;
+                }
+
+                // 遮蔽のレイ。最初に当たったのが本人でなければ、間に物がある（壁の裏）ので渡さない
+                float targetDistance = toTarget.magnitude;
+                if (!BeamPhysics.TryCast(origin, toTarget / targetDistance, 0.0f, targetDistance + SurfaceOffset,
+                        _hitMask, _triggerInteraction, IgnoreRoot, out RaycastHit hit)
+                    || hit.collider != candidate)
+                {
+                    continue;
+                }
+                Deliver(type, energy, hit, 0, false);
+            }
+        }
+
+        /// @brief 出る位置から見た、候補のいちばん近い点を返す
+        /// Collider.ClosestPoint は Box・Sphere・Capsule・凸の Mesh 専用（それ以外はエラーを出して使えない）なので、
+        /// それ以外（凹のメッシュ、Terrain など）は囲いの箱（bounds）のいちばん近い点で近似する
+        private static Vector3 GetClosestPoint(Collider candidate, Vector3 origin)
+        {
+            bool isSupported = candidate is BoxCollider || candidate is SphereCollider || candidate is CapsuleCollider
+                || (candidate is MeshCollider meshCollider && meshCollider.convex);
+            return isSupported ? candidate.ClosestPoint(origin) : candidate.ClosestPointOnBounds(origin);
         }
 
         /// @brief 点と線のビームの通り道をたどり、当たった物にビームを渡す。跳ね返るかは素材で決める
@@ -592,6 +714,18 @@ namespace Aura.ObjectInfoDemo
             SourceChanged?.Invoke(CurrentSource);
         }
 
+        private void ApplyFireShape()
+        {
+            if (_fireShape == _appliedFireShape)
+            {
+                return;
+            }
+            _appliedFireShape = _fireShape;
+            // 今の波を片付ける。引き金を引いたままなら、次のフレームの LateUpdate から新しい撃ち方で出る
+            HideBeam();
+            FireShapeChanged?.Invoke(_fireShape);
+        }
+
         /// @brief 今のビームの BeamSourceInfo に、出したもの（B5）を入れる
         private void MarkSourceKind()
         {
@@ -612,6 +746,10 @@ namespace Aura.ObjectInfoDemo
             if (_bodyLine != null)
             {
                 _bodyLine.Hide();
+            }
+            if (_fanLine != null)
+            {
+                _fanLine.Hide();
             }
             _hasLockedAim = false;
             _chain?.Stop();

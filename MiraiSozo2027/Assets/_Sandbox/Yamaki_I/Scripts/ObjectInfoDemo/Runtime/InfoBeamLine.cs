@@ -221,7 +221,8 @@ namespace Aura.ObjectInfoDemo
                 && !float.IsInfinity(point.x) && !float.IsInfinity(point.y) && !float.IsInfinity(point.z);
         }
 
-        private static Material GetDefaultMaterial()
+        /// @brief マテリアルを指定しないときに使う、頂点カラーの既定のマテリアル（FanWaveLine とも共用）
+        internal static Material GetDefaultMaterial()
         {
             if (_defaultMaterial == null)
             {
