@@ -76,6 +76,19 @@ namespace MiraiSozo.Options
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
+        private void Update()
+        {
+            // メニューが開いており、キーリバインド中でなければ、Cancelを検知
+            if(IsOpen && !IsRebinding && GameManager.Actions != null && GameManager.Actions.UI.Cancel.triggered)
+            {
+                Back();
+            }
+            // if(IsOpen && GameManager.Actions != null && GameManager.Actions.All.Pause.triggered)
+            // {
+            //     GameManager.Instance.ResumePause();
+            // }
+        }
+
         private void ApplyFont()
         {
             if (_font == null)
@@ -123,7 +136,11 @@ namespace MiraiSozo.Options
 
         private void WireNavigation()
         {
-            BindClick("Resume", CloseMenu);
+            BindClick("Resume", () =>
+            {
+                if(GameManager.Instance != null) GameManager.Instance.ResumePause();
+                else CloseMenu();
+            });
             BindClick("Open Options", OpenOptions);
             BindClick("Back", Back);
             BindClick("Return Title", () => GetView<Text>("Pause Status").text = "タイトルへの接続は後日追加予定です。");
@@ -222,13 +239,14 @@ namespace MiraiSozo.Options
         {
             if (IsRebinding || Time.frameCount <= _ignorePauseThroughFrame) return;
             if (!IsOpen) OpenMenu();
-            else Back();
+            else CloseMenu();
+            // else Back();
         }
 
         public void OpenMenu()
         {
             if (IsOpen) return;
-            OptionGameManager.Instance.SetPaused(true);
+            // OptionGameManager.Instance.SetPaused(true); //ポーズの切り替えはGameManager側で行う
             GetView("Test HUD").gameObject.SetActive(false);
             _overlay.SetActive(true);
             _pause.SetActive(true);
@@ -267,6 +285,7 @@ namespace MiraiSozo.Options
 
         public void Back()
         {
+            // ポーズメニューのタブ戻り関数（Actions.UI.Cancelで呼び出し予定）
             if (IsRebinding) { CancelRebind(); return; }
             if (_confirmation.activeSelf) { DismissConfirmation(); return; }
             if (_settings.activeSelf)
@@ -277,11 +296,22 @@ namespace MiraiSozo.Options
                 _pause.SetActive(true);
                 SelectControl("Open Options");
             }
-            else CloseMenu();
+            else
+            {
+                if(GameManager.Instance != null)
+                {
+                    GameManager.Instance.ResumePause();
+                }
+                else
+                {
+                    CloseMenu();
+                }
+            }
         }
 
         public void CloseMenu()
         {
+            // ポーズメニューの閉じる関数（Actions.All.Pauseで呼び出し予定）
             if (!IsOpen) return;
             try
             {
@@ -297,7 +327,7 @@ namespace MiraiSozo.Options
                 _confirmationOrigin = null;
                 _overlay.SetActive(false);
                 GetView("Test HUD").gameObject.SetActive(_showTestHud);
-                if (OptionGameManager.Instance != null) OptionGameManager.Instance.SetPaused(false);
+                //if (OptionGameManager.Instance != null) OptionGameManager.Instance.SetPaused(false); //ポーズの切り替えはGameManager側で行う
                 if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
             }
         }
@@ -376,7 +406,7 @@ namespace MiraiSozo.Options
             var content = GetView("Binding Content");
             foreach (Transform child in content) { child.gameObject.SetActive(false); Destroy(child.gameObject); }
             _bindingButtons.Clear();
-            var entries = OptionRebinding.GetEntries(OptionGameManager.Actions.Player.Get());
+            var entries = OptionRebinding.GetEntries(GameManager.Actions.Player.Get());
             for (int i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
@@ -432,7 +462,7 @@ namespace MiraiSozo.Options
             foreach (var selectable in _settings.GetComponentsInChildren<Selectable>(true)) selectable.interactable = true;
             GetView<Toggle>("Aim Assist").interactable = false;
             // コールバックの最中にボタンを破棄せず、表示文字列だけを更新する。
-            var entries = OptionRebinding.GetEntries(OptionGameManager.Actions.Player.Get());
+            var entries = OptionRebinding.GetEntries(GameManager.Actions.Player.Get());
             for (int i = 0; i < Mathf.Min(entries.Count, _bindingButtons.Count); i++)
                 _bindingButtons[i].GetComponentInChildren<Text>().text = entries[i].Label + "     [ " + entries[i].Action.GetBindingDisplayString(entries[i].Index) + " ]";
             SetStatus(message);

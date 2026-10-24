@@ -21,9 +21,25 @@ public class CameraBehavior : MonoBehaviour
     [SerializeField] private float _sensitivityY = 0.2f;
     [SerializeField] private float _minPitch = 30.0f; //見下ろし限界（度）
     [SerializeField] private float _maxPitch = 120.0f; //見上げ限界（度）
+    [SerializeField] private bool _invertX = false; //横方向反転（チェックを入れると左右反転）
     [SerializeField] private bool _invertY = false; //縦方向反転（チェックを入れると上下反転）
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    
+
+    public float SensitivityX => _sensitivityX;
+    public float SensitivityY => _sensitivityY;
+    public bool InvertX => _invertX;
+    public bool InvertY => _invertY;
+
+    /// <summary>
+    /// オプション設定からカメラの感度・反転を反映する
+    /// </summary>
+    public void ApplyOptions(float sensitivityX, float sensitivityY, bool invertX, bool invertY)
+    {
+        _sensitivityX = sensitivityX;
+        _sensitivityY = sensitivityY;
+        _invertX = invertX;
+        _invertY = invertY;
+    }
+
     private void Awake()
     {
 
@@ -58,11 +74,14 @@ public class CameraBehavior : MonoBehaviour
 
     void LateUpdate()
     {
-        if (_target == null) return;
+        if (_target == null || _actions == null) return;
+        // ポーズ中はカメラ回転を停止
+        if (GameManager.Instance != null && GameManager.Instance.IsPaused) return;
+
         // 1. Input System から Look（マウス移動 / 右スティック）を取得
         Vector2 lookInput = _actions.Player.Look.ReadValue<Vector2>();
-        // 2. 角度の加算
-        _yaw += lookInput.x * _sensitivityX;
+        // 2. 角度の加算（反転フラグを反映）
+        _yaw += lookInput.x * _sensitivityX * (_invertX ? -1f : 1f);
         float verticalDelta = lookInput.y * _sensitivityY * (_invertY ? 1f : -1f);
         _pitch += verticalDelta;
         // 3. 上下角度を制限（地面への潜り込みや真上反転を防止）
@@ -72,7 +91,7 @@ public class CameraBehavior : MonoBehaviour
         // 5. 注視点（キャラクターの胸付近）の座標
         Vector3 targetFocusPosition = _target.position + Vector3.up * _targetHeight;
         // 6. カメラの位置を算出（注視点から後ろへ _distance だけ下がった位置）
-        if(GameSettings.Instance.IsFirstPersonMode)
+        if(GameSettings.Instance != null && GameSettings.Instance.IsFirstPersonMode)
         {
             transform.position = _target.position + _targetHeight * Vector3.up;
         }
