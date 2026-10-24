@@ -1,4 +1,3 @@
-using Aura.ObjectInfoDemo;
 using Aura.Wave;
 using Echo.Echolocation;
 using UnityEngine;

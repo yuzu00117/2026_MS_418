@@ -349,23 +349,6 @@ Transform:
   - {fileID: 4257218392683802013}
   m_Father: {fileID: 4381050160742425656}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1662085989712540730
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8923635859648306710}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 823e90421c50475a9d98050712127b42, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.BeamSourceInfo
-  _waveKind: 1
-  _waveType: {fileID: 0}
-  _energyPerSecond: 1
-  _range: 25
-  _isBendable: 1
 --- !u!1 &3390714500635507670
 GameObject:
   m_ObjectHideFlags: 0
@@ -1611,7 +1594,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f9f01e989a494a479c25973e13e94e2f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfoDemo::Aura.ObjectInfoDemo.InfoBeamEmitter
+  m_EditorClassIdentifier: Aura.Wave::Aura.Wave.WaveEmitter
   _source: {fileID: 1662085989712540730}
   _canSwitchWaveKindByInput: 1
   _sources: []
@@ -1642,6 +1625,23 @@ MonoBehaviour:
   _pointLayer: 0
   _pointPrefab: {fileID: 3311711355854517144, guid: 1362f66c5301bb64aab30b1147bfdf58, type: 3}
   _isBodyLineVisible: 0
+--- !u!114 &1662085989712540730
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8923635859648306710}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 823e90421c50475a9d98050712127b42, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.BeamSourceInfo
+  _waveKind: 1
+  _waveType: {fileID: 0}
+  _energyPerSecond: 1
+  _range: 25
+  _isBendable: 1
 --- !u!1 &8978512811936796963
 GameObject:
   m_ObjectHideFlags: 0

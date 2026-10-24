@@ -723,7 +723,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 33c8cdbf026f6624ca5da32892ec487b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.Prototype::Aura.Prototype.DemoGimmickMover
+  m_EditorClassIdentifier: Aura.Gimmick::Aura.Gimmick.GimmickMover
   _activeOffset: {x: 0, y: -2.4, z: 0}
   _speed: 3
 --- !u!114 &227560657
@@ -737,7 +737,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ede34c80d730436eb7d28030c6ab4faf, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfoDemo::Aura.ObjectInfoDemo.ReactionFeedback
+  m_EditorClassIdentifier: Aura.Wave::Aura.Wave.ReactionFeedback
   _trigger: {fileID: 227560658}
   _renderers:
   - {fileID: 628131586}
@@ -757,14 +757,14 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 71a82484c8d24e2ba651597efe8b3d0b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfoDemo::Aura.ObjectInfoDemo.ReactionTrigger
+  m_EditorClassIdentifier: Aura.Wave::Aura.Wave.ReactionTrigger
   _mode: 2
   _decayPerSecond: 1
   _onActivated:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 227560656}
-        m_TargetAssemblyTypeName: Aura.Prototype.DemoGimmickMover, Aura.Prototype
+        m_TargetAssemblyTypeName: Aura.Gimmick.GimmickMover, Aura.Gimmick
         m_MethodName: Activate
         m_Mode: 0
         m_Arguments:
@@ -779,7 +779,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 227560656}
-        m_TargetAssemblyTypeName: Aura.Prototype.DemoGimmickMover, Aura.Prototype
+        m_TargetAssemblyTypeName: Aura.Gimmick.GimmickMover, Aura.Gimmick
         m_MethodName: Deactivate
         m_Mode: 0
         m_Arguments:
@@ -979,7 +979,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f9f01e989a494a479c25973e13e94e2f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfoDemo::Aura.ObjectInfoDemo.InfoBeamEmitter
+  m_EditorClassIdentifier: Aura.Wave::Aura.Wave.WaveEmitter
   _source: {fileID: 285671919}
   _canSwitchWaveKindByInput: 0
   _sources: []
@@ -1327,7 +1327,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f9f01e989a494a479c25973e13e94e2f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfoDemo::Aura.ObjectInfoDemo.InfoBeamEmitter
+  m_EditorClassIdentifier: Aura.Wave::Aura.Wave.WaveEmitter
   _source: {fileID: 364363754}
   _canSwitchWaveKindByInput: 0
   _sources: []
@@ -3749,7 +3749,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 33c8cdbf026f6624ca5da32892ec487b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.Prototype::Aura.Prototype.DemoGimmickMover
+  m_EditorClassIdentifier: Aura.Gimmick::Aura.Gimmick.GimmickMover
   _activeOffset: {x: 0, y: 2.6, z: 0}
   _speed: 1.5
 --- !u!114 &1291622823
@@ -4131,7 +4131,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 33c8cdbf026f6624ca5da32892ec487b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.Prototype::Aura.Prototype.DemoGimmickMover
+  m_EditorClassIdentifier: Aura.Gimmick::Aura.Gimmick.GimmickMover
   _activeOffset: {x: 3.2, y: 0, z: 0}
   _speed: 2
 --- !u!114 &1446005394
@@ -4145,7 +4145,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ede34c80d730436eb7d28030c6ab4faf, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfoDemo::Aura.ObjectInfoDemo.ReactionFeedback
+  m_EditorClassIdentifier: Aura.Wave::Aura.Wave.ReactionFeedback
   _trigger: {fileID: 1446005395}
   _renderers: []
   _idleColor: {r: 0.85, g: 0.4, b: 0.75, a: 1}
@@ -4164,14 +4164,14 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 71a82484c8d24e2ba651597efe8b3d0b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfoDemo::Aura.ObjectInfoDemo.ReactionTrigger
+  m_EditorClassIdentifier: Aura.Wave::Aura.Wave.ReactionTrigger
   _mode: 0
   _decayPerSecond: 0.5
   _onActivated:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1446005393}
-        m_TargetAssemblyTypeName: Aura.Prototype.DemoGimmickMover, Aura.Prototype
+        m_TargetAssemblyTypeName: Aura.Gimmick.GimmickMover, Aura.Gimmick
         m_MethodName: Activate
         m_Mode: 0
         m_Arguments:
@@ -4465,7 +4465,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ede34c80d730436eb7d28030c6ab4faf, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfoDemo::Aura.ObjectInfoDemo.ReactionFeedback
+  m_EditorClassIdentifier: Aura.Wave::Aura.Wave.ReactionFeedback
   _trigger: {fileID: 1464624865}
   _renderers: []
   _idleColor: {r: 0.35, g: 0.35, b: 0.38, a: 1}
@@ -4484,7 +4484,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 71a82484c8d24e2ba651597efe8b3d0b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfoDemo::Aura.ObjectInfoDemo.ReactionTrigger
+  m_EditorClassIdentifier: Aura.Wave::Aura.Wave.ReactionTrigger
   _mode: 1
   _decayPerSecond: 0.5
   _onActivated:
@@ -4581,7 +4581,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ede34c80d730436eb7d28030c6ab4faf, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfoDemo::Aura.ObjectInfoDemo.ReactionFeedback
+  m_EditorClassIdentifier: Aura.Wave::Aura.Wave.ReactionFeedback
   _trigger: {fileID: 1500157956}
   _renderers: []
   _idleColor: {r: 0.35, g: 0.35, b: 0.38, a: 1}
@@ -4600,14 +4600,14 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 71a82484c8d24e2ba651597efe8b3d0b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfoDemo::Aura.ObjectInfoDemo.ReactionTrigger
+  m_EditorClassIdentifier: Aura.Wave::Aura.Wave.ReactionTrigger
   _mode: 2
   _decayPerSecond: 0.4
   _onActivated:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1291622822}
-        m_TargetAssemblyTypeName: Aura.Prototype.DemoGimmickMover, Aura.Prototype
+        m_TargetAssemblyTypeName: Aura.Gimmick.GimmickMover, Aura.Gimmick
         m_MethodName: Activate
         m_Mode: 0
         m_Arguments:
@@ -4622,7 +4622,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1291622822}
-        m_TargetAssemblyTypeName: Aura.Prototype.DemoGimmickMover, Aura.Prototype
+        m_TargetAssemblyTypeName: Aura.Gimmick.GimmickMover, Aura.Gimmick
         m_MethodName: Deactivate
         m_Mode: 0
         m_Arguments:
@@ -5732,7 +5732,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 33c8cdbf026f6624ca5da32892ec487b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.Prototype::Aura.Prototype.DemoGimmickMover
+  m_EditorClassIdentifier: Aura.Gimmick::Aura.Gimmick.GimmickMover
   _activeOffset: {x: 0, y: -2.4, z: 0}
   _speed: 3
 --- !u!114 &1824030845
@@ -5746,7 +5746,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ede34c80d730436eb7d28030c6ab4faf, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfoDemo::Aura.ObjectInfoDemo.ReactionFeedback
+  m_EditorClassIdentifier: Aura.Wave::Aura.Wave.ReactionFeedback
   _trigger: {fileID: 1824030846}
   _renderers:
   - {fileID: 1926378015}
@@ -5766,14 +5766,14 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 71a82484c8d24e2ba651597efe8b3d0b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfoDemo::Aura.ObjectInfoDemo.ReactionTrigger
+  m_EditorClassIdentifier: Aura.Wave::Aura.Wave.ReactionTrigger
   _mode: 2
   _decayPerSecond: 1
   _onActivated:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1824030844}
-        m_TargetAssemblyTypeName: Aura.Prototype.DemoGimmickMover, Aura.Prototype
+        m_TargetAssemblyTypeName: Aura.Gimmick.GimmickMover, Aura.Gimmick
         m_MethodName: Activate
         m_Mode: 0
         m_Arguments:
@@ -5788,7 +5788,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1824030844}
-        m_TargetAssemblyTypeName: Aura.Prototype.DemoGimmickMover, Aura.Prototype
+        m_TargetAssemblyTypeName: Aura.Gimmick.GimmickMover, Aura.Gimmick
         m_MethodName: Deactivate
         m_Mode: 0
         m_Arguments:
@@ -5973,7 +5973,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ede34c80d730436eb7d28030c6ab4faf, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfoDemo::Aura.ObjectInfoDemo.ReactionFeedback
+  m_EditorClassIdentifier: Aura.Wave::Aura.Wave.ReactionFeedback
   _trigger: {fileID: 1852911557}
   _renderers: []
   _idleColor: {r: 0.35, g: 0.35, b: 0.38, a: 1}
@@ -5992,7 +5992,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 71a82484c8d24e2ba651597efe8b3d0b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfoDemo::Aura.ObjectInfoDemo.ReactionTrigger
+  m_EditorClassIdentifier: Aura.Wave::Aura.Wave.ReactionTrigger
   _mode: 2
   _decayPerSecond: 2
   _onActivated:
