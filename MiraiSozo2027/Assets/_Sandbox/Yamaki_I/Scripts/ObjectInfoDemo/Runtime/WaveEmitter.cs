@@ -8,7 +8,8 @@ using UnityEngine;
 namespace Aura.ObjectInfoDemo
 {
     /// @brief ObjectInfo の情報だけで動くビーム。プレイヤーの手からも、フィールドのギミックからも出せる
-    /// ・ビームの種類・強さ・届く距離は BeamSourceInfo（B1〜B3）から読む。切り替えは、BeamSourceInfo を付けた物を選び直す
+    /// ・ビームの種類・強さ・届く距離は、撃ち手の本体に 1 つ付けた BeamSourceInfo（B1〜B3）から読む
+    ///   プレイヤーの波の切り替え（Select Next Source）は、その BeamSourceInfo の「波の種類」を電磁波⇔超音波に入れ替える
     /// ・跳ね返るかは、当たった物の素材（Substance の SubstanceType、O6）で決める。素材の無い物では止まる
     /// ・当たった物に WaveReaction（O3、O4）と ReactionTrigger があれば、ビームを渡す。弱点（WeakPoint、O5）なら強さに倍率を掛ける
     /// ・ビームは、一定の間隔の点（BeamPoint）と点どうしをつなぐ直線で作る。
@@ -28,14 +29,26 @@ namespace Aura.ObjectInfoDemo
         private const float BodyLineWhiteBlend = 0.5f;       ///< ビームの実体の線の色を、ビームの色から白へ寄せる割合
 
         [Header("ビームの種類")]
-        [InspectorLabel("出せるビーム")]
-        [Tooltip("出せるビーム。BeamSourceInfo を付けた GameObject（子に置く）を並べる。種類・強さ・届く距離は、ここから読む\n" +
-                 "切り替えると上から順に入れ替わり、最後の次は最初に戻る。空だと出せない")]
-        [SerializeField] private BeamSourceInfo[] _sources;           ///< 出せるビーム（BeamSourceInfo）
+        [InspectorLabel("ビームの情報")]
+        [Tooltip("出すビームの情報（BeamSourceInfo。波の種類・強さ・届く距離・念力で曲げられるか）。撃ち手の本体に 1 つ付けておく\n" +
+                 "空なら、この GameObject か親に付いた BeamSourceInfo を自動で使う（ふつうは空のままでよい）")]
+        [SerializeField] private BeamSourceInfo _source;              ///< 出すビームの情報。空なら自分か親から探す
 
-        [InspectorLabel("今のビームの番号")]
-        [Tooltip("今のビームの番号（「出せるビーム」の何番目か。0 から数える）。実行中に変えると、そのビームに切り替わる")]
-        [SerializeField, Min(0)] private int _sourceIndex;            ///< 今のビームの番号
+        [InspectorLabel("入力で波の種類を切り替える")]
+        [Tooltip("オンにすると、Select Next Source / Select Previous Source（チームの PlayerController では Q キー／ゲームパッドの LT）で、" +
+                 "「ビームの情報」の「波の種類」を電磁波⇔超音波に入れ替える（プレイヤー用）\n" +
+                 "オフなら、入力では変わらない（決まった種類だけを出すタレットや敵）。コードや UnityEvent からの Switch Wave Kind / Select Wave Kind は、オフでも効く")]
+        [SerializeField] private bool _canSwitchWaveKindByInput;      ///< 入力で波の種類を切り替えるか
+
+        [InspectorLabel("（古い形）出せるビーム")]
+        [Tooltip("古い形。BeamSourceInfo を付けた子の GameObject を並べ、Select Next Source で上から順に選び直す\n" +
+                 "1 つでも入っていると古い形で動き、「ビームの情報」と「入力で波の種類を切り替える」は使わない\n" +
+                 "新しい形にするには、撃ち手の本体に BeamSourceInfo を 1 つ付けて、この一覧を空にする（空のときは Inspector に出ない）")]
+        [SerializeField] private BeamSourceInfo[] _sources;           ///< （古い形）出せるビーム
+
+        [InspectorLabel("（古い形）今のビームの番号")]
+        [Tooltip("古い形の「出せるビーム」の何番目か（0 から数える）。実行中に変えると、そのビームに切り替わる")]
+        [SerializeField, Min(0)] private int _sourceIndex;            ///< （古い形）今のビームの番号
 
         [InspectorLabel("ビームを出したもの")]
         [Tooltip("出したもの。出し始めるときに、BeamSourceInfo の SourceKind に入れる（シートの B5）\n" +
@@ -57,7 +70,7 @@ namespace Aura.ObjectInfoDemo
 
         [InspectorLabel("扇の届く距離（m）")]
         [Tooltip("扇が届く距離（m）。ビームの届く距離（BeamSourceInfo の「届く距離（m）」）とは別で、扇は近距離の設計。0 なら届かない\n" +
-                 "波の種類と強さは、ビームと同じく BeamSourceInfo（「出せるビーム」の今の番号）から読む")]
+                 "波の種類と強さは、ビームと同じく「ビームの情報」（BeamSourceInfo）から読む")]
         [SerializeField, Min(0.0f)] private float _fanRange = 6.0f;  ///< 扇の届く距離（m）
 
         [InspectorLabel("扇の半角（度）")]
@@ -198,22 +211,44 @@ namespace Aura.ObjectInfoDemo
         private bool _hasLockedAim;          ///< ビームを出す向きを止めているか
         private int _appliedSourceIndex;     ///< 最後に反映したビームの番号。Inspector での変更に気付くために持つ
         private WaveFireShape _appliedFireShape;  ///< 最後に反映した撃ち方。Inspector での変更に気付くために持つ
+        private BeamSourceInfo _foundSource; ///< 「ビームの情報」が空のときに、自分か親から見つけた BeamSourceInfo
         private bool _isTriggerHeld;         ///< 引き金を引いているか
 
-        /// @brief ビームを選び直した後に起きる
+        /// @brief （古い形）出せるビームを選び直した後に起きる
         public event Action<BeamSourceInfo> SourceChanged;
+
+        /// @brief 波の種類を入れ替えた後に起きる
+        public event Action<WaveKind> WaveKindChanged;
 
         /// @brief 撃ち方を切り替えた後に起きる
         public event Action<WaveFireShape> FireShapeChanged;
 
-        /// @brief 今のビーム（BeamSourceInfo）。1 つもなければ null
-        public BeamSourceInfo CurrentSource => HasSources ? _sources[_sourceIndex] : null;
+        /// @brief 今のビームの情報（BeamSourceInfo）。無ければ null
+        /// 古い形の「出せるビーム」に入っていればその今の番号のもの、空なら「ビームの情報」（それも空なら自分か親から見つけたもの）
+        public BeamSourceInfo CurrentSource
+        {
+            get
+            {
+                if (HasSources)
+                {
+                    return _sources[_sourceIndex];
+                }
+                return _source != null ? _source : _foundSource;
+            }
+        }
 
-        /// @brief 今のビームの番号
+        /// @brief （古い形）今のビームの番号
         public int SourceIndex => _sourceIndex;
 
-        /// @brief 出せるビームの数
+        /// @brief （古い形）出せるビームの数
         public int SourceCount => _sources != null ? _sources.Length : 0;
+
+        /// @brief 入力（Select Next Source / Select Previous Source）で波の種類を入れ替えるか
+        public bool CanSwitchWaveKindByInput
+        {
+            get => _canSwitchWaveKindByInput;
+            set => _canSwitchWaveKindByInput = value;
+        }
 
         /// @brief 撃ち方（ビーム/扇）。変えると今の波を片付け、引き金を引いたままなら次のフレームから新しい撃ち方で出る
         public WaveFireShape FireShape
@@ -270,6 +305,7 @@ namespace Aura.ObjectInfoDemo
             set => _bendReleaseMode = value;
         }
 
+        /// @brief 古い形の「出せるビーム」に入っているか（入っていれば、古い形で動く）
         private bool HasSources => _sources != null && _sources.Length > 0;
 
         private BeamPointChain Chain => _chain ??= new BeamPointChain(this);
@@ -307,27 +343,67 @@ namespace Aura.ObjectInfoDemo
             }
         }
 
-        /// @brief 次のビームに切り替える。最後の次は最初に戻る
+        /// @brief 入力からの波の切り替え（チームの PlayerController では Q キー）
+        /// 「入力で波の種類を切り替える」がオンなら、「ビームの情報」の波の種類を電磁波⇔超音波に入れ替える
+        /// 古い形の「出せるビーム」に入っていれば、次のビームに選び直す（最後の次は最初に戻る）
         public void SelectNextSource()
         {
             if (HasSources)
             {
                 SelectSource((_sourceIndex + 1) % _sources.Length);
             }
+            else if (_canSwitchWaveKindByInput)
+            {
+                SwitchWaveKind();
+            }
         }
 
-        /// @brief 前のビームに切り替える。最初の前は最後に戻る
+        /// @brief 入力からの波の切り替え（逆回り）。波の種類は 2 つなので、新しい形では Select Next Source と同じ
+        /// 古い形の「出せるビーム」に入っていれば、前のビームに選び直す（最初の前は最後に戻る）
         public void SelectPreviousSource()
         {
             if (HasSources)
             {
                 SelectSource((_sourceIndex - 1 + _sources.Length) % _sources.Length);
             }
+            else if (_canSwitchWaveKindByInput)
+            {
+                SwitchWaveKind();
+            }
         }
 
-        /// @brief 番号を指定してビームを切り替える
+        /// @brief 「ビームの情報」の波の種類を、電磁波⇔超音波で入れ替える。UnityEvent からも呼べる
+        /// 「入力で波の種類を切り替える」がオフでも効く。古い形の「出せるビーム」で動いているときは何もしない
+        /// @return 入れ替えたら true
+        public bool SwitchWaveKind()
+        {
+            BeamSourceInfo source = CurrentSource;
+            if (HasSources || source == null)
+            {
+                return false;
+            }
+            return SelectWaveKind(source.WaveKind == WaveKind.Electromagnetic ? WaveKind.Ultrasound : WaveKind.Electromagnetic);
+        }
+
+        /// @brief 「ビームの情報」の波の種類を、指定した種類にする
+        /// 「入力で波の種類を切り替える」がオフでも効く。古い形の「出せるビーム」で動いているときは何もしない
+        /// @param kind 波の種類
+        /// @return 種類が変わったら true（もともとその種類なら false）
+        public bool SelectWaveKind(WaveKind kind)
+        {
+            BeamSourceInfo source = CurrentSource;
+            if (HasSources || source == null || source.WaveKind == kind)
+            {
+                return false;
+            }
+            source.WaveKind = kind;
+            WaveKindChanged?.Invoke(kind);
+            return true;
+        }
+
+        /// @brief （古い形）番号を指定して、「出せるビーム」を選び直す
         /// @param index ビームの番号
-        /// @return 切り替えたら true。範囲の外なら false
+        /// @return 切り替えたら true。範囲の外か、新しい形で動いているときは false
         public bool SelectSource(int index)
         {
             if (!HasSources || index < 0 || index >= _sources.Length)
@@ -360,6 +436,8 @@ namespace Aura.ObjectInfoDemo
             _sourceIndex = HasSources ? Mathf.Clamp(_sourceIndex, 0, _sources.Length - 1) : 0;
             _appliedSourceIndex = _sourceIndex;
             _appliedFireShape = _fireShape;
+            // 「ビームの情報」が空なら、自分か親に付いた BeamSourceInfo を使う（子は探さない）
+            _foundSource = GetComponentInParent<BeamSourceInfo>();
         }
 
         private void OnDestroy()

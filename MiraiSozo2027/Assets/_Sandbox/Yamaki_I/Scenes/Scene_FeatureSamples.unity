@@ -980,8 +980,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9f01e989a494a479c25973e13e94e2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.ObjectInfoDemo::Aura.ObjectInfoDemo.InfoBeamEmitter
-  _sources:
-  - {fileID: 285671919}
+  _source: {fileID: 285671919}
+  _canSwitchWaveKindByInput: 0
+  _sources: []
   _sourceIndex: 0
   _sourceKind: 1
   _isFiringOnStart: 1
@@ -1327,8 +1328,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9f01e989a494a479c25973e13e94e2f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.ObjectInfoDemo::Aura.ObjectInfoDemo.InfoBeamEmitter
-  _sources:
-  - {fileID: 364363754}
+  _source: {fileID: 364363754}
+  _canSwitchWaveKindByInput: 0
+  _sources: []
   _sourceIndex: 0
   _sourceKind: 1
   _isFiringOnStart: 1
