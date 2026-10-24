@@ -50,7 +50,7 @@ namespace MiraiSozo.Options
             CreateBrightnessVolume();
             CacheSceneTargets();
             SceneManager.sceneLoaded += OnSceneLoaded;
-            OptionGameManager.ActionsChanged += ApplyBindings;
+            GameManager.ActionsChanged += ApplyBindings;
             Apply();
             ApplyBindings();
             InstanceChanged?.Invoke(this);
@@ -59,10 +59,10 @@ namespace MiraiSozo.Options
         private void EnsureOptionManager()
         {
             // シーン側のAwakeは後で実行されるため、配置済みのマネージャーを優先する。
-            if (OptionGameManager.Instance != null || FindAnyObjectByType<OptionGameManager>() != null) return;
-            var managerObject = new GameObject("OptionGameManager");
-            managerObject.AddComponent<OptionGameManager>();
-            managerObject.transform.SetParent(transform, false);
+            // if (OptionGameManager.Instance != null || FindAnyObjectByType<OptionGameManager>() != null) return;
+            // var managerObject = new GameObject("OptionGameManager");
+            // managerObject.AddComponent<OptionGameManager>();
+            // managerObject.transform.SetParent(transform, false);
         }
 
         private void LoadValues()
@@ -143,8 +143,8 @@ namespace MiraiSozo.Options
 
         public bool SaveBindings()
         {
-            if (OptionGameManager.Actions == null) return false;
-            return TrySave(BindingsKey, () => OptionGameManager.Actions.asset.SaveBindingOverridesAsJson());
+            if (GameManager.Actions == null) return false;
+            return TrySave(BindingsKey, () => GameManager.Actions.asset.SaveBindingOverridesAsJson());
         }
 
         private static bool TrySave(string key, Func<string> serialize)
@@ -180,7 +180,7 @@ namespace MiraiSozo.Options
                     category = OptionSettingsCategory.Audio;
                     break;
                 case OptionMenuLayout.ControlsTab:
-                    OptionGameManager.Actions?.asset.RemoveAllBindingOverrides();
+                    GameManager.Actions?.asset.RemoveAllBindingOverrides();
                     return SaveBindings();
                 default: return false;
             }
@@ -206,7 +206,7 @@ namespace MiraiSozo.Options
 
         private void ApplyBindings()
         {
-            var asset = OptionGameManager.Actions?.asset;
+            var asset = GameManager.Actions?.asset;
             if (asset == _boundActions) return;
             _boundActions = asset;
             if (asset == null) return;
@@ -255,7 +255,7 @@ namespace MiraiSozo.Options
             finally
             {
                 SceneManager.sceneLoaded -= OnSceneLoaded;
-                OptionGameManager.ActionsChanged -= ApplyBindings;
+                GameManager.ActionsChanged -= ApplyBindings;
                 RestoreEnvironment();
                 Instance = null;
                 InstanceChanged?.Invoke(null);

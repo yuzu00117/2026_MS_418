@@ -374,14 +374,14 @@ namespace MiraiSozo.Options.Editor
 
         private static void ValidatePauseRestoration(InGameOptionMenu menu)
         {
-            Assert(!menu.IsOpen && !OptionGameManager.Instance.IsPaused && Mathf.Approximately(Time.timeScale, TestValues.PauseTimeScale), "ESCで閉じて元の時間倍率を復元");
-            Assert(OptionGameManager.Actions.Player.enabled && !OptionGameManager.Actions.UI.enabled, "元のアクションマップ状態を復元");
+            Assert(!menu.IsOpen && !GameManager.Instance.IsPaused && Mathf.Approximately(Time.timeScale, TestValues.PauseTimeScale), "ESCで閉じて元の時間倍率を復元");
+            Assert(GameManager.Actions.Player.enabled && !GameManager.Actions.UI.enabled, "元のアクションマップ状態を復元");
             QueueKeys();
-            OptionGameManager.Actions.Player.Disable();
+            GameManager.Actions.Player.Disable();
             menu.OpenMenu();
             menu.CloseMenu();
-            Assert(!OptionGameManager.Actions.Player.enabled, "もともと停止していたプレイヤー入力は停止状態に復元");
-            OptionGameManager.Actions.Player.Enable();
+            Assert(!GameManager.Actions.Player.enabled, "もともと停止していたプレイヤー入力は停止状態に復元");
+            GameManager.Actions.Player.Enable();
             Time.timeScale = TestValues.DefaultTimeScale;
             var malformed = new OptionValues { frameRate = TestValues.InvalidFrameRate, fieldOfView = float.NaN, sensitivityX = TestValues.InvalidSensitivity, masterVolume = TestValues.InvalidMasterVolume };
             malformed.Sanitize();
@@ -396,11 +396,11 @@ namespace MiraiSozo.Options.Editor
             _portableRoot = menu.gameObject;
             Assert(SceneManager.GetActiveScene().path == SessionState.GetString(FixtureKey, ""), "別Sceneに共通Prefabを配置して起動");
             Assert(!menu.IsOpen && !FindMenuComponent<Transform>("Test HUD").gameObject.activeSelf, "共通PrefabはメニューとテストHUDが初期非表示");
-            Assert(OptionGameManager.Instance.transform.IsChildOf(menu.transform), "自動生成したゲーム管理もPrefab内に保持");
+            Assert(GameManager.Instance.transform.IsChildOf(menu.transform), "自動生成したゲーム管理もPrefab内に保持");
             Assert(UnityEngine.Object.FindObjectsByType<EventSystem>().Length == TestValues.ExpectedSingletonCount && !EventSystem.current.transform.IsChildOf(menu.transform), "既存のEventSystemを再利用");
             ValidateExternalEventSystem();
             Assert(Mathf.Approximately(Camera.main.fieldOfView, options.Values.fieldOfView), "別SceneのMainCameraへ保存した視野角を反映");
-            Assert(OptionGameManager.Actions.Player.Jump.bindings.Any(b => b.effectivePath == "<Keyboard>/j"), "別Sceneでも保存したキー配置を復元");
+            Assert(GameManager.Actions.Player.Jump.bindings.Any(b => b.effectivePath == "<Keyboard>/j"), "別Sceneでも保存したキー配置を復元");
             QueueKeys(Key.Escape);
             AdvanceStep();
         }
@@ -436,7 +436,7 @@ namespace MiraiSozo.Options.Editor
 
         private static void ValidateSceneCleanup(InGameOptionMenu menu, GameOptions options)
         {
-            Assert(!menu.IsOpen && !OptionGameManager.Instance.IsPaused && Mathf.Approximately(Time.timeScale, TestValues.DefaultTimeScale), "メニュー表示中のScene移動でポーズを解除");
+            Assert(!menu.IsOpen && !GameManager.Instance.IsPaused && Mathf.Approximately(Time.timeScale, TestValues.DefaultTimeScale), "メニュー表示中のScene移動でポーズを解除");
             Assert(UnityEngine.Object.FindObjectsByType<EventSystem>().Length == TestValues.ExpectedSingletonCount && !EventSystem.current.transform.IsChildOf(menu.transform), "再移動先のEventSystemに切り替えて重複を防止");
             Assert(menu.gameObject == _portableRoot && UnityEngine.Object.FindObjectsByType<InGameOptionMenu>().Length == TestValues.ExpectedSingletonCount, "往復後もPrefabを1つだけ保持");
             menu.OpenMenu();
@@ -470,7 +470,7 @@ namespace MiraiSozo.Options.Editor
             Assert(!result, "保存処理の例外を呼び出し元へ伝播しない");
             menu.OpenMenu();
             menu.CloseMenu();
-            Assert(!menu.IsOpen && !OptionGameManager.Instance.IsPaused && Mathf.Approximately(Time.timeScale, TestValues.DefaultTimeScale),
+            Assert(!menu.IsOpen && !GameManager.Instance.IsPaused && Mathf.Approximately(Time.timeScale, TestValues.DefaultTimeScale),
                 "保存失敗後もメニューを閉じてポーズを解除できる");
         }
 
@@ -478,7 +478,7 @@ namespace MiraiSozo.Options.Editor
         {
             menu.OpenOptions();
             menu.SelectTab(OptionMenuLayout.ControlsTab);
-            var entry = OptionRebinding.GetEntries(OptionGameManager.Actions.Player.Get()).First(e => e.Action.name == "Jump");
+            var entry = OptionRebinding.GetEntries(GameManager.Actions.Player.Get()).First(e => e.Action.name == "Jump");
             menu.BeginRebind(entry);
             InvokeWithUnavailableSettings(menu, () => typeof(InGameOptionMenu)
                 .GetMethod("CompleteRebind", BindingFlags.Instance | BindingFlags.NonPublic)
@@ -486,7 +486,7 @@ namespace MiraiSozo.Options.Editor
             Assert(!menu.IsRebinding && FindMenuComponent<Button>("Back").interactable && FindMenuComponent<Button>("Binding 0").interactable,
                 "キー保存中の例外でもリバインドを終了して操作を復元");
             InvokeWithUnavailableSettings(menu, menu.CloseMenu);
-            Assert(!menu.IsOpen && !OptionGameManager.Instance.IsPaused && Mathf.Approximately(Time.timeScale, TestValues.DefaultTimeScale),
+            Assert(!menu.IsOpen && !GameManager.Instance.IsPaused && Mathf.Approximately(Time.timeScale, TestValues.DefaultTimeScale),
                 "保存呼び出しが例外でもメニューを閉じてポーズを解除");
         }
 
@@ -509,11 +509,11 @@ namespace MiraiSozo.Options.Editor
 
         private static void ValidateManagerRecreation(InGameOptionMenu menu)
         {
-            UnityEngine.Object.DestroyImmediate(OptionGameManager.Instance.gameObject);
-            var root = new GameObject("Replacement OptionGameManager");
-            root.AddComponent<OptionGameManager>();
+            UnityEngine.Object.DestroyImmediate(GameManager.Instance.gameObject);
+            var root = new GameObject("Replacement GameManager");
+            root.AddComponent<GameManager>();
             root.transform.SetParent(menu.transform, false);
-            Assert(OptionGameManager.Actions.Player.Jump.bindings.Any(b => b.effectivePath == "<Keyboard>/j"),
+            Assert(GameManager.Actions.Player.Jump.bindings.Any(b => b.effectivePath == "<Keyboard>/j"),
                 "専用GameManagerの再生成イベントでキー配置を復元");
         }
 
