@@ -3,7 +3,6 @@ using UnityEngine;
 namespace Aura.ObjectInfoDemo
 {
     /// @brief ビームと照準の当たり判定をまとめたもの
-    /// 今ある WavePhysics（Aura.Wave）はアセンブリの外から使えないので、同じ決まりの判定をここに持つ
     /// 点と線のビームの点（BeamPoint）は、念力で掴むためだけにあるので、ビームと照準には当たらない（どのビームの点でも素通りする）
     internal static class BeamPhysics
     {

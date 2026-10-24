@@ -2,7 +2,6 @@
     "name": "Aura.ObjectInfoDemo",
     "rootNamespace": "Aura.ObjectInfoDemo",
     "references": [
-        "Aura.Wave",
         "Aura.ObjectInfo",
         "Unity.InputSystem",
         "Aura.Inspector"

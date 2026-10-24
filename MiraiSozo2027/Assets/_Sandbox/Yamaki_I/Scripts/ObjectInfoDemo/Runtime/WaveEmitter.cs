@@ -13,7 +13,6 @@ namespace Aura.ObjectInfoDemo
     /// ・当たった物に WaveReaction（O3、O4）と ReactionTrigger があれば、ビームを渡す。弱点（WeakPoint、O5）なら強さに倍率を掛ける
     /// ・ビームは、一定の間隔の点（BeamPoint）と点どうしをつなぐ直線で作る。
     ///   点を念力で掴んで動かすと、掴んだ点の前後が曲がる（BeamSourceInfo の Is Bendable がオンのときだけ）
-    /// 今ある WaveEmitter（Aura.Wave）とは別物で、WaveSurface や WaveReceiver は見ない
     public sealed class WaveEmitter : MonoBehaviour
     {
         private const int MaxReflectionLimit = 16;           ///< Max Reflections に決められる最大の回数
@@ -47,16 +46,16 @@ namespace Aura.ObjectInfoDemo
         [SerializeField] private bool _isFiringOnStart;               ///< 始めからビームを出し続けるか
 
         [Header("狙い")]
-        [InspectorLabel("ビームが出る位置の候補")]
-        [Tooltip("ビームが出る位置の候補（手の先に置いた空の GameObject など）。上から見て、アクティブな最初のものを使う\n" +
-                 "一人称と三人称で手が変わるときは両方入れておく（ViewModeSwitcher が出し入れした方が使われる）\n" +
-                 "「狙いを決める視点の候補」が空のときは、この正面（青い矢印の向き）に出す。空なら、この GameObject の位置から出る")]
-        [SerializeField] private Transform _muzzle;                ///< ビームが出る位置の候補
+        [InspectorLabel("ビームが出る位置")]
+        [Tooltip("ビームが出る位置（手の先に置いた空の GameObject など）。空なら、この GameObject の位置から出る\n" +
+                 "一人称と三人称で手が変わるときは、コードから Muzzle を差し替える\n" +
+                 "「狙いを決める視点」が空のときは、この正面（青い矢印の向き）に出す")]
+        [SerializeField] private Transform _muzzle;                ///< ビームが出る位置
 
-        [InspectorLabel("狙いを決める視点の候補")]
-        [Tooltip("狙いを決める視点の候補（ふつうはカメラ）。アクティブな最初のものの正面で最初に当たる位置へ向けて出すので、画面の中心（照準）に飛ぶ\n" +
-                 "空なら、「ビームが出る位置の候補」の正面に出す（ギミックのビームはこちら）")]
-        [SerializeField] private Transform _aimOrigin;             ///< 狙いを決める視点の候補
+        [InspectorLabel("狙いを決める視点")]
+        [Tooltip("狙いを決める視点（ふつうはカメラ）。その正面で最初に当たる位置へ向けて出すので、画面の中心（照準）に飛ぶ\n" +
+                 "空なら、「ビームが出る位置」の正面に出す（ギミックのビームはこちら）")]
+        [SerializeField] private Transform _aimOrigin;             ///< 狙いを決める視点
 
                                                                     /// @brief 波が出る位置（手の先）。一人称と三人称で手が変わるときに差し替える
         public Transform Muzzle {
@@ -196,12 +195,6 @@ namespace Aura.ObjectInfoDemo
 
         /// @brief 最後のフレームでビームが当たった物（当たった順）。出していないときは空
         public IReadOnlyList<InfoBeamHit> LastHits => _lastHits;
-
-        ///// @brief 今ビームが出る位置
-        //public Transform CurrentMuzzle => FindFirstActive(_muzzle) ?? transform;
-
-        ///// @brief 今の狙いを決める視点。無ければ null
-        //public Transform CurrentAimOrigin => FindFirstActive(_aimOrigin);
 
         /// @brief この下のコライダーには、ビームが当たらない
         public Transform IgnoreRoot => _ignoreRoot != null ? _ignoreRoot : transform;
@@ -622,22 +615,6 @@ namespace Aura.ObjectInfoDemo
             }
             _hasLockedAim = false;
             _chain?.Stop();
-        }
-
-        private static Transform FindFirstActive(Transform[] candidates)
-        {
-            if (candidates == null)
-            {
-                return null;
-            }
-            foreach (Transform candidate in candidates)
-            {
-                if (candidate != null && candidate.gameObject.activeInHierarchy)
-                {
-                    return candidate;
-                }
-            }
-            return null;
         }
     }
 }

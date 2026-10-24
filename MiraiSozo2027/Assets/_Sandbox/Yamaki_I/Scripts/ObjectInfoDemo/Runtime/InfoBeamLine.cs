@@ -6,14 +6,14 @@ using UnityEngine.Rendering;
 namespace Aura.ObjectInfoDemo
 {
     /// @brief LineRenderer で、折れ線に沿って正弦波の線を描く。WaveEmitter のビームの見た目に使う
-    /// 今ある WaveLine（Aura.Wave）と同じ描き方に、「揺れを 0 にする曲がり目」を選べるようにしたもの
+    /// 「揺れを 0 にする曲がり目」を選べる
     /// 点と線のビームでは、跳ね返った位置だけ揺れを 0 にし、点どうしの小さな曲がり目では揺らしたまま、線に沿って流す
     /// 揺らさない折れ線（DrawStraight）も描ける。ビームの実体の線（点どうしをつなぐ直線）を見せるのに使う
     [RequireComponent(typeof(LineRenderer))]
     public sealed class InfoBeamLine : MonoBehaviour
     {
         private const int PointsPerWavelength = 12;
-        private const int MaxPoints = 512;                  ///< 波をなめらかに描くための点の数の上限（WaveLine と同じ）。区間がこれより多いときは、区間ごとに 1 つずつ点を置く
+        private const int MaxPoints = 512;                  ///< 波をなめらかに描くための点の数の上限。区間がこれより多いときは、区間ごとに 1 つずつ点を置く
         private const int MaxLinePoints = 2048;             ///< 線が持てる点の数の上限。点と線のビームの点（1 本 1024 個まで）と跳ね返った位置を、最後まで描けるようにする
         private const float BeamFadeInLength = 0.3f;        ///< ビームの根元で振幅を 0 から上げる長さ（m）
         private const float CornerFadeLength = 0.3f;        ///< 曲がり目の前後で振幅を 0 にする長さ（m）
