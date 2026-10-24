@@ -21,7 +21,7 @@ namespace MiraiSozo.Options
         public event Action AudioChanged;
 
         private readonly Dictionary<Camera, CameraState> _cameras = new Dictionary<Camera, CameraState>();
-        private readonly List<OptionCameraBehavior> _cameraBehaviors = new List<OptionCameraBehavior>();
+        private readonly List<CameraBehavior> _cameraBehaviors = new List<CameraBehavior>();
         private OptionValues _defaults;
         private InputActionAsset _boundActions;
         private VolumeProfile _profile;
@@ -68,7 +68,7 @@ namespace MiraiSozo.Options
         private void LoadValues()
         {
             _defaults = new OptionValues();
-            var behavior = FindAnyObjectByType<OptionCameraBehavior>();
+            var behavior = FindAnyObjectByType<CameraBehavior>();
             if (behavior != null)
             {
                 _defaults.sensitivityX = behavior.SensitivityX;
@@ -235,10 +235,10 @@ namespace MiraiSozo.Options
             foreach (var entry in _cameras) if (entry.Key == null) removed.Add(entry.Key);
             foreach (var camera in removed) _cameras.Remove(camera);
             _cameraBehaviors.Clear();
-            _cameraBehaviors.AddRange(FindObjectsByType<OptionCameraBehavior>());
+            _cameraBehaviors.AddRange(FindObjectsByType<CameraBehavior>());
             foreach (var camera in FindObjectsByType<Camera>())
             {
-                if (camera.orthographic || (!camera.CompareTag("MainCamera") && camera.GetComponent<OptionCameraBehavior>() == null)) continue;
+                if (camera.orthographic || (!camera.CompareTag("MainCamera") && camera.GetComponent<CameraBehavior>() == null)) continue;
                 if (_cameras.ContainsKey(camera)) continue;
                 var data = camera.GetUniversalAdditionalCameraData();
                 _cameras.Add(camera, new CameraState { FieldOfView = camera.fieldOfView, PostProcessing = data.renderPostProcessing, Data = data });
