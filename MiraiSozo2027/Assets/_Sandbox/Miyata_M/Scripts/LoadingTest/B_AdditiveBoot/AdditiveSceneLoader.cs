@@ -43,9 +43,9 @@ namespace LoadingTest.B
         {
             _isLoading = true;
 
-            // 1. ロードUIをフェードイン
-            yield return Fade(0f, 1f);
+            // 1. ロードUIをフェードイン(フェードイン中に前回の満タンが見えないよう、表示前にバーを戻す)
             _progressBar.value = 0f;
+            yield return Fade(0f, 1f);
 
             // 2. 旧シーンを先にアンロードしてメモリのピークを抑える
             if (_currentScene.IsValid() && _currentScene.isLoaded)

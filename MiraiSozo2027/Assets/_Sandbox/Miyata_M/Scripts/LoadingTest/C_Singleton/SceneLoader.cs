@@ -71,8 +71,8 @@ namespace LoadingTest.C
         private IEnumerator LoadRoutine(string sceneName, Action onLoaded, Action onCompleted = null)
         {
             _isLoading = true;
+            _progressBar.value = 0f; // フェードイン中に前回の満タンが見えないよう、表示前に戻す
             yield return Fade(0f, 1f);
-            _progressBar.value = 0f;
 
             AsyncOperation op = SceneManager.LoadSceneAsync(sceneName);
             op.allowSceneActivation = false;
