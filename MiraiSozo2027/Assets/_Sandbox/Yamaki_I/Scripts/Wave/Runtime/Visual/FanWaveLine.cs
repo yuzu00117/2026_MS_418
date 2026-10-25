@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -5,19 +6,42 @@ namespace Aura.Wave
 {
     /// @brief 扇（近距離）の波の見た目。出る位置から前へ、輪を広げながら流す（扇の半角と同じ広がりの円すいに沿う）
     /// 見た目だけで、当たり判定には関わらない（判定は WaveEmitter の扇の処理が行う）
-    /// 色・太さ・流れる速さは、ビームと同じく WaveType から読む
+    /// 色・太さ・流れる速さは、ビームと同じく WaveType から読む。輪の数・薄れ方・太くなり方は、描く前にプロパティで渡す
     public sealed class FanWaveLine : MonoBehaviour
     {
-        private const int RingCount = 8;                     ///< 同時に見せる輪の数
+        public const int DefaultRingCount = 8;               ///< 同時に見せる輪の数の既定
+        public const float DefaultFarFadeStart = 0.6f;       ///< 輪が薄れ始める位置（届く距離に対する割合）の既定
+        public const float DefaultFarWidthScale = 2.0f;      ///< 届く距離まで進んだ輪の太さ（WaveType の太さの何倍か）の既定
+
         private const int RingSegments = 40;                 ///< 輪 1 つを描く折れ線の区間の数（両端をつないで閉じる）
-        private const float FarFadeStart = 0.6f;             ///< 輪がここ（届く距離に対する割合）から先で薄れ、届く距離で消える
-        private const float FarWidthScale = 2.0f;            ///< 届く距離まで進んだ輪の太さ（WaveType の太さの何倍か）。遠くの輪が細く見えすぎないように、進むほど太くする
         private const float MinRadius = 0.05f;               ///< これより小さい半径の輪は描かない（m）
         private const float NearFadeLength = 0.4f;           ///< 出る位置の近くで、透明から浮かび上がる長さ（m）
         private const float MinSideSqrMagnitude = 0.0001f;   ///< 向きと up の外積の長さの 2 乗がこれより小さければ、up がほぼ平行で輪の面の向きが決まらないとみなす
 
         private readonly Vector3[] _ringPoints = new Vector3[RingSegments];
-        private LineRenderer[] _rings;
+        private readonly List<LineRenderer> _rings = new List<LineRenderer>();
+        private Material _material;
+        private int _ringCount = DefaultRingCount;
+        private float _farFadeStart = DefaultFarFadeStart;
+        private float _farWidthScale = DefaultFarWidthScale;
+
+        /// @brief 同時に見せる輪の数（1 以上）。輪の間隔は、届く距離をこの数で割ったもの
+        public int RingCount {
+            get => _ringCount;
+            set => _ringCount = Mathf.Max(1, value);
+        }
+
+        /// @brief 輪が薄れ始める位置（届く距離に対する割合、0〜1）。ここから先で薄れ、届く距離で消える。1 なら薄れずに届く距離で消える
+        public float FarFadeStart {
+            get => _farFadeStart;
+            set => _farFadeStart = Mathf.Clamp01(value);
+        }
+
+        /// @brief 届く距離まで進んだ輪の太さ（WaveType の太さの何倍か、0 以上）。進むほど 1 倍からこの倍率まで太くなる。1 なら変わらない
+        public float FarWidthScale {
+            get => _farWidthScale;
+            set => _farWidthScale = Mathf.Max(0.0f, value);
+        }
 
         /// @brief 扇の見た目を持つ GameObject を作る
         /// @param name GameObject の名前
@@ -29,21 +53,8 @@ namespace Aura.Wave
             var fanObject = new GameObject(name);
             fanObject.transform.SetParent(parent, false);
             FanWaveLine fanLine = fanObject.AddComponent<FanWaveLine>();
-            fanLine._rings = new LineRenderer[RingCount];
-            for (int i = 0; i < RingCount; ++i)
-            {
-                var ringObject = new GameObject("Ring " + i);
-                ringObject.transform.SetParent(fanObject.transform, false);
-                var lineRenderer = ringObject.AddComponent<LineRenderer>();
-                lineRenderer.useWorldSpace = true;
-                lineRenderer.loop = true;
-                lineRenderer.shadowCastingMode = ShadowCastingMode.Off;
-                lineRenderer.receiveShadows = false;
-                lineRenderer.positionCount = 0;
-                lineRenderer.sharedMaterial = material != null ? material : InfoBeamLine.GetDefaultMaterial();
-                lineRenderer.enabled = false;
-                fanLine._rings[i] = lineRenderer;
-            }
+            fanLine._material = material != null ? material : InfoBeamLine.GetDefaultMaterial();
+            fanLine.EnsureRings(DefaultRingCount);
             return fanLine;
         }
 
@@ -82,14 +93,15 @@ namespace Aura.Wave
             float centerScale = Mathf.Cos(radians);
             float radiusScale = Mathf.Sin(radians);
 
-            float spacing = range / RingCount;
+            EnsureRings(_ringCount);
+            float spacing = range / _ringCount;
             float offset = Mathf.Repeat(phase, spacing);
-            for (int i = 0; i < RingCount; ++i)
+            for (int i = 0; i < _rings.Count; ++i)
             {
                 LineRenderer ring = _rings[i];
                 float distance = offset + spacing * i;  // 出る位置から輪の縁までの距離（m）
                 float radius = distance * radiusScale;
-                if (radius < MinRadius || distance > range)
+                if (i >= _ringCount || radius < MinRadius || distance > range)
                 {
                     ring.enabled = false;
                     continue;
@@ -106,10 +118,10 @@ namespace Aura.Wave
                 float ratio = distance / range;
                 Color color = type.Color;
                 color.a *= Mathf.SmoothStep(0.0f, 1.0f, distance / NearFadeLength)
-                    * (1.0f - Mathf.SmoothStep(0.0f, 1.0f, Mathf.InverseLerp(FarFadeStart, 1.0f, ratio)));
+                    * (1.0f - Mathf.SmoothStep(0.0f, 1.0f, Mathf.InverseLerp(_farFadeStart, 1.0f, ratio)));
                 ring.positionCount = _ringPoints.Length;
                 ring.SetPositions(_ringPoints);
-                ring.widthMultiplier = type.LineWidth * Mathf.Lerp(1.0f, FarWidthScale, ratio);
+                ring.widthMultiplier = type.LineWidth * Mathf.Lerp(1.0f, _farWidthScale, ratio);
                 ring.startColor = color;
                 ring.endColor = color;
                 ring.enabled = true;
@@ -119,16 +131,31 @@ namespace Aura.Wave
         /// @brief 輪を消す
         public void Hide()
         {
-            if (_rings == null)
-            {
-                return;
-            }
             foreach (LineRenderer ring in _rings)
             {
                 if (ring != null)
                 {
                     ring.enabled = false;
                 }
+            }
+        }
+
+        /// @brief 輪の線を、少なくとも count 本にする（足りなければ作り足す。多い分は描くときに隠す）
+        private void EnsureRings(int count)
+        {
+            while (_rings.Count < count)
+            {
+                var ringObject = new GameObject("Ring " + _rings.Count);
+                ringObject.transform.SetParent(transform, false);
+                var lineRenderer = ringObject.AddComponent<LineRenderer>();
+                lineRenderer.useWorldSpace = true;
+                lineRenderer.loop = true;
+                lineRenderer.shadowCastingMode = ShadowCastingMode.Off;
+                lineRenderer.receiveShadows = false;
+                lineRenderer.positionCount = 0;
+                lineRenderer.sharedMaterial = _material;
+                lineRenderer.enabled = false;
+                _rings.Add(lineRenderer);
             }
         }
     }

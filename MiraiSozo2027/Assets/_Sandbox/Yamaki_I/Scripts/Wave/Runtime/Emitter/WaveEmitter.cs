@@ -77,6 +77,23 @@ namespace Aura.Wave
                  "当たるかは、出る位置から見た「候補のいちばん近い点」の向きで決める（大きい物は、端が扇に入っていても、いちばん近い点が外なら当たらない）")]
         [SerializeField, Range(1.0f, 89.0f)] private float _fanHalfAngle = 40.0f;  ///< 扇の半角（度）
 
+        [InspectorLabel("扇の輪の数")]
+        [Tooltip("扇の見た目で、同時に見せる輪の数。輪の間隔は「扇の届く距離（m）」をこの数で割ったもの（多いほど詰まって見える）\n" +
+                 "見た目だけで、当たり判定は変わらない。実行中に変えてもよい")]
+        [SerializeField, Range(1, 32)] private int _fanRingCount = FanWaveLine.DefaultRingCount;  ///< 扇の見た目で、同時に見せる輪の数
+
+        [InspectorLabel("輪が薄れ始める位置（割合）")]
+        [Tooltip("扇の輪が薄れ始める位置。「扇の届く距離（m）」に対する割合（0〜1）。ここから先で薄れ、届く距離で消える\n" +
+                 "例: 0.6 なら届く距離の 6 割から薄れる。1 なら薄れずに、届く距離で消える。0 なら出てすぐ薄れ始める\n" +
+                 "見た目だけで、当たり判定は変わらない。実行中に変えてもよい")]
+        [SerializeField, Range(0.0f, 1.0f)] private float _fanRingFadeStart = FanWaveLine.DefaultFarFadeStart;  ///< 扇の輪が薄れ始める位置（届く距離に対する割合）
+
+        [InspectorLabel("遠くの輪の太さ（倍）")]
+        [Tooltip("「扇の届く距離（m）」まで進んだ輪の太さが、波の種類（WaveType）の「線の太さ（m）」の何倍か。進むほど、手元の 1 倍からこの倍率まで太くなる\n" +
+                 "遠くの輪は小さく見えて細りやすいので、1 より大きくすると見やすい。1 なら太さは変わらない\n" +
+                 "見た目だけで、当たり判定は変わらない。実行中に変えてもよい")]
+        [SerializeField, Range(0.0f, 5.0f)] private float _fanRingFarWidthScale = FanWaveLine.DefaultFarWidthScale;  ///< 届く距離まで進んだ扇の輪の太さ（線の太さの何倍か）
+
         [Header("狙い")]
         [InspectorLabel("ビームが出る位置")]
         [Tooltip("ビームが出る位置（手の先に置いた空の GameObject など）。空なら、この GameObject の位置から出る\n" +
@@ -545,6 +562,9 @@ namespace Aura.Wave
             }
             WaveType type = source.WaveType;
             float phase = Time.time * type.ScrollSpeed;
+            _fanLine.RingCount = _fanRingCount;
+            _fanLine.FarFadeStart = _fanRingFadeStart;
+            _fanLine.FarWidthScale = _fanRingFarWidthScale;
             _fanLine.Draw(muzzle.position, direction, muzzle.up, _fanHalfAngle, _fanRange, type, phase);
         }
 

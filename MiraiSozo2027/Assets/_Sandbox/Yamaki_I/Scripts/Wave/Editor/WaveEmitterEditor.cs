@@ -62,6 +62,9 @@ namespace Aura.Wave.Editor
         {
             "_fanRange",
             "_fanHalfAngle",
+            "_fanRingCount",
+            "_fanRingFadeStart",
+            "_fanRingFarWidthScale",
         };
 
         /// @brief Bend Release Mode が Hold Then Return のときだけ出す項目
