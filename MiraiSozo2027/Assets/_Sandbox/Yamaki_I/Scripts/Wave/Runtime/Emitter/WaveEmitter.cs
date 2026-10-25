@@ -73,7 +73,7 @@ namespace Aura.Wave
         [SerializeField, Min(0.0f)] private float _fanRange = 6.0f;  ///< 扇の届く距離（m）
 
         [InspectorLabel("扇の半角（度）")]
-        [Tooltip("扇の広がりの半分の角度（度）。正面からこの角度以内の物に当たる（例: 40 なら全体で 80 度の扇）。見た目の弧も同じ広がりで描く\n" +
+        [Tooltip("扇の広がりの半分の角度（度）。正面からこの角度以内の物に当たる（例: 40 なら全体で 80 度の扇）。見た目の輪も同じ広がりの円すいに沿って広がる\n" +
                  "当たるかは、出る位置から見た「候補のいちばん近い点」の向きで決める（大きい物は、端が扇に入っていても、いちばん近い点が外なら当たらない）")]
         [SerializeField, Range(1.0f, 89.0f)] private float _fanHalfAngle = 40.0f;  ///< 扇の半角（度）
 
@@ -125,8 +125,8 @@ namespace Aura.Wave
         [SerializeField, Range(1, MaxReflectionLimit)] private int _maxReflections = 8;  ///< 跳ね返る回数の上限
 
         [InspectorLabel("線のマテリアル")]
-        [Tooltip("ビームの線と扇の弧のマテリアル。空なら既定のマテリアルを使い、WaveType の「波の色」で色を付ける")]
-        [SerializeField] private Material _lineMaterial;              ///< ビームの線と扇の弧のマテリアル。空なら既定のもの
+        [Tooltip("ビームの線と扇の輪のマテリアル。空なら既定のマテリアルを使い、WaveType の「波の色」で色を付ける")]
+        [SerializeField] private Material _lineMaterial;              ///< ビームの線と扇の輪のマテリアル。空なら既定のもの
 
         [Header("点と線")]
         [InspectorLabel("点の間隔（m）")]
@@ -204,7 +204,7 @@ namespace Aura.Wave
         private readonly HashSet<ReactionTrigger> _deliveredTriggers = new HashSet<ReactionTrigger>();  ///< このフレームで、もうビームを渡した受け手
         private InfoBeamLine _beamLine;
         private InfoBeamLine _bodyLine;      ///< ビームの実体の線（確かめる用）
-        private FanWaveLine _fanLine;        ///< 扇の見た目（Wi-Fi 風の弧）
+        private FanWaveLine _fanLine;        ///< 扇の見た目（進むほど広がる輪）
         private BeamPointChain _chain;       ///< 点と線のビームの点と曲げ方。Chain から使う
         private Vector3 _lockedAimDirection; ///< 止めているビームを出す向き（Is Aim Locked While Held）
         private bool _hasLockedAim;          ///< ビームを出す向きを止めているか
@@ -537,7 +537,7 @@ namespace Aura.Wave
             float energy = source.EnergyPerSecond * deltaTime;
             TraceFanWave(source.WaveType, muzzle.position, direction, energy);
 
-            // 受け手の処理で波が止められた（この部品が無効にされたなど）ときは、弧を出し直さない
+            // 受け手の処理で波が止められた（この部品が無効にされたなど）ときは、見た目を出し直さない
             if (!IsFiring)
             {
                 _fanLine.Hide();
