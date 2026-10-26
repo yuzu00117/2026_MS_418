@@ -19,7 +19,7 @@ namespace LoadingTest.B
 
         private void OnClick()
         {
-            var loader = FindFirstObjectByType<AdditiveSceneLoader>();
+            var loader = FindAnyObjectByType<AdditiveSceneLoader>();
             if (loader == null)
             {
                 Debug.LogWarning("AdditiveSceneLoader が見つかりません。Boot シーンから再生してください。");
