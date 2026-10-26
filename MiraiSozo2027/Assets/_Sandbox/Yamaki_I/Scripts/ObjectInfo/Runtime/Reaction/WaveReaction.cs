@@ -14,11 +14,11 @@ namespace Aura.ObjectInfo
         [Tooltip("オンにすると、電磁波のビームに反応する。「超音波に反応する」と両方オンなら、どちらの波にも反応する\n" +
                  "両方オフなら、どの波にも反応しない\n" +
                  "ゲームの途中で反応する波が変わる敵・ギミックは、React Only To Electromagnetic / React Only To Ultrasound（UnityEvent からも呼べる）か、コードの Set Reaction で切り替える")]
-        [SerializeField, ShowWaveTypeAsset(WaveKind.Electromagnetic)] private bool _reactsToElectromagnetic;  ///< 電磁波に反応するか
+        [SerializeField, ShowWaveTypeAsset(WaveKind.Electromagnetic)] private bool _canReactToElectromagnetic;  ///< 電磁波に反応するか
 
         [InspectorLabel("超音波に反応する")]
         [Tooltip("オンにすると、超音波のビームに反応する")]
-        [SerializeField, ShowWaveTypeAsset(WaveKind.Ultrasound)] private bool _reactsToUltrasound;  ///< 超音波に反応するか
+        [SerializeField, ShowWaveTypeAsset(WaveKind.Ultrasound)] private bool _canReactToUltrasound;  ///< 超音波に反応するか
 
         [InspectorLabel("動くまでの秒数（強さ 1）")]
         [Tooltip("動くまでに溜める量。強さ 1 のビームを当て続けたときの秒数で数える。例: 3 なら、強さ 1 のビームを 3 秒当てると動く\n" +
@@ -31,18 +31,18 @@ namespace Aura.ObjectInfo
 
         /// @brief 電磁波に反応するか。実行中に変えてもよい
         [ShowInEventMenu]
-        public bool ReactsToElectromagnetic
+        public bool CanReactToElectromagnetic
         {
-            get => _reactsToElectromagnetic;
-            set => _reactsToElectromagnetic = value;
+            get => _canReactToElectromagnetic;
+            set => _canReactToElectromagnetic = value;
         }
 
         /// @brief 超音波に反応するか。実行中に変えてもよい
         [ShowInEventMenu]
-        public bool ReactsToUltrasound
+        public bool CanReactToUltrasound
         {
-            get => _reactsToUltrasound;
-            set => _reactsToUltrasound = value;
+            get => _canReactToUltrasound;
+            set => _canReactToUltrasound = value;
         }
 
         /// @brief 動くまでに溜める量（強さ 1 のビームで当てる秒数）。強いビームほど早く溜まる。0 なら当たった瞬間に動く
@@ -53,7 +53,7 @@ namespace Aura.ObjectInfo
         /// @return 反応するなら true
         public bool CanReactTo(WaveKind kind)
         {
-            return kind == WaveKind.Ultrasound ? _reactsToUltrasound : _reactsToElectromagnetic;
+            return kind == WaveKind.Ultrasound ? _canReactToUltrasound : _canReactToElectromagnetic;
         }
 
         /// @brief その種類の波に反応するか（WaveType のアセットで調べる）。対応表（SO_WaveTypeInfo）に無いアセットには反応しない
@@ -66,16 +66,16 @@ namespace Aura.ObjectInfo
 
         /// @brief 反応する波を変える（Inspector のチェックボックスと同じ）
         /// @param kind 波の種類
-        /// @param reacts 反応するなら true
-        public void SetReaction(WaveKind kind, bool reacts)
+        /// @param canReact 反応するなら true
+        public void SetReaction(WaveKind kind, bool canReact)
         {
             if (kind == WaveKind.Ultrasound)
             {
-                _reactsToUltrasound = reacts;
+                _canReactToUltrasound = canReact;
             }
             else
             {
-                _reactsToElectromagnetic = reacts;
+                _canReactToElectromagnetic = canReact;
             }
         }
 
@@ -83,16 +83,16 @@ namespace Aura.ObjectInfo
         [ShowInEventMenu]
         public void ReactOnlyToElectromagnetic()
         {
-            _reactsToElectromagnetic = true;
-            _reactsToUltrasound = false;
+            _canReactToElectromagnetic = true;
+            _canReactToUltrasound = false;
         }
 
         /// @brief 超音波だけに反応するようにする。途中で反応する波が変わる敵・ギミック用（UnityEvent からも呼べる）
         [ShowInEventMenu]
         public void ReactOnlyToUltrasound()
         {
-            _reactsToUltrasound = true;
-            _reactsToElectromagnetic = false;
+            _canReactToUltrasound = true;
+            _canReactToElectromagnetic = false;
         }
 
         private void Awake()
@@ -130,8 +130,8 @@ namespace Aura.ObjectInfo
             bool hasMigrated = false;
             if (_canReactToAnyType)
             {
-                _reactsToElectromagnetic = true;
-                _reactsToUltrasound = true;
+                _canReactToElectromagnetic = true;
+                _canReactToUltrasound = true;
                 _canReactToAnyType = false;
                 hasMigrated = true;
             }
