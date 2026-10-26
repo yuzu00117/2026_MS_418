@@ -1,0 +1,16 @@
+{
+    "name": "Aura.Gimmick",
+    "rootNamespace": "Aura.Gimmick",
+    "references": [
+        "Aura.Inspector"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
