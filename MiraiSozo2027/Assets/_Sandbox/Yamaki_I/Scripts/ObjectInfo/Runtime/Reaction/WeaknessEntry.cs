@@ -37,12 +37,15 @@ namespace Aura.ObjectInfo
         public float Multiplier => _multiplier;
 
         /// @brief 旧欄（WaveType のアセット）が残っていれば、「波の種類」へ写した 1 行を作る
-        /// 対応表（SO_WaveTypeInfo）に無いアセットは、警告を出して捨てる（「波の種類」は今の値のまま）
+        /// 対応表（SO_WaveTypeInfo）に無いアセットの行は、警告を出して、行ごと捨てるように知らせる
+        /// （旧データの「波の種類」は既定値の電磁波なので、残すと電磁波の行として効いてしまう）
         /// @param outMigrated 写した 1 行（写せなければ、この 1 行のまま）
-        /// @return 写したら true
-        internal bool TryMigrate(out WeaknessEntry outMigrated)
+        /// @param outIsDropped この行を一覧から捨てるなら true
+        /// @return 写したか、捨てることになったら true
+        internal bool TryMigrate(out WeaknessEntry outMigrated, out bool outIsDropped)
         {
             outMigrated = this;
+            outIsDropped = false;
             if (_waveType == null || WaveTypeInfo.Instance == null)
             {
                 return false;
@@ -53,7 +56,8 @@ namespace Aura.ObjectInfo
             }
             else
             {
-                Debug.LogWarning($"WeaknessEntry: 対応表（SO_WaveTypeInfo）に無い波の種類 {_waveType.name} が旧欄にあったので捨てた。「波の種類」は今の値のまま");
+                Debug.LogWarning($"WeaknessEntry: 対応表（SO_WaveTypeInfo）に無い波の種類 {_waveType.name} が旧欄にあったので、この行を捨てた");
+                outIsDropped = true;
             }
             outMigrated._waveType = null;
             return true;
