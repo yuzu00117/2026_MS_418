@@ -62,10 +62,20 @@ namespace SceneFlow
 
             Notify(OnBeforeTransition, scene);
             if (IsInputBlockEnabled) TransitionInputBlocker.Block();
-            _loader.Load(
-                scene.ScenePath,
-                () => Notify(OnAfterTransition, scene),
-                TransitionInputBlocker.Release); // ロード画面が消えて遷移が完了したら入力を戻す
+            try
+            {
+                _loader.Load(
+                    scene.ScenePath,
+                    () => Notify(OnAfterTransition, scene),
+                    TransitionInputBlocker.Release); // ロード画面が消えて遷移が完了したら入力を戻す
+            }
+            catch (Exception e)
+            {
+                // コルーチンを使わない実装が Load で直接例外を投げた場合、onCompleted は呼ばれない。
+                // 入力を止めたままにしないため、ここで戻す(コルーチン内の例外はローダー側の finally が受け持つ)
+                Debug.LogException(e);
+                TransitionInputBlocker.Release();
+            }
         }
 
         // 購読側の例外で遷移が止まらないよう、購読者ごとに例外を捕まえてログに出す。

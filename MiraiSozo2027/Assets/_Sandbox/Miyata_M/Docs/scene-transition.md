@@ -35,12 +35,13 @@ OnBeforeTransition(scene) 通知
   ▼
 入力デバイスを無効化
   ▼
-ISceneLoader.Load(path, onLoaded)
+ISceneLoader.Load(path, onLoaded, onCompleted)
   ├ ロード画面フェードイン(入力を遮断)
   ├ LoadSceneAsync(Single) ─ バーを進捗に追従(最低 _minDisplayTime 秒)
   ├ 有効化 → 新シーンの初期化が一巡するのを1フレーム待つ
   ├ onLoaded → OnAfterTransition(scene) 通知
-  └ ロード画面フェードアウト(入力遮断を解除)
+  ├ ロード画面フェードアウト(入力遮断を解除)
+  └ onCompleted → 入力デバイスを復帰(読み込みに失敗した場合も必ず呼ぶ)
 ```
 
 ## 使い方
@@ -107,6 +108,11 @@ private void OnDisable()
 - 仕組みは `TransitionInputBlocker`(Input System のデバイスを無効化・復帰)。Input System を使わない入力(旧 Input Manager)は止まらない。
 - 遷移中に接続・再接続されたデバイスも、接続の通知(`InputSystem.onDeviceChange`)を受けてその場で止め、完了時に戻す。
 - 遷移中に抜かれたデバイス: 抜かれている間は戻せない(Input System は、抜かれたデバイスへの有効化で例外を出し、無効にしたデバイスは再接続後も無効のまま)。保留にして、再接続された時点で有効に戻す。
+
+### ローダーが失敗したとき
+- ロード画面側が遷移の途中で例外を出しても(参照切れ、読み込み失敗など)、`SceneLoader` の `finally` で、ロード画面を消し、`_isLoading` を戻し、`onCompleted`(入力の復帰)を必ず呼ぶ。
+- `SceneLoader` は、必須の参照(`_canvasGroup`、`_progressBar`)が未設定だと、起動時にエラーを出して無効になる(登録しない)。この場合 `Go` は警告だけで、入力も止めない。
+- `ISceneLoader` を実装する側は、失敗時も `onCompleted` を呼ぶこと。
 
 ### 注意
 - 遷移中の再呼び出し、遷移先の未指定、Build Settings 未登録のときは、警告を出して何もしない。

@@ -15,6 +15,8 @@ namespace SceneFlow
         /// ロード画面を挟んでシーンを読み込む。
         /// onLoaded は新シーンの初期化が一巡し、ロード画面が消え始める直前に呼ぶ。
         /// onCompleted はロード画面が完全に消え、遷移が終わったときに呼ぶ。
+        /// 読み込み中に失敗した場合も、ロード画面を消して onCompleted を必ず呼ぶこと
+        /// (呼ばないと、遷移中のまま戻らず、入力も止まったままになる)。
         /// </summary>
         void Load(string scenePath, Action onLoaded, Action onCompleted);
     }

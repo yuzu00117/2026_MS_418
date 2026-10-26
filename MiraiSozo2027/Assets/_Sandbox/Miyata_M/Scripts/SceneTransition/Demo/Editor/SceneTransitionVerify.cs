@@ -1,3 +1,4 @@
+using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -24,6 +25,7 @@ namespace SceneFlow.EditorTools
         private const int StageOpen = 0;  // Title を開いて Play を始める
         private const int StageStart = 1; // 最初の遷移を要求する
         private const int StageWait = 2;  // 遷移の完了を待つ
+        private const int StageFailure = 3; // ローダーが失敗したときの後始末を待つ
         private const int StageStop = 90; // Play の終了を待つ
         private const string TitleName = DemoScenes.TitleName;
         private const string StageSelectName = DemoScenes.StageSelectName;
@@ -67,6 +69,7 @@ namespace SceneFlow.EditorTools
                 case StageOpen: OpenTitleAndPlay(); break;
                 case StageStart: StartFirstTransition(); break;
                 case StageWait: WaitTransition(); break;
+                case StageFailure: WaitLoaderFailure(); break;
                 case StageStop: WaitPlayStopped(); break;
             }
         }
@@ -156,10 +159,56 @@ namespace SceneFlow.EditorTools
                 Finish(false, error);
                 return;
             }
+            StartLoaderFailureTest();
+        }
+
+        // ロード画面側が遷移の途中で例外を出しても、入力とロード画面が元に戻ることの確認。
+        // 進捗バーの参照を意図的に外して(読み込み途中で NullReferenceException になる)遷移を始める
+        private static void StartLoaderFailureTest()
+        {
+            var loader = Object.FindAnyObjectByType<LoadingTest.C.SceneLoader>();
+            SetLoaderField(loader, "_progressBar", null);
+
+            foreach (var button in Object.FindObjectsByType<SceneTransitionButton>())
+            {
+                ResetDeadline();
+                SceneTransition.Go(button.Target);
+                SessionState.SetInt(KeyStage, StageFailure);
+                return;
+            }
+            Finish(false, "失敗時の確認に使う遷移ボタンが見つからない");
+        }
+
+        // 失敗した遷移が終わる(遷移中でなくなる)のを待ち、元に戻っていることを確認する
+        private static void WaitLoaderFailure()
+        {
+            if (SceneTransition.IsTransitioning) return;
+
+            var loader = Object.FindAnyObjectByType<LoadingTest.C.SceneLoader>();
+            var group = (CanvasGroup)typeof(LoadingTest.C.SceneLoader)
+                .GetField("_canvasGroup", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(loader);
+            if (!_testKeyboard.enabled || !_lateKeyboard.enabled)
+            {
+                Finish(false, "ローダーの失敗後に入力が戻っていない");
+                return;
+            }
+            if (group.alpha > 0f || group.blocksRaycasts)
+            {
+                Finish(false, "ローダーの失敗後にロード画面が残っている");
+                return;
+            }
+            Debug.Log(Tag + "ローダーの失敗後に入力とロード画面が戻った OK");
+
             InputSystem.RemoveDevice(_testKeyboard);
             InputSystem.RemoveDevice(_lateKeyboard);
             EditorApplication.isPlaying = false;
             SessionState.SetInt(KeyStage, StageStop);
+        }
+
+        private static void SetLoaderField(LoadingTest.C.SceneLoader loader, string fieldName, object value)
+        {
+            typeof(LoadingTest.C.SceneLoader)
+                .GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance).SetValue(loader, value);
         }
 
         // 全遷移の後の確認。問題があればその内容を返す(なければ null)
@@ -188,7 +237,7 @@ namespace SceneFlow.EditorTools
 
         // 現在のシーンから目的のシーンへ遷移する要素を探して実行する。
         // SceneTransitionTrigger(イベント用)があればそれを優先し、無ければボタンを実際に押す
-        private static void RequestClick(string targetScene, bool alsoDouble)
+        private static void RequestClick(string targetScene, bool isDoubleClick)
         {
             ResetDeadline();
             // カウントダウン(UnityEvent -> Trigger.Go の接続)があるシーンでは、押さずにイベントでの遷移を待つ
@@ -202,7 +251,7 @@ namespace SceneFlow.EditorTools
                 if (t.Target.SceneName != targetScene) continue;
                 Debug.Log(Tag + $"{targetScene} へ Trigger で遷移");
                 t.Go();
-                if (alsoDouble) t.Go();
+                if (isDoubleClick) t.Go();
                 return;
             }
             foreach (var b in Object.FindObjectsByType<SceneTransitionButton>())
@@ -210,7 +259,7 @@ namespace SceneFlow.EditorTools
                 if (b.Target.SceneName != targetScene) continue;
                 var button = b.GetComponent<UnityEngine.UI.Button>();
                 button.onClick.Invoke();
-                if (alsoDouble) button.onClick.Invoke(); // 二重遷移が無視されること(通知が増えない)を確認する
+                if (isDoubleClick) button.onClick.Invoke(); // 二重遷移が無視されること(通知が増えない)を確認する
                 return;
             }
             Finish(false, $"{targetScene} への遷移要素が見つからない");
@@ -221,14 +270,14 @@ namespace SceneFlow.EditorTools
             SessionState.SetFloat(KeyDeadline, (float)(EditorApplication.timeSinceStartup + TimeoutSeconds));
         }
 
-        private static void Finish(bool ok, string message)
+        private static void Finish(bool isSuccess, string message)
         {
             SessionState.SetBool(KeyRun, false);
             EditorApplication.update -= Tick;
-            if (ok) Debug.Log(Tag + "RESULT " + message);
+            if (isSuccess) Debug.Log(Tag + "RESULT " + message);
             else Debug.LogError(Tag + "RESULT FAILED " + message);
             // 対話モードで実行した場合に Editor を閉じて未保存の作業を失わせないよう、バッチ時のみ終了する
-            if (Application.isBatchMode) EditorApplication.Exit(ok ? 0 : 1);
+            if (Application.isBatchMode) EditorApplication.Exit(isSuccess ? 0 : 1);
         }
     }
 }
