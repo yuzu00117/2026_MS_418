@@ -94,7 +94,8 @@ namespace Aura.ObjectInfo
 #endif
 
         /// @brief 旧欄（WaveType のアセット）が残っている行があれば、「波の種類」へ写す
-        /// @return 写した行があれば true
+        /// 対応表（SO_WaveTypeInfo）に無いアセットの行は、一覧から除く（後ろの本物の行を隠さないように）
+        /// @return 写したか、除いた行があれば true
         private bool MigrateEntries()
         {
             if (_entries == null)
@@ -102,13 +103,33 @@ namespace Aura.ObjectInfo
                 return false;
             }
             bool hasMigrated = false;
+            List<WeaknessEntry> keptEntries = null;  // 除く行が出たときだけ作る
             for (int i = 0; i < _entries.Length; ++i)
             {
-                if (_entries[i].TryMigrate(out WeaknessEntry migrated))
+                if (!_entries[i].TryMigrate(out WeaknessEntry migrated, out bool isDropped))
                 {
-                    _entries[i] = migrated;
-                    hasMigrated = true;
+                    keptEntries?.Add(_entries[i]);
+                    continue;
                 }
+                hasMigrated = true;
+                if (isDropped)
+                {
+                    if (keptEntries == null)
+                    {
+                        keptEntries = new List<WeaknessEntry>(_entries.Length);
+                        for (int j = 0; j < i; ++j)
+                        {
+                            keptEntries.Add(_entries[j]);
+                        }
+                    }
+                    continue;
+                }
+                _entries[i] = migrated;
+                keptEntries?.Add(migrated);
+            }
+            if (keptEntries != null)
+            {
+                _entries = keptEntries.ToArray();
             }
             return hasMigrated;
         }
