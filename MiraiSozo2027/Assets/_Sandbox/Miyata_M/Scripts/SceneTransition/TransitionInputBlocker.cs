@@ -20,10 +20,10 @@ namespace SceneFlow
     internal static class TransitionInputBlocker
     {
         // 止めたデバイスの記録。遷移1回につき O(接続デバイス数)(遷移時のみ、ホットパスではない)
-        private static readonly List<InputDevice> BlockedDevices = new List<InputDevice>();
+        private static readonly List<InputDevice> _blockedDevices = new List<InputDevice>();
 
         // 遷移中に抜かれ、まだ復帰できていないデバイス(再接続されたら復帰する)
-        private static readonly List<InputDevice> PendingDevices = new List<InputDevice>();
+        private static readonly List<InputDevice> _pendingDevices = new List<InputDevice>();
 
         private static bool _isBlocking;
         private static bool _isListening;
@@ -37,7 +37,7 @@ namespace SceneFlow
             foreach (var device in InputSystem.devices)
             {
                 if (!device.enabled) continue; // 元から無効なもの(センサー等)は触らない
-                BlockedDevices.Add(device);
+                _blockedDevices.Add(device);
                 InputSystem.DisableDevice(device);
             }
             Listen();
@@ -49,14 +49,14 @@ namespace SceneFlow
             if (!_isBlocking) return;
             _isBlocking = false;
 
-            foreach (var device in BlockedDevices)
+            foreach (var device in _blockedDevices)
             {
                 if (device.added) InputSystem.EnableDevice(device);
-                else PendingDevices.Add(device); // 抜かれている間は戻せない。再接続を待つ
+                else _pendingDevices.Add(device); // 抜かれている間は戻せない。再接続を待つ
             }
-            BlockedDevices.Clear();
+            _blockedDevices.Clear();
 
-            if (PendingDevices.Count == 0) StopListening();
+            if (_pendingDevices.Count == 0) StopListening();
         }
 
         private static void Listen()
@@ -79,7 +79,7 @@ namespace SceneFlow
         private static void HandleQuit()
         {
             Release();
-            PendingDevices.Clear();
+            _pendingDevices.Clear();
             StopListening();
         }
 
@@ -90,17 +90,17 @@ namespace SceneFlow
             if (_isBlocking)
             {
                 // 遷移中に接続・再接続された。再接続の場合は、すでに記録済みのことがある
-                if (!BlockedDevices.Contains(device)) BlockedDevices.Add(device);
-                PendingDevices.Remove(device);
+                if (!_blockedDevices.Contains(device)) _blockedDevices.Add(device);
+                _pendingDevices.Remove(device);
                 if (device.enabled) InputSystem.DisableDevice(device);
                 return;
             }
 
             // 遷移の完了後に再接続された。無効のまま戻ってくるため、ここで復帰させる
-            if (PendingDevices.Remove(device))
+            if (_pendingDevices.Remove(device))
             {
                 InputSystem.EnableDevice(device);
-                if (PendingDevices.Count == 0) StopListening();
+                if (_pendingDevices.Count == 0) StopListening();
             }
         }
     }
