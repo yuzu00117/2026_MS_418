@@ -3,8 +3,8 @@ using UnityEngine;
 
 namespace Aura.Wave
 {
-    /// @brief 波の種類（属性）を表すアセット。電磁波、超音波などを 1 つずつ作る
-    /// 受け手の WaveReceiver は、このアセットを参照して反応する波を決める
+    /// @brief 波の種類（属性）を表すアセット。電磁波と超音波を 1 つずつ作ってある
+    /// 使う側は「波の種類」（WaveKind: 電磁波/超音波）で選び、このアセットとの対応は WaveTypeInfo（Resources/SO_WaveTypeInfo）の枠で決める
     [CreateAssetMenu(fileName = "WaveType", menuName = "Aura/Wave/Wave Type")]
     public sealed class WaveType : ScriptableObject
     {

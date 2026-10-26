@@ -6,7 +6,6 @@ namespace Aura.ObjectInfo
     /// @brief その物の素材。シートの O6「波を跳ね返すか止めるか」と O7「エコーをさえぎるか通すか」
     /// 素材の種類（SubstanceType）を選ぶ。この GameObject と子のコライダー・見た目（Renderer）に効く
     /// 取り出すときは ObjectInfoLookup.TryGetSubstanceType を使う
-    /// 今ある WaveSurface（Aura.Wave）とは別物で、今の波のコードはこれをまだ読まない
     [DisallowMultipleComponent]
     public sealed class Substance : MonoBehaviour, IObjectInfo
     {

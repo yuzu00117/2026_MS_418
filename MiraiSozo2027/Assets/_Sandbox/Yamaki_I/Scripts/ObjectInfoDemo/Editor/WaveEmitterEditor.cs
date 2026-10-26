@@ -5,12 +5,12 @@ using UnityEngine;
 
 namespace Aura.ObjectInfoDemo.Editor
 {
-    /// @brief InfoBeamEmitter の Inspector。ふつうの Inspector と同じ順に全項目を出すが、
+    /// @brief WaveEmitter の Inspector。ふつうの Inspector と同じ順に全項目を出すが、
     /// ・離した後に戻るまでの時間（Bend Hold Seconds、Bend Return Seconds）は、Bend Release Mode が Hold Then Return のときだけ出す
     /// ・点のレイヤー（Point Layer）は、レイヤーを選ぶ欄で出す
     [CustomEditor(typeof(WaveEmitter))]
     [CanEditMultipleObjects]
-    public sealed class InfoBeamEmitterEditor : UnityEditor.Editor
+    public sealed class WaveEmitterEditor : UnityEditor.Editor
     {
         private const string ScriptPropertyPath = "m_Script";
         private const string BendReleaseModePropertyPath = "_bendReleaseMode";
@@ -68,7 +68,7 @@ namespace Aura.ObjectInfoDemo.Editor
         }
 
         /// @brief その選択肢の項目が、指定した値か。複数を選んで値が違うときは、その値の物があるかもしれないので true
-        /// @param serializedObject InfoBeamEmitter の SerializedObject
+        /// @param serializedObject WaveEmitter の SerializedObject
         /// @param propertyPath 選択肢の項目の SerializedProperty.propertyPath
         /// @param value 比べる値（選択肢の番号）
         /// @return 指定した値なら true

@@ -36,15 +36,15 @@ namespace Aura.ObjectInfo
         public float OtherMultiplier => _otherMultiplier;
 
         /// @brief その種類の波の効き目（倍率）を返す。一覧になければ Other Multiplier
-        /// @param type 当たった波の種類
+        /// @param kind 当たった波の種類
         /// @return 効き目（倍率）
-        public float GetMultiplier(WaveType type)
+        public float GetMultiplier(WaveKind kind)
         {
-            if (type != null && _entries != null)
+            if (_entries != null)
             {
                 for (int i = 0; i < _entries.Length; ++i)
                 {
-                    if (_entries[i].WaveType == type)
+                    if (_entries[i].WaveKind == kind)
                     {
                         return _entries[i].Multiplier;
                     }
@@ -53,12 +53,85 @@ namespace Aura.ObjectInfo
             return _otherMultiplier;
         }
 
+        /// @brief その種類の波の効き目（倍率）を返す（WaveType のアセットで調べる）
+        /// 対応表（SO_WaveTypeInfo）に無いアセットは、一覧にない扱い（Other Multiplier）
+        /// @param type 当たった波の種類のアセット
+        /// @return 効き目（倍率）
+        public float GetMultiplier(WaveType type)
+        {
+            return WaveTypeInfo.TryGetKind(type, out WaveKind kind) ? GetMultiplier(kind) : _otherMultiplier;
+        }
+
         /// @brief その種類の波が弱点か（普通より効くか）
-        /// @param type 波の種類
+        /// @param kind 波の種類
+        /// @return 効き目が普通（1）より大きければ true
+        public bool IsWeakTo(WaveKind kind)
+        {
+            return GetMultiplier(kind) > NormalMultiplier;
+        }
+
+        /// @brief その種類の波が弱点か（WaveType のアセットで調べる）
+        /// @param type 波の種類のアセット
         /// @return 効き目が普通（1）より大きければ true
         public bool IsWeakTo(WaveType type)
         {
             return GetMultiplier(type) > NormalMultiplier;
+        }
+
+        private void OnEnable()
+        {
+            MigrateEntries();
+        }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (MigrateEntries())
+            {
+                UnityEditor.EditorUtility.SetDirty(this);
+            }
+        }
+#endif
+
+        /// @brief 旧欄（WaveType のアセット）が残っている行があれば、「波の種類」へ写す
+        /// 対応表（SO_WaveTypeInfo）に無いアセットの行は、一覧から除く（後ろの本物の行を隠さないように）
+        /// @return 写したか、除いた行があれば true
+        private bool MigrateEntries()
+        {
+            if (_entries == null)
+            {
+                return false;
+            }
+            bool hasMigrated = false;
+            List<WeaknessEntry> keptEntries = null;  // 除く行が出たときだけ作る
+            for (int i = 0; i < _entries.Length; ++i)
+            {
+                if (!_entries[i].TryMigrate(out WeaknessEntry migrated, out bool isDropped))
+                {
+                    keptEntries?.Add(_entries[i]);
+                    continue;
+                }
+                hasMigrated = true;
+                if (isDropped)
+                {
+                    if (keptEntries == null)
+                    {
+                        keptEntries = new List<WeaknessEntry>(_entries.Length);
+                        for (int j = 0; j < i; ++j)
+                        {
+                            keptEntries.Add(_entries[j]);
+                        }
+                    }
+                    continue;
+                }
+                _entries[i] = migrated;
+                keptEntries?.Add(migrated);
+            }
+            if (keptEntries != null)
+            {
+                _entries = keptEntries.ToArray();
+            }
+            return hasMigrated;
         }
     }
 }
