@@ -2,16 +2,20 @@
 """直近 N 時間に develop へマージされた PR の機能紹介を Discord 進捗チャンネルへ投稿する。
 
 discord_daily_digest.yml から呼ばれる。設定はすべて環境変数で受け取る(ユーザー入力をシェルに展開しないため)。
-  GH_TOKEN, REPO, DISCORD_PROGRESS_WEBHOOK_URL, HOURS, DRY_RUN, PR_NUMBER
+  GH_TOKEN, REPO, DISCORD_PROGRESS_WEBHOOK_URL, HOURS, DRY_RUN, PR_NUMBER, DIGEST_FORMAT
 PR_NUMBER(任意): 指定すると期間・マージ状態・base・Bot除外の絞り込みを無視し、その PR 1件だけを
   通常と同じ形式で投稿する(未マージでも可。ローカルでのテスト投稿用)。DRY_RUN と併用できる。
 Webhook URL はログに出さない。
 
-投稿形式: 1PR = 1メッセージ。embed は使わず、content(本文テキスト)に
-  見出しリンク → 作成者 → 概要 の順で書き、動画は添付する。Discord は1メッセージ内で
-  content → attachments → embeds の順に描画するため、本文 → 動画の順で表示される。
-  動画を添付できずリンクにフォールバックした場合のみ、末尾に動画URLを貼る。
-  content は Discord の上限2000文字に収める(概要を削り、見出し・作成者・動画リンクを優先して残す)。
+投稿形式(DIGEST_FORMAT、既定 card): 1PR = 1メッセージ。
+  card: Discord Components V2。flags=32768(IS_COMPONENTS_V2)を付け、content / embeds は使わない。
+    1つの Container(左に色の帯が付くカード)に 見出しリンク+作成者 → 概要 → 動画(Media Gallery) の順で入れる。
+    送信URLに ?with_components=true を付ける。動画は attachment://videoN.ext で参照する。
+    動画を添付できずリンクにフォールバックした場合のみ、見出しの Text Display 末尾に動画URLを貼る。
+    全 Text Display の合計は 3800 文字以内(概要を削り、見出し・作成者・動画リンクを優先して残す)。
+  text: 従来形式。content(見出し→作成者→概要、2000文字以内)に動画を添付する。
+    Components V2 が Webhook で受理されない・動画が再生されない場合の切り替え用。
+日付見出しメッセージは常に通常の content メッセージ。allowed_mentions は常に parse=[]。
 """
 import datetime
 import json
@@ -27,6 +31,10 @@ MAX_VIDEO_BYTES = 10_000_000
 MAX_VIDEOS_PER_PR = 3
 # content の上限は 2000 文字。安全側で短くする。
 CONTENT_LIMIT = 1900
+# Components V2 の Text Display 合計上限は 4000 文字。安全側で短くする。
+CARD_TEXT_LIMIT = 3800
+CARD_COLOR = 0x5865F2
+IS_COMPONENTS_V2 = 1 << 15
 JST = datetime.timezone(datetime.timedelta(hours=9))
 
 URL_CHARS = r"[^\s)\"'<>\]]"
@@ -107,6 +115,22 @@ def build_content(pr, login, desc, links, limit=CONTENT_LIMIT):
     return content if len(content) <= limit else clip(content, limit)
 
 
+def build_card(pr, login, desc, links, media_names, limit=CARD_TEXT_LIMIT):
+    """Components V2 の Container を1つ返す。Text Display の合計は limit 文字以内。"""
+    title = "#%d %s" % (pr["number"], pr["title"])
+    heading = "**[%s](<%s>)**" % (escape_md(clip(title, 300)), pr["url"])
+    head = heading + "\n作成者: " + login
+    if links:
+        head += "\n\n" + "\n".join(links)
+    budget = limit - len(head)
+    parts = [{"type": 10, "content": head}]
+    if desc and budget > 20:
+        parts.append({"type": 10, "content": clip(desc, budget)})
+    if media_names:
+        parts.append({"type": 12, "items": [{"media": {"url": "attachment://" + n}} for n in media_names]})
+    return {"type": 17, "accent_color": CARD_COLOR, "components": parts}
+
+
 def extract_videos(body):
     """(url, 動画と見なせるか) のリスト。実行動画セクション優先、無ければ本文全体から探す。"""
     sec = get_section(body, "実行動画")
@@ -147,12 +171,15 @@ def video_ext(url, ctype):
     return "." + m.group(1).lower() if m else ".mp4"
 
 
-def post(webhook, payload, files=()):
+def post(webhook, payload, files=(), with_components=False):
     cmd = ["curl", "-sS", "--fail-with-body", "-X", "POST", "--form-string",
            "payload_json=" + json.dumps(payload, ensure_ascii=False)]
     for i, (path, name) in enumerate(files):
         cmd += ["-F", "files[%d]=@%s;filename=%s" % (i, path, name)]
-    cmd.append(webhook)
+    url = webhook
+    if with_components:
+        url += ("&" if "?" in url else "?") + "with_components=true"
+    cmd.append(url)
     for attempt in range(3):
         r = run(cmd)
         if r.returncode == 0:
@@ -228,6 +255,9 @@ def main():
     if not dry_run:
         post(webhook, {"content": header, "allowed_mentions": allowed})
 
+    card_mode = (os.environ.get("DIGEST_FORMAT", "") or "card").strip().lower() != "text"
+    print("DIGEST_FORMAT: " + ("card" if card_mode else "text"))
+
     with tempfile.TemporaryDirectory() as tmp:
         for _, pr in prs:
             body = strip_comments(pr.get("body") or "")
@@ -248,14 +278,26 @@ def main():
                     links.append(url)
                     print("  PR #%d: リンク投稿にフォールバック (%s)" % (pr["number"], reason or "添付上限"))
 
-            content = build_content(pr, login, desc, links)
-            payload = {"allowed_mentions": allowed, "content": content}
-            print("[PR #%d] %s / 添付 %d 件 / リンク %d 件 / content %d 文字"
-                  % (pr["number"], pr["title"], len(attach), len(links), len(content)))
+            if card_mode:
+                # attachment:// で参照できる安全な ASCII 名にする
+                attach = [(path, "video%d%s" % (n + 1, os.path.splitext(name)[1])) for n, (path, name) in enumerate(attach)]
+                names = [name for _, name in attach]
+                card = build_card(pr, login, desc, links, names)
+                text_len = sum(len(c["content"]) for c in card["components"] if c["type"] == 10)
+                payload = {"flags": IS_COMPONENTS_V2, "allowed_mentions": allowed, "components": [card]}
+                if attach:
+                    payload["attachments"] = [{"id": n, "filename": name} for n, name in enumerate(names)]
+                size_info = "text %d 文字" % text_len
+            else:
+                content = build_content(pr, login, desc, links)
+                payload = {"allowed_mentions": allowed, "content": content}
+                size_info = "content %d 文字" % len(content)
+            print("[PR #%d] %s / 添付 %d 件 / リンク %d 件 / %s"
+                  % (pr["number"], pr["title"], len(attach), len(links), size_info))
             if dry_run:
                 print(json.dumps(payload, ensure_ascii=False, indent=2))
                 continue
-            post(webhook, payload, attach)
+            post(webhook, payload, attach, with_components=card_mode)
             time.sleep(1)
 
 
