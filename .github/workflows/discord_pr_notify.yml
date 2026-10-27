@@ -9,9 +9,21 @@
 #      DISCORD_GITHUB_TO_DISCORD_ID_MAP: GitHub ログイン名 → Discord ユーザー ID の JSON オブジェクト。PR 作成者のメンションに使う
 #                        例: {"yuzu00117":"123456789012345678"}
 #                        対応表にない作成者は、メンションせずプレーンテキストで表示する。
+#  (5) workflow_dispatch(input: pr_number)でも起動できる。retarget-pr-base.yml が GITHUB_TOKEN で base を main から
+#      develop に付け替えても、GITHUB_TOKEN の操作では他のワークフローが起動しないため、付け替え後に
+#      retarget-pr-base.yml がこのワークフローを dispatch する。dispatch 時は gh pr view で PR 情報を取得し、
+#      Draft・フォーク PR・main 向け(head が develop 以外)のいずれかなら何もせず正常終了する。
+#  (6) 重複投稿防止: 投稿前に PR コメントに <!-- discord-thread-id: を含むものがあれば、何もせず正常終了する
+#      (通常経路・dispatch 経路の両方)。
 name: Discord PR Notify
 
 on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 通知対象の PR 番号
+        required: true
+        type: string
   pull_request:
     types: [opened, reopened, ready_for_review]
     branches: [develop, main]
@@ -30,11 +42,13 @@ jobs:
     #  - Bot 起因のイベントは除外する
     #  - main 向けは develop → main の PR のみ対象にする。main 向けの feature/* PR は
     #    retarget-pr-base.yml が develop に付け替えるため、ここで通知すると二重・不正確になる
+    #  - workflow_dispatch 時はジョブ側では通し、スクリプト内で同等の判定(Draft・フォーク・main 向け)を行う
     if: >-
-      github.event.sender.type != 'Bot' &&
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.sender.type != 'Bot' &&
       github.event.pull_request.draft == false &&
       github.event.pull_request.head.repo.full_name == github.repository &&
-      (github.event.pull_request.base.ref != 'main' || github.event.pull_request.head.ref == 'develop')
+      (github.event.pull_request.base.ref != 'main' || github.event.pull_request.head.ref == 'develop'))
     steps:
       - name: Create Discord forum thread
         env:
@@ -50,6 +64,9 @@ jobs:
           PR_HEAD: ${{ github.event.pull_request.head.ref }}
           PR_BASE: ${{ github.event.pull_request.base.ref }}
           PR_CREATED_AT: ${{ github.event.pull_request.created_at }}
+          # workflow_dispatch 時のみ使う入力(PR 番号)とイベント名。
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_PR_NUMBER: ${{ github.event.inputs.pr_number }}
           # レビュー担当者の Discord ユーザー ID と、GitHub ログイン名 → Discord ユーザー ID の対応表(Variables 由来)。
           REVIEWER_USER_ID: ${{ vars.DISCORD_REVIEWER_USER_ID }}
           GITHUB_TO_DISCORD_ID_MAP: ${{ vars.DISCORD_GITHUB_TO_DISCORD_ID_MAP }}
@@ -59,6 +76,47 @@ jobs:
         run: |
           # set -x は使わない(Webhook URL をログに出さないため)。
           set -euo pipefail
+
+          # workflow_dispatch 時は gh pr view で PR 情報を取得し、PR_* を上書きする。
+          # 値は JSON として受け取り jq で取り出す(シェルに展開して評価しない)。
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if ! [[ "$INPUT_PR_NUMBER" =~ ^[0-9]+$ ]]; then
+              echo "::error::pr_number は数字で指定してください。"
+              exit 1
+            fi
+            pr_json="$(gh pr view "$INPUT_PR_NUMBER" --repo "$REPO"               --json number,title,body,url,author,headRefName,baseRefName,createdAt,isDraft,isCrossRepository)"
+            PR_NUMBER="$(jq -r '.number' <<< "$pr_json")"
+            PR_TITLE="$(jq -r '.title' <<< "$pr_json")"
+            PR_BODY="$(jq -r '.body // ""' <<< "$pr_json")"
+            PR_URL="$(jq -r '.url' <<< "$pr_json")"
+            PR_AUTHOR="$(jq -r '.author.login' <<< "$pr_json")"
+            PR_HEAD="$(jq -r '.headRefName' <<< "$pr_json")"
+            PR_BASE="$(jq -r '.baseRefName' <<< "$pr_json")"
+            PR_CREATED_AT="$(jq -r '.createdAt' <<< "$pr_json")"
+            is_draft="$(jq -r '.isDraft' <<< "$pr_json")"
+            is_cross="$(jq -r '.isCrossRepository' <<< "$pr_json")"
+
+            # ジョブ側の if と同等の判定。満たさない場合は何もせず正常終了する。
+            if [ "$is_draft" = "true" ]; then
+              echo "Draft PR のため通知しません。"
+              exit 0
+            fi
+            if [ "$is_cross" = "true" ]; then
+              echo "フォーク PR のため通知しません。"
+              exit 0
+            fi
+            if [ "$PR_BASE" = "main" ] && [ "$PR_HEAD" != "develop" ]; then
+              echo "main 向け(develop 以外)の PR のため通知しません。"
+              exit 0
+            fi
+          fi
+
+          # 重複投稿防止: すでにスレッド ID コメントがあれば何もしない。
+          existing="$(gh api --paginate "repos/${REPO}/issues/${PR_NUMBER}/comments"             --jq '[.[] | select((.body // "") | contains("<!-- discord-thread-id:"))] | length'             | awk '{s+=$1} END {print s+0}')"
+          if [ "$existing" -gt 0 ]; then
+            echo "すでに Discord に通知済みのため、何もしません。"
+            exit 0
+          fi
 
           # JSON は jq で組み立てる(引用符・改行・メンションを安全に扱うため)。
           # - thread_name は Discord の上限 100 文字に収める
