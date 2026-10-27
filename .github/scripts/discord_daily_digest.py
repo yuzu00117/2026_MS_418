@@ -6,6 +6,12 @@ discord_daily_digest.yml から呼ばれる。設定はすべて環境変数で�
 PR_NUMBER(任意): 指定すると期間・マージ状態・base・Bot除外の絞り込みを無視し、その PR 1件だけを
   通常と同じ形式で投稿する(未マージでも可。ローカルでのテスト投稿用)。DRY_RUN と併用できる。
 Webhook URL はログに出さない。
+
+投稿形式: 1PR = 1メッセージ。embed は使わず、content(本文テキスト)に
+  見出しリンク → 作成者 → 概要 の順で書き、動画は添付する。Discord は1メッセージ内で
+  content → attachments → embeds の順に描画するため、本文 → 動画の順で表示される。
+  動画を添付できずリンクにフォールバックした場合のみ、末尾に動画URLを貼る。
+  content は Discord の上限2000文字に収める(概要を削り、見出し・作成者・動画リンクを優先して残す)。
 """
 import datetime
 import json
@@ -19,8 +25,8 @@ import time
 # Discord の無料枠の添付上限は 10MB。ペイロード分の余裕を見て少し小さくしておく。
 MAX_VIDEO_BYTES = 10_000_000
 MAX_VIDEOS_PER_PR = 3
-# embed description の上限は 4096 だが、embed 全体(6000)に対して安全側で短くする。
-DESC_LIMIT = 1800
+# content の上限は 2000 文字。安全側で短くする。
+CONTENT_LIMIT = 1900
 JST = datetime.timezone(datetime.timedelta(hours=9))
 
 URL_CHARS = r"[^\s)\"'<>\]]"
@@ -78,11 +84,27 @@ def clip(text, limit):
 
 
 def build_description(body):
-    """「## 概要」のみを embed description にする。空なら空文字を返す。"""
+    """「## 概要」の整形済み本文(見出し付き)を返す。空なら空文字を返す。"""
     sec = clean_section(get_section(body, "概要"))
     if not sec:
         return ""
-    return clip("**概要**\n" + sec, DESC_LIMIT)
+    return "**概要**\n" + sec
+
+
+def escape_md(text):
+    return re.sub(r"([\\[\]*_`~|])", r"\\\1", text.replace("\n", " "))
+
+
+def build_content(pr, login, desc, links, limit=CONTENT_LIMIT):
+    """1PR 分の本文を組み立てる。limit 文字以内。見出し・作成者・動画リンクを優先し、概要を削る。"""
+    title = "#%d %s" % (pr["number"], pr["title"])
+    heading = "**[%s](<%s>)**" % (escape_md(clip(title, 300)), pr["url"])
+    head = heading + "\n作成者: " + login
+    tail = ("\n\n" + "\n".join(links)) if links else ""
+    budget = limit - len(head) - len(tail) - 2
+    middle = ("\n\n" + clip(desc, budget)) if desc and budget > 20 else ""
+    content = head + middle + tail
+    return content if len(content) <= limit else clip(content, limit)
 
 
 def extract_videos(body):
@@ -166,13 +188,11 @@ def main():
             print("::error::PR_NUMBER は数字(例: 58)で指定してください。")
             sys.exit(1)
         r = run(["gh", "pr", "view", pr_number, "--repo", repo,
-                 "--json", "number,title,body,url,author,mergedAt,createdAt"])
+                 "--json", "number,title,body,url,author,mergedAt"])
         if r.returncode != 0:
             print("::error::gh pr view に失敗しました: " + r.stderr[:500])
             sys.exit(1)
         pr = json.loads(r.stdout)
-        # 未マージ PR は mergedAt が無いので createdAt で代用する(embed の timestamp 用)。
-        pr["mergedAt"] = pr.get("mergedAt") or pr["createdAt"]
         prs = [(None, pr)]
         print("PR_NUMBER 指定: #%s のみ対象 (dry_run=%s)" % (pr_number, dry_run))
     else:
@@ -212,16 +232,7 @@ def main():
         for _, pr in prs:
             body = strip_comments(pr.get("body") or "")
             login = (pr.get("author") or {}).get("login", "unknown")
-            embed = {
-                "title": clip("#%d %s" % (pr["number"], pr["title"]), 256),
-                "url": pr["url"],
-                "color": 5793266,
-                "timestamp": pr["mergedAt"],
-                "fields": [{"name": "作成者", "value": login, "inline": True}],
-            }
             desc = build_description(body)
-            if desc:
-                embed["description"] = desc
 
             attach, links, total = [], [], 0
             for i, (url, is_video) in enumerate(extract_videos(body)):
@@ -237,10 +248,10 @@ def main():
                     links.append(url)
                     print("  PR #%d: リンク投稿にフォールバック (%s)" % (pr["number"], reason or "添付上限"))
 
-            payload = {"allowed_mentions": allowed, "embeds": [embed]}
-            if links:
-                payload["content"] = "🎬 実行動画\n" + "\n".join(links)
-            print("[PR #%d] %s / 添付 %d 件 / リンク %d 件" % (pr["number"], embed["title"], len(attach), len(links)))
+            content = build_content(pr, login, desc, links)
+            payload = {"allowed_mentions": allowed, "content": content}
+            print("[PR #%d] %s / 添付 %d 件 / リンク %d 件 / content %d 文字"
+                  % (pr["number"], pr["title"], len(attach), len(links), len(content)))
             if dry_run:
                 print(json.dumps(payload, ensure_ascii=False, indent=2))
                 continue
