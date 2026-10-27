@@ -1,6 +1,8 @@
 # PR 作成時に Discord のフォーラムチャンネルへ通知するワークフロー。
-#  (1) develop 向けの PR、および develop → main の PR が opened / reopened / ready_for_review になったとき、
+#  (1) develop 向けの PR、および main 向けで head が feature/* 以外の PR が opened / reopened / ready_for_review になったとき、
 #      PR ごとに新規スレッド(投稿)を Webhook で作成する。
+#      Draft・フォーク PR・Bot 起因のイベントは対象外。main 向けの PR は head が feature/* 以外のもののみ対象
+#      (main 向けの feature/* PR は retarget-pr-base.yml が develop に付け替えて dispatch で通知する)。
 #  (2) 必要な Secret: DISCORD_WEBHOOK_URL (フォーラムチャンネルの Webhook URL)
 #  (3) スレッド作成後、Discord のスレッド ID を隠しマーカー付きコメント(<!-- discord-thread-id:ID -->)として PR に保存する。
 #      discord_coderabbit_notify.yml がこの ID を読み取り、CodeRabbit のレビュー状況を同じスレッドへ追記する。
@@ -12,7 +14,7 @@
 #  (5) workflow_dispatch(input: pr_number)でも起動できる。retarget-pr-base.yml が GITHUB_TOKEN で base を main から
 #      develop に付け替えても、GITHUB_TOKEN の操作では他のワークフローが起動しないため、付け替え後に
 #      retarget-pr-base.yml がこのワークフローを dispatch する。dispatch 時は gh pr view で PR 情報を取得し、
-#      Draft・フォーク PR・main 向け(head が develop 以外)のいずれかなら何もせず正常終了する。
+#      Draft・フォーク PR・main 向けの feature/* PR のいずれかなら何もせず正常終了する。
 #  (6) 重複投稿防止: 投稿前に PR コメントを確認し、github-actions[bot] が投稿した
 #      <!-- discord-thread-id:数字 --> 形式のマーカーがあれば、何もせず正常終了する(通常経路・dispatch 経路の両方)。
 #      github-actions[bot] 以外(人間のコメント)に同じ文字列があっても対象外。
@@ -42,7 +44,7 @@ jobs:
     #  - Draft PR は opened 時には通知せず、ready_for_review になった時点で通知する
     #  - フォーク PR は Secrets が渡らず失敗するので、同一リポジトリの PR のみ対象にする
     #  - Bot 起因のイベントは除外する
-    #  - main 向けは develop → main の PR のみ対象にする。main 向けの feature/* PR は
+    #  - main 向けは head が feature/* 以外の PR のみ対象にする。main 向けの feature/* PR は
     #    retarget-pr-base.yml が develop に付け替えるため、ここで通知すると二重・不正確になる
     #  - workflow_dispatch 時はジョブ側では通し、スクリプト内で同等の判定(Draft・フォーク・main 向け)を行う
     if: >-
@@ -50,7 +52,7 @@ jobs:
       (github.event.sender.type != 'Bot' &&
       github.event.pull_request.draft == false &&
       github.event.pull_request.head.repo.full_name == github.repository &&
-      (github.event.pull_request.base.ref != 'main' || github.event.pull_request.head.ref == 'develop'))
+      (github.event.pull_request.base.ref != 'main' || !startsWith(github.event.pull_request.head.ref, 'feature/')))
     steps:
       - name: Create Discord forum thread
         env:
@@ -108,8 +110,10 @@ jobs:
               echo "フォーク PR のため通知しません。"
               exit 0
             fi
-            if [ "$PR_BASE" = "main" ] && [ "$PR_HEAD" != "develop" ]; then
-              echo "main 向け(develop 以外)の PR のため通知しません。"
+            # main 向けの feature/* PR は retarget-pr-base.yml の付け替えで通知するため、ここでは通知しない(ジョブ側 if と同じ判定)。
+            # 付け替え後の dispatch では base は develop になっているので、この判定に掛からない。
+            if [ "$PR_BASE" = "main" ] && [[ "$PR_HEAD" == feature/* ]]; then
+              echo "main 向けの feature/* PR のため通知しません。"
               exit 0
             fi
           fi
