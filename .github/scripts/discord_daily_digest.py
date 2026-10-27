@@ -15,6 +15,7 @@ Webhook URL はログに出さない。
     全 Text Display の合計は 3800 文字以内(概要を削り、見出し・作成者・動画リンクを優先して残す)。
   text: 従来形式。content(見出し→作成者→概要、2000文字以内)に動画を添付する。
     Components V2 が Webhook で受理されない・動画が再生されない場合の切り替え用。
+見出し記法(card / text 共通): 日付メッセージ=H1(`# `)、PR タイトルのリンク=H2(`## `)、概要=H3(`### `)。
 日付見出しメッセージは常に通常の content メッセージ。allowed_mentions は常に parse=[]。
 """
 import datetime
@@ -96,7 +97,7 @@ def build_description(body):
     sec = clean_section(get_section(body, "概要"))
     if not sec:
         return ""
-    return "**概要**\n" + sec
+    return "### 概要\n" + sec
 
 
 def escape_md(text):
@@ -106,7 +107,7 @@ def escape_md(text):
 def build_content(pr, login, desc, links, limit=CONTENT_LIMIT):
     """1PR 分の本文を組み立てる。limit 文字以内。見出し・作成者・動画リンクを優先し、概要を削る。"""
     title = "#%d %s" % (pr["number"], pr["title"])
-    heading = "**[%s](<%s>)**" % (escape_md(clip(title, 300)), pr["url"])
+    heading = "## [%s](<%s>)" % (escape_md(clip(title, 300)), pr["url"])
     head = heading + "\n作成者: " + login
     tail = ("\n\n" + "\n".join(links)) if links else ""
     budget = limit - len(head) - len(tail) - 2
@@ -118,7 +119,7 @@ def build_content(pr, login, desc, links, limit=CONTENT_LIMIT):
 def build_card(pr, login, desc, links, media_names, limit=CARD_TEXT_LIMIT):
     """Components V2 の Container を1つ返す。Text Display の合計は limit 文字以内。"""
     title = "#%d %s" % (pr["number"], pr["title"])
-    heading = "**[%s](<%s>)**" % (escape_md(clip(title, 300)), pr["url"])
+    heading = "## [%s](<%s>)" % (escape_md(clip(title, 300)), pr["url"])
     head = heading + "\n作成者: " + login
     if links:
         head += "\n\n" + "\n".join(links)
@@ -250,7 +251,7 @@ def main():
 
     # PR 本文由来の @everyone / @here などを無効化する。
     allowed = {"parse": []}
-    header = "📅 %s の進捗" % now.astimezone(JST).strftime("%Y-%m-%d")
+    header = "# 📅 %s の進捗" % now.astimezone(JST).strftime("%Y-%m-%d")
     print("[header] " + header)
     if not dry_run:
         post(webhook, {"content": header, "allowed_mentions": allowed})
