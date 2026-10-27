@@ -3,6 +3,8 @@ name: Retarget PR Base
 # main 向けに作られた feature/* の PR を、自動で develop 向けに付け替える。
 # docs/CONTRIBUTING.md のルールは feature/* -> develop -> main。
 # デフォルトブランチが main のため、PR のベースが main になりがちなので補正する。
+# 付け替え後は、discord_pr_notify.yml を workflow_dispatch で起動して Discord に通知する。
+# GITHUB_TOKEN による付け替えでは他のワークフローが起動しないため、明示的に dispatch する必要がある。
 #
 # 注意: pull_request_target はデフォルトブランチ(main)上のファイルが使われる。
 # そのため develop から main へ反映されるまでは有効にならない。
@@ -17,6 +19,8 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      # 付け替え後に discord_pr_notify.yml を dispatch するために必要。
+      actions: write
     # 実行条件:
     #  - base が main の PR のみ対象にする
     #  - head ブランチが feature/* の PR のみ対象にする(hotfix/*, release/* などは対象外)
@@ -41,3 +45,12 @@ jobs:
 
           \`$HEAD_REF\` のような feature/* ブランチは、docs/CONTRIBUTING.md のルールにより develop 向けの PR が正しいためです。
           意図的に main 向けにしたい場合は、develop から main への PR を作成してください。"
+
+      # GITHUB_TOKEN の操作では pull_request イベントが発火しないため、通知ワークフローを明示的に起動する。
+      - name: Dispatch Discord notification
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh workflow run discord_pr_notify.yml --repo "$REPO" -f pr_number="$PR_NUMBER"
