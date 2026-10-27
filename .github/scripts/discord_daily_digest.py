@@ -19,7 +19,6 @@ MAX_VIDEO_BYTES = 10_000_000
 MAX_VIDEOS_PER_PR = 3
 # embed description の上限は 4096 だが、embed 全体(6000)に対して安全側で短くする。
 DESC_LIMIT = 1800
-SECTION_LIMIT = 900
 JST = datetime.timezone(datetime.timedelta(hours=9))
 
 URL_CHARS = r"[^\s)\"'<>\]]"
@@ -74,12 +73,11 @@ def clip(text, limit):
 
 
 def build_description(body):
-    parts = []
-    for heading in ("概要", "変更内容"):
-        sec = clean_section(get_section(body, heading))
-        if sec:
-            parts.append("**" + heading + "**\n" + clip(sec, SECTION_LIMIT))
-    return clip("\n\n".join(parts), DESC_LIMIT)
+    """「## 概要」のみを embed description にする。空なら空文字を返す。"""
+    sec = clean_section(get_section(body, "概要"))
+    if not sec:
+        return ""
+    return clip("**概要**\n" + sec, DESC_LIMIT)
 
 
 def extract_videos(body):
