@@ -19,6 +19,8 @@ Webhook URL はログに出さない。
     全 Text Display の合計は 3800 文字以内(概要を削り、見出し・作成者・動画リンクを優先して残す)。
   text: 従来形式(1PR = 1メッセージ)。content(見出し→作成者→概要、2000文字以内)に動画を添付する。
     Components V2 が Webhook で受理されない・動画が再生されない場合の切り替え用。
+動画: user-attachments の URL は先頭だけ取得して Content-Type が video/* かを判定し(貼られたセクションは問わない)、
+  10MB 以下なら添付、超過・ダウンロード失敗ならカード内にリンクで出す。各動画の扱いと理由はログに出す。
 見出し記法(card / text 共通): 日付メッセージ=H1(`# `)、PR タイトルのリンク=H2(`## `)、概要=H3(`### `)。
 text 形式の日付見出しは通常の content メッセージ。allowed_mentions は常に parse=[]。
 """
@@ -212,6 +214,32 @@ def run(cmd):
     return subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
 
 
+def probe(url, hdr_path):
+    """先頭 100 バイトだけ取得して (ok, content_type, size or None, reason) を返す。トークンは送らない。"""
+    r = run(["curl", "-sSL", "--max-time", "30", "-r", "0-99", "-o", os.devnull, "-D", hdr_path,
+             "-w", "%{http_code} %{content_type}", url])
+    if r.returncode != 0:
+        return False, "", None, "probe curl error %d" % r.returncode
+    code, _, ctype = r.stdout.strip().partition(" ")
+    if code not in ("200", "206"):
+        return False, ctype.lower(), None, "probe http " + code
+    size = None
+    try:
+        with open(hdr_path, encoding="utf-8", errors="replace") as f:
+            blocks = [b for b in f.read().replace("\r", "").split("\n\n") if b.strip()]
+        last = blocks[-1] if blocks else ""  # リダイレクトを辿った最後のレスポンスのヘッダ
+        m = re.search(r"^content-range:\s*bytes\s+\d+-\d+/(\d+)", last, re.I | re.M)
+        if m:
+            size = int(m.group(1))
+        elif code == "200":
+            m = re.search(r"^content-length:\s*(\d+)", last, re.I | re.M)
+            if m:
+                size = int(m.group(1))
+    except OSError:
+        pass
+    return True, ctype.lower(), size, ""
+
+
 def download(url, dest):
     """動画をダウンロードし (ok, reason, content_type) を返す。トークンは送らない。"""
     r = run(["curl", "-sSL", "--max-time", "120", "--max-filesize", str(MAX_VIDEO_BYTES),
@@ -346,17 +374,36 @@ def main():
 
             attach, links, total = [], [], 0
             for i, (url, is_video) in enumerate(extract_videos(body)):
+                tag = "  PR #%d %s: " % (pr["number"], url)
                 dest = os.path.join(tmp, "pr%d_%d.bin" % (pr["number"], i))
-                ok, reason, ctype = download(url, dest)
-                if ok and (ctype.startswith("image/") or ctype.startswith("text/")):
-                    continue  # 動画ではない(スクリーンショット等)
-                size = os.path.getsize(dest) if ok else 0
-                if ok and len(attach) < MAX_VIDEOS_PER_PR and total + size <= MAX_VIDEO_BYTES:
-                    total += size
-                    attach.append((dest, "pr%d_%d%s" % (pr["number"], i + 1, video_ext(url, ctype))))
-                elif is_video:
+                pok, pctype, psize, preason = probe(url, dest + ".hdr")
+                if pok:
+                    if not pctype.startswith("video/"):
+                        print(tag + "skip (not video: %s)" % (pctype or "unknown"))
+                        continue
+                    is_video = True
+                elif not is_video:
+                    print(tag + "skip (probe failed: %s, not judged as video)" % preason)
+                    continue
+                else:
+                    print(tag + "probe failed (%s), fallback to section/extension judgement" % preason)
+                if psize is not None and psize > MAX_VIDEO_BYTES:
                     links.append(url)
-                    print("  PR #%d: リンク投稿にフォールバック (%s)" % (pr["number"], reason or "添付上限"))
+                    print(tag + "too large (%d bytes) -> link" % psize)
+                    continue
+                ok, reason, ctype = download(url, dest)
+                if not ok:
+                    links.append(url)
+                    print(tag + "download failed (%s) -> link" % reason)
+                    continue
+                size = os.path.getsize(dest)
+                if len(attach) < MAX_VIDEOS_PER_PR and total + size <= MAX_VIDEO_BYTES:
+                    total += size
+                    attach.append((dest, "pr%d_%d%s" % (pr["number"], i + 1, video_ext(url, ctype or pctype))))
+                    print(tag + "attach (%d bytes)" % size)
+                else:
+                    links.append(url)
+                    print(tag + "attachment limit reached (%d bytes) -> link" % size)
 
             if card_mode:
                 items.append({"pr": pr, "login": login, "desc": desc, "links": links,
