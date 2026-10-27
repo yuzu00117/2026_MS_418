@@ -68,7 +68,10 @@ def clip(text, limit):
     head = text[: limit - 1]
     parts = head.split("\n")
     if len(parts) > 1:
-        head = "\n".join(parts[:-1])
+        by_line = "\n".join(parts[:-1]).rstrip()
+        # 行単位で切ると本文がほとんど残らない(改行の少ない長文)場合は、文字単位で切って本文を残す
+        if len(by_line) >= limit / 2:
+            return by_line + "…"
     return head.rstrip() + "…"
 
 
