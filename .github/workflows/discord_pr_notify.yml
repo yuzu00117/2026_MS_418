@@ -1,6 +1,8 @@
 # PR 作成時に Discord のフォーラムチャンネルへ通知するワークフロー。
-#  (1) develop 向けの PR、および develop → main の PR が opened / reopened / ready_for_review になったとき、
+#  (1) develop 向けの PR、および main 向けで head が feature/* 以外の PR が opened / reopened / ready_for_review になったとき、
 #      PR ごとに新規スレッド(投稿)を Webhook で作成する。
+#      Draft・フォーク PR・Bot 起因のイベントは対象外。main 向けの PR は head が feature/* 以外のもののみ対象
+#      (main 向けの feature/* PR は retarget-pr-base.yml が develop に付け替えて dispatch で通知する)。
 #  (2) 必要な Secret: DISCORD_WEBHOOK_URL (フォーラムチャンネルの Webhook URL)
 #  (3) スレッド作成後、Discord のスレッド ID を隠しマーカー付きコメント(<!-- discord-thread-id:ID -->)として PR に保存する。
 #      discord_coderabbit_notify.yml がこの ID を読み取り、CodeRabbit のレビュー状況を同じスレッドへ追記する。
@@ -12,7 +14,7 @@
 #  (5) workflow_dispatch(input: pr_number)でも起動できる。retarget-pr-base.yml が GITHUB_TOKEN で base を main から
 #      develop に付け替えても、GITHUB_TOKEN の操作では他のワークフローが起動しないため、付け替え後に
 #      retarget-pr-base.yml がこのワークフローを dispatch する。dispatch 時は gh pr view で PR 情報を取得し、
-#      Draft・フォーク PR・main 向け(head が develop 以外)のいずれかなら何もせず正常終了する。
+#      Draft・フォーク PR・main 向けの feature/* PR のいずれかなら何もせず正常終了する。
 #  (6) 重複投稿防止: 投稿前に PR コメントを確認し、github-actions[bot] が投稿した
 #      <!-- discord-thread-id:数字 --> 形式のマーカーがあれば、何もせず正常終了する(通常経路・dispatch 経路の両方)。
 #      github-actions[bot] 以外(人間のコメント)に同じ文字列があっても対象外。
@@ -42,7 +44,7 @@ jobs:
     #  - Draft PR は opened 時には通知せず、ready_for_review になった時点で通知する
     #  - フォーク PR は Secrets が渡らず失敗するので、同一リポジトリの PR のみ対象にする
     #  - Bot 起因のイベントは除外する
-    #  - main 向けは develop → main の PR のみ対象にする。main 向けの feature/* PR は
+    #  - main 向けは head が feature/* 以外の PR のみ対象にする。main 向けの feature/* PR は
     #    retarget-pr-base.yml が develop に付け替えるため、ここで通知すると二重・不正確になる
     #  - workflow_dispatch 時はジョブ側では通し、スクリプト内で同等の判定(Draft・フォーク・main 向け)を行う
     if: >-
@@ -50,7 +52,7 @@ jobs:
       (github.event.sender.type != 'Bot' &&
       github.event.pull_request.draft == false &&
       github.event.pull_request.head.repo.full_name == github.repository &&
-      (github.event.pull_request.base.ref != 'main' || github.event.pull_request.head.ref == 'develop'))
+      (github.event.pull_request.base.ref != 'main' || !startsWith(github.event.pull_request.head.ref, 'feature/')))
     steps:
       - name: Create Discord forum thread
         env:
@@ -108,8 +110,10 @@ jobs:
               echo "フォーク PR のため通知しません。"
               exit 0
             fi
-            if [ "$PR_BASE" = "main" ] && [ "$PR_HEAD" != "develop" ]; then
-              echo "main 向け(develop 以外)の PR のため通知しません。"
+            # main 向けの feature/* PR は retarget-pr-base.yml の付け替えで通知するため、ここでは通知しない(ジョブ側 if と同じ判定)。
+            # 付け替え後の dispatch では base は develop になっているので、この判定に掛からない。
+            if [ "$PR_BASE" = "main" ] && [[ "$PR_HEAD" == feature/* ]]; then
+              echo "main 向けの feature/* PR のため通知しません。"
               exit 0
             fi
           fi
@@ -124,8 +128,11 @@ jobs:
           fi
 
           # JSON は jq で組み立てる(引用符・改行・メンションを安全に扱うため)。
-          # - thread_name は Discord の上限 100 文字に収める
-          # - description は先頭 300 文字に切り詰め、空なら「(説明なし)」
+          # - thread_name は「#番号 [種別 → base] タイトル」形式。種別は head の最初の / より前(/ が無ければ head 全体)、
+          #   base は省略せず全文。全体は Discord の上限 100 文字に収める(超える場合は [種別 → base] 部分を残し、タイトル側を末尾 … で切る)
+          # - embed の「ブランチ」欄には head → base を全文で入れる(embed の field value 上限 1024 文字を超える場合のみ切り詰め)
+          # - description は PR 本文からテンプレートのノイズ(HTML コメント・CodeRabbit 要約節・@coderabbitai summary 行)を除去し、
+          #   見出しを太字にして整形したうえで 400 文字以内に切り詰める(行区切りを優先し末尾 …)。整形後が空なら「(説明なし)」
           # - allowed_mentions は users に指定した ID(レビュー担当者・PR作成者)のみ許可する。
           #   parse は空のままにして、PR 本文由来の @everyone や @here を無効化する
           # - content にレビュー担当者のメンションと PR 作成者の表示を入れる(対応表に無ければプレーンテキスト)
@@ -143,8 +150,43 @@ jobs:
             '
             # Discord ID は数字のみ有効とする
             def is_id: type == "string" and test("^[0-9]+$");
-            ("#" + $number + " " + $title) as $thread
-            | ($body | if length > 300 then .[0:300] + "…" else . end) as $excerpt
+            # 種別: head の最初の / より前。/ を含まなければ head 全体(例: develop)
+            def kind: if contains("/") then split("/")[0] else . end;
+            # 本文の整形: HTML コメント除去 → CodeRabbit 要約節と @coderabbitai summary 行の除去 → 見出しを太字化 → 空白整理
+            def clean_body:
+              gsub("<!--[\\s\\S]*?-->"; "")
+              | gsub("\r"; "")
+              | split("\n")
+              | reduce .[] as $l ({skip: false, out: []};
+                  if ($l | test("^## CodeRabbit による要約")) then (.skip = true)
+                  elif (.skip and ($l | test("^## "))) then (.skip = false | .out += [$l])
+                  elif .skip then .
+                  elif ($l | test("^\\s*@coderabbitai summary\\s*$")) then .
+                  else (.out += [$l]) end)
+              | .out
+              | map(if test("^#{1,6} ") then "**" + (sub("^#{1,6} "; "") | sub("\\s+$"; "")) + "**" else . end)
+              | join("\n")
+              | gsub("[ \t]+\n"; "\n")
+              | gsub("\n{3,}"; "\n\n")
+              | gsub("^\\s+|\\s+$"; "");
+            # 400 文字以内に切る。400 文字を超える場合は 399 文字以内の最後の改行位置で切って … を付ける(改行が無ければ 399 文字 + …)
+            def clip400:
+              if length <= 400 then .
+              else
+                .[0:399] as $head
+                | ($head | split("\n")) as $parts
+                | if ($parts | length) > 1 then ($parts[:-1] | join("\n")) + "…"
+                  else $head + "…" end
+              end;
+            # スレッド名: 先頭部分("#番号 [種別 → base] ")は残し、全体が 100 文字を超える場合はタイトル側を末尾 … で切る
+            ("#" + $number + " [" + ($head | kind) + " → " + $base + "] ") as $prefix
+            | ($prefix + $title) as $thread0
+            | (if ($thread0 | length) > 100
+               then $prefix + ($title | .[0:([0, 100 - ($prefix | length) - 1] | max)] + "…")
+               else $thread0 end) as $thread
+            # embed のブランチ欄: 全文(1024 文字を超える場合のみ安全弁で切り詰め)
+            | (($head + " → " + $base) | if length > 1024 then .[0:1023] + "…" else . end) as $branch
+            | ($body | clean_body | clip400) as $excerpt
             # 対応表は空文字・不正JSON・オブジェクト以外でも落ちずに {} 扱いにする
             | (try ($id_map | fromjson) catch null) as $map0
             | (if ($map0 | type) == "object" then $map0 else {} end) as $map
@@ -158,7 +200,7 @@ jobs:
             | ([ (if $rid == null then empty else "<@" + $rid + ">" end), $author_line ] | join("\n")) as $content
             | ([$rid, $author_id] | map(select(. != null)) | unique) as $users
             | {
-                thread_name: (if ($thread | length) > 100 then $thread[0:99] + "…" else $thread end),
+                thread_name: $thread,
                 content: $content,
                 allowed_mentions: { parse: [], users: $users },
                 embeds: [{
@@ -169,7 +211,7 @@ jobs:
                   timestamp: $created_at,
                   fields: [
                     { name: "作成者", value: $author, inline: true },
-                    { name: "ブランチ", value: ($head + " → " + $base), inline: true }
+                    { name: "ブランチ", value: $branch, inline: true }
                   ]
                 }]
               }
