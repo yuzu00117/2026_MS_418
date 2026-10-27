@@ -13,8 +13,10 @@
 #      develop に付け替えても、GITHUB_TOKEN の操作では他のワークフローが起動しないため、付け替え後に
 #      retarget-pr-base.yml がこのワークフローを dispatch する。dispatch 時は gh pr view で PR 情報を取得し、
 #      Draft・フォーク PR・main 向け(head が develop 以外)のいずれかなら何もせず正常終了する。
-#  (6) 重複投稿防止: 投稿前に PR コメントに <!-- discord-thread-id: を含むものがあれば、何もせず正常終了する
-#      (通常経路・dispatch 経路の両方)。
+#  (6) 重複投稿防止: 投稿前に PR コメントを確認し、github-actions[bot] が投稿した
+#      <!-- discord-thread-id:数字 --> 形式のマーカーがあれば、何もせず正常終了する(通常経路・dispatch 経路の両方)。
+#      github-actions[bot] 以外(人間のコメント)に同じ文字列があっても対象外。
+#      同じ PR の reopened などでは再通知しない(スレッドを増やさない)。
 name: Discord PR Notify
 
 on:
@@ -84,7 +86,8 @@ jobs:
               echo "::error::pr_number は数字で指定してください。"
               exit 1
             fi
-            pr_json="$(gh pr view "$INPUT_PR_NUMBER" --repo "$REPO"               --json number,title,body,url,author,headRefName,baseRefName,createdAt,isDraft,isCrossRepository)"
+            pr_json="$(gh pr view "$INPUT_PR_NUMBER" --repo "$REPO" \
+              --json number,title,body,url,author,headRefName,baseRefName,createdAt,isDraft,isCrossRepository)"
             PR_NUMBER="$(jq -r '.number' <<< "$pr_json")"
             PR_TITLE="$(jq -r '.title' <<< "$pr_json")"
             PR_BODY="$(jq -r '.body // ""' <<< "$pr_json")"
@@ -112,7 +115,9 @@ jobs:
           fi
 
           # 重複投稿防止: すでにスレッド ID コメントがあれば何もしない。
-          existing="$(gh api --paginate "repos/${REPO}/issues/${PR_NUMBER}/comments"             --jq '[.[] | select((.body // "") | contains("<!-- discord-thread-id:"))] | length'             | awk '{s+=$1} END {print s+0}')"
+          existing="$(gh api --paginate "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+            --jq '[.[] | select(.user.login == "github-actions[bot]" and ((.body // "") | test("<!-- discord-thread-id:[0-9]+ -->")))] | length' \
+            | awk '{s+=$1} END {print s+0}')"
           if [ "$existing" -gt 0 ]; then
             echo "すでに Discord に通知済みのため、何もしません。"
             exit 0
