@@ -1266,9 +1266,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2848166820a21424dacfa7ac6bdf7ecb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  _moveSpeed: 5
+  _runSpeed: 8
+  _walkSpeed: 5.5
+  _walkOnModifierKey: 1
   _jumpForce: 5
   _rotateSpeed: 720
+  _animDampTime: 0.1
   _cameraTransform: {fileID: 0}
   _groundChecker: {fileID: 4120551395615623928}
 --- !u!54 &2045787908689986872
@@ -1464,7 +1467,7 @@ MonoBehaviour:
   _minDistance: 2
   _maxDistance: 15
   _wheelStep: 0.2
-  _controllerSpeed: 2
+  _controllerSpeed: 8
   _baseFollowSpeed: 15
   _massWeightFactor: 0.5
   _maxVelocity: 20
@@ -1604,6 +1607,9 @@ MonoBehaviour:
   _fireShape: 0
   _fanRange: 6
   _fanHalfAngle: 40
+  _fanRingCount: 8
+  _fanRingFadeStart: 0.6
+  _fanRingFarWidthScale: 2
   _muzzle: {fileID: 6191001033493183197}
   _aimOrigin: {fileID: 0}
   _ignoreRoot: {fileID: 8114588384119620780}

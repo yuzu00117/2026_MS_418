@@ -15,6 +15,7 @@ public class Phononkinesis : MonoBehaviour
     [Header("State")]
     [SerializeField] private State _currentState = State.Inactive;
     public State CurrentState => _currentState;
+    public bool IsActive => _currentState != State.Inactive;
 
     [Header("Raycast & Detection")]
     [Tooltip("掴める最大射程距離（メートル）")]
@@ -30,11 +31,11 @@ public class Phononkinesis : MonoBehaviour
     private float _activeMinDistance;
     private float _activeMaxDistance;
 
-    [Header("Distance Adjustment Sensitivity (ObjectPlacer流用)")]
+    [Header("Distance Adjustment Sensitivity")]
     [Tooltip("マウスホイール1ノッチあたりの移動量（メートル）")]
     [SerializeField] private float _wheelStep = 0.2f;
     [Tooltip("コントローラーボタン長押し時の移動速度（メートル/秒）")]
-    [SerializeField] private float _controllerSpeed = 2.0f;
+    [SerializeField] private float _controllerSpeed = 4.0f;
 
     [Header("Physics Settings (重さと追従挙動)")]
     [Tooltip("追従の基準速度")]
@@ -294,22 +295,29 @@ public class Phononkinesis : MonoBehaviour
 
     private void HandleDistanceAdjustment()
     {
-        if (Mouse.current != null)
+
+        float distanceInput = _actions.Player.AdjustDistance.ReadValue<float>();
+        if (Mathf.Abs(distanceInput) > 0.01f) //微細な入力検知
         {
-            float mouseScrollY = _actions.Player.ScrollDistance.ReadValue<Vector2>().y;
-            if (Mathf.Abs(mouseScrollY) > 0.01f)
+
+            // 入力デバイス検知
+            var activeControl = _actions.Player.AdjustDistance.activeControl;
+            bool isMouse = activeControl != null && activeControl.device is Mouse;
+
+            //マウスホイール用の大きな入力検知
+            if(isMouse)
             {
-                float scrollDir = Mathf.Sign(mouseScrollY);
+                float scrollDir = Mathf.Sign(distanceInput);
                 _currentDistance += scrollDir * _wheelStep;
+            }
+            //コントローラー用の小さな入力検知
+            else
+            {
+                _currentDistance += distanceInput * _controllerSpeed * Time.deltaTime;
             }
         }
 
-        float controllerAxis = _actions.Player.AdjustDistance.ReadValue<float>();
-        if (Mathf.Abs(controllerAxis) > 0.01f)
-        {
-            _currentDistance += controllerAxis * _controllerSpeed * Time.deltaTime;
-        }
-
+        //距離制限
         _currentDistance = Mathf.Clamp(_currentDistance, _activeMinDistance, _activeMaxDistance);
 
         //一旦の上限より近づいたら、本来の上限値まで戻す
