@@ -128,8 +128,9 @@ jobs:
           fi
 
           # JSON は jq で組み立てる(引用符・改行・メンションを安全に扱うため)。
-          # - thread_name は「#番号 [head → base] タイトル」形式。head / base は 25 文字超で先頭 24 文字 + … に省略し、
-          #   全体は Discord の上限 100 文字に収める(超える場合は [head → base] 部分を残し、タイトル側を末尾 … で切る)
+          # - thread_name は「#番号 [種別 → base] タイトル」形式。種別は head の最初の / より前(/ が無ければ head 全体)、
+          #   base は省略せず全文。全体は Discord の上限 100 文字に収める(超える場合は [種別 → base] 部分を残し、タイトル側を末尾 … で切る)
+          # - embed の「ブランチ」欄には head → base を全文で入れる(embed の field value 上限 1024 文字を超える場合のみ切り詰め)
           # - description は先頭 300 文字に切り詰め、空なら「(説明なし)」
           # - allowed_mentions は users に指定した ID(レビュー担当者・PR作成者)のみ許可する。
           #   parse は空のままにして、PR 本文由来の @everyone や @here を無効化する
@@ -148,14 +149,16 @@ jobs:
             '
             # Discord ID は数字のみ有効とする
             def is_id: type == "string" and test("^[0-9]+$");
-            # ブランチ名は 25 文字を超えたら先頭 24 文字 + … に省略する
-            def short: if length > 25 then .[0:24] + "…" else . end;
-            # スレッド名: 先頭部分("#番号 [head → base] ")は残し、全体が 100 文字を超える場合はタイトル側を末尾 … で切る
-            ("#" + $number + " [" + ($head | short) + " → " + ($base | short) + "] ") as $prefix
+            # 種別: head の最初の / より前。/ を含まなければ head 全体(例: develop)
+            def kind: if contains("/") then split("/")[0] else . end;
+            # スレッド名: 先頭部分("#番号 [種別 → base] ")は残し、全体が 100 文字を超える場合はタイトル側を末尾 … で切る
+            ("#" + $number + " [" + ($head | kind) + " → " + $base + "] ") as $prefix
             | ($prefix + $title) as $thread0
             | (if ($thread0 | length) > 100
-               then $prefix + ($title | .[0:(100 - ($prefix | length) - 1)] + "…")
+               then $prefix + ($title | .[0:([0, 100 - ($prefix | length) - 1] | max)] + "…")
                else $thread0 end) as $thread
+            # embed のブランチ欄: 全文(1024 文字を超える場合のみ安全弁で切り詰め)
+            | (($head + " → " + $base) | if length > 1024 then .[0:1023] + "…" else . end) as $branch
             | ($body | if length > 300 then .[0:300] + "…" else . end) as $excerpt
             # 対応表は空文字・不正JSON・オブジェクト以外でも落ちずに {} 扱いにする
             | (try ($id_map | fromjson) catch null) as $map0
@@ -181,7 +184,7 @@ jobs:
                   timestamp: $created_at,
                   fields: [
                     { name: "作成者", value: $author, inline: true },
-                    { name: "ブランチ", value: ($head + " → " + $base), inline: true }
+                    { name: "ブランチ", value: $branch, inline: true }
                   ]
                 }]
               }
