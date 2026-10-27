@@ -5,6 +5,7 @@ discord_daily_digest.yml から呼ばれる。設定はすべて環境変数で�
   GH_TOKEN, REPO, DISCORD_PROGRESS_WEBHOOK_URL, HOURS, DRY_RUN, PR_NUMBER, DIGEST_FORMAT
 PR_NUMBER(任意): 指定すると期間・マージ状態・base・Bot除外の絞り込みを無視し、その PR 1件だけを
   通常と同じ形式で投稿する(未マージでも可。ローカルでのテスト投稿用)。DRY_RUN と併用できる。
+  カンマ区切りで複数指定可(例: 53,54,55)。指定順に取得し、同じ同梱ロジックで1つの投稿にまとめる。
 Webhook URL はログに出さない。
 
 投稿形式(DIGEST_FORMAT、既定 card): card は PR ごとのカードを上限内で1メッセージに同梱する。
@@ -272,19 +273,34 @@ def main():
         sys.exit(1)
 
     now = datetime.datetime.now(datetime.timezone.utc)
-    pr_number = os.environ.get("PR_NUMBER", "").strip()
-    if pr_number:
-        if not re.fullmatch(r"[0-9]+", pr_number):
-            print("::error::PR_NUMBER は数字(例: 58)で指定してください。")
+    pr_number_raw = os.environ.get("PR_NUMBER", "").strip()
+    if pr_number_raw:
+        numbers = []
+        for token in pr_number_raw.split(","):
+            token = token.strip()
+            if not token:
+                continue
+            if not re.fullmatch(r"[0-9]+", token):
+                print("::error::PR_NUMBER は数字(例: 58)またはカンマ区切りの数字(例: 53,54,55)で指定してください。不正な値: " + token[:50])
+                sys.exit(1)
+            if token not in numbers:
+                numbers.append(token)
+        if not numbers:
+            print("::error::PR_NUMBER に有効な番号がありません。")
             sys.exit(1)
-        r = run(["gh", "pr", "view", pr_number, "--repo", repo,
-                 "--json", "number,title,body,url,author,mergedAt"])
-        if r.returncode != 0:
-            print("::error::gh pr view に失敗しました: " + r.stderr[:500])
+        prs, fetched = [], []
+        for n in numbers:
+            r = run(["gh", "pr", "view", n, "--repo", repo,
+                     "--json", "number,title,body,url,author,mergedAt"])
+            if r.returncode != 0:
+                print("::warning::PR #%s を取得できなかったため飛ばします: %s" % (n, r.stderr[:300]))
+                continue
+            prs.append((None, json.loads(r.stdout)))
+            fetched.append(n)
+        if not prs:
+            print("::error::指定された PR を1件も取得できませんでした。")
             sys.exit(1)
-        pr = json.loads(r.stdout)
-        prs = [(None, pr)]
-        print("PR_NUMBER 指定: #%s のみ対象 (dry_run=%s)" % (pr_number, dry_run))
+        print("PR_NUMBER 指定: " + ", ".join("#" + n for n in fetched) + " を対象 (dry_run=%s)" % dry_run)
     else:
         since = now - datetime.timedelta(hours=hours)
         r = run(["gh", "pr", "list", "--repo", repo, "--state", "merged", "--base", "develop",
