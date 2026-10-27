@@ -316,6 +316,27 @@ namespace Aura.Wave
         /// @brief このフレームで波を渡した物（渡した順）。ビームが当たった物と、扇の 1 発の輪の先頭が届いた物。無ければ空
         public IReadOnlyList<InfoBeamHit> LastHits => _lastHits;
 
+        /// @brief ビームの当たり判定の球の半径（m）。「ビームの判定の半径（m）」
+        public float BeamHitRadius => _radius;
+
+        /// @brief 今出しているビームの実体の線の点（出る位置から終わりの位置まで）。当たり判定は、この線に沿って
+        /// BeamHitRadius の球を動かして行っている。出していないときは空。中身は次のフレームで変わるので、このフレームの間だけ使う
+        public IReadOnlyList<Vector3> BeamCorners => _isBeamShown && _chain != null ? _chain.Positions : Array.Empty<Vector3>();
+
+        /// @brief 撃った扇の 1 発のうち、波面が進んでいるものの情報を集める（確かめる用の表示などに使う）
+        /// @param results 入れる先。空にしてから入れる
+        public void GetFlyingFanShots(List<FanShotInfo> results)
+        {
+            results.Clear();
+            foreach (FanWaveShot shot in _fanShots)
+            {
+                if (shot.IsActive)
+                {
+                    results.Add(shot.Info);
+                }
+            }
+        }
+
         /// @brief この下のコライダーには、ビームが当たらない
         public Transform IgnoreRoot => _ignoreRoot != null ? _ignoreRoot : transform;
 
