@@ -7,16 +7,19 @@ PR_NUMBER(任意): 指定すると期間・マージ状態・base・Bot除外の
   通常と同じ形式で投稿する(未マージでも可。ローカルでのテスト投稿用)。DRY_RUN と併用できる。
 Webhook URL はログに出さない。
 
-投稿形式(DIGEST_FORMAT、既定 card): 1PR = 1メッセージ。
-  card: Discord Components V2。flags=32768(IS_COMPONENTS_V2)を付け、content / embeds は使わない。
+投稿形式(DIGEST_FORMAT、既定 card): card は PR ごとのカードを上限内で1メッセージに同梱する。
+  card: Discord Components V2。PR ごとの Container(カード)を、1メッセージあたり Text Display 合計 3800 文字・
+    添付 10 個・コンポーネント 40 個の範囲でマージ順に貪欲に詰め、超える場合は新しいメッセージに分ける。
+    日付見出しは最初のメッセージ先頭の Text Display(Container の外)に入れる。
+    1PR のカードは必ず1メッセージに収まる(概要を削る)。flags=32768(IS_COMPONENTS_V2)を付け、content / embeds は使わない。
     1つの Container(左に色の帯が付くカード)に 見出しリンク+作成者 → 概要 → 動画(Media Gallery) の順で入れる。
     送信URLに ?with_components=true を付ける。動画は attachment://videoN.ext で参照する。
     動画を添付できずリンクにフォールバックした場合のみ、見出しの Text Display 末尾に動画URLを貼る。
     全 Text Display の合計は 3800 文字以内(概要を削り、見出し・作成者・動画リンクを優先して残す)。
-  text: 従来形式。content(見出し→作成者→概要、2000文字以内)に動画を添付する。
+  text: 従来形式(1PR = 1メッセージ)。content(見出し→作成者→概要、2000文字以内)に動画を添付する。
     Components V2 が Webhook で受理されない・動画が再生されない場合の切り替え用。
 見出し記法(card / text 共通): 日付メッセージ=H1(`# `)、PR タイトルのリンク=H2(`## `)、概要=H3(`### `)。
-日付見出しメッセージは常に通常の content メッセージ。allowed_mentions は常に parse=[]。
+text 形式の日付見出しは通常の content メッセージ。allowed_mentions は常に parse=[]。
 """
 import datetime
 import json
@@ -34,6 +37,9 @@ MAX_VIDEOS_PER_PR = 3
 CONTENT_LIMIT = 1900
 # Components V2 の Text Display 合計上限は 4000 文字。安全側で短くする。
 CARD_TEXT_LIMIT = 3800
+MAX_MESSAGE_ATTACHMENTS = 10
+# Components V2 のメッセージあたりコンポーネント上限は 40(Container・Text Display・Media Gallery とそのアイテムを数える)。
+MAX_MESSAGE_COMPONENTS = 40
 CARD_COLOR = 0x5865F2
 IS_COMPONENTS_V2 = 1 << 15
 JST = datetime.timezone(datetime.timedelta(hours=9))
@@ -130,6 +136,62 @@ def build_card(pr, login, desc, links, media_names, limit=CARD_TEXT_LIMIT):
     if media_names:
         parts.append({"type": 12, "items": [{"media": {"url": "attachment://" + n}} for n in media_names]})
     return {"type": 17, "accent_color": CARD_COLOR, "components": parts}
+
+
+def count_components(components):
+    """トップレベル components 配下のコンポーネント総数(入れ子の子も数える)。"""
+    n = 0
+    for c in components:
+        n += 1
+        n += count_components(c.get("components", []))
+        n += len(c.get("items", []))
+    return n
+
+
+def text_total(components):
+    """Text Display(type 10)の文字数合計。入れ子も数える。"""
+    n = 0
+    for c in components:
+        if c["type"] == 10:
+            n += len(c["content"])
+        n += text_total(c.get("components", []))
+    return n
+
+
+def pack_messages(items, header, text_limit=CARD_TEXT_LIMIT):
+    """items([{pr, login, desc, links, files:[(path, ext)]}])を順に貪欲に詰めてメッセージのリストを返す。
+
+    各メッセージ: {components, attach:[(path, name)], text, comps}。header は最初のメッセージ先頭に置く。
+    1カードが単独で上限を超えないよう、概要は header 分を含めて text_limit に収まるよう削る。
+    """
+    per_card_limit = text_limit - len(header)
+    msgs = []
+    cur = None
+    for it in items:
+        base = len(cur["attach"]) if cur else 0
+        names = ["video%d%s" % (base + n + 1, ext) for n, (_, ext) in enumerate(it["files"])]
+        card = build_card(it["pr"], it["login"], it["desc"], it["links"], names, limit=per_card_limit)
+        fits = False
+        if cur is not None:
+            fits = (cur["text"] + text_total([card]) <= text_limit
+                    and len(cur["attach"]) + len(names) <= MAX_MESSAGE_ATTACHMENTS
+                    and cur["comps"] + count_components([card]) <= MAX_MESSAGE_COMPONENTS)
+        if not fits:
+            cur = {"components": [], "attach": [], "text": 0, "comps": 0}
+            if not msgs:
+                h = {"type": 10, "content": header}
+                cur["components"].append(h)
+                cur["text"] += len(header)
+                cur["comps"] += 1
+            msgs.append(cur)
+            # 新メッセージでは添付名を 1 から振り直す
+            names = ["video%d%s" % (n + 1, ext) for n, (_, ext) in enumerate(it["files"])]
+            card = build_card(it["pr"], it["login"], it["desc"], it["links"], names, limit=per_card_limit)
+        cur["components"].append(card)
+        cur["attach"] += [(path, name) for (path, _), name in zip(it["files"], names)]
+        cur["text"] += text_total([card])
+        cur["comps"] += count_components([card])
+    return msgs
 
 
 def extract_videos(body):
@@ -253,12 +315,13 @@ def main():
     allowed = {"parse": []}
     header = "# 📅 %s の進捗" % now.astimezone(JST).strftime("%Y-%m-%d")
     print("[header] " + header)
-    if not dry_run:
-        post(webhook, {"content": header, "allowed_mentions": allowed})
 
     card_mode = (os.environ.get("DIGEST_FORMAT", "") or "card").strip().lower() != "text"
     print("DIGEST_FORMAT: " + ("card" if card_mode else "text"))
+    if not card_mode and not dry_run:
+        post(webhook, {"content": header, "allowed_mentions": allowed})
 
+    items = []
     with tempfile.TemporaryDirectory() as tmp:
         for _, pr in prs:
             body = strip_comments(pr.get("body") or "")
@@ -280,26 +343,35 @@ def main():
                     print("  PR #%d: リンク投稿にフォールバック (%s)" % (pr["number"], reason or "添付上限"))
 
             if card_mode:
-                # attachment:// で参照できる安全な ASCII 名にする
-                attach = [(path, "video%d%s" % (n + 1, os.path.splitext(name)[1])) for n, (path, name) in enumerate(attach)]
-                names = [name for _, name in attach]
-                card = build_card(pr, login, desc, links, names)
-                text_len = sum(len(c["content"]) for c in card["components"] if c["type"] == 10)
-                payload = {"flags": IS_COMPONENTS_V2, "allowed_mentions": allowed, "components": [card]}
-                if attach:
-                    payload["attachments"] = [{"id": n, "filename": name} for n, name in enumerate(names)]
-                size_info = "text %d 文字" % text_len
-            else:
-                content = build_content(pr, login, desc, links)
-                payload = {"allowed_mentions": allowed, "content": content}
-                size_info = "content %d 文字" % len(content)
-            print("[PR #%d] %s / 添付 %d 件 / リンク %d 件 / %s"
-                  % (pr["number"], pr["title"], len(attach), len(links), size_info))
+                items.append({"pr": pr, "login": login, "desc": desc, "links": links,
+                              "files": [(path, os.path.splitext(name)[1]) for path, name in attach]})
+                print("[PR #%d] %s / 添付 %d 件 / リンク %d 件" % (pr["number"], pr["title"], len(attach), len(links)))
+                continue
+
+            content = build_content(pr, login, desc, links)
+            payload = {"allowed_mentions": allowed, "content": content}
+            print("[PR #%d] %s / 添付 %d 件 / リンク %d 件 / content %d 文字"
+                  % (pr["number"], pr["title"], len(attach), len(links), len(content)))
             if dry_run:
                 print(json.dumps(payload, ensure_ascii=False, indent=2))
                 continue
-            post(webhook, payload, attach, with_components=card_mode)
+            post(webhook, payload, attach, with_components=False)
             time.sleep(1)
+
+        if card_mode:
+            msgs = pack_messages(items, header)
+            print("投稿メッセージ数: %d" % len(msgs))
+            for n, m in enumerate(msgs, 1):
+                payload = {"flags": IS_COMPONENTS_V2, "allowed_mentions": allowed, "components": m["components"]}
+                if m["attach"]:
+                    payload["attachments"] = [{"id": i, "filename": name} for i, (_, name) in enumerate(m["attach"])]
+                print("[message %d/%d] text %d 文字 / 添付 %d 件 / コンポーネント %d 個"
+                      % (n, len(msgs), m["text"], len(m["attach"]), m["comps"]))
+                if dry_run:
+                    print(json.dumps(payload, ensure_ascii=False, indent=2))
+                    continue
+                post(webhook, payload, m["attach"], with_components=True)
+                time.sleep(1)
 
 
 if __name__ == "__main__":
