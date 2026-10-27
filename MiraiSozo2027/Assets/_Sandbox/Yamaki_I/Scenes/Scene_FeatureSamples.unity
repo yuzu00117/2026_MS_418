@@ -802,9 +802,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70f54563842f48bfa64fbb11da4b21d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.WaveReaction
-  _reactiveTypes: []
-  _canReactToAnyType: 1
+  _canReactToElectromagnetic: 1
+  _canReactToUltrasound: 1
   _requiredSeconds: 3
+  _reactiveTypes: []
+  _canReactToAnyType: 0
 --- !u!1 &257631598
 GameObject:
   m_ObjectHideFlags: 0
@@ -986,7 +988,14 @@ MonoBehaviour:
   _sourceIndex: 0
   _sourceKind: 1
   _isFiringOnStart: 1
-  _muzzle: {fileID: 0}
+  _fireShape: 0
+  _fanRange: 6
+  _fanHalfAngle: 40
+  _fanCooldownSeconds: 0
+  _fanShotSeconds: 1
+  _fanShotSpeed: 20
+  _isFanAutoRepeat: 0
+  _muzzle: {fileID: 485796109}
   _aimOrigin: {fileID: 0}
   _ignoreRoot: {fileID: 285671917}
   _hitMask:
@@ -995,13 +1004,12 @@ MonoBehaviour:
   _triggerInteraction: 1
   _radius: 0.1
   _maxReflections: 8
-  _lineMaterial: {fileID: 0}
   _pointSpacing: 0.5
   _bendMode: 1
   _bendRange: 3
-  _bendReleaseMode: 0
-  _bendHoldSeconds: 2
-  _bendReturnSeconds: 1
+  _bendReleaseMode: 1
+  _bendHoldSeconds: 10
+  _bendReturnSeconds: 2
   _isAimLockedWhileHeld: 1
   _pointRadius: 0.3
   _pointLayer: 0
@@ -1019,7 +1027,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 823e90421c50475a9d98050712127b42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.BeamSourceInfo
-  _waveType: {fileID: 11400000, guid: c5dab73c0020e384cbfaf5e7956aec02, type: 2}
+  _waveKind: 0
+  _waveType: {fileID: 0}
   _energyPerSecond: 1
   _range: 30
   _isBendable: 1
@@ -1070,10 +1079,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70f54563842f48bfa64fbb11da4b21d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.WaveReaction
-  _reactiveTypes:
-  - {fileID: 11400000, guid: 21953a811a19f67419eff1a24511da1a, type: 2}
-  _canReactToAnyType: 0
+  _canReactToElectromagnetic: 0
+  _canReactToUltrasound: 1
   _requiredSeconds: 1
+  _reactiveTypes: []
+  _canReactToAnyType: 0
 --- !u!23 &340653031
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1334,7 +1344,14 @@ MonoBehaviour:
   _sourceIndex: 0
   _sourceKind: 1
   _isFiringOnStart: 1
-  _muzzle: {fileID: 0}
+  _fireShape: 0
+  _fanRange: 6
+  _fanHalfAngle: 40
+  _fanCooldownSeconds: 0
+  _fanShotSeconds: 1
+  _fanShotSpeed: 20
+  _isFanAutoRepeat: 0
+  _muzzle: {fileID: 665205662}
   _aimOrigin: {fileID: 0}
   _ignoreRoot: {fileID: 364363752}
   _hitMask:
@@ -1343,13 +1360,12 @@ MonoBehaviour:
   _triggerInteraction: 1
   _radius: 0.1
   _maxReflections: 8
-  _lineMaterial: {fileID: 0}
   _pointSpacing: 0.5
   _bendMode: 1
   _bendRange: 3
-  _bendReleaseMode: 0
-  _bendHoldSeconds: 2
-  _bendReturnSeconds: 1
+  _bendReleaseMode: 1
+  _bendHoldSeconds: 10
+  _bendReturnSeconds: 2
   _isAimLockedWhileHeld: 1
   _pointRadius: 0.3
   _pointLayer: 0
@@ -1367,7 +1383,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 823e90421c50475a9d98050712127b42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.BeamSourceInfo
-  _waveType: {fileID: 11400000, guid: 21953a811a19f67419eff1a24511da1a, type: 2}
+  _waveKind: 1
+  _waveType: {fileID: 0}
   _energyPerSecond: 1
   _range: 30
   _isBendable: 1
@@ -2672,7 +2689,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 823e90421c50475a9d98050712127b42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.BeamSourceInfo
-  _waveType: {fileID: 11400000, guid: 21953a811a19f67419eff1a24511da1a, type: 2}
+  _waveKind: 1
+  _waveType: {fileID: 0}
   _energyPerSecond: 1
   _range: 25
   _isBendable: 1
@@ -3027,9 +3045,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70f54563842f48bfa64fbb11da4b21d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.WaveReaction
-  _reactiveTypes: []
-  _canReactToAnyType: 1
+  _canReactToElectromagnetic: 1
+  _canReactToUltrasound: 1
   _requiredSeconds: 1
+  _reactiveTypes: []
+  _canReactToAnyType: 0
 --- !u!23 &927310984
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -4197,10 +4217,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70f54563842f48bfa64fbb11da4b21d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.WaveReaction
-  _reactiveTypes:
-  - {fileID: 11400000, guid: 21953a811a19f67419eff1a24511da1a, type: 2}
-  _canReactToAnyType: 0
+  _canReactToElectromagnetic: 0
+  _canReactToUltrasound: 1
   _requiredSeconds: 1
+  _reactiveTypes: []
+  _canReactToAnyType: 0
 --- !u!114 &1446005397
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4529,9 +4550,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70f54563842f48bfa64fbb11da4b21d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.WaveReaction
-  _reactiveTypes: []
-  _canReactToAnyType: 1
+  _canReactToElectromagnetic: 1
+  _canReactToUltrasound: 1
   _requiredSeconds: 0.5
+  _reactiveTypes: []
+  _canReactToAnyType: 0
 --- !u!1 &1500157953
 GameObject:
   m_ObjectHideFlags: 0
@@ -4645,10 +4668,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70f54563842f48bfa64fbb11da4b21d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.WaveReaction
-  _reactiveTypes:
-  - {fileID: 11400000, guid: c5dab73c0020e384cbfaf5e7956aec02, type: 2}
-  _canReactToAnyType: 0
+  _canReactToElectromagnetic: 1
+  _canReactToUltrasound: 0
   _requiredSeconds: 1.5
+  _reactiveTypes: []
+  _canReactToAnyType: 0
 --- !u!1 &1505059626
 GameObject:
   m_ObjectHideFlags: 0
@@ -4809,7 +4833,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 823e90421c50475a9d98050712127b42, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.BeamSourceInfo
-  _waveType: {fileID: 11400000, guid: c5dab73c0020e384cbfaf5e7956aec02, type: 2}
+  _waveKind: 0
+  _waveType: {fileID: 0}
   _energyPerSecond: 1
   _range: 25
   _isBendable: 1
@@ -5060,7 +5085,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3720786117580805148, guid: c8b3915861a55de4399092bfdebd9d45, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1700980796}
   m_SourcePrefab: {fileID: 100100000, guid: c8b3915861a55de4399092bfdebd9d45, type: 3}
 --- !u!1 &1538707845
 GameObject:
@@ -5468,6 +5496,31 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1659668716}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1700980792 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 3720786117580805148, guid: c8b3915861a55de4399092bfdebd9d45, type: 3}
+  m_PrefabInstance: {fileID: 1526837147}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1700980796
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1700980792}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 017c6f50fb824e479b916902fa2373db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Aura.Wave::Aura.Wave.WaveHitboxDebugger
+  _toggleKey: 96
+  _isVisibleOnStart: 0
+  _beamColor: {r: 1, g: 0.2, b: 0.2, a: 0.25}
+  _fanRangeColor: {r: 1, g: 0.8, b: 0.2, a: 0.1}
+  _fanFrontColor: {r: 1, g: 0.45, b: 0.1, a: 0.35}
+  _hitColor: {r: 1, g: 0, b: 0.4, a: 0.7}
+  _hitMarkSeconds: 0.3
+  _hitMarkRadius: 0.12
 --- !u!1 &1736422683
 GameObject:
   m_ObjectHideFlags: 0
@@ -5811,9 +5864,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70f54563842f48bfa64fbb11da4b21d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.WaveReaction
-  _reactiveTypes: []
-  _canReactToAnyType: 1
+  _canReactToElectromagnetic: 1
+  _canReactToUltrasound: 1
   _requiredSeconds: 3
+  _reactiveTypes: []
+  _canReactToAnyType: 0
 --- !u!1 &1830113212
 GameObject:
   m_ObjectHideFlags: 0
@@ -6037,10 +6092,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70f54563842f48bfa64fbb11da4b21d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.WaveReaction
-  _reactiveTypes:
-  - {fileID: 11400000, guid: 21953a811a19f67419eff1a24511da1a, type: 2}
-  _canReactToAnyType: 0
+  _canReactToElectromagnetic: 0
+  _canReactToUltrasound: 1
   _requiredSeconds: 0.5
+  _reactiveTypes: []
+  _canReactToAnyType: 0
 --- !u!1 &1878376887
 GameObject:
   m_ObjectHideFlags: 0
@@ -6398,10 +6454,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70f54563842f48bfa64fbb11da4b21d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.WaveReaction
-  _reactiveTypes:
-  - {fileID: 11400000, guid: c5dab73c0020e384cbfaf5e7956aec02, type: 2}
-  _canReactToAnyType: 0
+  _canReactToElectromagnetic: 1
+  _canReactToUltrasound: 0
   _requiredSeconds: 1
+  _reactiveTypes: []
+  _canReactToAnyType: 0
 --- !u!23 &2141531454
 MeshRenderer:
   m_ObjectHideFlags: 0
