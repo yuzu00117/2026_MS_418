@@ -2,7 +2,9 @@
 """直近 N 時間に develop へマージされた PR の機能紹介を Discord 進捗チャンネルへ投稿する。
 
 discord_daily_digest.yml から呼ばれる。設定はすべて環境変数で受け取る(ユーザー入力をシェルに展開しないため)。
-  GH_TOKEN, REPO, DISCORD_PROGRESS_WEBHOOK_URL, HOURS, DRY_RUN
+  GH_TOKEN, REPO, DISCORD_PROGRESS_WEBHOOK_URL, HOURS, DRY_RUN, PR_NUMBER
+PR_NUMBER(任意): 指定すると期間・マージ状態・base・Bot除外の絞り込みを無視し、その PR 1件だけを
+  通常と同じ形式で投稿する(未マージでも可。ローカルでのテスト投稿用)。DRY_RUN と併用できる。
 Webhook URL はログに出さない。
 """
 import datetime
@@ -97,7 +99,7 @@ def extract_videos(body):
 
 
 def run(cmd):
-    return subprocess.run(cmd, capture_output=True, text=True)
+    return subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace")
 
 
 def download(url, dest):
@@ -158,30 +160,46 @@ def main():
         sys.exit(1)
 
     now = datetime.datetime.now(datetime.timezone.utc)
-    since = now - datetime.timedelta(hours=hours)
-    r = run(["gh", "pr", "list", "--repo", repo, "--state", "merged", "--base", "develop",
-             "--limit", "100", "--search", "merged:>=" + since.strftime("%Y-%m-%dT%H:%M:%SZ"),
-             "--json", "number,title,body,url,author,mergedAt"])
-    if r.returncode != 0:
-        print("::error::gh pr list に失敗しました: " + r.stderr[:500])
-        sys.exit(1)
+    pr_number = os.environ.get("PR_NUMBER", "").strip()
+    if pr_number:
+        if not re.fullmatch(r"[0-9]+", pr_number):
+            print("::error::PR_NUMBER は数字(例: 58)で指定してください。")
+            sys.exit(1)
+        r = run(["gh", "pr", "view", pr_number, "--repo", repo,
+                 "--json", "number,title,body,url,author,mergedAt,createdAt"])
+        if r.returncode != 0:
+            print("::error::gh pr view に失敗しました: " + r.stderr[:500])
+            sys.exit(1)
+        pr = json.loads(r.stdout)
+        # 未マージ PR は mergedAt が無いので createdAt で代用する(embed の timestamp 用)。
+        pr["mergedAt"] = pr.get("mergedAt") or pr["createdAt"]
+        prs = [(None, pr)]
+        print("PR_NUMBER 指定: #%s のみ対象 (dry_run=%s)" % (pr_number, dry_run))
+    else:
+        since = now - datetime.timedelta(hours=hours)
+        r = run(["gh", "pr", "list", "--repo", repo, "--state", "merged", "--base", "develop",
+                 "--limit", "100", "--search", "merged:>=" + since.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                 "--json", "number,title,body,url,author,mergedAt"])
+        if r.returncode != 0:
+            print("::error::gh pr list に失敗しました: " + r.stderr[:500])
+            sys.exit(1)
 
-    prs = []
-    for pr in json.loads(r.stdout):
-        merged = datetime.datetime.fromisoformat(pr["mergedAt"].replace("Z", "+00:00"))
-        author = pr.get("author") or {}
-        login = author.get("login", "")
-        if merged < since:
-            continue
-        if author.get("is_bot") or login.endswith("[bot]") or login.startswith("app/"):
-            continue
-        prs.append((merged, pr))
-    prs.sort(key=lambda x: x[0])
+        prs = []
+        for pr in json.loads(r.stdout):
+            merged = datetime.datetime.fromisoformat(pr["mergedAt"].replace("Z", "+00:00"))
+            author = pr.get("author") or {}
+            login = author.get("login", "")
+            if merged < since:
+                continue
+            if author.get("is_bot") or login.endswith("[bot]") or login.startswith("app/"):
+                continue
+            prs.append((merged, pr))
+        prs.sort(key=lambda x: x[0])
 
-    if not prs:
-        print("対象期間(直近 %d 時間)に develop へマージされた PR はありません。何も投稿しません。" % hours)
-        return
-    print("対象 PR: %d 件 (dry_run=%s)" % (len(prs), dry_run))
+        if not prs:
+            print("対象期間(直近 %d 時間)に develop へマージされた PR はありません。何も投稿しません。" % hours)
+            return
+        print("対象 PR: %d 件 (dry_run=%s)" % (len(prs), dry_run))
 
     # PR 本文由来の @everyone / @here などを無効化する。
     allowed = {"parse": []}
