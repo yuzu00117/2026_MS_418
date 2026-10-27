@@ -131,7 +131,8 @@ jobs:
           # - thread_name は「#番号 [種別 → base] タイトル」形式。種別は head の最初の / より前(/ が無ければ head 全体)、
           #   base は省略せず全文。全体は Discord の上限 100 文字に収める(超える場合は [種別 → base] 部分を残し、タイトル側を末尾 … で切る)
           # - embed の「ブランチ」欄には head → base を全文で入れる(embed の field value 上限 1024 文字を超える場合のみ切り詰め)
-          # - description は先頭 300 文字に切り詰め、空なら「(説明なし)」
+          # - description は PR 本文からテンプレートのノイズ(HTML コメント・CodeRabbit 要約節・@coderabbitai summary 行)を除去し、
+          #   見出しを太字にして整形したうえで 400 文字以内に切り詰める(行区切りを優先し末尾 …)。整形後が空なら「(説明なし)」
           # - allowed_mentions は users に指定した ID(レビュー担当者・PR作成者)のみ許可する。
           #   parse は空のままにして、PR 本文由来の @everyone や @here を無効化する
           # - content にレビュー担当者のメンションと PR 作成者の表示を入れる(対応表に無ければプレーンテキスト)
@@ -151,6 +152,32 @@ jobs:
             def is_id: type == "string" and test("^[0-9]+$");
             # 種別: head の最初の / より前。/ を含まなければ head 全体(例: develop)
             def kind: if contains("/") then split("/")[0] else . end;
+            # 本文の整形: HTML コメント除去 → CodeRabbit 要約節と @coderabbitai summary 行の除去 → 見出しを太字化 → 空白整理
+            def clean_body:
+              gsub("<!--[\\s\\S]*?-->"; "")
+              | gsub("\r"; "")
+              | split("\n")
+              | reduce .[] as $l ({skip: false, out: []};
+                  if ($l | test("^## CodeRabbit による要約")) then (.skip = true)
+                  elif (.skip and ($l | test("^## "))) then (.skip = false | .out += [$l])
+                  elif .skip then .
+                  elif ($l | test("^\\s*@coderabbitai summary\\s*$")) then .
+                  else (.out += [$l]) end)
+              | .out
+              | map(if test("^#{1,6} ") then "**" + (sub("^#{1,6} "; "") | sub("\\s+$"; "")) + "**" else . end)
+              | join("\n")
+              | gsub("[ \t]+\n"; "\n")
+              | gsub("\n{3,}"; "\n\n")
+              | gsub("^\\s+|\\s+$"; "");
+            # 400 文字以内に切る。400 文字を超える場合は 399 文字以内の最後の改行位置で切って … を付ける(改行が無ければ 399 文字 + …)
+            def clip400:
+              if length <= 400 then .
+              else
+                .[0:399] as $head
+                | ($head | split("\n")) as $parts
+                | if ($parts | length) > 1 then ($parts[:-1] | join("\n")) + "…"
+                  else $head + "…" end
+              end;
             # スレッド名: 先頭部分("#番号 [種別 → base] ")は残し、全体が 100 文字を超える場合はタイトル側を末尾 … で切る
             ("#" + $number + " [" + ($head | kind) + " → " + $base + "] ") as $prefix
             | ($prefix + $title) as $thread0
@@ -159,7 +186,7 @@ jobs:
                else $thread0 end) as $thread
             # embed のブランチ欄: 全文(1024 文字を超える場合のみ安全弁で切り詰め)
             | (($head + " → " + $base) | if length > 1024 then .[0:1023] + "…" else . end) as $branch
-            | ($body | if length > 300 then .[0:300] + "…" else . end) as $excerpt
+            | ($body | clean_body | clip400) as $excerpt
             # 対応表は空文字・不正JSON・オブジェクト以外でも落ちずに {} 扱いにする
             | (try ($id_map | fromjson) catch null) as $map0
             | (if ($map0 | type) == "object" then $map0 else {} end) as $map
