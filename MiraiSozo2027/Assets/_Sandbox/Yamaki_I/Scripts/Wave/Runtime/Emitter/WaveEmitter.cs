@@ -13,8 +13,9 @@ namespace Aura.Wave
     /// ・当たった物に WaveReaction（O3、O4）と ReactionTrigger があれば、ビームを渡す。弱点（WeakPoint、O5）なら強さに倍率を掛ける
     /// ・ビームは、一定の間隔の点（BeamPoint）と点どうしをつなぐ直線で作る。
     ///   点を念力で掴んで動かすと、掴んだ点の前後が曲がる（BeamSourceInfo の Is Bendable がオンのときだけ）
-    /// ・撃ち方は「ビーム（点と線）」と「扇（近距離）」の 2 つ（Fire Shape）。扇は正面から「扇の半角（度）」以内の物すべてに
-    ///   同時に波を渡す。曲げ・跳ね返りはせず、壁の裏には届かない
+    /// ・撃ち方は「ビーム（点と線）」と「扇（近距離）」の 2 つ（Fire Shape）。ビームは引き金を引いている間ずっと出る
+    ///   扇はショットガンのような単発で、引き金を引いた瞬間に 1 発撃つ。正面から「扇の半角（度）」以内の物すべてに、
+    ///   広がる輪の先頭が届いたときに波を渡す。曲げ・跳ね返りはせず、壁の裏には届かない
     public sealed class WaveEmitter : MonoBehaviour
     {
         private const int MaxReflectionLimit = 16;           ///< Max Reflections に決められる最大の回数
@@ -26,6 +27,7 @@ namespace Aura.Wave
         private const float MinBendRange = 0.1f;             ///< Bend Range に決められる最小の範囲（m）
         private const float BodyLineWidth = 0.01f;           ///< ビームの実体の線（点どうしをつなぐ直線）を見せるときの太さ（m）
         private const float BodyLineWhiteBlend = 0.5f;       ///< ビームの実体の線の色を、ビームの色から白へ寄せる割合
+        private const float MinFanShotSpeed = 0.1f;          ///< 「扇の波の速さ（m/s）」に決められる最小の速さ
 
         [Header("ビームの種類")]
         [InspectorLabel("ビームの情報")]
@@ -56,14 +58,16 @@ namespace Aura.Wave
 
         [InspectorLabel("始めから出し続ける")]
         [Tooltip("オンにすると、始めからビームを出し続ける（フィールドのギミック用）。入力の部品が無くても出る\n" +
-                 "Set Trigger Held を UnityEvent から呼ぶと、出す・止めるを切り替えられる")]
+                 "Set Trigger Held を UnityEvent から呼ぶと、出す・止めるを切り替えられる\n" +
+                 "「撃ち方」が「扇（近距離）」なら、始めに 1 発だけ撃つ（撃ち続けるには「押し続けると連射」をオンにする）")]
         [SerializeField] private bool _isFiringOnStart;               ///< 始めからビームを出し続けるか
 
         [Header("撃ち方")]
         [InspectorLabel("撃ち方")]
         [Tooltip("波の出し方。実行中に変えてもよい（引き金を引いたままなら、次のフレームから新しい撃ち方で出る）\n" +
-                 "ビーム（点と線）: 長射程。素材で跳ね返り、点を念力で掴んで曲げられる\n" +
-                 "扇（近距離）: 低射程・広範囲。「扇の届く距離（m）」の中で、正面から「扇の半角（度）」以内の物すべてに同時に波を渡す。曲げ・跳ね返りはせず、壁の裏には届かない\n" +
+                 "ビーム（点と線）: 長射程。引き金を引いている間ずっと出る。素材で跳ね返り、点を念力で掴んで曲げられる\n" +
+                 "扇（近距離）: 低射程・広範囲の単発（ショットガンのように、引き金を引いた瞬間に 1 発撃つ）。「扇の届く距離（m）」の中で、正面から「扇の半角（度）」以内の物すべてに、" +
+                 "広がる輪の先頭が届いたときに波を渡す。曲げ・跳ね返りはせず、壁の裏には届かない\n" +
                  "切り替えの入力は、ゲームの側から Toggle Fire Shape を呼ぶ（チームの PlayerController では B キー／ゲームパッドの十字キーの上）")]
         [SerializeField] private WaveFireShape _fireShape = WaveFireShape.Beam;  ///< 撃ち方
 
@@ -77,10 +81,31 @@ namespace Aura.Wave
                  "当たるかは、出る位置から見た「候補のいちばん近い点」の向きで決める（大きい物は、端が扇に入っていても、いちばん近い点が外なら当たらない）")]
         [SerializeField, Range(1.0f, 89.0f)] private float _fanHalfAngle = 40.0f;  ///< 扇の半角（度）
 
+        [InspectorLabel("扇の次を撃てるまで（秒）")]
+        [Tooltip("扇を 1 発撃ってから、次を撃てるまでの時間（秒）。この間に引き金を引き直しても撃たない。0 なら引き直すたびに撃てる")]
+        [SerializeField, Min(0.0f)] private float _fanShotInterval = 0.5f;  ///< 扇を 1 発撃ってから、次を撃てるまでの時間（秒）
+
+        [InspectorLabel("扇の 1 発の量（秒分）")]
+        [Tooltip("扇の 1 発で受け手に渡す量を、ビームを当て続ける秒数で表したもの。渡る量は「強さ（1 秒あたり）」（BeamSourceInfo）× これ × 弱点の倍率\n" +
+                 "例: 1 なら、強さ 1 の 1 発で、受け手の「動くまでの秒数（強さ 1）」が 1 の物が動く。0.5 なら 2 発要る（受け手の「1 秒で減る量」で、撃つ間に少し減る）\n" +
+                 "1 発の中で、同じ受け手には 1 回だけ渡す")]
+        [SerializeField, Min(0.0f)] private float _fanShotSeconds = 1.0f;  ///< 扇の 1 発で渡す量（ビームを当て続ける秒数で数える）
+
+        [InspectorLabel("扇の波の速さ（m/s）")]
+        [Tooltip("撃った 1 発の輪が、広がりながら進む速さ（m/s）。物に波が渡るのは、先頭の輪がその物に届いたとき（遠い物ほど少し遅れる）\n" +
+                 "1 発の当たる物は撃った瞬間に決める。撃った後に撃ち手が動いても、輪は撃った位置から広がる\n" +
+                 "最後の輪が「扇の届く距離（m）」を越えると、その 1 発は終わる")]
+        [SerializeField, Min(MinFanShotSpeed)] private float _fanShotSpeed = 20.0f;  ///< 扇の 1 発の輪が進む速さ（m/s）
+
+        [InspectorLabel("押し続けると連射")]
+        [Tooltip("オンにすると、引き金を引いている間、「扇の次を撃てるまで（秒）」ごとに撃ち続ける（扇のギミック・タレット用）\n" +
+                 "オフなら、引き金を引いた瞬間に 1 発だけ撃つ。次を撃つには引き直す")]
+        [SerializeField] private bool _isFanAutoRepeat;  ///< 引き金を引いている間、扇を撃ち続けるか
+
         [InspectorLabel("扇の輪の数")]
-        [Tooltip("扇の見た目で、同時に見せる輪の数。輪の間隔は「扇の届く距離（m）」をこの数で割ったもの（多いほど詰まって見える）\n" +
+        [Tooltip("扇の 1 発で出す輪の数。輪の間隔は「扇の届く距離（m）」をこの数で割ったもの（多いほど詰まって見え、1 発が終わるまでが長くなる）\n" +
                  "見た目だけで、当たり判定は変わらない。実行中に変えてもよい")]
-        [SerializeField, Range(1, 32)] private int _fanRingCount = FanWaveLine.DefaultRingCount;  ///< 扇の見た目で、同時に見せる輪の数
+        [SerializeField, Range(1, 32)] private int _fanRingCount = FanWaveLine.DefaultRingCount;  ///< 扇の 1 発で出す輪の数
 
         [InspectorLabel("輪が薄れ始める位置（割合）")]
         [Tooltip("扇の輪が薄れ始める位置。「扇の届く距離（m）」に対する割合（0〜1）。ここから先で薄れ、届く距離で消える\n" +
@@ -217,11 +242,11 @@ namespace Aura.Wave
                  "点そのものは、Scene ビューに印（水色: 掴める点、灰: 掴めない点、橙: 支点、赤: 掴まれている支点）で出る")]
         [SerializeField] private bool _isBodyLineVisible;  ///< ビームの実体の線を見せるか（確かめる用）
 
-        private readonly List<InfoBeamHit> _lastHits = new List<InfoBeamHit>();                ///< 最後のフレームでビームが当たった物（当たった順）
+        private readonly List<InfoBeamHit> _lastHits = new List<InfoBeamHit>();                ///< このフレームで波を渡した物（渡した順）
         private readonly HashSet<ReactionTrigger> _deliveredTriggers = new HashSet<ReactionTrigger>();  ///< このフレームで、もうビームを渡した受け手
+        private readonly List<FanWaveShot> _fanShots = new List<FanWaveShot>();  ///< 扇の 1 発（輪が進んでいるものと、使い回すために取っておくもの）
         private InfoBeamLine _beamLine;
         private InfoBeamLine _bodyLine;      ///< ビームの実体の線（確かめる用）
-        private FanWaveLine _fanLine;        ///< 扇の見た目（進むほど広がる輪）
         private BeamPointChain _chain;       ///< 点と線のビームの点と曲げ方。Chain から使う
         private Vector3 _lockedAimDirection; ///< 止めているビームを出す向き（Is Aim Locked While Held）
         private bool _hasLockedAim;          ///< ビームを出す向きを止めているか
@@ -229,6 +254,8 @@ namespace Aura.Wave
         private WaveFireShape _appliedFireShape;  ///< 最後に反映した撃ち方。Inspector での変更に気付くために持つ
         private BeamSourceInfo _foundSource; ///< 「ビームの情報」が空のときに、自分か親から見つけた BeamSourceInfo
         private bool _isTriggerHeld;         ///< 引き金を引いているか
+        private bool _isFanShotRequested;    ///< 引き金を引いた瞬間か。扇では、次の LateUpdate で 1 発撃つ
+        private float _nextFanShotTime;      ///< 扇の次を撃てる時刻
 
         /// @brief （古い形）出せるビームを選び直した後に起きる
         public event Action<BeamSourceInfo> SourceChanged;
@@ -266,7 +293,8 @@ namespace Aura.Wave
             set => _canSwitchWaveKindByInput = value;
         }
 
-        /// @brief 撃ち方（ビーム/扇）。変えると今の波を片付け、引き金を引いたままなら次のフレームから新しい撃ち方で出る
+        /// @brief 撃ち方（ビーム/扇）。変えると今のビームを片付け、引き金を引いたままなら次のフレームから新しい撃ち方で出る
+        /// 扇は引いた瞬間に撃つので、引いたまま扇に変えても撃たない（「押し続けると連射」がオンなら撃つ）。撃った後の扇の輪は、変えても最後まで進む
         public WaveFireShape FireShape
         {
             get => _fireShape;
@@ -277,10 +305,27 @@ namespace Aura.Wave
             }
         }
 
-        /// @brief ビームを出しているか
+        /// @brief 引き金を引いていて、撃てる状態か（波の種類が決まっていて、この部品が有効か）
+        /// ビームなら、出している最中。扇は 1 発ずつ撃つので、引いているかだけを表す（撃った 1 発の輪は IsFanShotFlying）
         public bool IsFiring => _isTriggerHeld && CurrentType != null && isActiveAndEnabled;
 
-        /// @brief 最後のフレームでビームが当たった物（当たった順）。出していないときは空
+        /// @brief 撃った扇の輪が、まだ進んでいるか
+        public bool IsFanShotFlying
+        {
+            get
+            {
+                foreach (FanWaveShot shot in _fanShots)
+                {
+                    if (shot.IsActive)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        }
+
+        /// @brief このフレームで波を渡した物（渡した順）。ビームが当たった物と、扇の 1 発の輪の先頭が届いた物。無ければ空
         public IReadOnlyList<InfoBeamHit> LastHits => _lastHits;
 
         /// @brief この下のコライダーには、ビームが当たらない
@@ -339,7 +384,8 @@ namespace Aura.Wave
         // 公開の操作
         //============================================================
 
-        /// @brief 引き金の状態を伝える。入力の部品から毎フレーム呼んでよい。押している間ビームを出す
+        /// @brief 引き金の状態を伝える。入力の部品から毎フレーム呼んでよい。ビームは押している間出す
+        /// 扇は、押した瞬間に 1 発撃つ（「押し続けると連射」がオンなら、押している間「扇の次を撃てるまで（秒）」ごとに撃つ）
         /// ギミックのビームなら、UnityEvent（スイッチの On Activated など）から呼んで、出す・止めるを切り替える
         /// @param isHeld 引き金を引いているか
         [ShowInEventMenu]
@@ -353,6 +399,9 @@ namespace Aura.Wave
             if (isHeld)
             {
                 MarkSourceKind();
+                // 扇は、次の LateUpdate で（カメラと手が動いた後の狙いで）撃つ。それまでに離しても撃つ
+                // 無効な間に引いた分は、有効になったときに撃たない
+                _isFanShotRequested = isActiveAndEnabled;
             }
             else
             {
@@ -449,8 +498,6 @@ namespace Aura.Wave
             _beamLine.Hide();
             _bodyLine = InfoBeamLine.Create("InfoBeamBody", transform, _lineMaterial);
             _bodyLine.Hide();
-            _fanLine = FanWaveLine.Create("FanWave", transform, _lineMaterial);
-            _fanLine.Hide();
             _sourceIndex = HasSources ? Mathf.Clamp(_sourceIndex, 0, _sources.Length - 1) : 0;
             _appliedSourceIndex = _sourceIndex;
             _appliedFireShape = _fireShape;
@@ -474,6 +521,12 @@ namespace Aura.Wave
         private void OnDisable()
         {
             HideBeam();
+            // 撃った扇の輪も止める（まだ届いていない物には渡さない）
+            foreach (FanWaveShot shot in _fanShots)
+            {
+                shot.End();
+            }
+            _isFanShotRequested = false;
         }
 
         private void Update()
@@ -493,21 +546,24 @@ namespace Aura.Wave
         private void LateUpdate()
         {
             // カメラと手が動いた後に、波の判定と見た目を合わせる
-            if (IsFiring)
+            _lastHits.Clear();
+            if (_fireShape == WaveFireShape.Beam && IsFiring)
             {
-                if (_fireShape == WaveFireShape.Fan)
-                {
-                    UpdateFan(Time.deltaTime);
-                }
-                else
-                {
-                    UpdateBeam(Time.deltaTime);
-                }
+                UpdateBeam(Time.deltaTime);
             }
             else
             {
                 HideBeam();
             }
+
+            // 扇は、引いた瞬間（連射なら、引いている間ずっと）に、次を撃てる時刻を過ぎていれば 1 発撃つ
+            bool isFanShotWanted = _isFanShotRequested || (_isFanAutoRepeat && _isTriggerHeld);
+            _isFanShotRequested = false;
+            if (_fireShape == WaveFireShape.Fan && isFanShotWanted && CurrentType != null && Time.time >= _nextFanShotTime)
+            {
+                FireFanShot();
+            }
+            UpdateFanShots();
         }
 
         //============================================================
@@ -546,35 +602,79 @@ namespace Aura.Wave
             }
         }
 
-        private void UpdateFan(float deltaTime)
+        /// @brief 扇を 1 発撃つ。撃った瞬間の狙いで、扇の中で当たる物を集めておく。波を渡すのは、輪の先頭が届いたとき（UpdateFanShots）
+        private void FireFanShot()
         {
             BeamSourceInfo source = CurrentSource;
             Transform muzzle = Muzzle;
             Vector3 direction = GetAimDirection(muzzle, _fanRange);
-            float energy = source.EnergyPerSecond * deltaTime;
-            TraceFanWave(source.WaveType, muzzle.position, direction, energy);
-
-            // 受け手の処理で波が止められた（この部品が無効にされたなど）ときは、見た目を出し直さない
-            if (!IsFiring)
-            {
-                _fanLine.Hide();
-                return;
-            }
-            WaveType type = source.WaveType;
-            float phase = Time.time * type.ScrollSpeed;
-            _fanLine.RingCount = _fanRingCount;
-            _fanLine.FarFadeStart = _fanRingFadeStart;
-            _fanLine.FarWidthScale = _fanRingFarWidthScale;
-            _fanLine.Draw(muzzle.position, direction, muzzle.up, _fanHalfAngle, _fanRange, type, phase);
+            FanWaveShot shot = GetIdleFanShot();
+            shot.Begin(muzzle.position, direction, muzzle.up, _fanRange, _fanHalfAngle, source.WaveType,
+                source.EnergyPerSecond * _fanShotSeconds, Time.time);
+            CollectFanHits(shot);
+            _nextFanShotTime = Time.time + _fanShotInterval;
         }
 
-        /// @brief 扇の中の物を調べて、ビームと同じ決まりで波を渡す。曲げ・跳ね返りはしない
-        /// 近くの候補を球で集め、正面から「扇の半角（度）」以内に絞り、最後に出る位置から遮蔽のレイを 1 本飛ばして、壁の裏の物を除く
-        private void TraceFanWave(WaveType type, Vector3 origin, Vector3 direction, float energy)
+        /// @brief 撃った扇の 1 発を進める。輪の先頭（波面）が届いた物に、近い順に波を渡し、輪を描く
+        /// 最後の輪が届く距離を越え、渡す物も残っていなければ、その 1 発を終える
+        private void UpdateFanShots()
         {
-            _lastHits.Clear();
-            _deliveredTriggers.Clear();
-            int count = BeamPhysics.OverlapSphere(origin, _fanRange, _hitMask, _triggerInteraction, IgnoreRoot,
+            foreach (FanWaveShot shot in _fanShots)
+            {
+                if (!shot.IsActive)
+                {
+                    continue;
+                }
+                float frontDistance = (Time.time - shot.StartTime) * Mathf.Max(MinFanShotSpeed, _fanShotSpeed);
+                while (shot.TryTakeArrivedHit(frontDistance, out RaycastHit hit))
+                {
+                    // 届く前に消えた物には渡さない
+                    if (hit.collider != null)
+                    {
+                        Deliver(shot.Type, shot.Energy, hit, 0, false, shot.DeliveredTriggers);
+                    }
+                }
+                // 受け手の処理でこの部品が無効にされたときは、1 発はもう終わっている
+                if (!shot.IsActive)
+                {
+                    continue;
+                }
+
+                FanWaveLine line = shot.Line;
+                line.RingCount = _fanRingCount;
+                line.FarFadeStart = _fanRingFadeStart;
+                line.FarWidthScale = _fanRingFarWidthScale;
+                bool hasRingsLeft = line.DrawShot(shot.Origin, shot.Direction, shot.Up, shot.HalfAngle, shot.Range, shot.Type,
+                    frontDistance);
+                if (!hasRingsLeft && !shot.HasPendingHits)
+                {
+                    shot.End();
+                }
+            }
+        }
+
+        /// @brief 輪が進んでいない扇の 1 発を返す。すべて進んでいれば、新しく作る（輪の見た目も 1 つ作る）
+        private FanWaveShot GetIdleFanShot()
+        {
+            foreach (FanWaveShot shot in _fanShots)
+            {
+                if (!shot.IsActive)
+                {
+                    return shot;
+                }
+            }
+            var created = new FanWaveShot(FanWaveLine.Create("FanWave " + _fanShots.Count, transform, _lineMaterial));
+            _fanShots.Add(created);
+            return created;
+        }
+
+        /// @brief 扇の中で当たる物を集める。曲げ・跳ね返りはしない
+        /// 近くの候補を球で集め、正面から「扇の半角（度）」以内に絞り、最後に出る位置から遮蔽のレイを 1 本飛ばして、壁の裏の物を除く
+        private void CollectFanHits(FanWaveShot shot)
+        {
+            Vector3 origin = shot.Origin;
+            Vector3 direction = shot.Direction;
+            int count = BeamPhysics.OverlapSphere(origin, shot.Range, _hitMask, _triggerInteraction, IgnoreRoot,
                 out Collider[] candidates);
             for (int i = 0; i < count; ++i)
             {
@@ -588,12 +688,13 @@ namespace Aura.Wave
                     // 出る位置が候補の中にある物には渡さない（内側からのレイは本人に当たらず、遮蔽を確かめられない）
                     continue;
                 }
-                if (Vector3.Angle(direction, toTarget) > _fanHalfAngle)
+                if (Vector3.Angle(direction, toTarget) > shot.HalfAngle)
                 {
                     continue;
                 }
 
                 // 遮蔽のレイ。最初に当たったのが本人でなければ、間に物がある（壁の裏）ので渡さない
+                // 当たりの distance（出る位置からの距離）で、輪の先頭が届く時が決まる
                 float targetDistance = toTarget.magnitude;
                 if (!BeamPhysics.TryCast(origin, toTarget / targetDistance, 0.0f, targetDistance + SurfaceOffset,
                         _hitMask, _triggerInteraction, IgnoreRoot, out RaycastHit hit)
@@ -601,8 +702,9 @@ namespace Aura.Wave
                 {
                     continue;
                 }
-                Deliver(type, energy, hit, 0, false);
+                shot.AddHit(hit);
             }
+            shot.SortHits();
         }
 
         /// @brief 出る位置から見た、候補のいちばん近い点を返す
@@ -621,7 +723,6 @@ namespace Aura.Wave
         /// 届く距離は、Bump なら曲げる前の元の線の長さで、Redirect なら曲げた後の道のりで数える
         private void TraceChainBeam(BeamSourceInfo source, Vector3 origin, Vector3 direction, float range, float energy)
         {
-            _lastHits.Clear();
             _deliveredTriggers.Clear();
             bool isBendable = source.IsBendable;
             BeamPointChain chain = Chain;
@@ -709,7 +810,7 @@ namespace Aura.Wave
                     }
 
                     bool isReflected = CanReflect(hit, segmentDirection, reflectionCount, out Vector3 normal);
-                    Deliver(type, energy, hit, reflectionCount, isReflected);
+                    Deliver(type, energy, hit, reflectionCount, isReflected, _deliveredTriggers);
                     float remaining = legLength - hitU;
                     if (!isReflected || remaining <= 0.0f)
                     {
@@ -758,7 +859,9 @@ namespace Aura.Wave
         }
 
         /// @brief 当たった物にビームを渡す。弱点なら倍率を掛け、WaveReaction の受け手があれば渡す
-        private void Deliver(WaveType type, float energy, in RaycastHit hit, int reflectionCount, bool isReflected)
+        /// @param deliveredTriggers もう渡した受け手。ここに入っている受け手には渡さない（ビームは 1 フレームごと、扇は 1 発ごとに空にする）
+        private void Deliver(WaveType type, float energy, in RaycastHit hit, int reflectionCount, bool isReflected,
+            HashSet<ReactionTrigger> deliveredTriggers)
         {
             float multiplier = ObjectInfoLookup.TryGet(hit.collider, out WeakPoint weakPoint)
                 ? weakPoint.GetMultiplier(type)
@@ -767,10 +870,10 @@ namespace Aura.Wave
                 reflectionCount, isReflected);
             _lastHits.Add(beamHit);
 
-            // 同じ受け手には、1 本のビーム（1 フレーム）で 1 回だけ渡す（跳ね返って、また同じ受け手に当たっても渡さない）
+            // 同じ受け手には、1 本のビーム（1 フレーム）・扇の 1 発で 1 回だけ渡す（跳ね返って、また同じ受け手に当たっても渡さない）
             if (ObjectInfoLookup.TryGet(hit.collider, out WaveReaction reaction)
                 && ReactionTrigger.TryGetTrigger(reaction, out ReactionTrigger trigger)
-                && _deliveredTriggers.Add(trigger))
+                && deliveredTriggers.Add(trigger))
             {
                 trigger.ReceiveBeam(beamHit);
             }
@@ -820,7 +923,7 @@ namespace Aura.Wave
                 return;
             }
             _appliedFireShape = _fireShape;
-            // 今の波を片付ける。引き金を引いたままなら、次のフレームの LateUpdate から新しい撃ち方で出る
+            // 今のビームを片付ける。引き金を引いたままなら、次のフレームの LateUpdate から新しい撃ち方で出る（撃った扇の輪は最後まで進む）
             HideBeam();
             FireShapeChanged?.Invoke(_fireShape);
         }
@@ -835,9 +938,9 @@ namespace Aura.Wave
             }
         }
 
+        /// @brief ビーム（点と線）を片付ける。撃った扇の輪はそのまま進む
         private void HideBeam()
         {
-            _lastHits.Clear();
             if (_beamLine != null)
             {
                 _beamLine.Hide();
@@ -845,10 +948,6 @@ namespace Aura.Wave
             if (_bodyLine != null)
             {
                 _bodyLine.Hide();
-            }
-            if (_fanLine != null)
-            {
-                _fanLine.Hide();
             }
             _hasLockedAim = false;
             _chain?.Stop();

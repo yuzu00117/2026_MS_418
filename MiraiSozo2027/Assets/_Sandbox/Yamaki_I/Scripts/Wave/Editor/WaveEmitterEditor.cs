@@ -62,6 +62,10 @@ namespace Aura.Wave.Editor
         {
             "_fanRange",
             "_fanHalfAngle",
+            "_fanShotInterval",
+            "_fanShotSeconds",
+            "_fanShotSpeed",
+            "_isFanAutoRepeat",
             "_fanRingCount",
             "_fanRingFadeStart",
             "_fanRingFarWidthScale",

@@ -4,9 +4,9 @@ using UnityEngine.Rendering;
 
 namespace Aura.Wave
 {
-    /// @brief 扇（近距離）の波の見た目。出る位置から前へ、輪を広げながら流す（扇の半角と同じ広がりの円すいに沿う）
+    /// @brief 扇（近距離）の 1 発の見た目。撃った位置から前へ、輪を広げながら進める（扇の半角と同じ広がりの円すいに沿う）
     /// 見た目だけで、当たり判定には関わらない（判定は WaveEmitter の扇の処理が行う）
-    /// 色・太さ・流れる速さは、ビームと同じく WaveType から読む。輪の数・薄れ方・太くなり方は、描く前にプロパティで渡す
+    /// 色・太さは、ビームと同じく WaveType から読む。輪の数・薄れ方・太くなり方は、描く前にプロパティで渡す
     public sealed class FanWaveLine : MonoBehaviour
     {
         public const int DefaultRingCount = 8;               ///< 同時に見せる輪の数の既定
@@ -25,7 +25,7 @@ namespace Aura.Wave
         private float _farFadeStart = DefaultFarFadeStart;
         private float _farWidthScale = DefaultFarWidthScale;
 
-        /// @brief 同時に見せる輪の数（1 以上）。輪の間隔は、届く距離をこの数で割ったもの
+        /// @brief 1 発で出す輪の数（1 以上）。輪の間隔は、届く距離をこの数で割ったもの
         public int RingCount {
             get => _ringCount;
             set => _ringCount = Mathf.Max(1, value);
@@ -58,23 +58,24 @@ namespace Aura.Wave
             return fanLine;
         }
 
-        /// @brief 扇の輪を描く。輪を広げながら前へ流れて見える
+        /// @brief 撃った 1 発の輪を描く。先頭の輪の後ろに「届く距離 ÷ 輪の数」の間隔で輪が続き、撃った位置から順に出て、広がりながら前へ進む
         /// 輪は、出る位置から同じ距離の点を、扇の半角の円すいの縁に沿って結んだもの（球面に広がる波の、いちばん外の縁）
-        /// なので、いちばん外の輪の縁が届く距離にちょうど届く。輪の中心は、出す向きの上で、その距離の cos（半角）倍の位置
-        /// @param origin 出る位置
-        /// @param direction 出す向き（正規化したもの）
+        /// なので、輪の縁が届く距離にちょうど届いたところで消える。輪の中心は、出す向きの上で、その距離の cos（半角）倍の位置
+        /// @param origin 撃った位置
+        /// @param direction 撃った向き（正規化したもの）
         /// @param up 輪の面の向きを決める軸（ふつうは出る位置の上の向き）
         /// @param halfAngle 扇の半角（度）
         /// @param range 届く距離（m）
-        /// @param type 波の種類（色、太さ、流れる速さ）
-        /// @param phase 波の位相（m）。時間とともに増やすと輪が前へ流れて見える
-        public void Draw(Vector3 origin, Vector3 direction, Vector3 up, float halfAngle, float range, WaveType type,
-            float phase)
+        /// @param type 波の種類（色、太さ）
+        /// @param frontDistance 先頭の輪の、撃った位置からの距離（m）。撃ってからの時間 × 速さ
+        /// @return まだ届く距離を越えていない輪があれば true（false なら、この 1 発の輪はすべて通り過ぎた）
+        public bool DrawShot(Vector3 origin, Vector3 direction, Vector3 up, float halfAngle, float range, WaveType type,
+            float frontDistance)
         {
             if (type == null || range <= MinRadius || direction.sqrMagnitude < 0.5f)
             {
                 Hide();
-                return;
+                return false;
             }
 
             // 輪の面を張る 2 本の向き（どちらも出す向きと直交する）。up が向きとほぼ平行で決まらないときは、代わりの軸を使う
@@ -95,11 +96,10 @@ namespace Aura.Wave
 
             EnsureRings(_ringCount);
             float spacing = range / _ringCount;
-            float offset = Mathf.Repeat(phase, spacing);
             for (int i = 0; i < _rings.Count; ++i)
             {
                 LineRenderer ring = _rings[i];
-                float distance = offset + spacing * i;  // 出る位置から輪の縁までの距離（m）
+                float distance = frontDistance - spacing * i;  // 撃った位置から輪の縁までの距離（m）。負ならまだ出ていない
                 float radius = distance * radiusScale;
                 if (i >= _ringCount || radius < MinRadius || distance > range)
                 {
@@ -126,6 +126,8 @@ namespace Aura.Wave
                 ring.endColor = color;
                 ring.enabled = true;
             }
+            // 最後の輪が届く距離を越えるまでは、まだ輪が残っている
+            return frontDistance - spacing * (_ringCount - 1) <= range;
         }
 
         /// @brief 輪を消す
