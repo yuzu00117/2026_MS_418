@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 namespace Aura.Wave
 {
     /// @brief 扇（近距離）の 1 発の見た目。撃った位置から前へ、輪を広げながら進める（扇の半角と同じ広がりの円すいに沿う）
-    /// 見た目だけで、当たり判定には関わらない（判定は WaveEmitter の扇の処理が行う）
+    /// 扇の今の見た目（FanRingView）が使う。見た目だけで、当たり判定には関わらない（判定は WaveEmitter の扇の処理が行う）
     /// 色・太さは、ビームと同じく WaveType から読む。輪の数・薄れ方・太くなり方は、描く前にプロパティで渡す
     public sealed class FanWaveLine : MonoBehaviour
     {

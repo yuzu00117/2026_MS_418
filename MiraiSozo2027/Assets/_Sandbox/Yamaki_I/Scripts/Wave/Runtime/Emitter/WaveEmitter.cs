@@ -15,7 +15,10 @@ namespace Aura.Wave
     ///   点を念力で掴んで動かすと、掴んだ点の前後が曲がる（BeamSourceInfo の Is Bendable がオンのときだけ）
     /// ・撃ち方は「ビーム（点と線）」と「扇（近距離）」の 2 つ（Fire Shape）。ビームは引き金を引いている間ずっと出る
     ///   扇はショットガンのような単発で、引き金を引いた瞬間に 1 発撃つ。正面から「扇の半角（度）」以内の物すべてに、
-    ///   広がる輪の先頭が届いたときに波を渡す。曲げ・跳ね返りはせず、壁の裏には届かない
+    ///   波面（見た目では輪の先頭）が届いたときに波を渡す。曲げ・跳ね返りはせず、壁の裏には届かない
+    /// ・これは波の実体（当たり判定と、波を渡すこと）だけを受け持つ。見た目は、同じ GameObject に付けた見た目の部品
+    ///   （ビームは IBeamWaveView、扇は IFanWaveView）に形を渡して描かせる。部品が無ければ、再生を始めるときに今の見た目
+    ///   （BeamLineView、FanRingView）を足す。見た目の部品を替えても、当たり方は変わらない
     public sealed class WaveEmitter : MonoBehaviour
     {
         private const int MaxReflectionLimit = 16;           ///< Max Reflections に決められる最大の回数
@@ -28,6 +31,7 @@ namespace Aura.Wave
         private const float BodyLineWidth = 0.01f;           ///< ビームの実体の線（点どうしをつなぐ直線）を見せるときの太さ（m）
         private const float BodyLineWhiteBlend = 0.5f;       ///< ビームの実体の線の色を、ビームの色から白へ寄せる割合
         private const float MinFanShotSpeed = 0.1f;          ///< 「扇の波の速さ（m/s）」に決められる最小の速さ
+        private const float MinFanRepeatInterval = 0.1f;     ///< 「押し続けると連射」で撃つ間隔の最小（秒）。クールタイムが 0 でも、毎フレームは撃たない
 
         [Header("ビームの種類")]
         [InspectorLabel("ビームの情報")]
@@ -67,7 +71,7 @@ namespace Aura.Wave
         [Tooltip("波の出し方。実行中に変えてもよい（引き金を引いたままなら、次のフレームから新しい撃ち方で出る）\n" +
                  "ビーム（点と線）: 長射程。引き金を引いている間ずっと出る。素材で跳ね返り、点を念力で掴んで曲げられる\n" +
                  "扇（近距離）: 低射程・広範囲の単発（ショットガンのように、引き金を引いた瞬間に 1 発撃つ）。「扇の届く距離（m）」の中で、正面から「扇の半角（度）」以内の物すべてに、" +
-                 "広がる輪の先頭が届いたときに波を渡す。曲げ・跳ね返りはせず、壁の裏には届かない\n" +
+                 "波面（見た目では輪の先頭）が届いたときに波を渡す。曲げ・跳ね返りはせず、壁の裏には届かない\n" +
                  "切り替えの入力は、ゲームの側から Toggle Fire Shape を呼ぶ（チームの PlayerController では B キー／ゲームパッドの十字キーの上）")]
         [SerializeField] private WaveFireShape _fireShape = WaveFireShape.Beam;  ///< 撃ち方
 
@@ -77,13 +81,14 @@ namespace Aura.Wave
         [SerializeField, Min(0.0f)] private float _fanRange = 6.0f;  ///< 扇の届く距離（m）
 
         [InspectorLabel("扇の半角（度）")]
-        [Tooltip("扇の広がりの半分の角度（度）。正面からこの角度以内の物に当たる（例: 40 なら全体で 80 度の扇）。見た目の輪も同じ広がりの円すいに沿って広がる\n" +
+        [Tooltip("扇の広がりの半分の角度（度）。正面からこの角度以内の物に当たる（例: 40 なら全体で 80 度の扇）。今の見た目（FanRingView）の輪も、同じ広がりの円すいに沿って広がる\n" +
                  "当たるかは、出る位置から見た「候補のいちばん近い点」の向きで決める（大きい物は、端が扇に入っていても、いちばん近い点が外なら当たらない）")]
         [SerializeField, Range(1.0f, 89.0f)] private float _fanHalfAngle = 40.0f;  ///< 扇の半角（度）
 
-        [InspectorLabel("扇の次を撃てるまで（秒）")]
-        [Tooltip("扇を 1 発撃ってから、次を撃てるまでの時間（秒）。この間に引き金を引き直しても撃たない。0 なら引き直すたびに撃てる")]
-        [SerializeField, Min(0.0f)] private float _fanShotInterval = 0.5f;  ///< 扇を 1 発撃ってから、次を撃てるまでの時間（秒）
+        [InspectorLabel("扇のクールタイム（秒）")]
+        [Tooltip("扇を 1 発撃ってから、次を撃てるまでの時間（秒）。この間に引き金を引き直しても撃たない\n" +
+                 "0 なら、引き直すたびに撃てる（連射できる）。実行中に変えてもよい")]
+        [SerializeField, Min(0.0f)] private float _fanCooldownSeconds;  ///< 扇を 1 発撃ってから、次を撃てるまでの時間（秒）
 
         [InspectorLabel("扇の 1 発の量（秒分）")]
         [Tooltip("扇の 1 発で受け手に渡す量を、ビームを当て続ける秒数で表したもの。渡る量は「強さ（1 秒あたり）」（BeamSourceInfo）× これ × 弱点の倍率\n" +
@@ -92,32 +97,16 @@ namespace Aura.Wave
         [SerializeField, Min(0.0f)] private float _fanShotSeconds = 1.0f;  ///< 扇の 1 発で渡す量（ビームを当て続ける秒数で数える）
 
         [InspectorLabel("扇の波の速さ（m/s）")]
-        [Tooltip("撃った 1 発の輪が、広がりながら進む速さ（m/s）。物に波が渡るのは、先頭の輪がその物に届いたとき（遠い物ほど少し遅れる）\n" +
-                 "1 発の当たる物は撃った瞬間に決める。撃った後に撃ち手が動いても、輪は撃った位置から広がる\n" +
-                 "最後の輪が「扇の届く距離（m）」を越えると、その 1 発は終わる")]
-        [SerializeField, Min(MinFanShotSpeed)] private float _fanShotSpeed = 20.0f;  ///< 扇の 1 発の輪が進む速さ（m/s）
+        [Tooltip("撃った 1 発の波面が進む速さ（m/s）。物に波が渡るのは、波面がその物に届いたとき（遠い物ほど少し遅れる）\n" +
+                 "1 発の当たる物は撃った瞬間に決める。撃った後に撃ち手が動いても、波は撃った位置から広がる\n" +
+                 "波面が「扇の届く距離（m）」に着くと、その 1 発の当たりは終わる。見た目の部品も、この速さに合わせて描く（今の見た目では、輪の先頭が波面）")]
+        [SerializeField, Min(MinFanShotSpeed)] private float _fanShotSpeed = 20.0f;  ///< 扇の 1 発の波面が進む速さ（m/s）
 
         [InspectorLabel("押し続けると連射")]
-        [Tooltip("オンにすると、引き金を引いている間、「扇の次を撃てるまで（秒）」ごとに撃ち続ける（扇のギミック・タレット用）\n" +
+        [Tooltip("オンにすると、引き金を引いている間、「扇のクールタイム（秒）」ごとに撃ち続ける（扇のギミック・タレット用）。" +
+                 "クールタイムが 0.1 秒より短いときは、0.1 秒ごとに撃つ\n" +
                  "オフなら、引き金を引いた瞬間に 1 発だけ撃つ。次を撃つには引き直す")]
         [SerializeField] private bool _isFanAutoRepeat;  ///< 引き金を引いている間、扇を撃ち続けるか
-
-        [InspectorLabel("扇の輪の数")]
-        [Tooltip("扇の 1 発で出す輪の数。輪の間隔は「扇の届く距離（m）」をこの数で割ったもの（多いほど詰まって見え、1 発が終わるまでが長くなる）\n" +
-                 "見た目だけで、当たり判定は変わらない。実行中に変えてもよい")]
-        [SerializeField, Range(1, 32)] private int _fanRingCount = FanWaveLine.DefaultRingCount;  ///< 扇の 1 発で出す輪の数
-
-        [InspectorLabel("輪が薄れ始める位置（割合）")]
-        [Tooltip("扇の輪が薄れ始める位置。「扇の届く距離（m）」に対する割合（0〜1）。ここから先で薄れ、届く距離で消える\n" +
-                 "例: 0.6 なら届く距離の 6 割から薄れる。1 なら薄れずに、届く距離で消える。0 なら出てすぐ薄れ始める\n" +
-                 "見た目だけで、当たり判定は変わらない。実行中に変えてもよい")]
-        [SerializeField, Range(0.0f, 1.0f)] private float _fanRingFadeStart = FanWaveLine.DefaultFarFadeStart;  ///< 扇の輪が薄れ始める位置（届く距離に対する割合）
-
-        [InspectorLabel("遠くの輪の太さ（倍）")]
-        [Tooltip("「扇の届く距離（m）」まで進んだ輪の太さが、波の種類（WaveType）の「線の太さ（m）」の何倍か。進むほど、手元の 1 倍からこの倍率まで太くなる\n" +
-                 "遠くの輪は小さく見えて細りやすいので、1 より大きくすると見やすい。1 なら太さは変わらない\n" +
-                 "見た目だけで、当たり判定は変わらない。実行中に変えてもよい")]
-        [SerializeField, Range(0.0f, 5.0f)] private float _fanRingFarWidthScale = FanWaveLine.DefaultFarWidthScale;  ///< 届く距離まで進んだ扇の輪の太さ（線の太さの何倍か）
 
         [Header("狙い")]
         [InspectorLabel("ビームが出る位置")]
@@ -165,10 +154,6 @@ namespace Aura.Wave
         [InspectorLabel("跳ね返る回数の上限")]
         [Tooltip("1 本のビームが跳ね返る回数の上限（回。1〜16）。この回数だけ跳ね返った後は、次に当たった物で止まる")]
         [SerializeField, Range(1, MaxReflectionLimit)] private int _maxReflections = 8;  ///< 跳ね返る回数の上限
-
-        [InspectorLabel("線のマテリアル")]
-        [Tooltip("ビームの線と扇の輪のマテリアル。空なら既定のマテリアルを使い、WaveType の「波の色」で色を付ける")]
-        [SerializeField] private Material _lineMaterial;              ///< ビームの線と扇の輪のマテリアル。空なら既定のもの
 
         [Header("点と線")]
         [InspectorLabel("点の間隔（m）")]
@@ -238,15 +223,17 @@ namespace Aura.Wave
         [SerializeField] private GameObject _pointPrefab;  ///< 点を作るときのプレハブ。空なら見えない球を作る
 
         [InspectorLabel("点をつなぐ線を見せる")]
-        [Tooltip("オンにすると、ビームの実体の線（点どうしをつなぐ直線）を、見た目の波とは別に細い線で見せる（確かめる用）\n" +
+        [Tooltip("オンにすると、ビームの実体の線（点どうしをつなぐ直線）を、見た目の部品とは別に細い線で見せる（確かめる用。見た目の部品を替えても出る）\n" +
                  "点そのものは、Scene ビューに印（水色: 掴める点、灰: 掴めない点、橙: 支点、赤: 掴まれている支点）で出る")]
         [SerializeField] private bool _isBodyLineVisible;  ///< ビームの実体の線を見せるか（確かめる用）
 
         private readonly List<InfoBeamHit> _lastHits = new List<InfoBeamHit>();                ///< このフレームで波を渡した物（渡した順）
         private readonly HashSet<ReactionTrigger> _deliveredTriggers = new HashSet<ReactionTrigger>();  ///< このフレームで、もうビームを渡した受け手
-        private readonly List<FanWaveShot> _fanShots = new List<FanWaveShot>();  ///< 扇の 1 発（輪が進んでいるものと、使い回すために取っておくもの）
-        private InfoBeamLine _beamLine;
-        private InfoBeamLine _bodyLine;      ///< ビームの実体の線（確かめる用）
+        private readonly List<FanWaveShot> _fanShots = new List<FanWaveShot>();  ///< 扇の 1 発（波面が進んでいるものと、使い回すために取っておくもの）
+        private readonly List<IBeamWaveView> _beamViews = new List<IBeamWaveView>();  ///< ビームの見た目の部品（同じ GameObject に付いている物）
+        private readonly List<IFanWaveView> _fanViews = new List<IFanWaveView>();     ///< 扇の見た目の部品（同じ GameObject に付いている物）
+        private InfoBeamLine _bodyLine;      ///< ビームの実体の線（確かめる用。見た目の部品とは別）
+        private bool _isBeamShown;           ///< ビームの見た目の部品に、ビームを描かせているか（止めたときに 1 回だけ消させるため）
         private BeamPointChain _chain;       ///< 点と線のビームの点と曲げ方。Chain から使う
         private Vector3 _lockedAimDirection; ///< 止めているビームを出す向き（Is Aim Locked While Held）
         private bool _hasLockedAim;          ///< ビームを出す向きを止めているか
@@ -255,7 +242,7 @@ namespace Aura.Wave
         private BeamSourceInfo _foundSource; ///< 「ビームの情報」が空のときに、自分か親から見つけた BeamSourceInfo
         private bool _isTriggerHeld;         ///< 引き金を引いているか
         private bool _isFanShotRequested;    ///< 引き金を引いた瞬間か。扇では、次の LateUpdate で 1 発撃つ
-        private float _nextFanShotTime;      ///< 扇の次を撃てる時刻
+        private float _lastFanShotTime = float.NegativeInfinity;  ///< 扇を最後に撃った時刻
 
         /// @brief （古い形）出せるビームを選び直した後に起きる
         public event Action<BeamSourceInfo> SourceChanged;
@@ -306,10 +293,11 @@ namespace Aura.Wave
         }
 
         /// @brief 引き金を引いていて、撃てる状態か（波の種類が決まっていて、この部品が有効か）
-        /// ビームなら、出している最中。扇は 1 発ずつ撃つので、引いているかだけを表す（撃った 1 発の輪は IsFanShotFlying）
+        /// ビームなら、出している最中。扇は 1 発ずつ撃つので、引いているかだけを表す（撃った 1 発の波面は IsFanShotFlying）
         public bool IsFiring => _isTriggerHeld && CurrentType != null && isActiveAndEnabled;
 
-        /// @brief 撃った扇の輪が、まだ進んでいるか
+        /// @brief 撃った扇の波面が、まだ進んでいるか（波面が届く距離に着いて、すべての当たりに波を渡すまで）
+        /// 見た目の部品の輪などは、これが false になった後も少し残ることがある
         public bool IsFanShotFlying
         {
             get
@@ -405,7 +393,7 @@ namespace Aura.Wave
             }
             else
             {
-                HideBeam();
+                StopBeam();
             }
         }
 
@@ -488,16 +476,25 @@ namespace Aura.Wave
             FireShape = _fireShape == WaveFireShape.Beam ? WaveFireShape.Fan : WaveFireShape.Beam;
         }
 
+        /// @brief 見た目の部品（IBeamWaveView、IFanWaveView）を、この GameObject から集め直す
+        /// 再生を始めるときに集めるので、ふつうは呼ばなくてよい。再生中に見た目の部品を足したり外したりしたときに呼ぶ
+        /// （有効・無効の切り替えだけなら、呼ばなくても効く）
+        public void RefreshViews()
+        {
+            GetComponents(_beamViews);
+            GetComponents(_fanViews);
+        }
+
         //============================================================
         // Unity のメッセージ
         //============================================================
 
         private void Awake()
         {
-            _beamLine = InfoBeamLine.Create("InfoBeam", transform, _lineMaterial);
-            _beamLine.Hide();
-            _bodyLine = InfoBeamLine.Create("InfoBeamBody", transform, _lineMaterial);
+            _bodyLine = InfoBeamLine.Create("InfoBeamBody", transform, null);
             _bodyLine.Hide();
+            AddDefaultViews();
+            RefreshViews();
             _sourceIndex = HasSources ? Mathf.Clamp(_sourceIndex, 0, _sources.Length - 1) : 0;
             _appliedSourceIndex = _sourceIndex;
             _appliedFireShape = _fireShape;
@@ -520,11 +517,18 @@ namespace Aura.Wave
 
         private void OnDisable()
         {
-            HideBeam();
-            // 撃った扇の輪も止める（まだ届いていない物には渡さない）
+            StopBeam();
+            // 撃った扇の波も止め（まだ届いていない物には渡さない）、見た目の部品に消させる
             foreach (FanWaveShot shot in _fanShots)
             {
                 shot.End();
+            }
+            foreach (IFanWaveView view in _fanViews)
+            {
+                if (IsAlive(view))
+                {
+                    view.ClearFanShots();
+                }
             }
             _isFanShotRequested = false;
         }
@@ -553,13 +557,17 @@ namespace Aura.Wave
             }
             else
             {
-                HideBeam();
+                StopBeam();
             }
 
-            // 扇は、引いた瞬間（連射なら、引いている間ずっと）に、次を撃てる時刻を過ぎていれば 1 発撃つ
-            bool isFanShotWanted = _isFanShotRequested || (_isFanAutoRepeat && _isTriggerHeld);
+            // 扇は、引いた瞬間に、クールタイムが過ぎていれば 1 発撃つ
+            // 連射なら、引いている間もクールタイムごとに撃つ（0.1 秒より短い間隔にはしない）
+            float sinceLastFanShot = Time.time - _lastFanShotTime;
+            bool isPressShot = _isFanShotRequested && sinceLastFanShot >= _fanCooldownSeconds;
+            bool isRepeatShot = _isFanAutoRepeat && _isTriggerHeld
+                && sinceLastFanShot >= Mathf.Max(_fanCooldownSeconds, MinFanRepeatInterval);
             _isFanShotRequested = false;
-            if (_fireShape == WaveFireShape.Fan && isFanShotWanted && CurrentType != null && Time.time >= _nextFanShotTime)
+            if (_fireShape == WaveFireShape.Fan && (isPressShot || isRepeatShot) && CurrentType != null)
             {
                 FireFanShot();
             }
@@ -579,19 +587,26 @@ namespace Aura.Wave
             float energy = source.EnergyPerSecond * deltaTime;
             TraceChainBeam(source, muzzle.position, direction, range, energy);
 
-            // 受け手の処理でビームが止められた（この部品が無効にされたなど）ときは、線を出し直さない
+            // 受け手の処理でビームが止められた（この部品が無効にされたなど）ときは、見た目を出し直さない
             // 止められた後に並べ直した点も、片付け直す
             if (!IsFiring)
             {
                 _chain?.Stop();
                 return;
             }
-            WaveType type = source.WaveType;
-            float phase = Time.time * type.ScrollSpeed;
 
-            // 見た目の波は、点どうしをつなぐ直線に沿って流す。跳ね返った位置でだけ揺れを 0 にする
+            // 見た目は、見た目の部品に実体の線の形を渡して描かせる
+            WaveType type = source.WaveType;
             BeamPointChain chain = Chain;
-            _beamLine.Draw(chain.Positions, chain.FadingCorners, muzzle.up, type, phase);
+            var frame = new BeamWaveFrame(chain.Positions, chain.FadingCorners, muzzle.up, type);
+            foreach (IBeamWaveView view in _beamViews)
+            {
+                if (IsEnabled(view))
+                {
+                    view.DrawBeam(frame);
+                }
+            }
+            _isBeamShown = true;
             if (_isBodyLineVisible)
             {
                 _bodyLine.DrawStraight(chain.Positions, Color.Lerp(type.Color, Color.white, BodyLineWhiteBlend), BodyLineWidth);
@@ -602,21 +617,30 @@ namespace Aura.Wave
             }
         }
 
-        /// @brief 扇を 1 発撃つ。撃った瞬間の狙いで、扇の中で当たる物を集めておく。波を渡すのは、輪の先頭が届いたとき（UpdateFanShots）
+        /// @brief 扇を 1 発撃つ。撃った瞬間の狙いで、扇の中で当たる物を集めておく。波を渡すのは、波面が届いたとき（UpdateFanShots）
+        /// 見た目の部品には、撃った 1 発の情報を渡す（その後の見た目は、部品が自分で進める）
         private void FireFanShot()
         {
             BeamSourceInfo source = CurrentSource;
             Transform muzzle = Muzzle;
             Vector3 direction = GetAimDirection(muzzle, _fanRange);
+            var info = new FanShotInfo(muzzle.position, direction, muzzle.up, _fanRange, _fanHalfAngle,
+                Mathf.Max(MinFanShotSpeed, _fanShotSpeed), Time.time, source.WaveType);
             FanWaveShot shot = GetIdleFanShot();
-            shot.Begin(muzzle.position, direction, muzzle.up, _fanRange, _fanHalfAngle, source.WaveType,
-                source.EnergyPerSecond * _fanShotSeconds, Time.time);
+            shot.Begin(info, source.EnergyPerSecond * _fanShotSeconds);
             CollectFanHits(shot);
-            _nextFanShotTime = Time.time + _fanShotInterval;
+            _lastFanShotTime = Time.time;
+            foreach (IFanWaveView view in _fanViews)
+            {
+                if (IsEnabled(view))
+                {
+                    view.ShowFanShot(info);
+                }
+            }
         }
 
-        /// @brief 撃った扇の 1 発を進める。輪の先頭（波面）が届いた物に、近い順に波を渡し、輪を描く
-        /// 最後の輪が届く距離を越え、渡す物も残っていなければ、その 1 発を終える
+        /// @brief 撃った扇の 1 発を進める。波面が届いた物に、近い順に波を渡す
+        /// 波面が届く距離に着き、渡す物も残っていなければ、その 1 発を終える（見た目の部品の輪などは、部品が自分で消す）
         private void UpdateFanShots()
         {
             foreach (FanWaveShot shot in _fanShots)
@@ -625,35 +649,25 @@ namespace Aura.Wave
                 {
                     continue;
                 }
-                float frontDistance = (Time.time - shot.StartTime) * Mathf.Max(MinFanShotSpeed, _fanShotSpeed);
+                FanShotInfo info = shot.Info;
+                float frontDistance = info.GetFrontDistance(Time.time);
                 while (shot.TryTakeArrivedHit(frontDistance, out RaycastHit hit))
                 {
                     // 届く前に消えた物には渡さない
                     if (hit.collider != null)
                     {
-                        Deliver(shot.Type, shot.Energy, hit, 0, false, shot.DeliveredTriggers);
+                        Deliver(info.Type, shot.Energy, hit, 0, false, shot.DeliveredTriggers);
                     }
                 }
                 // 受け手の処理でこの部品が無効にされたときは、1 発はもう終わっている
-                if (!shot.IsActive)
-                {
-                    continue;
-                }
-
-                FanWaveLine line = shot.Line;
-                line.RingCount = _fanRingCount;
-                line.FarFadeStart = _fanRingFadeStart;
-                line.FarWidthScale = _fanRingFarWidthScale;
-                bool hasRingsLeft = line.DrawShot(shot.Origin, shot.Direction, shot.Up, shot.HalfAngle, shot.Range, shot.Type,
-                    frontDistance);
-                if (!hasRingsLeft && !shot.HasPendingHits)
+                if (shot.IsActive && frontDistance >= info.Range && !shot.HasPendingHits)
                 {
                     shot.End();
                 }
             }
         }
 
-        /// @brief 輪が進んでいない扇の 1 発を返す。すべて進んでいれば、新しく作る（輪の見た目も 1 つ作る）
+        /// @brief 波面が進んでいない扇の 1 発を返す。すべて進んでいれば、新しく作る
         private FanWaveShot GetIdleFanShot()
         {
             foreach (FanWaveShot shot in _fanShots)
@@ -663,7 +677,7 @@ namespace Aura.Wave
                     return shot;
                 }
             }
-            var created = new FanWaveShot(FanWaveLine.Create("FanWave " + _fanShots.Count, transform, _lineMaterial));
+            var created = new FanWaveShot();
             _fanShots.Add(created);
             return created;
         }
@@ -672,9 +686,10 @@ namespace Aura.Wave
         /// 近くの候補を球で集め、正面から「扇の半角（度）」以内に絞り、最後に出る位置から遮蔽のレイを 1 本飛ばして、壁の裏の物を除く
         private void CollectFanHits(FanWaveShot shot)
         {
-            Vector3 origin = shot.Origin;
-            Vector3 direction = shot.Direction;
-            int count = BeamPhysics.OverlapSphere(origin, shot.Range, _hitMask, _triggerInteraction, IgnoreRoot,
+            FanShotInfo info = shot.Info;
+            Vector3 origin = info.Origin;
+            Vector3 direction = info.Direction;
+            int count = BeamPhysics.OverlapSphere(origin, info.Range, _hitMask, _triggerInteraction, IgnoreRoot,
                 out Collider[] candidates);
             for (int i = 0; i < count; ++i)
             {
@@ -688,7 +703,7 @@ namespace Aura.Wave
                     // 出る位置が候補の中にある物には渡さない（内側からのレイは本人に当たらず、遮蔽を確かめられない）
                     continue;
                 }
-                if (Vector3.Angle(direction, toTarget) > shot.HalfAngle)
+                if (Vector3.Angle(direction, toTarget) > info.HalfAngle)
                 {
                     continue;
                 }
@@ -923,8 +938,8 @@ namespace Aura.Wave
                 return;
             }
             _appliedFireShape = _fireShape;
-            // 今のビームを片付ける。引き金を引いたままなら、次のフレームの LateUpdate から新しい撃ち方で出る（撃った扇の輪は最後まで進む）
-            HideBeam();
+            // 今のビームを止める。引き金を引いたままなら、次のフレームの LateUpdate から新しい撃ち方で出る（撃った扇の波は最後まで進む）
+            StopBeam();
             FireShapeChanged?.Invoke(_fireShape);
         }
 
@@ -938,12 +953,21 @@ namespace Aura.Wave
             }
         }
 
-        /// @brief ビーム（点と線）を片付ける。撃った扇の輪はそのまま進む
-        private void HideBeam()
+        /// @brief ビーム（点と線）を止める。点を片付け、見た目の部品にビームを消させる（描かせていたときだけ 1 回）
+        /// 撃った扇の波はそのまま進む
+        private void StopBeam()
         {
-            if (_beamLine != null)
+            if (_isBeamShown)
             {
-                _beamLine.Hide();
+                _isBeamShown = false;
+                // 無効にされた部品にも伝える（描いたまま無効にされた物が、残らないように）
+                foreach (IBeamWaveView view in _beamViews)
+                {
+                    if (IsAlive(view))
+                    {
+                        view.HideBeam();
+                    }
+                }
             }
             if (_bodyLine != null)
             {
@@ -951,6 +975,32 @@ namespace Aura.Wave
             }
             _hasLockedAim = false;
             _chain?.Stop();
+        }
+
+        /// @brief 見た目の部品が 1 つも付いていなければ、今の見た目（BeamLineView、FanRingView）を足す
+        /// 無効にした部品も「付いている」に数える（見た目を出したくないときは、部品を付けて無効にしておく）
+        private void AddDefaultViews()
+        {
+            if (!TryGetComponent(out IBeamWaveView _))
+            {
+                gameObject.AddComponent<BeamLineView>();
+            }
+            if (!TryGetComponent(out IFanWaveView _))
+            {
+                gameObject.AddComponent<FanRingView>();
+            }
+        }
+
+        /// @brief 見た目の部品が、まだ消されていないか
+        private static bool IsAlive(object view)
+        {
+            return view is UnityEngine.Object unityObject ? unityObject != null : view != null;
+        }
+
+        /// @brief 見た目の部品が、呼べる状態か（消されておらず、有効か）
+        private static bool IsEnabled(object view)
+        {
+            return view is Behaviour behaviour ? behaviour != null && behaviour.isActiveAndEnabled : IsAlive(view);
         }
     }
 }

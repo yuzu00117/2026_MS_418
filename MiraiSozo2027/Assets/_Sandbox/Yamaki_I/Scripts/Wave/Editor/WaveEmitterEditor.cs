@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Aura.Inspector.Editor;
 using UnityEditor;
 using UnityEngine;
@@ -12,6 +13,8 @@ namespace Aura.Wave.Editor
     /// ・扇だけの欄（扇の届く距離、扇の半角）は、「撃ち方」が「扇（近距離）」のときだけ出す
     /// ・離した後に戻るまでの時間（Bend Hold Seconds、Bend Return Seconds）は、Bend Release Mode が Hold Then Return のときだけ出す
     /// ・点のレイヤー（Point Layer）は、レイヤーを選ぶ欄で出す
+    /// ・見た目の部品（IBeamWaveView、IFanWaveView）が付いていなければ、再生を始めるときに今の見た目を足すことを知らせ、
+    ///   今の見た目の部品（BeamLineView、FanRingView）を付けるボタンを出す（付けておくと、見た目の欄を Inspector で変えられる）
     [CustomEditor(typeof(WaveEmitter))]
     [CanEditMultipleObjects]
     public sealed class WaveEmitterEditor : UnityEditor.Editor
@@ -22,6 +25,10 @@ namespace Aura.Wave.Editor
         private const string SourceListMessage =
             "古い形（「出せるビーム」の一覧）で動いている。\n" +
             "新しい形にするには、撃ち手の本体に BeamSourceInfo を 1 つ付けて、この一覧を空にする（「ビームの情報」は空なら自動で探す）。";
+        private const string MissingViewMessage =
+            "見た目の部品が付いていないので、再生を始めるときに今の見た目（{0}）を自動で足す。\n" +
+            "見た目の欄（線のマテリアル、輪の数など）を Inspector で変えるときは、下のボタンで付けておく。";
+        private const string AddViewsButtonLabel = "今の見た目の部品を付ける";
 
         /// @brief 古い形の「出せるビーム」に入っているときだけ出す項目
         private static readonly string[] SourceListPropertyPaths =
@@ -62,13 +69,10 @@ namespace Aura.Wave.Editor
         {
             "_fanRange",
             "_fanHalfAngle",
-            "_fanShotInterval",
+            "_fanCooldownSeconds",
             "_fanShotSeconds",
             "_fanShotSpeed",
             "_isFanAutoRepeat",
-            "_fanRingCount",
-            "_fanRingFadeStart",
-            "_fanRingFarWidthScale",
         };
 
         /// @brief Bend Release Mode が Hold Then Return のときだけ出す項目
@@ -115,6 +119,52 @@ namespace Aura.Wave.Editor
                 }
             }
             serializedObject.ApplyModifiedProperties();
+            DrawMissingViews();
+        }
+
+        /// @brief 見た目の部品が付いていない物があれば、そのことと、今の見た目の部品を付けるボタンを出す
+        private void DrawMissingViews()
+        {
+            bool isBeamViewMissing = false;
+            bool isFanViewMissing = false;
+            foreach (UnityEngine.Object each in targets)
+            {
+                var emitter = (WaveEmitter)each;
+                isBeamViewMissing |= !emitter.TryGetComponent(out IBeamWaveView _);
+                isFanViewMissing |= !emitter.TryGetComponent(out IFanWaveView _);
+            }
+            if (!isBeamViewMissing && !isFanViewMissing)
+            {
+                return;
+            }
+
+            var missingNames = new List<string>();
+            if (isBeamViewMissing)
+            {
+                missingNames.Add(nameof(BeamLineView));
+            }
+            if (isFanViewMissing)
+            {
+                missingNames.Add(nameof(FanRingView));
+            }
+            EditorGUILayout.Space();
+            EditorGUILayout.HelpBox(string.Format(MissingViewMessage, string.Join("、", missingNames)), MessageType.Info);
+            if (!GUILayout.Button(AddViewsButtonLabel))
+            {
+                return;
+            }
+            foreach (UnityEngine.Object each in targets)
+            {
+                GameObject emitterObject = ((WaveEmitter)each).gameObject;
+                if (!emitterObject.TryGetComponent(out IBeamWaveView _))
+                {
+                    Undo.AddComponent<BeamLineView>(emitterObject);
+                }
+                if (!emitterObject.TryGetComponent(out IFanWaveView _))
+                {
+                    Undo.AddComponent<FanRingView>(emitterObject);
+                }
+            }
         }
 
         /// @brief レイヤーの番号を持つ項目を、レイヤーを選ぶ欄で出す
