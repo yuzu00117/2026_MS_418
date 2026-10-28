@@ -17,22 +17,7 @@ namespace Echo.Echolocation.Editor
             if ((binding.Renderer.transform.lossyScale - binding.Data.SourceScale).sqrMagnitude > .000001f) return false;
             return binding.Data.SourceHash == AssetDatabase.GetAssetDependencyHash(AssetDatabase.GetAssetPath(filter.sharedMesh)).ToString();
         }
-        public void OnProcessScene(Scene scene, BuildReport report)
-        {
-            if (report == null) return;
-            foreach (var root in scene.GetRootGameObjects())
-                foreach (var state in root.GetComponentsInChildren<EchoRevealState>(true))
-                {
-                    if (!state.World || !state.TryGetComponent<EchoTag>(out var tag)) continue;
-                    var controller = state.World.GetComponent<EchoController>();
-                    EchoTagColorRule matched = null;
-                    foreach (var rule in controller.Settings.TagColorRules)
-                        if (rule != null && rule.IsEnabled && rule.Definition && rule.Definition == tag.Definition) { matched = rule; break; }
-                    if (matched == null || matched.RevealMode != EchoOriginalRevealMode.ContactRegion || !matched.OriginalEnabled) continue;
-                    if (state.Surfaces.Count == 0) throw new BuildFailedException(state.name + ": 部分表示の分割データをベイクしてください。");
-                    foreach (var binding in state.Surfaces)
-                        if (!IsCurrent(binding)) throw new BuildFailedException(state.name + ": Meshまたはスケールが変わっています。再ベイクしてください。");
-                }
-        }
+        // ベイクデータは新しい描画方式から参照しない。旧データの有無でビルドを阻止しない。
+        public void OnProcessScene(Scene scene, BuildReport report) { }
     }
 }

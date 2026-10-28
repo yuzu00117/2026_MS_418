@@ -9,9 +9,13 @@ namespace Echo.Echolocation.Editor
     {
         public const string OutputFolder = "Assets/_Sandbox/Omata_N/Settings/EchoSurfaces";
         public const int MaxPatches = 1024;
+        private const float MinimumEdgeLength = .05f;
+        private const int OpaqueQueueUpperBound = 2500;
+        private const int MaxSubdivisionDepth = 24;
+        private const float MinimumPatchArea = .0000001f;
         public static EchoSurfaceBinding[] Bake(EchoTarget target, float maxEdge)
         {
-            if (!target || maxEdge < .05f) throw new ArgumentException("最大辺長は0.05m以上です。");
+            if (!target || maxEdge < MinimumEdgeLength) throw new ArgumentException("最大辺長は0.05m以上です。");
             if (Application.isPlaying) throw new InvalidOperationException("ベイクは編集モードで実行してください。");
             var bindings = new List<EchoSurfaceBinding>();
             var generated = new List<UnityEngine.Object>();
@@ -25,7 +29,7 @@ namespace Echo.Echolocation.Editor
                         source.GetComponentInParent<Rigidbody>() || source.GetComponentInParent<LODGroup>())
                         throw new InvalidOperationException("部分表示は静的MeshRenderer専用です（LOD/Rigidbodyは非対応）。");
                     foreach (var material in source.sharedMaterials)
-                        if (!material || material.renderQueue > 2500 || material.IsKeywordEnabled("_ALPHATEST_ON"))
+                        if (!material || material.renderQueue > OpaqueQueueUpperBound || material.IsKeywordEnabled("_ALPHATEST_ON"))
                             throw new InvalidOperationException("部分表示は不透明・非AlphaClipマテリアル専用です。");
                     var mesh = filter.sharedMesh;
                     var vertices = mesh.vertices; var normals = mesh.normals; var tangents = mesh.tangents;
@@ -47,14 +51,14 @@ namespace Echo.Echolocation.Editor
                                 float ca = source.transform.TransformVector(pa - pc).sqrMagnitude;
                                 if (Mathf.Max(ab, Mathf.Max(bc, ca)) > maxEdge * maxEdge)
                                 {
-                                    if (depth > 24) throw new InvalidOperationException("分割が細かすぎます。最大辺長を増やしてください。");
+                                    if (depth > MaxSubdivisionDepth) throw new InvalidOperationException("分割が細かすぎます。最大辺長を増やしてください。");
                                     if (ab >= bc && ab >= ca) { var m = (a + b) * .5f; Split(a, m, c, depth + 1); Split(m, b, c, depth + 1); }
                                     else if (bc >= ca) { var m = (b + c) * .5f; Split(a, b, m, depth + 1); Split(a, m, c, depth + 1); }
                                     else { var m = (c + a) * .5f; Split(a, b, m, depth + 1); Split(m, b, c, depth + 1); }
                                     return;
                                 }
                                 float area = Vector3.Cross(source.transform.TransformVector(pb - pa), source.transform.TransformVector(pc - pa)).magnitude * .5f;
-                                if (area <= .0000001f) return;
+                                if (area <= MinimumPatchArea) return;
                                 if (++total > MaxPatches) throw new InvalidOperationException("1対象の上限1024分割を超えます。最大辺長を増やすか、対象を分けてください。");
                                 var patch = new Mesh { name = "EchoPatch_" + patches.Count };
                                 generated.Add(patch);

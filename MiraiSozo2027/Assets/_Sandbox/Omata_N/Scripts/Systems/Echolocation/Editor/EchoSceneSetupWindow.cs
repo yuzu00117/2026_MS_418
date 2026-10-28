@@ -32,7 +32,7 @@ namespace Echo.Echolocation.Editor
             {
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField("2. 発信元とカメラを設定", EditorStyles.boldLabel);
-                EditorGUILayout.HelpBox("Controllerはエコーの発信と範囲を管理し、Worldは元マテリアル表示・当たり判定の状態を管理します。発信位置にはプレイヤーなどのTransformを指定します。", MessageType.None);
+                EditorGUILayout.HelpBox("Controllerはエコーの発信と描画範囲を管理します。発信位置にはプレイヤーなどのTransformを指定します。", MessageType.None);
                 _controller = (EchoController)EditorGUILayout.ObjectField("このシーンのController", _controller, typeof(EchoController), true);
                 _camera = (Camera)EditorGUILayout.ObjectField("描画するカメラ", _camera, typeof(Camera), true);
                 _origin = (Transform)EditorGUILayout.ObjectField("発信位置・方向", _origin, typeof(Transform), true);
@@ -50,16 +50,16 @@ namespace Echo.Echolocation.Editor
                     if (GUILayout.Button("このタグの表示ルールを追加してInspectorを開く")) AddRule();
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField("4. 対象に専用タグを付与", EditorStyles.boldLabel);
-                EditorGUILayout.HelpBox("Unityタグで対象を検索し、上で作った専用タグを付与します。元マテリアル表示を使う場合は、発信元のEchoRevealWorldを「表示状態の管理元」に指定してください。", MessageType.None);
+                EditorGUILayout.HelpBox("Unityタグで対象を検索し、上で作った専用タグを付与します。元表示の部分表示には接触部分表示を指定します。", MessageType.None);
                 if (GUILayout.Button("対象へのタグ付与ツールを開く"))
                     EchoTagBatchWindow.OpenFor(_definition, _controller && _controller.gameObject.scene == scene ? _controller.GetComponent<EchoRevealWorld>() : null);
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField("5. 接触部分表示の準備（使用する場合のみ）", EditorStyles.boldLabel);
-                EditorGUILayout.HelpBox("接触部分表示は静的な不透明Mesh専用です。対象のEchoRevealStateで分割ベイクします。全体表示・色塗り・輪郭のみならベイク不要です。当たり判定も制御する場合はEchoRevealColliderを追加し、表示範囲と同じモードを選び、元のColliderを登録してください。", MessageType.None);
+                EditorGUILayout.HelpBox("接触部分表示は届いた表面をGPUで表示します。ベイクやCollider追加は不要です。輪郭グリッチは管理元のタグと表示設定で調整します。", MessageType.None);
                 if (GUILayout.Button("部分表示の準備ツールを開く")) EchoSurfaceSetupWindow.Open();
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField("6. 保存して動作確認", EditorStyles.boldLabel);
-                EditorGUILayout.HelpBox("シーンを保存して再生します。チーム入力からエコーを発信し、表示・遮蔽・当たり判定を確認してください。表示されない場合はEchoRevealStateのInspector警告を確認します。入力連携はこのツールでは作成しません。", MessageType.None);
+                EditorGUILayout.HelpBox("シーンを保存して再生します。チーム入力からエコーを発信し、表示・遮蔽・当たり判定を確認してください。表示されない場合は専用タグと描画Featureを確認します。入力連携はこのツールでは作成しません。", MessageType.None);
                 if (GUILayout.Button("現在のシーンを保存")) EditorSceneManager.SaveScene(scene);
             }
             EditorGUILayout.EndScrollView();
@@ -80,7 +80,7 @@ namespace Echo.Echolocation.Editor
             _controller.TargetCamera = _camera;
             _controller.OriginTransform = _origin;
             _controller.DirectionTransform = _origin;
-            if (!_controller.GetComponent<EchoRevealWorld>()) Undo.AddComponent<EchoRevealWorld>(_controller.gameObject);
+
             PrefabUtility.RecordPrefabInstancePropertyModifications(_controller);
             EditorSceneManager.MarkSceneDirty(_controller.gameObject.scene);
             Selection.activeObject = _controller;

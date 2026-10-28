@@ -1,19 +1,11 @@
 using UnityEditor;
-using UnityEngine;
 namespace Echo.Echolocation.Editor
 {
     [CustomEditor(typeof(EchoRevealCollider)), CanEditMultipleObjects]
     public sealed class EchoRevealColliderEditor : UnityEditor.Editor
     {
-        public override void OnInspectorGUI()
-        {
-            serializedObject.Update();
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_mode"), new GUIContent("当たり判定のモード"), true);
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_originalColliders"), new GUIContent("制御する元のコライダー"), true);
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_occupantLayers"), new GUIContent("消去を保留する対象レイヤー"), true);
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_patchMaterial"), new GUIContent("部分コライダーの物理マテリアル"), true);
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_hasPenetrationGuard"), new GUIContent("重なっている間は表示と衝突を保持"), true);
-            serializedObject.ApplyModifiedProperties();
-        }
+        public override void OnInspectorGUI() => EditorGUILayout.HelpBox(
+            "旧方式の互換コンポーネントです。新方式はControllerの表示範囲で接触部分表示を選択します。ベイク・読み戻し・Collider制御は不要です。輪郭のグリッチは管理元のタグと表示設定で調整してください。旧状態APIは非稼働を返します。",
+            MessageType.Info);
     }
 }

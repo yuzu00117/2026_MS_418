@@ -52,7 +52,7 @@ Shader "Hidden/Echo/Highlight"
             Name "ObjectMask"
             // R: 全体のシルエット、B: カメラから見える表面。
             // 波との接触はWorldContactパスでカメラから独立して判定する。
-            Cull Off ZWrite Off ZTest Always Blend One One BlendOp Max
+            Cull Back ZWrite On ZTest LEqual Blend Off
             HLSLPROGRAM
             #pragma target 3.5
             #pragma vertex Vert
@@ -86,7 +86,8 @@ Shader "Hidden/Echo/Highlight"
                     float3 sceneWS=ComputeWorldSpacePosition(uv,raw,UNITY_MATRIX_I_VP);
                     visible=step(-TransformWorldToView(input.positionWS).z,-TransformWorldToView(sceneWS).z+.001);
                 }
-                return half4(1,0,visible,1);
+                float coverage=EchoCoverage(input.positionWS);
+                return half4(1,coverage,visible,coverage*visible);
             }
             ENDHLSL
         }

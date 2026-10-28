@@ -45,7 +45,7 @@ namespace Echo.Echolocation
             var paths = _shadowTexture.Import(graph, controller);
             _effectGroups.Clear();
             foreach (var item in controller.RenderItems)
-                if (item.Rule.OutlineEnabled || item.Rule.OriginalEnabled)
+                if (item.Rule.OutlineEnabled || item.Rule.OriginalEnabled || item.Rule.Glitch.IsEnabled)
                 {
                     if (!_effectGroups.TryGetValue(item.EffectGroup, out var group))
                         _effectGroups.Add(item.EffectGroup, group = new List<EchoRenderItem>());

@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7c451352f26f4ad2a1f1cc4dfbcc7dd6, type: 3}
-  m_Name: SO_EchoTag_WholeExample
+  m_Name: SO_ET_EchoItem
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTagDefinition
   _displayName: 
   _description: 
