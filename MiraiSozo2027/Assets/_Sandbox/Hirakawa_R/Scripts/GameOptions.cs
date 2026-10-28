@@ -42,7 +42,6 @@ namespace MiraiSozo.Options
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
             DontDestroyOnLoad(gameObject);
-            EnsureOptionManager();
             _previousFrameRate = Application.targetFrameRate;
             _previousVSync = QualitySettings.vSyncCount;
             _previousMaster = AudioListener.volume;
@@ -54,15 +53,6 @@ namespace MiraiSozo.Options
             Apply();
             ApplyBindings();
             InstanceChanged?.Invoke(this);
-        }
-
-        private void EnsureOptionManager()
-        {
-            // シーン側のAwakeは後で実行されるため、配置済みのマネージャーを優先する。
-            // if (OptionGameManager.Instance != null || FindAnyObjectByType<OptionGameManager>() != null) return;
-            // var managerObject = new GameObject("OptionGameManager");
-            // managerObject.AddComponent<OptionGameManager>();
-            // managerObject.transform.SetParent(transform, false);
         }
 
         private void LoadValues()

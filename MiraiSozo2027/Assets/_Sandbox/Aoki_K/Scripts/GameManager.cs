@@ -1,9 +1,7 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using System;
 using UnityEngine.SceneManagement;
 using MiraiSozo.Options;
-using System.Linq;
 
 [DefaultExecutionOrder(-600)]
 public class GameManager : MonoBehaviour
@@ -86,6 +84,7 @@ public class GameManager : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         TrySpawnPlayer();
+        ResumePause();
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -104,7 +103,7 @@ public class GameManager : MonoBehaviour
         {
             if(!_isPaused)
             {
-                SetPaused(true);
+                Pause();
             }
             else
             {
@@ -115,59 +114,53 @@ public class GameManager : MonoBehaviour
                 }
                 else
                 {
-                    SetPaused(false);
+                    ResumePause();
                 }
             }
         }
     }
 
-    public void SetPaused(bool paused)
+    public void Pause()
     {
-        if(_isPaused == paused || Actions == null) return;
+        if(_isPaused || Actions == null) return;
+        _resumeTimeScale = Time.timeScale;
+        _resumeCursorLock = Cursor.lockState;
+        _resumeCursorVisible = Cursor.visible;
+        _resumePlayerEnabled = Actions.Player.enabled;
 
-        if (paused)
-        {
-            _resumeTimeScale = Time.timeScale;
-            _resumeCursorLock = Cursor.lockState;
-            _resumeCursorVisible = Cursor.visible;
-            _resumePlayerEnabled = Actions.Player.enabled;
+        _isPaused = true;
+        Time.timeScale = 0f;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
 
-            _isPaused = true;
-            Time.timeScale = 0f;
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+        Actions.Player.Disable();
+        Actions.UI.Enable();
 
-            Actions.Player.Disable();
-            Actions.UI.Enable();
-
-            if(InGameOptionMenu.Instance != null)
-            {//UI表示
-                InGameOptionMenu.Instance.OpenMenu();
-            }
-        }
-        else
-        {
-            _isPaused = false;
-            Time.timeScale = _resumeTimeScale;
-            Cursor.lockState = _resumeCursorLock;
-            Cursor.visible = _resumeCursorVisible;
-
-            if(_resumePlayerEnabled) Actions.Player.Enable();
-            Actions.UI.Disable();
-
-            //UIの非表示
-            if(InGameOptionMenu.Instance != null && InGameOptionMenu.Instance.IsOpen)
-            {
-                InGameOptionMenu.Instance.CloseMenu();
-            }
-            if(_menuUI != null)
-            {
-                if(_menuUI != null) _menuUI.SetActive(false);
-            }
-
+        if(InGameOptionMenu.Instance != null)
+        {//UI表示
+            InGameOptionMenu.Instance.OpenMenu();
         }
     }
 
-    public void TogglePause() => SetPaused(!_isPaused);
-    public void ResumePause() => SetPaused(false);
+    public void ResumePause()
+    {
+        if(!_isPaused || Actions == null) return;
+        _isPaused = false;
+        Time.timeScale = _resumeTimeScale;
+        Cursor.lockState = _resumeCursorLock;
+        Cursor.visible = _resumeCursorVisible;
+
+        if(_resumePlayerEnabled) Actions.Player.Enable();
+        Actions.UI.Disable();
+
+        //UIの非表示
+        if(InGameOptionMenu.Instance != null && InGameOptionMenu.Instance.IsOpen)
+        {
+            InGameOptionMenu.Instance.CloseMenu();
+        }
+        if(_menuUI != null)
+        {
+            _menuUI.SetActive(false);
+        }
+    }
 }

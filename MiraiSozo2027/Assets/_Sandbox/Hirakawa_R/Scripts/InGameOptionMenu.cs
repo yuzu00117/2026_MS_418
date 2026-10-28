@@ -83,10 +83,6 @@ namespace MiraiSozo.Options
             {
                 Back();
             }
-            // if(IsOpen && GameManager.Actions != null && GameManager.Actions.All.Pause.triggered)
-            // {
-            //     GameManager.Instance.ResumePause();
-            // }
         }
 
         private void ApplyFont()
@@ -240,7 +236,6 @@ namespace MiraiSozo.Options
             if (IsRebinding || Time.frameCount <= _ignorePauseThroughFrame) return;
             if (!IsOpen) OpenMenu();
             else CloseMenu();
-            // else Back();
         }
 
         public void OpenMenu()
@@ -327,7 +322,6 @@ namespace MiraiSozo.Options
                 _confirmationOrigin = null;
                 _overlay.SetActive(false);
                 GetView("Test HUD").gameObject.SetActive(_showTestHud);
-                //if (OptionGameManager.Instance != null) OptionGameManager.Instance.SetPaused(false); //ポーズの切り替えはGameManager側で行う
                 if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
             }
         }
