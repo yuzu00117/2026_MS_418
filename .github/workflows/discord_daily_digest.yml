@@ -26,9 +26,14 @@ on:
         default: false
         type: boolean
 
+concurrency:
+  group: discord-daily-digest
+  cancel-in-progress: false
+
 jobs:
   digest:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     # 最小権限にする。PR の読み取りのみ。
     permissions:
       contents: read
