@@ -1,0 +1,61 @@
+# 毎日 21:00 JST に、直近 24 時間で develop へマージされた PR の機能紹介を Discord の進捗チャンネルへ投稿するワークフロー。
+#  (1) 必要な Secret: DISCORD_PROGRESS_WEBHOOK_URL (進捗チャンネルの Webhook URL)
+#      PR 通知用の DISCORD_WEBHOOK_URL(フォーラム)は流用しない。未設定の場合はエラーで失敗する(dry_run 時を除く)。
+#  (2) 対象は base=develop にマージされた PR。mergedAt が対象期間内のものだけに絞り、Bot 作成の PR は除外する。0 件の日は何も投稿しない。
+#  (3) PR 本文の「## 概要」のみを抜粋し、「## 実行動画」(無ければ本文全体)の動画 URL を取得する。
+#      動画は 10MB 以下なら Webhook へファイル添付し、超過・取得失敗時は URL をリンクとして投稿する。
+#  (4) workflow_dispatch の入力: hours(対象期間・時間, 既定 24) / dry_run(true なら投稿せずログ出力のみ)。
+#  (5) 抽出・投稿のロジックは .github/scripts/discord_daily_digest.py。PR 本文はユーザー入力なので env 経由でのみ扱う。
+#  (6) schedule はデフォルトブランチ(main)の定義で動く。main に取り込まれるまで定期実行は始まらない。
+name: Discord Daily Digest
+
+on:
+  schedule:
+    # 21:00 JST = 12:00 UTC
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+    inputs:
+      hours:
+        description: 対象期間(直近何時間か)
+        required: false
+        default: "24"
+        type: string
+      dry_run:
+        description: true なら Discord へ投稿せず、内容をログに出すだけにする
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: discord-daily-digest
+  cancel-in-progress: false
+
+jobs:
+  digest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # 最小権限にする。PR の読み取りのみ。
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      # スクリプトを取得するためにチェックアウトする。公式 Action は SHA 固定にする。
+      - name: Checkout script
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+          sparse-checkout: .github/scripts
+
+      - name: Post daily digest to Discord
+        env:
+          # Webhook URL は直書きせず、必ず secrets 経由で渡す。
+          DISCORD_PROGRESS_WEBHOOK_URL: ${{ secrets.DISCORD_PROGRESS_WEBHOOK_URL }}
+          # ユーザー入力由来の値は ${{ }} をシェルに展開せず env 経由で参照する。
+          HOURS: ${{ github.event.inputs.hours }}
+          DRY_RUN: ${{ github.event.inputs.dry_run }}
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          # set -x は使わない(Webhook URL をログに出さないため)。
+          set -euo pipefail
+          python3 .github/scripts/discord_daily_digest.py
