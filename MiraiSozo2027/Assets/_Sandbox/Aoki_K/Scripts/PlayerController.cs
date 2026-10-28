@@ -148,7 +148,7 @@ public class PlayerController : MonoBehaviour
         }
 
         // アニメーション更新
-        UpdateAnimator(normalizedSpeed, inputMagnitude);
+        UpdateAnimator(normalizedSpeed);
 
         // ジャンプの検知
         bool isGrounded = _groundChecker != null && _groundChecker.IsGrounded;
@@ -208,7 +208,7 @@ public class PlayerController : MonoBehaviour
     /// アニメーションパラメータの更新
     /// Blend Tree（Speed Float）と既存のBoolステートの両方に対応するハイブリッド仕様
     /// </summary>
-    private void UpdateAnimator(float normalizedSpeed, float inputMagnitude)
+    private void UpdateAnimator(float normalizedSpeed)
     {
         if (_animator == null) return;
 

@@ -35,7 +35,7 @@ public class Phononkinesis : MonoBehaviour
     [Tooltip("マウスホイール1ノッチあたりの移動量（メートル）")]
     [SerializeField] private float _wheelStep = 0.2f;
     [Tooltip("コントローラーボタン長押し時の移動速度（メートル/秒）")]
-    [SerializeField] private float _controllerSpeed = 4.0f;
+    [SerializeField] private float _controllerSpeed = 8.0f;
 
     [Header("Physics Settings (重さと追従挙動)")]
     [Tooltip("追従の基準速度")]
