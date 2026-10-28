@@ -136,17 +136,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""name"": ""AdjustDistance"",
                     ""type"": ""Value"",
                     ""id"": ""589f1dc5-8e51-431e-8548-074317de7d29"",
-                    ""expectedControlType"": ""Vector2"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": true,
-                    ""priority"": 0
-                },
-                {
-                    ""name"": ""ScrollDistance"",
-                    ""type"": ""Value"",
-                    ""id"": ""d55233d8-4c23-44e1-b230-e23ba9ee9f66"",
-                    ""expectedControlType"": ""Vector2"",
+                    ""expectedControlType"": ""Axis"",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": true,
@@ -216,7 +206,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""name"": ""Sprint"",
                     ""type"": ""Button"",
                     ""id"": ""641cd816-40e6-41b4-8c3d-04687c349290"",
-                    ""expectedControlType"": ""Button"",
+                    ""expectedControlType"": """",
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false,
@@ -651,17 +641,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""isPartOfComposite"": false
                 },
                 {
-                    ""name"": """",
-                    ""id"": ""3998785b-f3cf-476f-aecb-07a039d77f90"",
-                    ""path"": ""<Mouse>/scroll"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": "";Keyboard&Mouse"",
-                    ""action"": ""ScrollDistance"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
                     ""name"": ""1D Axis"",
                     ""id"": ""eea73a72-c634-4e36-82e6-17bcd7801428"",
                     ""path"": ""1DAxis"",
@@ -693,6 +672,17 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""action"": ""AdjustDistance"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": true
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""42eb6ea7-ce59-47b3-ab93-b2bccf76109a"",
+                    ""path"": ""<Mouse>/scroll/y"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard&Mouse"",
+                    ""action"": ""AdjustDistance"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 },
                 {
                     ""name"": """",
@@ -1432,7 +1422,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         m_Player_Fire = m_Player.FindAction("Fire", throwIfNotFound: true);
         m_Player_Confirmed = m_Player.FindAction("Confirmed", throwIfNotFound: true);
         m_Player_AdjustDistance = m_Player.FindAction("AdjustDistance", throwIfNotFound: true);
-        m_Player_ScrollDistance = m_Player.FindAction("ScrollDistance", throwIfNotFound: true);
         m_Player_LayoutMode = m_Player.FindAction("LayoutMode", throwIfNotFound: true);
         m_Player_Interact = m_Player.FindAction("Interact", throwIfNotFound: true);
         m_Player_Crouch = m_Player.FindAction("Crouch", throwIfNotFound: true);
@@ -1545,7 +1534,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Fire;
     private readonly InputAction m_Player_Confirmed;
     private readonly InputAction m_Player_AdjustDistance;
-    private readonly InputAction m_Player_ScrollDistance;
     private readonly InputAction m_Player_LayoutMode;
     private readonly InputAction m_Player_Interact;
     private readonly InputAction m_Player_Crouch;
@@ -1587,10 +1575,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/AdjustDistance".
         /// </summary>
         public InputAction @AdjustDistance => m_Wrapper.m_Player_AdjustDistance;
-        /// <summary>
-        /// Provides access to the underlying input action "Player/ScrollDistance".
-        /// </summary>
-        public InputAction @ScrollDistance => m_Wrapper.m_Player_ScrollDistance;
         /// <summary>
         /// Provides access to the underlying input action "Player/LayoutMode".
         /// </summary>
@@ -1672,9 +1656,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @AdjustDistance.started += instance.OnAdjustDistance;
             @AdjustDistance.performed += instance.OnAdjustDistance;
             @AdjustDistance.canceled += instance.OnAdjustDistance;
-            @ScrollDistance.started += instance.OnScrollDistance;
-            @ScrollDistance.performed += instance.OnScrollDistance;
-            @ScrollDistance.canceled += instance.OnScrollDistance;
             @LayoutMode.started += instance.OnLayoutMode;
             @LayoutMode.performed += instance.OnLayoutMode;
             @LayoutMode.canceled += instance.OnLayoutMode;
@@ -1731,9 +1712,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @AdjustDistance.started -= instance.OnAdjustDistance;
             @AdjustDistance.performed -= instance.OnAdjustDistance;
             @AdjustDistance.canceled -= instance.OnAdjustDistance;
-            @ScrollDistance.started -= instance.OnScrollDistance;
-            @ScrollDistance.performed -= instance.OnScrollDistance;
-            @ScrollDistance.canceled -= instance.OnScrollDistance;
             @LayoutMode.started -= instance.OnLayoutMode;
             @LayoutMode.performed -= instance.OnLayoutMode;
             @LayoutMode.canceled -= instance.OnLayoutMode;
@@ -2195,13 +2173,6 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnAdjustDistance(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "ScrollDistance" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnScrollDistance(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "LayoutMode" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
