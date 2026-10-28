@@ -39,6 +39,11 @@ import time
 # Discord の無料枠の添付上限は 10MB。ペイロード分の余裕を見て少し小さくしておく。
 MAX_VIDEO_BYTES = 10_000_000
 MAX_VIDEOS_PER_PR = 3
+# 1PR で調べる動画 URL の上限と、リンク行として出す最大行数(超過分は「他N件」にまとめる)。
+MAX_VIDEO_CANDIDATES = 6
+MAX_LINK_LINES = 5
+# 1メッセージに同梱する添付ファイルの合計サイズ上限。
+MAX_MESSAGE_ATTACH_BYTES = 20_000_000
 # 圧縮の元動画としてダウンロードする上限と、そのダウンロードの curl タイムアウト(秒)。
 COMPRESS_SRC_MAX_BYTES = 200_000_000
 COMPRESS_DOWNLOAD_TIMEOUT = 600
@@ -132,14 +137,21 @@ def build_link_lines(links, originals):
     for urls, single, multi in ((links, "実行動画を見る", "実行動画"), (originals, "元の動画", "元の動画")):
         for n, u in enumerate(urls, 1):
             lines.append("🎬 [%s](<%s>)" % (single if len(urls) == 1 else multi + str(n), u))
+    if len(lines) > MAX_LINK_LINES:
+        extra = len(lines) - (MAX_LINK_LINES - 1)
+        lines = lines[:MAX_LINK_LINES - 1] + ["🎬 他%d件の動画" % extra]
     return "\n".join(lines)
 
 
 def build_body(desc, link_lines, budget):
     """概要の下に動画リンク行を置いた本文を返す。budget 文字以内で、リンク行を優先して概要を削る。"""
+    if budget <= 0:
+        return ""
+    link_lines = clip(link_lines, budget)
     room = budget - len(link_lines) - (2 if link_lines else 0)
     text = clip(desc, room) if desc and room > 20 else ""
-    return text + ("\n\n" if text and link_lines else "") + link_lines
+    out = text + ("\n\n" if text and link_lines else "") + link_lines
+    return out if len(out) <= budget else clip(out, budget)
 
 
 def build_content(pr, login, desc, links, originals=(), limit=CONTENT_LIMIT):
@@ -188,7 +200,7 @@ def text_total(components):
 
 
 def pack_messages(items, header, text_limit=CARD_TEXT_LIMIT):
-    """items([{pr, login, desc, links, originals, files:[(path, ext)]}])を順に貪欲に詰めてメッセージのリストを返す。
+    """items([{pr, login, desc, links, originals, files:[(path, ext, size)]}])を順に貪欲に詰めてメッセージのリストを返す。
 
     各メッセージ: {components, attach:[(path, name)], text, comps}。header は最初のメッセージ先頭に置く。
     1カードが単独で上限を超えないよう、概要は header 分を含めて text_limit に収まるよう削る。
@@ -198,15 +210,17 @@ def pack_messages(items, header, text_limit=CARD_TEXT_LIMIT):
     cur = None
     for it in items:
         base = len(cur["attach"]) if cur else 0
-        names = ["video%d%s" % (base + n + 1, ext) for n, (_, ext) in enumerate(it["files"])]
+        names = ["video%d%s" % (base + n + 1, f[1]) for n, f in enumerate(it["files"])]
+        fbytes = sum(f[2] if len(f) > 2 else 0 for f in it["files"])
         card = build_card(it["pr"], it["login"], it["desc"], it["links"], it["originals"], names, limit=per_card_limit)
         fits = False
         if cur is not None:
             fits = (cur["text"] + text_total([card]) <= text_limit
                     and len(cur["attach"]) + len(names) <= MAX_MESSAGE_ATTACHMENTS
+                    and cur["bytes"] + fbytes <= MAX_MESSAGE_ATTACH_BYTES
                     and cur["comps"] + count_components([card]) <= MAX_MESSAGE_COMPONENTS)
         if not fits:
-            cur = {"components": [], "attach": [], "text": 0, "comps": 0}
+            cur = {"components": [], "attach": [], "text": 0, "comps": 0, "bytes": 0}
             if not msgs:
                 h = {"type": 10, "content": header}
                 cur["components"].append(h)
@@ -214,10 +228,11 @@ def pack_messages(items, header, text_limit=CARD_TEXT_LIMIT):
                 cur["comps"] += 1
             msgs.append(cur)
             # 新メッセージでは添付名を 1 から振り直す
-            names = ["video%d%s" % (n + 1, ext) for n, (_, ext) in enumerate(it["files"])]
+            names = ["video%d%s" % (n + 1, f[1]) for n, f in enumerate(it["files"])]
             card = build_card(it["pr"], it["login"], it["desc"], it["links"], it["originals"], names, limit=per_card_limit)
         cur["components"].append(card)
-        cur["attach"] += [(path, name) for (path, _), name in zip(it["files"], names)]
+        cur["attach"] += [(f[0], name) for f, name in zip(it["files"], names)]
+        cur["bytes"] += fbytes
         cur["text"] += text_total([card])
         cur["comps"] += count_components([card])
     return msgs
@@ -225,14 +240,20 @@ def pack_messages(items, header, text_limit=CARD_TEXT_LIMIT):
 
 def extract_videos(body):
     """(url, 動画と見なせるか) のリスト。実行動画セクション優先、無ければ本文全体から探す。"""
+    def find(text):
+        found = []
+        for m in list(ASSET_RE.finditer(text)) + list(EXT_RE.finditer(text)):
+            u = m.group(0).rstrip(".,;")
+            if u not in found:
+                found.append(u)
+        return found
+
     sec = get_section(body, "実行動画")
-    in_section = sec is not None
-    text = sec if in_section else body
-    urls = []
-    for m in list(ASSET_RE.finditer(text)) + list(EXT_RE.finditer(text)):
-        u = m.group(0).rstrip(".,;")
-        if u not in urls:
-            urls.append(u)
+    urls = find(sec) if sec is not None else []
+    # セクションが無い・URL が1件も無い(空やテンプレのコメントだけ)ときは本文全体から探す
+    in_section = bool(urls)
+    if not urls:
+        urls = find(body)
     return [(u, in_section or bool(EXT_RE.fullmatch(u))) for u in urls]
 
 
@@ -446,7 +467,13 @@ def main():
 
             attach, links, originals, total = [], [], [], 0
             can_compress = bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
-            for i, (url, is_video) in enumerate(extract_videos(body)):
+            candidates = extract_videos(body)
+            if len(candidates) > MAX_VIDEO_CANDIDATES:
+                print("  PR #%d: 動画URLが %d 件あるため先頭 %d 件のみ調べ、残りは無視します: %s"
+                      % (pr["number"], len(candidates), MAX_VIDEO_CANDIDATES,
+                         ", ".join(u for u, _ in candidates[MAX_VIDEO_CANDIDATES:])))
+                candidates = candidates[:MAX_VIDEO_CANDIDATES]
+            for i, (url, is_video) in enumerate(candidates):
                 tag = "  PR #%d %s: " % (pr["number"], url)
                 dest = os.path.join(tmp, "pr%d_%d.bin" % (pr["number"], i))
                 pok, pctype, psize, preason = probe(url, dest + ".hdr")
@@ -506,7 +533,7 @@ def main():
 
             if card_mode:
                 items.append({"pr": pr, "login": login, "desc": desc, "links": links, "originals": originals,
-                              "files": [(path, os.path.splitext(name)[1]) for path, name in attach]})
+                              "files": [(path, os.path.splitext(name)[1], os.path.getsize(path)) for path, name in attach]})
                 print("[PR #%d] %s / 添付 %d 件 / リンク %d 件" % (pr["number"], pr["title"], len(attach), len(links)))
                 continue
 
