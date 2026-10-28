@@ -16,19 +16,31 @@ namespace Echo.Echolocation.Tests
         [TestCase(0, 0, false)]
         public void AngleHasCorrectOpening(float angle, float pointAngle, bool isExpected)
         {
-            var f = new EchoFrameData(Vector3.zero, Vector3.forward, angle, 10, 0, EchoState.Active, EchoOcclusionMode.ThroughWalls);
-            Assert.That(EchoVolumeMath.Contains(f, Quaternion.Euler(0, pointAngle, 0) * Vector3.forward * 5), Is.EqualTo(isExpected));
-            Assert.That(EchoVolumeMath.Contains(f, Quaternion.Euler(pointAngle, 0, 0) * Vector3.forward * 5), Is.EqualTo(isExpected));
+            var frame = new EchoFrameData(Vector3.zero, Vector3.forward, angle, 10, 0, EchoState.Active, EchoOcclusionMode.ThroughWalls);
+            Assert.That(EchoVolumeMath.Contains(frame, Quaternion.Euler(0, pointAngle, 0) * Vector3.forward * 5), Is.EqualTo(isExpected));
+            Assert.That(EchoVolumeMath.Contains(frame, Quaternion.Euler(pointAngle, 0, 0) * Vector3.forward * 5), Is.EqualTo(isExpected));
+        }
+
+        [Test]
+        public void BandWaveContainsOnlyItsWidth()
+        {
+            // 一回だけのスキャンは展開中でも、帯が通り過ぎた内側を含まない。
+            var frame = new EchoFrameData(Vector3.zero, Vector3.forward, 360, 6, 5.7f, EchoState.Revealing, EchoOcclusionMode.ThroughWalls, 0, true);
+            Assert.False(EchoVolumeMath.Contains(frame, Vector3.forward * 2));
+            Assert.False(EchoVolumeMath.Contains(frame, Vector3.forward * 5.7f));
+            Assert.True(EchoVolumeMath.Contains(frame, Vector3.forward * 5.8f));
+            Assert.True(EchoVolumeMath.Contains(frame, Vector3.forward * 6));
+            Assert.False(EchoVolumeMath.Contains(frame, Vector3.forward * 6.1f));
         }
 
         [Test]
         public void HidingKeepsOnlyOpenInnerClosedOuterShell()
         {
-            var f = new EchoFrameData(Vector3.zero, Vector3.forward, 360, 10, 5, EchoState.Hiding, EchoOcclusionMode.ThroughWalls);
-            Assert.False(EchoVolumeMath.Contains(f, Vector3.forward * 5));
-            Assert.True(EchoVolumeMath.Contains(f, Vector3.forward * 5.01f));
-            Assert.True(EchoVolumeMath.Contains(f, Vector3.forward * 10));
-            Assert.False(EchoVolumeMath.Contains(f, Vector3.forward * 10.01f));
+            var frame = new EchoFrameData(Vector3.zero, Vector3.forward, 360, 10, 5, EchoState.Hiding, EchoOcclusionMode.ThroughWalls);
+            Assert.False(EchoVolumeMath.Contains(frame, Vector3.forward * 5));
+            Assert.True(EchoVolumeMath.Contains(frame, Vector3.forward * 5.01f));
+            Assert.True(EchoVolumeMath.Contains(frame, Vector3.forward * 10));
+            Assert.False(EchoVolumeMath.Contains(frame, Vector3.forward * 10.01f));
         }
 
         [Test]

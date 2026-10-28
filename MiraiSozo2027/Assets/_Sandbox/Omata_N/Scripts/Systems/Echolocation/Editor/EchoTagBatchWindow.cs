@@ -58,7 +58,7 @@ namespace Echo.Echolocation.Editor
                 if (!candidate.scene.IsValid() || !candidate.scene.path.StartsWith("Assets/_Sandbox/Omata_N/") ||
                     (_isActiveSceneOnly && candidate.scene != UnityEngine.SceneManagement.SceneManager.GetActiveScene()) ||
                     (!_hasInactive && !candidate.activeInHierarchy) || !candidate.CompareTag(_unityTag) ||
-                    (!_canReplace && candidate.GetComponent<EchoTag>())) continue;
+                    (!_canReplace && candidate.TryGetComponent<EchoTarget>(out var existing) && existing.Definition)) continue;
                 if (_isSelectionOnly)
                 {
                     bool isSelected = false;
@@ -76,12 +76,11 @@ namespace Echo.Echolocation.Editor
             foreach (var candidate in candidates)
             {
                 if (!candidate || !candidate.scene.path.StartsWith("Assets/_Sandbox/Omata_N/")) continue;
-                var tag = candidate.GetComponent<EchoTag>();
-                if (tag && !canReplace) continue;
-                if (!candidate.GetComponent<EchoTarget>()) Undo.AddComponent<EchoTarget>(candidate);
-                if (!tag) tag = Undo.AddComponent<EchoTag>(candidate);
-                Undo.RecordObject(tag, "Assign echo tag"); tag.Definition = definition;
-                PrefabUtility.RecordPrefabInstancePropertyModifications(tag);
+                var target = candidate.GetComponent<EchoTarget>();
+                if (target && target.Definition && !canReplace) continue;
+                if (!target) target = Undo.AddComponent<EchoTarget>(candidate);
+                Undo.RecordObject(target, "Assign echo tag"); target.Definition = definition;
+                PrefabUtility.RecordPrefabInstancePropertyModifications(target);
                 EditorSceneManager.MarkSceneDirty(candidate.scene);
             }
             Undo.CollapseUndoOperations(group);

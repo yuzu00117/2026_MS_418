@@ -14,11 +14,13 @@
 ## 1. 専用タグを設定する
 
 1. Projectで `Create > Echo > Tag` を選び、`SO_EchoTag_用途.asset`としてOmata_N配下に保存する。
-2. 分類したいルートへ`EchoTag`を追加する。`EchoTarget`も自動で追加される。
-3. `Definition`にタグアセットを指定する。
+2. 分類したいルートへ`EchoTarget`を追加する。
+3. `EchoTarget`の「専用タグ」にタグアセットを指定する。
 4. Controllerのタグ表示ルールの「専用タグ」に同じアセットを指定する。
 
-アセット参照で照合するため、表示名・アセット名の変更では対応が切れない。最も近い`EchoTarget`が所有者になる。子に別のEchoTargetがある場合、親のタグはその境界を越えない。EchoTagを無効化した対象は専用タグで一致しなくなる。
+アセット参照で照合するため、表示名・アセット名の変更では対応が切れない。最も近い`EchoTarget`が所有者になる。子に別のEchoTargetがある場合、親のタグはその境界を越えない。EchoTargetを無効化した対象は専用タグで一致しなくなる。旧`EchoTag`が残っている対象は、EchoTargetの専用タグが未設定の間だけ旧EchoTagの指定を使う。
+
+> 以下の「EchoRevealWorld」「EchoRevealState」は旧方式の互換コンポーネントで、現在は付ける必要がない。
 
 ### 既存Unityタグから一括付与
 

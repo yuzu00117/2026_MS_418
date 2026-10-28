@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Echo.Echolocation
 {
     /// <summary>旧シーンの参照互換用。Colliderの生成・有効状態の変更は行わない。</summary>
-    [DisallowMultipleComponent]
+    [DisallowMultipleComponent, AddComponentMenu("")]
     public sealed class EchoRevealCollider : MonoBehaviour
     {
         public EchoRevealCollisionMode Mode => EchoRevealCollisionMode.Unchanged;

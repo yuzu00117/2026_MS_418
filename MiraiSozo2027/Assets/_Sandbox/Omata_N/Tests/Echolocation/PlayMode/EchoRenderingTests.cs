@@ -17,6 +17,8 @@ namespace Echo.Echolocation.Tests
         private RenderTexture _output;
         private Camera _camera;
         private EchoController _controller;
+        private EchoTagDefinition _definition;
+        private readonly System.Collections.Generic.List<EchoTagDefinition> _definitions = new System.Collections.Generic.List<EchoTagDefinition>();
         [UnitySetUp]
         public IEnumerator Setup()
         {
@@ -44,7 +46,8 @@ namespace Echo.Echolocation.Tests
             _controller.Settings.Duration = 0;
             _controller.Settings.Radius = 10;
             _controller.Settings.Shadow.IsEnabled = false;
-            _controller.Settings.TagColorRules.Add(new EchoTagColorRule { TagName = "Player", Color = Color.green });
+            _definition = AssignTag(_target, Color.green);
+            _controller.Settings.TagColorRules.Add(_definition.Settings);
             _controller.RefreshTargets();
             yield return null;
             yield return null;
@@ -55,6 +58,8 @@ namespace Echo.Echolocation.Tests
         {
             if (_camera)
                 _camera.targetTexture = null;
+            foreach (var definition in _definitions) if (definition) Object.Destroy(definition);
+            _definitions.Clear();
             Object.Destroy(_cameraObject);
             Object.Destroy(_target);
             if (_wall)
@@ -65,6 +70,15 @@ namespace Echo.Echolocation.Tests
             yield return null;
         }
 
+        private EchoTagDefinition AssignTag(GameObject target, Color color, bool hasFill = true)
+        {
+            var definition = ScriptableObject.CreateInstance<EchoTagDefinition>(); _definitions.Add(definition);
+            definition.Settings.Color = color; definition.Settings.Fill.IsEnabled = hasFill;
+            definition.Settings.Fill.IsThroughWalls = true;
+            definition.Settings.Outline.IsThroughWalls = true; definition.Settings.Original.IsThroughWalls = true;
+            (target.TryGetComponent<EchoTarget>(out var existing) ? existing : target.AddComponent<EchoTarget>()).Definition = definition;
+            return definition;
+        }
         Texture2D Read()
         {
             var old = RenderTexture.active;
@@ -80,8 +94,8 @@ namespace Echo.Echolocation.Tests
         {
             var image = Read();
             int count = 0;
-            foreach (var c in image.GetPixels32())
-                if (c.g > 180 && c.r < 80 && c.b < 80)
+            foreach (var pixel in image.GetPixels32())
+                if (pixel.g > 180 && pixel.r < 80 && pixel.b < 80)
                     count++;
             var root = Path.GetFullPath(Path.Combine(Application.dataPath, "_Sandbox/Omata_N/Verification~/Images"));
             Directory.CreateDirectory(root);
@@ -99,6 +113,7 @@ namespace Echo.Echolocation.Tests
             _wall.GetComponent<Renderer>().sharedMaterial = _mat;
             Object.Destroy(_wall.GetComponent<Collider>());
             _controller.Settings.Shadow.IsEnabled = true;
+            AssignTag(_wall, Color.clear, false);
         }
 
         float GetGreenAt(Vector3 point)
@@ -122,13 +137,15 @@ namespace Echo.Echolocation.Tests
             try
             {
                 var rule = _controller.Settings.TagColorRules[0];
-                rule.FillEnabled = false;
-                rule.OutlineEnabled = true;
+                rule.IsFillEnabled = false;
+                rule.IsOutlineEnabled = true;
                 rule.OutlineColor = Color.green;
-                rule.OriginalEnabled = true;
+                rule.IsOriginalEnabled = true;
                 rule.OutlineOcclusion = EchoEffectOcclusionMode.ThroughWalls;
                 rule.OriginalOcclusion = EchoEffectOcclusionMode.VisibleOnly;
                 _controller.Settings.OcclusionMode = EchoOcclusionMode.VisibleOnly;
+            _definition.Settings.Fill.IsThroughWalls = false;
+            _definition.Settings.Fill.IsThroughWalls = false;
                 _controller.SetScanEnabled(true);
                 yield return null;
                 yield return null;
@@ -136,7 +153,7 @@ namespace Echo.Echolocation.Tests
                 var image = Read();
                 Assert.That(image.GetPixel(128, 128).r, Is.LessThan(.7f), "元マテリアルは壁で隠す");
                 int green = 0;
-                foreach (var c in image.GetPixels32()) if (c.g > 180 && c.r < 80) green++;
+                foreach (var pixel in image.GetPixels32()) if (pixel.g > 180 && pixel.r < 80) green++;
                 Object.Destroy(image);
                 Assert.That(green, Is.GreaterThan(100), "輪郭のみ壁越しに表示");
 
@@ -147,12 +164,12 @@ namespace Echo.Echolocation.Tests
                 image = Read();
                 Assert.That(image.GetPixel(128, 128).r, Is.GreaterThan(.9f), "元マテリアルのみ壁越しに表示");
                 green = 0;
-                foreach (var c in image.GetPixels32()) if (c.g > 180 && c.r < 80) green++;
+                foreach (var pixel in image.GetPixels32()) if (pixel.g > 180 && pixel.r < 80) green++;
                 Object.Destroy(image);
                 Assert.That(green, Is.Zero, "輪郭は壁で隠す");
 
                 rule.OriginalOcclusion = EchoEffectOcclusionMode.VisibleOnly;
-                rule.FillEnabled = true;
+                rule.IsFillEnabled = true;
                 rule.FillOcclusion = EchoEffectOcclusionMode.ThroughWalls;
                 yield return null;
                 yield return null;
@@ -178,8 +195,8 @@ namespace Echo.Echolocation.Tests
         public IEnumerator FullyBlockedObjectNeverActivatesWholeOutline()
         {
             var rule = _controller.Settings.TagColorRules[0];
-            rule.FillEnabled = false;
-            rule.OutlineEnabled = true;
+            rule.IsFillEnabled = false;
+            rule.IsOutlineEnabled = true;
             rule.OutlineColor = Color.green;
             rule.OutlineHoldDuration = 0;
             _target.transform.position = new Vector3(1.5f, 1.5f, 8);
@@ -201,7 +218,7 @@ namespace Echo.Echolocation.Tests
                 Assert.That(green, Is.Zero, "完全遮蔽した物体の輪郭を起動しない。角度=" + angle);
             }
             _target.transform.rotation = Quaternion.identity;
-            _controller.Settings.Shadow.Rules.Add(new EchoBlockingRule { TagName = "Untagged", IsBlocking = false });
+            _wall.GetComponent<EchoTarget>().Definition.IsBlocking = false;
             yield return null;
             yield return null;
             yield return null;
@@ -216,8 +233,8 @@ namespace Echo.Echolocation.Tests
         public IEnumerator OffscreenContactIsRememberedWhenCameraReturns()
         {
             var rule = _controller.Settings.TagColorRules[0];
-            rule.FillEnabled = false;
-            rule.OriginalEnabled = true;
+            rule.IsFillEnabled = false;
+            rule.IsOriginalEnabled = true;
             rule.OriginalHoldDuration = 1;
             _mat.SetColor("_BaseColor", Color.red);
             _camera.transform.rotation = Quaternion.Euler(0, 180, 0);
@@ -238,8 +255,8 @@ namespace Echo.Echolocation.Tests
         public IEnumerator RecontactExtendsOriginalLifetime()
         {
             var rule = _controller.Settings.TagColorRules[0];
-            rule.FillEnabled = false;
-            rule.OriginalEnabled = true;
+            rule.IsFillEnabled = false;
+            rule.IsOriginalEnabled = true;
             rule.OriginalHoldDuration = .6f;
             _mat.SetColor("_BaseColor", Color.red);
             _controller.SetScanEnabled(true);
@@ -267,8 +284,8 @@ namespace Echo.Echolocation.Tests
         public IEnumerator OriginalZeroHoldAndTagChangeRestoreRenderer()
         {
             var rule = _controller.Settings.TagColorRules[0];
-            rule.FillEnabled = false;
-            rule.OriginalEnabled = true;
+            rule.IsFillEnabled = false;
+            rule.IsOriginalEnabled = true;
             rule.OriginalHoldDuration = 0;
             _mat.SetColor("_BaseColor", Color.red);
             _controller.SetScanEnabled(true);
@@ -284,7 +301,7 @@ namespace Echo.Echolocation.Tests
             image = Read();
             Assert.That(image.GetPixel(128, 128).r, Is.LessThan(.1f));
             Object.Destroy(image);
-            _target.tag = "Respawn";
+            _target.GetComponent<EchoTarget>().Definition = null;
             yield return null;
             yield return null;
             Assert.True(_target.GetComponent<Renderer>().enabled);
@@ -309,8 +326,8 @@ namespace Echo.Echolocation.Tests
             Object.Destroy(image);
             Assert.That(expected.r, Is.GreaterThan(.2f));
             var rule = _controller.Settings.TagColorRules[0];
-            rule.FillEnabled = false;
-            rule.OriginalEnabled = true;
+            rule.IsFillEnabled = false;
+            rule.IsOriginalEnabled = true;
             _controller.SetScanEnabled(true);
             yield return null;
             yield return null;
@@ -326,7 +343,8 @@ namespace Echo.Echolocation.Tests
         public IEnumerator ContactWithOneChildRevealsWholeEchoTarget()
         {
             _wall = new GameObject("Grouped target", typeof(EchoTarget));
-            _wall.tag = "Player";
+            _wall.GetComponent<EchoTarget>().Definition = _definition;
+            Object.DestroyImmediate(_target.GetComponent<EchoTarget>());
             _target.transform.SetParent(_wall.transform, true);
             _target.transform.position = new Vector3(-1.5f, 0, 5);
             _target.transform.localScale = Vector3.one;
@@ -341,9 +359,9 @@ namespace Echo.Echolocation.Tests
             _controller.OriginTransform = origin;
             _controller.Settings.Radius = .75f;
             var rule = _controller.Settings.TagColorRules[0];
-            rule.FillEnabled = false;
-            rule.OriginalEnabled = true;
-            rule.OutlineEnabled = true;
+            rule.IsFillEnabled = false;
+            rule.IsOriginalEnabled = true;
+            rule.IsOutlineEnabled = true;
             rule.OutlineColor = Color.green;
             _controller.RefreshTargets();
             _controller.SetScanEnabled(true);
@@ -360,8 +378,8 @@ namespace Echo.Echolocation.Tests
         public IEnumerator WholeOutlineDoesNotFillCenterAndReachesBeyondWave()
         {
             var rule = _controller.Settings.TagColorRules[0];
-            rule.FillEnabled = false;
-            rule.OutlineEnabled = true;
+            rule.IsFillEnabled = false;
+            rule.IsOutlineEnabled = true;
             rule.OutlineColor = Color.green;
             rule.OutlineWidth = 5;
             _controller.Settings.Radius = 5; // 中央だけに接触。端は半径外。
@@ -389,10 +407,10 @@ namespace Echo.Echolocation.Tests
         public IEnumerator OriginalMaterialCoexistsAndExpiresAfterLastContact()
         {
             var rule = _controller.Settings.TagColorRules[0];
-            rule.FillEnabled = false;
-            rule.OutlineEnabled = true;
+            rule.IsFillEnabled = false;
+            rule.IsOutlineEnabled = true;
             rule.OutlineColor = Color.green;
-            rule.OriginalEnabled = true;
+            rule.IsOriginalEnabled = true;
             rule.OriginalHoldDuration = .3f;
             _mat.SetColor("_BaseColor", Color.red);
             yield return null;
@@ -411,13 +429,13 @@ namespace Echo.Echolocation.Tests
             foreach (var pixel in image.GetPixels32()) if (pixel.g > 180 && pixel.r < 80) green++;
             Assert.That(green, Is.GreaterThan(100), "輪郭と同時表示");
             Object.Destroy(image);
-            rule.FillEnabled = true;
+            rule.IsFillEnabled = true;
             yield return null;
             yield return null;
             image = Read();
             Assert.That(image.GetPixel(128, 128).g, Is.GreaterThan(.9f), "従来の色塗りも併用");
             Object.Destroy(image);
-            rule.FillEnabled = false;
+            rule.IsFillEnabled = false;
             _controller.SetScanEnabled(false);
             yield return null;
             yield return null;
@@ -449,7 +467,7 @@ namespace Echo.Echolocation.Tests
             int resolution = _controller.Settings.Shadow.Resolution;
             Assert.That(readback.GetData<float>(4)[resolution / 2 * resolution + resolution / 2], Is.EqualTo(2.4f).Within(.02f), "正面マップに壁までの距離を保存する");
             Assert.That(GetGreenCount("source-shadow-blocked"), Is.Zero);
-            _controller.Settings.Shadow.Rules.Add(new EchoBlockingRule { TagName = "Untagged", IsBlocking = false });
+            _wall.GetComponent<EchoTarget>().Definition.IsBlocking = false;
             yield return null;
             yield return null;
             yield return null;
@@ -463,7 +481,7 @@ namespace Echo.Echolocation.Tests
             second.transform.localScale = new Vector3(20, 20, .2f);
             second.transform.SetParent(_wall.transform, true);
             second.GetComponent<Renderer>().sharedMaterial = _mat;
-            second.AddComponent<EchoOccluder>(); // 動的な遮蔽物を登録する。
+            AssignTag(second, Color.clear, false); // 子にも独立した遮断専用タグを付ける。
             yield return null;
             yield return null;
             yield return null;
@@ -523,7 +541,7 @@ namespace Echo.Echolocation.Tests
         }
 
         [UnityTest]
-        public IEnumerator ReadOnlyMeshAndLayerAndRootExclusionAreSupported()
+        public IEnumerator ReadOnlyMeshAndRootExclusionAreSupported()
         {
             CreateShadowWall(new Vector3(0, 0, 2.5f), new Vector3(20, 20, .2f));
             var mesh = Object.Instantiate(_wall.GetComponent<MeshFilter>().sharedMesh);
@@ -539,7 +557,7 @@ namespace Echo.Echolocation.Tests
             yield return null;
             yield return null;
             yield return null;
-            Assert.That(GetGreenAt(new Vector3(0, 0, 4.9f)), Is.GreaterThan(.9f));
+            Assert.That(GetGreenAt(new Vector3(0, 0, 4.9f)), Is.LessThan(.7f), "旧レイヤー設定では遮断対象を除外しない");
             _controller.Settings.Shadow.Layers = ~0;
             _controller.ExcludedRoot = _wall.transform;
             yield return null;
@@ -599,13 +617,9 @@ namespace Echo.Echolocation.Tests
         {
             CreateShadowWall(Vector3.zero, Vector3.one);
             _target.transform.localScale = new Vector3(.5f, .5f, .2f);
-            _controller.Settings.Shadow.Rules.Add(new EchoBlockingRule { TagName = "Player", IsBlocking = false });
-            var rule = new EchoBlockingRule
-            {
-                TagName = "Untagged",
-                IsBlocking = true
-            };
-            _controller.Settings.Shadow.Rules.Add(rule);
+            _definition.IsBlocking = false;
+            var rule = _wall.GetComponent<EchoTarget>().Definition;
+            rule.IsBlocking = true;
             var origin = new GameObject("Origin").transform;
             origin.SetParent(_cameraObject.transform, false);
             _controller.OriginTransform = origin;
@@ -689,7 +703,8 @@ namespace Echo.Echolocation.Tests
             _wall.transform.position = new Vector3(0, 0, 3);
             _wall.transform.localScale = new Vector3(1, 1, .2f);
             _wall.GetComponent<Renderer>().sharedMaterial = _mat;
-            _controller.Settings.TagColorRules.Add(new EchoTagColorRule { TagName = "Untagged", Color = Color.red });
+            var definition = AssignTag(_wall, Color.red);
+            _controller.Settings.TagColorRules.Add(definition.Settings);
             _controller.RefreshTargets();
         }
 
@@ -735,7 +750,9 @@ namespace Echo.Echolocation.Tests
         public IEnumerator VisibleOnlyStillRespectsSceneDepthBetweenHighlights()
         {
             AddOverlappingHighlight();
+            _wall.GetComponent<EchoTarget>().Definition.Settings.Fill.IsThroughWalls = false;
             _controller.Settings.OcclusionMode = EchoOcclusionMode.VisibleOnly;
+            _definition.Settings.Fill.IsThroughWalls = false;
             _controller.SetScanEnabled(true);
             yield return null;
             yield return null;
@@ -751,7 +768,8 @@ namespace Echo.Echolocation.Tests
         public IEnumerator PassedSurfaceDoesNotLeaveBrightFrontWhileWaveContinues()
         {
             // 壁に到達した後も親波は展開中。終端へのクランプによる先端の残留を再現する。
-            _cameraObject.AddComponent<EchoRangeDisplay>().IsBoundaryVisible = false;
+            _controller.RangeDisplay.IsEnabled = true; _controller.RangeDisplay.IsBoundaryVisible = false;
+            _target.GetComponent<EchoTarget>().enabled = false;
             _controller.Settings.TagColorRules.Clear();
             _controller.Settings.AngleDegrees = 10;
             _controller.Settings.Duration = 2;
@@ -773,7 +791,8 @@ namespace Echo.Echolocation.Tests
         [UnityTest]
         public IEnumerator CompletedWaveRetainsFillWithoutBrightRim()
         {
-            _cameraObject.AddComponent<EchoRangeDisplay>().IsBoundaryVisible = false;
+            _controller.RangeDisplay.IsEnabled = true; _controller.RangeDisplay.IsBoundaryVisible = false;
+            _target.GetComponent<EchoTarget>().enabled = false;
             _controller.Settings.TagColorRules.Clear();
             _controller.Settings.Radius = 4.95f;
             _controller.Settings.AngleDegrees = 10;
@@ -803,6 +822,7 @@ namespace Echo.Echolocation.Tests
             yield return null;
             Assert.That(GetGreenCount("through-walls"), Is.GreaterThan(500), "壁裏の対象をGPUで描画する");
             _controller.Settings.OcclusionMode = EchoOcclusionMode.VisibleOnly;
+            _definition.Settings.Fill.IsThroughWalls = false;
             yield return null;
             yield return null;
             yield return null;
@@ -892,8 +912,9 @@ namespace Echo.Echolocation.Tests
         [UnityTest]
         public IEnumerator RangeShowsUntaggedSurfacesAndClearsOnOff()
         {
-            var display = _cameraObject.AddComponent<EchoRangeDisplay>();
+            var display = _controller.RangeDisplay; display.IsEnabled = true;
             display.IsBoundaryVisible = false;
+            _target.GetComponent<EchoTarget>().enabled = false;
             _controller.Settings.TagColorRules.Clear();
             _controller.Settings.AngleDegrees = 30;
             _controller.SetScanEnabled(true);
@@ -943,8 +964,8 @@ namespace Echo.Echolocation.Tests
             Assert.That(_controller.Frames[0].Origin.x, Is.EqualTo(-1.5f));
             Color At(Texture2D image, float x)
             {
-                var p = _camera.WorldToScreenPoint(new Vector3(x, 0, 4.9f));
-                return image.GetPixel((int)p.x, (int)p.y);
+                var screen = _camera.WorldToScreenPoint(new Vector3(x, 0, 4.9f));
+                return image.GetPixel((int)screen.x, (int)screen.y);
             }
 
             var both = Read();

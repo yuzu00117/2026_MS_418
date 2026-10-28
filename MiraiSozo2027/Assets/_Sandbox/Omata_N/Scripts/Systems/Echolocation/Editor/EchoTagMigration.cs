@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 namespace Echo.Echolocation.Editor
 {
-    /// <summary>保存済み個人シーンの旧ルールを参照型へ移す。既存の遮断判定は個別設定で保持。</summary>
+    /// <summary>保存済み個人シーンの旧ルールを参照型へ移す。表示と遮断設定を専用タグアセットに保存する。</summary>
     public static class EchoTagMigration
     {
         private const string TagFolder = "Assets/_Sandbox/Omata_N/Settings/EchoTags";
@@ -23,6 +23,16 @@ namespace Echo.Echolocation.Editor
                 }
             if (!selected) { Debug.LogError("現在のシーンにEchoControllerがありません。"); return; }
             Migrate(selected);
+        }
+        private static void ImportAssetSettings(EchoController controller, EchoTagColorRule rule)
+        {
+            if (rule == null || !rule.Definition || rule.Definition.HasAssetSettings) return;
+            if (!AssetDatabase.GetAssetPath(rule.Definition).StartsWith("Assets/_Sandbox/Omata_N/")) return;
+            Undo.RecordObject(rule.Definition, "専用タグの設定を移行");
+            var settings = rule.Copy();
+            settings.ImportLegacySettings(controller.Settings.OcclusionMode);
+            rule.Definition.Configure(settings, controller.Settings.Shadow.IsBlockingTag(rule.TagName));
+            EditorUtility.SetDirty(rule.Definition);
         }
         public static void Migrate(EchoController controller)
         {
@@ -52,19 +62,12 @@ namespace Echo.Echolocation.Editor
                 }
                 else if (!definitions.ContainsKey(rule.TagName)) definitions.Add(rule.TagName, rule.Definition);
             }
+            foreach (var rule in controller.Settings.TagColorRules) ImportAssetSettings(controller, rule);
             var world = controller.GetComponent<EchoRevealWorld>();
-            if (!world) world = Undo.AddComponent<EchoRevealWorld>(controller.gameObject);
             var owners = new HashSet<GameObject>();
             foreach (var renderer in UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include))
             {
                 if (renderer.gameObject.scene != controller.gameObject.scene || renderer.GetComponent<EchoRevealProxy>()) continue;
-                // 旧遮断分類はRenderer自身のUnityタグなので、表示所有者と分けて保存する。
-                if (!renderer.GetComponent<EchoOccluder>())
-                {
-                    var occluder = Undo.AddComponent<EchoOccluder>(renderer.gameObject);
-                    occluder.IsBlocking = controller.Settings.Shadow.IsBlockingTag(renderer.tag);
-                    PrefabUtility.RecordPrefabInstancePropertyModifications(occluder);
-                }
                 var owner = renderer.GetComponentInParent<EchoTarget>(true);
                 owners.Add(owner ? owner.gameObject : renderer.gameObject);
             }
@@ -77,7 +80,7 @@ namespace Echo.Echolocation.Editor
             EditorSceneManager.MarkSceneDirty(controller.gameObject.scene);
             foreach (var definition in definitions.Values) AssetDatabase.SaveAssetIfDirty(definition);
             Undo.CollapseUndoOperations(group);
-            controller.RefreshTargets(); world.Refresh();
+            controller.RefreshTargets();
         }
     }
 }

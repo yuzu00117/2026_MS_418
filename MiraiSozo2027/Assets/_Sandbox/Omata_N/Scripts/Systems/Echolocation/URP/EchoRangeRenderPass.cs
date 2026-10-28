@@ -19,7 +19,7 @@ namespace Echo.Echolocation
             renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
         }
 
-        static Color GetLinearColor(Color c) => QualitySettings.activeColorSpace == ColorSpace.Linear ? c.linear : c;
+        static Color GetLinearColor(Color color) => QualitySettings.activeColorSpace == ColorSpace.Linear ? color.linear : color;
         /// <summary>現在のスキャン領域と設定を固定し、フルスクリーンと境界線を追加する。</summary>
         public override void RecordRenderGraph(RenderGraph graph, ContextContainer frameData)
         {
@@ -27,8 +27,8 @@ namespace Echo.Echolocation
             var controller = EchoController.GetForCamera(camera.camera);
             if (!controller || controller.Frames.Count == 0 || controller.Settings.AngleDegrees <= 0)
                 return;
-            var display = controller.GetComponent<EchoRangeDisplay>();
-            if (!display || !display.isActiveAndEnabled)
+            var display = controller.RangeDisplay;
+            if (!display.IsEnabled)
                 return;
             var resources = frameData.Get<UniversalResourceData>();
             if (!resources.cameraDepthTexture.IsValid())
@@ -48,33 +48,35 @@ namespace Echo.Echolocation
                 data.Erase = GetLinearColor(display.EraseColor);
                 data.Boundary = GetLinearColor(display.BoundaryColor);
                 data.Width = display.WaveWidth;
+                data.FollowWave = controller.FollowWaveRadius;
                 builder.UseTexture(resources.cameraDepthTexture, AccessFlags.Read);
                 builder.SetRenderAttachment(resources.activeColorTexture, 0, AccessFlags.ReadWrite);
                 builder.AllowGlobalStateModification(true);
-                builder.SetRenderFunc((EchoRangePassData d, RasterGraphContext ctx) =>
+                builder.SetRenderFunc((EchoRangePassData passData, RasterGraphContext ctx) =>
                 {
-                    d.Waves.Bind(ctx.cmd);
-                    ctx.cmd.SetGlobalVector("_EchoRangeFill", d.Fill);
-                    ctx.cmd.SetGlobalVector("_EchoRangeWave", d.Wave);
-                    ctx.cmd.SetGlobalVector("_EchoRangeErase", d.Erase);
-                    ctx.cmd.SetGlobalFloat("_EchoRangeWidth", d.Width);
-                    if (d.IsSurfaceVisible)
-                        ctx.cmd.DrawProcedural(Matrix4x4.identity, d.Material, 0, MeshTopology.Triangles, 3);
-                    if (d.IsBoundaryVisible && d.Mesh)
+                    passData.Waves.Bind(ctx.cmd);
+                    ctx.cmd.SetGlobalVector("_EchoRangeFill", passData.Fill);
+                    ctx.cmd.SetGlobalVector("_EchoRangeWave", passData.Wave);
+                    ctx.cmd.SetGlobalVector("_EchoRangeErase", passData.Erase);
+                    ctx.cmd.SetGlobalFloat("_EchoRangeWidth", passData.Width);
+                    ctx.cmd.SetGlobalFloat("_EchoFollowWave", passData.FollowWave);
+                    if (passData.IsSurfaceVisible)
+                        ctx.cmd.DrawProcedural(Matrix4x4.identity, passData.Material, 0, MeshTopology.Triangles, 3);
+                    if (passData.IsBoundaryVisible && passData.Mesh)
                     {
-                        for (int i = 0; i < d.Waves.Count; i++)
+                        for (int i = 0; i < passData.Waves.Count; i++)
                         {
-                            var f = d.Waves.Frames[i];
-                            if (f.OuterRadius <= 0)
+                            var frame = passData.Waves.Frames[i];
+                            if (frame.OuterRadius <= 0)
                                 continue;
                             ctx.cmd.SetGlobalInteger("_EchoBoundaryWave", i);
                             // ZTestの代わりに専用シェーダーで深度比較し、カメラの深度を書き換えない。
-                            ctx.cmd.SetGlobalVector("_EchoRangeLine", d.Boundary);
-                            ctx.cmd.DrawMesh(d.Mesh, Matrix4x4.TRS(f.Origin, Quaternion.LookRotation(f.Forward), Vector3.one * f.OuterRadius), d.Material, 0, 1);
-                            if (f.State == EchoState.Hiding && f.EraseRadius > 0)
+                            ctx.cmd.SetGlobalVector("_EchoRangeLine", passData.Boundary);
+                            ctx.cmd.DrawMesh(passData.Mesh, Matrix4x4.TRS(frame.Origin, Quaternion.LookRotation(frame.Forward), Vector3.one * frame.OuterRadius), passData.Material, 0, 1);
+                            if (frame.State == EchoState.Hiding && frame.EraseRadius > 0)
                             {
-                                ctx.cmd.SetGlobalVector("_EchoRangeLine", d.Erase);
-                                ctx.cmd.DrawMesh(d.Mesh, Matrix4x4.TRS(f.Origin, Quaternion.LookRotation(f.Forward), Vector3.one * f.EraseRadius), d.Material, 0, 1);
+                                ctx.cmd.SetGlobalVector("_EchoRangeLine", passData.Erase);
+                                ctx.cmd.DrawMesh(passData.Mesh, Matrix4x4.TRS(frame.Origin, Quaternion.LookRotation(frame.Forward), Vector3.one * frame.EraseRadius), passData.Material, 0, 1);
                             }
                         }
                     }

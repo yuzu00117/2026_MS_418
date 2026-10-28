@@ -8,6 +8,12 @@ namespace Echo.Echolocation
     [Serializable]
     public sealed class EchoShadowSettings
     {
+        private const int DefaultResolution = 512;
+        private const int MinimumResolution = 128;
+        private const int MaximumResolution = 1024;
+        private const float DefaultBias = .03f;
+        private const float MinimumBias = .001f;
+        private const float MaximumBias = .2f;
         [UnityEngine.SerializeField]
         [UnityEngine.Serialization.FormerlySerializedAs("Enabled")]
         private bool _isEnabled = true;
@@ -26,13 +32,13 @@ namespace Echo.Echolocation
         [Tooltip("1方向の影解像度。各発生地点で6方向を描画します。")]
         [UnityEngine.SerializeField]
         [UnityEngine.Serialization.FormerlySerializedAs("Resolution")]
-        private int _resolution = 512;
+        private int _resolution = DefaultResolution;
         public int Resolution { get => _resolution; set => _resolution = value; }
 
-        [Range(.001f, .2f), Tooltip("自分自身の面を影と誤判定しないための距離許容値（m）。大きいと薄い壁から漏れます。")]
+        [Range(MinimumBias, MaximumBias), Tooltip("自分自身の面を影と誤判定しないための距離許容値（m）。大きいと薄い壁から漏れます。")]
         [UnityEngine.SerializeField]
         [UnityEngine.Serialization.FormerlySerializedAs("Bias")]
-        private float _bias = .03f;
+        private float _bias = DefaultBias;
         public float Bias { get => _bias; set => _bias = value; }
 
         [UnityEngine.SerializeField]
@@ -42,8 +48,8 @@ namespace Echo.Echolocation
 
         public void Validate()
         {
-            Resolution = Mathf.Clamp(Mathf.ClosestPowerOfTwo(Resolution), 128, 1024);
-            Bias = float.IsFinite(Bias) ? Mathf.Clamp(Bias, .001f, .2f) : .03f;
+            Resolution = Mathf.Clamp(Mathf.ClosestPowerOfTwo(Resolution), MinimumResolution, MaximumResolution);
+            Bias = float.IsFinite(Bias) ? Mathf.Clamp(Bias, MinimumBias, MaximumBias) : DefaultBias;
             Rules ??= new List<EchoBlockingRule>();
         }
 
@@ -67,9 +73,9 @@ namespace Echo.Echolocation
             var copy = (EchoShadowSettings)MemberwiseClone();
             copy.Rules = new List<EchoBlockingRule>();
             if (Rules != null)
-                foreach (var r in Rules)
-                    if (r != null)
-                        copy.Rules.Add(new EchoBlockingRule { IsEnabled = r.IsEnabled, Definition = r.Definition, TagName = r.TagName, IsBlocking = r.IsBlocking });
+                foreach (var rule in Rules)
+                    if (rule != null)
+                        copy.Rules.Add(new EchoBlockingRule { IsEnabled = rule.IsEnabled, Definition = rule.Definition, TagName = rule.TagName, IsBlocking = rule.IsBlocking });
             copy.Validate();
             return copy;
         }

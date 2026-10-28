@@ -14,16 +14,27 @@ namespace Echo.Echolocation
         private readonly EchoUrpRenderBackend _backend;
         private readonly EchoShadowTexture _shadowTexture = new EchoShadowTexture();
         private readonly EchoObjectEffects _objectEffects = new EchoObjectEffects();
+        // 毎フレームの確保を避けるため、対象ごとのリストと並べ替え用の一覧は使い回す。
         private readonly Dictionary<Object, List<EchoRenderItem>> _effectGroups = new Dictionary<Object, List<EchoRenderItem>>();
+        private readonly List<List<EchoRenderItem>> _sortedGroups = new List<List<EchoRenderItem>>();
+        private readonly List<Object> _emptyGroups = new List<Object>();
+        private readonly System.Comparison<List<EchoRenderItem>> _compareFarthestFirst;
+        private Vector3 _cameraPosition;
         public void Dispose() { _shadowTexture.Dispose(); _objectEffects.Dispose(); }
         public void PruneObjectEffects() => _objectEffects.Prune();
-        private static readonly int _colorId = Shader.PropertyToID("_EchoTint");
-        private static readonly int _modeId = Shader.PropertyToID("_EchoOcclusion");
+        // Hidden/Echo/Compositeの、蓄積した色を画面へ合成するパス。
+        private const int CompositePass = 0;
+        private static readonly Vector4 IdentityScaleBias = new Vector4(1, 1, 0, 0);
         /// <summary>パイプライン固有リソースを受け取る。</summary>
         public EchoUrpRenderPass(EchoUrpRenderBackend backend)
         {
             this._backend = backend;
+            _compareFarthestFirst = CompareFarthestFirst;
         }
+
+        // 奥の対象から描き、手前の対象の色を後から重ねる。
+        private int CompareFarthestFirst(List<EchoRenderItem> first, List<EchoRenderItem> second) =>
+            (second[0].Renderer.bounds.center - _cameraPosition).sqrMagnitude.CompareTo((first[0].Renderer.bounds.center - _cameraPosition).sqrMagnitude);
 
         /// <summary>各カメラのリソース依存を明示し、Render Graphに寿命を任せる。</summary>
         public override void RecordRenderGraph(RenderGraph graph, ContextContainer context)
@@ -43,76 +54,34 @@ namespace Echo.Echolocation
             desc.clearColor = Color.clear;
             var color = graph.CreateTexture(desc);
             var paths = _shadowTexture.Import(graph, controller);
-            _effectGroups.Clear();
+            foreach (var group in _effectGroups.Values)
+                group.Clear();
             foreach (var item in controller.RenderItems)
-                if (item.Rule.OutlineEnabled || item.Rule.OriginalEnabled || item.Rule.Glitch.IsEnabled)
+                if (item.Renderer && item.Renderer.enabled && item.Renderer.gameObject.activeInHierarchy && item.Rule.HasAnyEffect)
                 {
                     if (!_effectGroups.TryGetValue(item.EffectGroup, out var group))
                         _effectGroups.Add(item.EffectGroup, group = new List<EchoRenderItem>());
                     group.Add(item);
                 }
-            var sortedGroups = new List<List<EchoRenderItem>>(_effectGroups.Values);
-            var cameraPosition = camera.camera.transform.position;
-            sortedGroups.Sort((a, b) => (b[0].Renderer.bounds.center - cameraPosition).sqrMagnitude.CompareTo((a[0].Renderer.bounds.center - cameraPosition).sqrMagnitude));
-            foreach (var group in sortedGroups)
-                _objectEffects.Record(graph, context, resources, controller, group.ToArray(), desc, color, paths, _backend);
-            foreach (var item in controller.RenderItems)
-            {
-                if (!item.Rule.FillEnabled || item.Color.a <= 0) continue;
-                // 各Rendererで深度を初期化する。他対象との重なりは後段の色合成に任せる。
-                var objectDesc = desc;
-                objectDesc.name = "Echo object highlight";
-                var objectColor = graph.CreateTexture(objectDesc);
-                objectDesc.name = "Echo object depth";
-                objectDesc.colorFormat = GraphicsFormat.None;
-                objectDesc.depthBufferBits = DepthBits.Depth32;
-                var depth = graph.CreateTexture(objectDesc);
-                using (var builder = graph.AddRasterRenderPass<EchoHighlightDrawData>("Echo.Draw", out EchoHighlightDrawData data))
-                {
-                    data.Waves.Capture(controller);
-                    data.Occlusion = EchoTagColorRule.ResolveOcclusion(item.Rule.FillOcclusion, controller.Settings.OcclusionMode);
-                    data.Item = item;
-                    data.Material = _backend.Highlight;
-                    data.Waves.Shadows = paths;
-                    if (paths.IsValid())
-                        builder.UseTexture(paths, AccessFlags.Read);
-                    builder.SetRenderAttachment(objectColor, 0, AccessFlags.Write);
-                    builder.SetRenderAttachmentDepth(depth, AccessFlags.Write);
-                    if (resources.cameraDepthTexture.IsValid())
-                        builder.UseTexture(resources.cameraDepthTexture, AccessFlags.Read);
-                    builder.AllowGlobalStateModification(true);
-                    builder.SetRenderFunc((EchoHighlightDrawData d, RasterGraphContext ctx) =>
-                    {
-                        d.Waves.Bind(ctx.cmd);
-                        ctx.cmd.SetGlobalFloat(_modeId, d.Occlusion == EchoOcclusionMode.VisibleOnly ? 1 : 0);
-                        var renderItem = d.Item;
-                        if (renderItem.Renderer)
-                        {
-                            Color c = QualitySettings.activeColorSpace == ColorSpace.Linear ? renderItem.Color.linear : renderItem.Color;
-                            ctx.cmd.SetGlobalVector(_colorId, new Vector4(c.r, c.g, c.b, renderItem.Color.a));
-                            for (int s = 0; s < renderItem.SubMeshCount; s++)
-                                ctx.cmd.DrawRenderer(renderItem.Renderer, d.Material, s, 0);
-                        }
-                    });
-                }
-
-                using (var builder = graph.AddRasterRenderPass<EchoCompositeData>("Echo.Accumulate", out EchoCompositeData data))
-                {
-                    data.Source = objectColor;
-                    data.Material = _backend.Composite;
-                    builder.UseTexture(objectColor, AccessFlags.Read);
-                    builder.SetRenderAttachment(color, 0, AccessFlags.ReadWrite);
-                    builder.SetRenderFunc((EchoCompositeData d, RasterGraphContext ctx) => Blitter.BlitTexture(ctx.cmd, d.Source, new Vector4(1, 1, 0, 0), d.Material, 1));
-                }
-            }
-
+            // 対象がいなくなったリストは捨て、辞書が増え続けないようにする。
+            _emptyGroups.Clear();
+            _sortedGroups.Clear();
+            foreach (var pair in _effectGroups)
+                if (pair.Value.Count == 0) _emptyGroups.Add(pair.Key);
+                else _sortedGroups.Add(pair.Value);
+            foreach (var key in _emptyGroups)
+                _effectGroups.Remove(key);
+            _cameraPosition = camera.camera.transform.position;
+            _sortedGroups.Sort(_compareFarthestFirst);
+            foreach (var group in _sortedGroups)
+                _objectEffects.Record(graph, context, resources, controller, group, desc, color, paths, _backend);
             using (var builder = graph.AddRasterRenderPass<EchoCompositeData>("Echo.Composite", out EchoCompositeData data))
             {
                 data.Source = color;
                 data.Material = _backend.Composite;
                 builder.UseTexture(color, AccessFlags.Read);
                 builder.SetRenderAttachment(resources.activeColorTexture, 0, AccessFlags.ReadWrite);
-                builder.SetRenderFunc((EchoCompositeData d, RasterGraphContext ctx) => Blitter.BlitTexture(ctx.cmd, d.Source, new Vector4(1, 1, 0, 0), d.Material, 0));
+                builder.SetRenderFunc((EchoCompositeData passData, RasterGraphContext ctx) => Blitter.BlitTexture(ctx.cmd, passData.Source, IdentityScaleBias, passData.Material, CompositePass));
             }
         }
     }

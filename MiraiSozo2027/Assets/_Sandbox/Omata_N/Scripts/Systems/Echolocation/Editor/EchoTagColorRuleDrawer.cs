@@ -14,69 +14,61 @@ namespace Echo.Echolocation.Editor
         private const int ContactLineCount = 1;
         private const float LineSpacing = 4;
 
-        public override float GetPropertyHeight(SerializedProperty p, GUIContent l)
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             int lines = BaseLineCount;
-            if (!p.FindPropertyRelative("_definition").objectReferenceValue) lines++;
-            if (p.FindPropertyRelative("_fillEnabled").boolValue) lines += FillLineCount;
-            if (p.FindPropertyRelative("_outlineEnabled").boolValue) lines += OutlineLineCount;
-            if (p.FindPropertyRelative("_originalEnabled").boolValue) lines += OriginalLineCount;
-            if (p.FindPropertyRelative("_originalEnabled").boolValue || p.FindPropertyRelative("_outlineEnabled").boolValue || p.FindPropertyRelative("_glitch._isEnabled").boolValue) lines += ContactLineCount;
-            var glitch = p.FindPropertyRelative("_glitch");
-            if (glitch.FindPropertyRelative("_isEnabled").boolValue && !p.FindPropertyRelative("_originalEnabled").boolValue) lines++;
-            return lines * (EditorGUIUtility.singleLineHeight + LineSpacing) + EditorGUI.GetPropertyHeight(glitch, true) + LineSpacing;
+            if (!property.FindPropertyRelative("_definition").objectReferenceValue) lines++;
+            if (property.FindPropertyRelative("_isFillEnabled").boolValue) lines += FillLineCount;
+            if (property.FindPropertyRelative("_isOutlineEnabled").boolValue) lines += OutlineLineCount;
+            if (property.FindPropertyRelative("_isOriginalEnabled").boolValue) lines += OriginalLineCount;
+            if (property.FindPropertyRelative("_isOriginalEnabled").boolValue || property.FindPropertyRelative("_isOutlineEnabled").boolValue) lines += ContactLineCount;
+            return lines * (EditorGUIUtility.singleLineHeight + LineSpacing) + LineSpacing;
         }
-        public override void OnGUI(Rect rect, SerializedProperty p, GUIContent label)
+        public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
         {
-            EditorGUI.BeginProperty(rect, label, p);
+            EditorGUI.BeginProperty(rect, label, property);
             rect.height = EditorGUIUtility.singleLineHeight;
-            EditorGUI.PropertyField(new Rect(rect.x, rect.y, 20, rect.height), p.FindPropertyRelative("_isEnabled"), GUIContent.none);
+            EditorGUI.PropertyField(new Rect(rect.x, rect.y, 20, rect.height), property.FindPropertyRelative("_isEnabled"), GUIContent.none);
             EditorGUI.PropertyField(new Rect(rect.x + 24, rect.y, rect.width - 24, rect.height),
-                p.FindPropertyRelative("_definition"), new GUIContent("専用タグ"));
-            if (!p.FindPropertyRelative("_definition").objectReferenceValue)
+                property.FindPropertyRelative("_definition"), new GUIContent("専用タグ"));
+            if (!property.FindPropertyRelative("_definition").objectReferenceValue)
             {
                 rect.y += EditorGUIUtility.singleLineHeight + LineSpacing;
-                var tag = p.FindPropertyRelative("_tagName");
+                var tag = property.FindPropertyRelative("_tagName");
                 EditorGUI.BeginChangeCheck();
                 string value = EditorGUI.TagField(rect, "旧Unityタグ（移行用）", tag.stringValue);
                 if (EditorGUI.EndChangeCheck()) tag.stringValue = value;
             }
-            void Field(string path, string title)
+            void DrawField(string path, string title)
             {
                 rect.y += EditorGUIUtility.singleLineHeight + LineSpacing;
-                EditorGUI.PropertyField(rect, p.FindPropertyRelative(path), new GUIContent(title), true);
+                EditorGUI.PropertyField(rect, property.FindPropertyRelative(path), new GUIContent(title), true);
             }
-            Field("_fillEnabled", "表面を色で塗る");
-            if (p.FindPropertyRelative("_fillEnabled").boolValue)
+            DrawField("_isFillEnabled", "表面を色で塗る");
+            if (property.FindPropertyRelative("_isFillEnabled").boolValue)
             {
-                Field("_color", "塗りの色 / 不透明度");
-                Field("_fillOcclusion", "塗りの壁越し表示");
+                DrawField("_color", "塗りの色 / 不透明度");
+                DrawField("_fillOcclusion", "塗りの壁越し表示");
             }
-            Field("_outlineEnabled", "全体の輪郭を表示");
-            if (p.FindPropertyRelative("_outlineEnabled").boolValue)
+            DrawField("_isOutlineEnabled", "全体の輪郭を表示");
+            if (property.FindPropertyRelative("_isOutlineEnabled").boolValue)
             {
-                Field("_outlineColor", "輪郭の色 / 不透明度");
-                Field("_outlineWidth", "輪郭幅（ピクセル）");
-                Field("_outlineHoldDuration", "接触後の輪郭残存（秒）");
-                Field("_outlineOcclusion", "輪郭の壁越し表示");
+                DrawField("_outlineColor", "輪郭の色 / 不透明度");
+                DrawField("_outlineWidth", "輪郭幅（ピクセル）");
+                DrawField("_outlineHoldDuration", "接触後の輪郭残存（秒）");
+                DrawField("_outlineOcclusion", "輪郭の壁越し表示");
             }
-            Field("_originalEnabled", "元のマテリアルを表示");
-            if (p.FindPropertyRelative("_originalEnabled").boolValue)
+            DrawField("_isOriginalEnabled", "元のマテリアルを表示");
+            if (property.FindPropertyRelative("_isOriginalEnabled").boolValue)
             {
-                Field("_revealMode", "表示範囲");
-                Field("_hideOriginalOutsideEcho", "通常時は非表示にする");
-                Field("_originalHoldDuration", "全体表示の残存（秒）");
-                Field("_originalOpacity", "元の見た目の不透明度");
-                Field("_originalOcclusion", "元マテリアルの壁越し表示");
+                DrawField("_revealMode", "表示範囲");
+                DrawField("_isOriginalHiddenOutsideEcho", "通常時は非表示にする");
+                DrawField("_originalHoldDuration", "全体表示の残存（秒）");
+                DrawField("_originalOpacity", "元の見た目の不透明度");
+                DrawField("_originalOcclusion", "元マテリアルの壁越し表示");
             }
-            if (p.FindPropertyRelative("_originalEnabled").boolValue || p.FindPropertyRelative("_outlineEnabled").boolValue || p.FindPropertyRelative("_glitch._isEnabled").boolValue)
-                Field("_contactResolution", "接触判定の解像度");
-            if (!p.FindPropertyRelative("_originalEnabled").boolValue && p.FindPropertyRelative("_glitch._isEnabled").boolValue)
-                Field("_revealMode", "グリッチの表示範囲");
-            rect.y += EditorGUIUtility.singleLineHeight + LineSpacing;
-            var glitch = p.FindPropertyRelative("_glitch");
-            rect.height = EditorGUI.GetPropertyHeight(glitch, true);
-            EditorGUI.PropertyField(rect, glitch, new GUIContent("グリッチ設定"), true);
+            if (property.FindPropertyRelative("_isOriginalEnabled").boolValue || property.FindPropertyRelative("_isOutlineEnabled").boolValue)
+                DrawField("_contactResolution", "接触判定の解像度");
             EditorGUI.EndProperty();
         }
     }

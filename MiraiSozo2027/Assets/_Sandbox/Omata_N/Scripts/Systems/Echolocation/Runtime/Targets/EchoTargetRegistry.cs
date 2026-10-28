@@ -57,8 +57,8 @@ namespace Echo.Echolocation
 
         static Material[] CreateInvisible(Shader shader, int count)
         {
-            if (_queues.Count + count > 5000)
-                throw new System.InvalidOperationException("エコーの元マテリアル表示は同時5000スロットまでです。");
+            if (_queues.Count + count > MaximumInvisibleSlots)
+                throw new System.InvalidOperationException($"エコーの元マテリアル表示は同時{MaximumInvisibleSlots}スロットまでです。");
             var result = new Material[count];
             for (int i = 0; i < count; i++)
             {
@@ -71,14 +71,18 @@ namespace Echo.Echolocation
             }
             return result;
         }
+        // 専用の描画順を1つずつ割り当てるため、Unityが扱えるrenderQueueの範囲に収める。
+        private const int MaximumInvisibleSlots = 5000;
         private static readonly ProfilerMarker _marker = new ProfilerMarker("Echo.Candidates");
         /// <summary>登録されたRenderer数。</summary>
         public int Count => _entries.Count;
         private static bool TryGetRule(EchoTagResolver tags, EchoTargetEntry entry, GameObject owner, out EchoTagColorRule rule)
         {
-            if (entry.Tag) return tags.TryGetRule(entry.Tag, out rule);
-            // 専用タグ設定済みのルールはUnityタグにはフォールバックしない。
-            return tags.TryGetRule(owner.tag, out rule) && !rule.Definition;
+            rule = null;
+            var definition = entry.Owner ? entry.Owner.Definition : null;
+            if (!entry.Owner || !entry.Owner.isActiveAndEnabled || !definition) return false;
+            rule = definition.Settings;
+            return rule.HasAnyEffect;
         }
 
         /// <summary>専用形状取得を追加する。再収集前に登録する。</summary>
@@ -91,26 +95,26 @@ namespace Echo.Echolocation
         /// <summary>全参照を解放する。</summary>
         public void Clear()
         {
-            foreach (var r in _hidden) ReleaseHidden(r);
+            foreach (var renderer in _hidden) ReleaseHidden(renderer);
             _hidden.Clear();
             _wantedHidden.Clear();
             _releaseHidden.Clear();
             _entries.Clear();
         }
 
-        public static void ReleaseHidden(Renderer r)
+        public static void ReleaseHidden(Renderer renderer)
         {
-            if (!_hiddenOwners.TryGetValue(r, out var state)) return;
+            if (!_hiddenOwners.TryGetValue(renderer, out var state)) return;
             if (state.Count > 1) state.Count--;
             else
             {
-                if (r)
+                if (renderer)
                 {
-                    var materials = r.sharedMaterials;
+                    var materials = renderer.sharedMaterials;
                     RestoreOriginalReferences(materials, state);
-                    r.sharedMaterials = materials;
+                    renderer.sharedMaterials = materials;
                 }
-                _hiddenOwners.Remove(r);
+                _hiddenOwners.Remove(renderer);
                 DestroyInvisible(state);
             }
         }
@@ -133,64 +137,66 @@ namespace Echo.Echolocation
         public void UpdateHidden(int layers, Transform excluded, Camera camera, EchoTagResolver tags)
         {
             _wantedHidden.Clear();
-            foreach (var e in _entries)
+            foreach (var entry in _entries)
             {
-                var r = e.Renderer;
-                if (!r || !r.enabled || r.forceRenderingOff || !r.gameObject.activeInHierarchy || !camera) continue;
-                if (excluded && r.transform.IsChildOf(excluded)) continue;
-                if (e.Owner && (!e.Owner.isActiveAndEnabled || !e.IsOwned)) continue;
-                var owner = e.Owner ? e.Owner.gameObject : r.gameObject;
-                if ((layers & (1 << owner.layer)) == 0 || (camera.cullingMask & (1 << r.gameObject.layer)) == 0) continue;
-                if (!TryGetRule(tags, e, owner, out var rule) || !rule.OriginalEnabled || !rule.HideOriginalOutsideEcho) continue;
+                var renderer = entry.Renderer;
+                if (!renderer || !renderer.enabled || renderer.forceRenderingOff || !renderer.gameObject.activeInHierarchy || !camera) continue;
+                if (excluded && renderer.transform.IsChildOf(excluded)) continue;
+                if (entry.Owner && (!entry.Owner.isActiveAndEnabled || !entry.IsOwned)) continue;
+                var owner = entry.Owner ? entry.Owner.gameObject : renderer.gameObject;
+                if ((layers & (1 << owner.layer)) == 0 || (camera.cullingMask & (1 << renderer.gameObject.layer)) == 0) continue;
+                if (!TryGetRule(tags, entry, owner, out var rule) || !rule.IsOriginalEnabled || !rule.IsOriginalHiddenOutsideEcho) continue;
 
-                bool supported = false;
+                bool isSupported = false;
                 foreach (var adapter in _adapters)
-                    if (adapter.TryGetGeometry(r, out _)) { supported = true; break; }
-                if (!supported) continue;
+                    if (adapter.TryGetGeometry(renderer, out _)) { isSupported = true; break; }
+                if (!isSupported) continue;
                 var shader = Resources.Load<Shader>("EchoInvisible");
                 if (!shader) continue;
-                _wantedHidden.Add(r);
-                if (_hidden.Add(r))
+                _wantedHidden.Add(renderer);
+                if (_hidden.Add(renderer))
                 {
-                    if (_hiddenOwners.TryGetValue(r, out var state)) state.Count++;
+                    if (_hiddenOwners.TryGetValue(renderer, out var state)) state.Count++;
                     else
                     {
-                        var originals = r.sharedMaterials;
+                        var originals = renderer.sharedMaterials;
                         var invisible = CreateInvisible(shader, originals.Length);
-                        _hiddenOwners.Add(r, new HiddenState { Count = 1, Originals = originals, Invisible = invisible });
-                        r.sharedMaterials = invisible;
+                        _hiddenOwners.Add(renderer, new HiddenState { Count = 1, Originals = originals, Invisible = invisible });
+                        renderer.sharedMaterials = invisible;
                     }
                 }
-                var current = r.sharedMaterials;
-                var hidden = _hiddenOwners[r];
+                var current = renderer.sharedMaterials;
+                var hidden = _hiddenOwners[renderer];
                 if (!UsesInvisibleMaterials(current))
                 {
                     RestoreOriginalReferences(current, hidden);
                     hidden.Originals = current;
                     DestroyInvisible(hidden);
                     hidden.Invisible = CreateInvisible(shader, current.Length);
-                    r.sharedMaterials = hidden.Invisible;
+                    renderer.sharedMaterials = hidden.Invisible;
                 }
             }
             _releaseHidden.Clear();
-            foreach (var r in _hidden) if (!_wantedHidden.Contains(r)) _releaseHidden.Add(r);
-            foreach (var r in _releaseHidden) { ReleaseHidden(r); _hidden.Remove(r); }
+            foreach (var renderer in _hidden) if (!_wantedHidden.Contains(renderer)) _releaseHidden.Add(renderer);
+            foreach (var renderer in _releaseHidden) { ReleaseHidden(renderer); _hidden.Remove(renderer); }
         }
         /// <summary>シーンロードまたは明示的な再収集時だけ全検索する。</summary>
         public void Refresh(bool isAuto)
         {
             _entries.Clear();
+            foreach (var adapter in _adapters)
+                if (adapter is EchoMeshGeometryAdapter meshAdapter) meshAdapter.Clear();
             var foundRenderers = Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include);
-            System.Array.Sort(foundRenderers, (a, b) => string.CompareOrdinal(a.GetEntityId().ToString(), b.GetEntityId().ToString()));
-            foreach (var r in foundRenderers)
+            System.Array.Sort(foundRenderers, (left, right) => string.CompareOrdinal(left.GetEntityId().ToString(), right.GetEntityId().ToString()));
+            foreach (var renderer in foundRenderers)
             {
-                if (!r.gameObject.scene.IsValid() || r.GetComponent<EchoRevealProxy>())
+                if (!renderer.gameObject.scene.IsValid() || renderer.GetComponent<EchoRevealProxy>())
                     continue;
-                var owner = r.GetComponentInParent<EchoTarget>(true);
+                var owner = renderer.GetComponentInParent<EchoTarget>(true);
                 if (!isAuto && !owner)
                     continue;
-                var group = r.GetComponentInParent<LODGroup>(true);
-                _entries.Add(new EchoTargetEntry { Renderer = r, Owner = owner, IsOwned = !owner || owner.Owns(r), Tag = owner ? owner.GetComponent<EchoTag>() : null, Reveal = owner ? owner.GetComponent<EchoRevealState>() : null, Group = group, Lods = group ? group.GetLODs() : null });
+                var group = renderer.GetComponentInParent<LODGroup>(true);
+                _entries.Add(new EchoTargetEntry { Renderer = renderer, Owner = owner, IsOwned = !owner || owner.Owns(renderer), Reveal = owner ? owner.GetComponent<EchoRevealState>() : null, Group = group, Lods = group ? group.GetLODs() : null });
             }
         }
 
@@ -200,37 +206,26 @@ namespace Echo.Echolocation
             using (_marker.Auto())
             {
                 GeometryUtility.CalculateFrustumPlanes(camera, _planes);
-                foreach (EchoTargetEntry e in _entries)
+                foreach (EchoTargetEntry entry in _entries)
                 {
-                    var r = e.Renderer;
-                    if (!r || !r.enabled || r.forceRenderingOff || !r.gameObject.activeInHierarchy)
+                    var renderer = entry.Renderer;
+                    if (!renderer || !renderer.enabled || renderer.forceRenderingOff || !renderer.gameObject.activeInHierarchy)
                         continue;
-                    if (excluded && r.transform.IsChildOf(excluded))
+                    if (excluded && renderer.transform.IsChildOf(excluded))
                         continue;
-                    if (e.Owner && (!e.Owner.isActiveAndEnabled || !e.IsOwned))
+                    if (entry.Owner && (!entry.Owner.isActiveAndEnabled || !entry.IsOwned))
                         continue;
-                    GameObject owner = e.Owner ? e.Owner.gameObject : r.gameObject;
-                    if ((layers & (1 << owner.layer)) == 0 || (camera.cullingMask & (1 << r.gameObject.layer)) == 0)
+                    GameObject owner = entry.Owner ? entry.Owner.gameObject : renderer.gameObject;
+                    if ((layers & (1 << owner.layer)) == 0 || (camera.cullingMask & (1 << renderer.gameObject.layer)) == 0)
                         continue;
-                    if (!TryGetRule(tags, e, owner, out var rule) || (!rule.OriginalEnabled && !rule.OutlineEnabled && !rule.Glitch.IsEnabled && (!rule.FillEnabled || rule.Color.a <= 0)))
+                    if (!TryGetRule(tags, entry, owner, out var rule) || (!rule.IsOriginalEnabled && !rule.IsOutlineEnabled && (!rule.IsFillEnabled || rule.Color.a <= 0)))
                         continue;
-                    bool isIntersects = false;
-                    for (int i = 0; i < frames.Count; i++)
-                        if (EchoVolumeMath.Intersects(r.bounds, frames[i].Origin, frames[i].OuterRadius))
-                        {
-                            isIntersects = true;
-                            break;
-                        }
-
-                    // 全体表示は画面外の接触も残存時間へ反映する。
-                    if (!rule.OriginalEnabled && !rule.OutlineEnabled && !rule.Glitch.IsEnabled && (!isIntersects || !GeometryUtility.TestPlanesAABB(_planes, r.bounds)))
-                        continue;
-                    if (!EchoLodSelector.Includes(e.Group, e.Lods, r, camera))
+                    if (!EchoLodSelector.Includes(entry.Group, entry.Lods, renderer, camera))
                         continue;
                     foreach (var adapter in _adapters)
-                        if (adapter.TryGetGeometry(r, out var mesh))
+                        if (adapter.TryGetGeometry(renderer, out var mesh))
                         {
-                            outputItems.Add(new EchoRenderItem(r, rule, mesh.subMeshCount, e.Owner, e.Reveal));
+                            outputItems.Add(new EchoRenderItem(renderer, rule, mesh.subMeshCount, entry.Owner, entry.Reveal));
                             break;
                         }
                 }
