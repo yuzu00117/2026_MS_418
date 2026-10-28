@@ -15,12 +15,14 @@ Webhook URL はログに出さない。
     1PR のカードは必ず1メッセージに収まる(概要を削る)。flags=32768(IS_COMPONENTS_V2)を付け、content / embeds は使わない。
     1つの Container(左に色の帯が付くカード)に 見出しリンク+作成者 → 概要 → 動画(Media Gallery) の順で入れる。
     送信URLに ?with_components=true を付ける。動画は attachment://videoN.ext で参照する。
-    動画を添付できずリンクにフォールバックした場合のみ、見出しの Text Display 末尾に動画URLを貼る。
+    動画リンク(添付できなかった動画、圧縮して添付した場合の元動画)は、概要と同じ Text Display の末尾
+    (概要の下)に `🎬 [実行動画を見る](<URL>)` / `🎬 [元の動画](<URL>)` として置く(複数なら末尾に連番)。
     全 Text Display の合計は 3800 文字以内(概要を削り、見出し・作成者・動画リンクを優先して残す)。
-  text: 従来形式(1PR = 1メッセージ)。content(見出し→作成者→概要、2000文字以内)に動画を添付する。
+  text: 従来形式(1PR = 1メッセージ)。content(見出し→作成者→概要→動画リンク、2000文字以内)に動画を添付する。
     Components V2 が Webhook で受理されない・動画が再生されない場合の切り替え用。
 動画: user-attachments の URL は先頭だけ取得して Content-Type が video/* かを判定し(貼られたセクションは問わない)、
-  10MB 以下なら添付、超過・ダウンロード失敗ならカード内にリンクで出す。各動画の扱いと理由はログに出す。
+  10MB 以下なら添付。超過した動画は ffmpeg/ffprobe があれば再エンコードして約 9MB 以下にして添付し(元動画はリンクを添える)、
+  ffmpeg が無い・圧縮失敗・圧縮後も超過・ダウンロード失敗ならカード内にリンクで出す。各動画の扱いと理由はログに出す。
 見出し記法(card / text 共通): 日付メッセージ=H1(`# `)、PR タイトルのリンク=H2(`## `)、概要=H3(`### `)。
 text 形式の日付見出しは通常の content メッセージ。allowed_mentions は常に parse=[]。
 """
@@ -28,6 +30,7 @@ import datetime
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -36,6 +39,15 @@ import time
 # Discord の無料枠の添付上限は 10MB。ペイロード分の余裕を見て少し小さくしておく。
 MAX_VIDEO_BYTES = 10_000_000
 MAX_VIDEOS_PER_PR = 3
+# 圧縮の元動画としてダウンロードする上限と、そのダウンロードの curl タイムアウト(秒)。
+COMPRESS_SRC_MAX_BYTES = 200_000_000
+COMPRESS_DOWNLOAD_TIMEOUT = 600
+# 圧縮後の目標合計サイズ(音声込み)。コンテナの余裕として SAFETY を掛けて映像ビットレートを逆算する。
+COMPRESS_TARGET_BYTES = 9_000_000
+COMPRESS_AUDIO_BPS = 64_000
+COMPRESS_SAFETY = 0.9
+COMPRESS_MIN_VIDEO_BPS = 100_000
+COMPRESS_TIMEOUT = 300
 # content の上限は 2000 文字。安全側で短くする。
 CONTENT_LIMIT = 1900
 # Components V2 の Text Display 合計上限は 4000 文字。安全側で短くする。
@@ -113,29 +125,43 @@ def escape_md(text):
     return re.sub(r"([\\[\]*_`~|])", r"\\\1", text.replace("\n", " "))
 
 
-def build_content(pr, login, desc, links, limit=CONTENT_LIMIT):
+def build_link_lines(links, originals):
+    """動画リンク行を返す。links=添付できなかった動画、originals=圧縮して添付した動画の元URL。
+    URL は <> で囲んで埋め込みプレビューを抑止する。複数なら末尾に連番を振る。"""
+    lines = []
+    for urls, single, multi in ((links, "実行動画を見る", "実行動画"), (originals, "元の動画", "元の動画")):
+        for n, u in enumerate(urls, 1):
+            lines.append("🎬 [%s](<%s>)" % (single if len(urls) == 1 else multi + str(n), u))
+    return "\n".join(lines)
+
+
+def build_body(desc, link_lines, budget):
+    """概要の下に動画リンク行を置いた本文を返す。budget 文字以内で、リンク行を優先して概要を削る。"""
+    room = budget - len(link_lines) - (2 if link_lines else 0)
+    text = clip(desc, room) if desc and room > 20 else ""
+    return text + ("\n\n" if text and link_lines else "") + link_lines
+
+
+def build_content(pr, login, desc, links, originals=(), limit=CONTENT_LIMIT):
     """1PR 分の本文を組み立てる。limit 文字以内。見出し・作成者・動画リンクを優先し、概要を削る。"""
     title = "#%d %s" % (pr["number"], pr["title"])
     heading = "## [%s](<%s>)" % (escape_md(clip(title, 300)), pr["url"])
     head = heading + "\n作成者: " + login
-    tail = ("\n\n" + "\n".join(links)) if links else ""
-    budget = limit - len(head) - len(tail) - 2
-    middle = ("\n\n" + clip(desc, budget)) if desc and budget > 20 else ""
-    content = head + middle + tail
+    body = build_body(desc, build_link_lines(links, originals), limit - len(head) - 2)
+    content = head + ("\n\n" + body if body else "")
     return content if len(content) <= limit else clip(content, limit)
 
 
-def build_card(pr, login, desc, links, media_names, limit=CARD_TEXT_LIMIT):
-    """Components V2 の Container を1つ返す。Text Display の合計は limit 文字以内。"""
+def build_card(pr, login, desc, links, originals, media_names, limit=CARD_TEXT_LIMIT):
+    """Components V2 の Container を1つ返す。Text Display の合計は limit 文字以内。
+    概要とリンク行は同じ Text Display に入れる(コンポーネント数を増やさない)。"""
     title = "#%d %s" % (pr["number"], pr["title"])
     heading = "## [%s](<%s>)" % (escape_md(clip(title, 300)), pr["url"])
     head = heading + "\n作成者: " + login
-    if links:
-        head += "\n\n" + "\n".join(links)
-    budget = limit - len(head)
     parts = [{"type": 10, "content": head}]
-    if desc and budget > 20:
-        parts.append({"type": 10, "content": clip(desc, budget)})
+    body = build_body(desc, build_link_lines(links, originals), limit - len(head))
+    if body:
+        parts.append({"type": 10, "content": body})
     if media_names:
         parts.append({"type": 12, "items": [{"media": {"url": "attachment://" + n}} for n in media_names]})
     return {"type": 17, "accent_color": CARD_COLOR, "components": parts}
@@ -162,7 +188,7 @@ def text_total(components):
 
 
 def pack_messages(items, header, text_limit=CARD_TEXT_LIMIT):
-    """items([{pr, login, desc, links, files:[(path, ext)]}])を順に貪欲に詰めてメッセージのリストを返す。
+    """items([{pr, login, desc, links, originals, files:[(path, ext)]}])を順に貪欲に詰めてメッセージのリストを返す。
 
     各メッセージ: {components, attach:[(path, name)], text, comps}。header は最初のメッセージ先頭に置く。
     1カードが単独で上限を超えないよう、概要は header 分を含めて text_limit に収まるよう削る。
@@ -173,7 +199,7 @@ def pack_messages(items, header, text_limit=CARD_TEXT_LIMIT):
     for it in items:
         base = len(cur["attach"]) if cur else 0
         names = ["video%d%s" % (base + n + 1, ext) for n, (_, ext) in enumerate(it["files"])]
-        card = build_card(it["pr"], it["login"], it["desc"], it["links"], names, limit=per_card_limit)
+        card = build_card(it["pr"], it["login"], it["desc"], it["links"], it["originals"], names, limit=per_card_limit)
         fits = False
         if cur is not None:
             fits = (cur["text"] + text_total([card]) <= text_limit
@@ -189,7 +215,7 @@ def pack_messages(items, header, text_limit=CARD_TEXT_LIMIT):
             msgs.append(cur)
             # 新メッセージでは添付名を 1 から振り直す
             names = ["video%d%s" % (n + 1, ext) for n, (_, ext) in enumerate(it["files"])]
-            card = build_card(it["pr"], it["login"], it["desc"], it["links"], names, limit=per_card_limit)
+            card = build_card(it["pr"], it["login"], it["desc"], it["links"], it["originals"], names, limit=per_card_limit)
         cur["components"].append(card)
         cur["attach"] += [(path, name) for (path, _), name in zip(it["files"], names)]
         cur["text"] += text_total([card])
@@ -240,18 +266,64 @@ def probe(url, hdr_path):
     return True, ctype.lower(), size, ""
 
 
-def download(url, dest):
+def download(url, dest, max_bytes=MAX_VIDEO_BYTES, timeout=120):
     """動画をダウンロードし (ok, reason, content_type) を返す。トークンは送らない。"""
-    r = run(["curl", "-sSL", "--max-time", "120", "--max-filesize", str(MAX_VIDEO_BYTES),
+    r = run(["curl", "-sSL", "--max-time", str(timeout), "--max-filesize", str(max_bytes),
              "-o", dest, "-w", "%{http_code} %{content_type}", url])
     if r.returncode != 0:
         return False, "download failed or too large", ""
     code, _, ctype = r.stdout.strip().partition(" ")
     if code != "200":
         return False, "http " + code, ctype.lower()
-    if os.path.getsize(dest) > MAX_VIDEO_BYTES:
+    if os.path.getsize(dest) > max_bytes:
         return False, "too large", ctype.lower()
     return True, "", ctype.lower()
+
+
+def calc_video_bitrate(duration, target_bytes=COMPRESS_TARGET_BYTES, audio_bps=COMPRESS_AUDIO_BPS,
+                       safety=COMPRESS_SAFETY):
+    """長さ(秒)と目標合計サイズ(音声込み)から映像ビットレート(bps)を逆算する。"""
+    return int(target_bytes * 8 * safety / duration - audio_bps)
+
+
+def build_ffmpeg_cmd(src, dst, video_bps):
+    """再エンコード用の ffmpeg コマンド引数を返す(実行はしない)。"""
+    return ["ffmpeg", "-y", "-i", src,
+            "-c:v", "libx264", "-preset", "veryfast",
+            "-b:v", str(video_bps), "-maxrate", str(video_bps), "-bufsize", str(video_bps * 2),
+            "-vf", "scale='min(1280,iw)':-2", "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+            "-c:a", "aac", "-b:a", "%dk" % (COMPRESS_AUDIO_BPS // 1000), dst]
+
+
+def probe_duration(path):
+    """ffprobe で動画の長さ(秒)を返す。取得できなければ None。"""
+    r = run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "default=noprint_wrappers=1:nokey=1", path])
+    try:
+        d = float(r.stdout.strip().splitlines()[0])
+    except (ValueError, IndexError):
+        return None
+    return d if r.returncode == 0 and d > 0 else None
+
+
+def compress_video(src, dst):
+    """src を約 9MB 以下の mp4 に再エンコードして dst に書く。(ok, reason) を返す。"""
+    duration = probe_duration(src)
+    if duration is None:
+        return False, "duration unknown"
+    vbps = calc_video_bitrate(duration)
+    if vbps < COMPRESS_MIN_VIDEO_BPS:
+        return False, "bitrate too low (%d bps for %.0f s)" % (vbps, duration)
+    try:
+        r = subprocess.run(build_ffmpeg_cmd(src, dst, vbps), capture_output=True, text=True,
+                           encoding="utf-8", errors="replace", timeout=COMPRESS_TIMEOUT)
+    except subprocess.TimeoutExpired:
+        return False, "ffmpeg timeout"
+    if r.returncode != 0 or not os.path.exists(dst):
+        return False, "ffmpeg error %d" % r.returncode
+    if os.path.getsize(dst) > MAX_VIDEO_BYTES:
+        return False, "still too large (%d bytes)" % os.path.getsize(dst)
+    return True, ""
 
 
 def video_ext(url, ctype):
@@ -372,7 +444,8 @@ def main():
             login = (pr.get("author") or {}).get("login", "unknown")
             desc = build_description(body)
 
-            attach, links, total = [], [], 0
+            attach, links, originals, total = [], [], [], 0
+            can_compress = bool(shutil.which("ffmpeg") and shutil.which("ffprobe"))
             for i, (url, is_video) in enumerate(extract_videos(body)):
                 tag = "  PR #%d %s: " % (pr["number"], url)
                 dest = os.path.join(tmp, "pr%d_%d.bin" % (pr["number"], i))
@@ -387,31 +460,57 @@ def main():
                     continue
                 else:
                     print(tag + "probe failed (%s), fallback to section/extension judgement" % preason)
+                compressed = False
                 if psize is not None and psize > MAX_VIDEO_BYTES:
-                    links.append(url)
-                    print(tag + "too large (%d bytes) -> link" % psize)
-                    continue
-                ok, reason, ctype = download(url, dest)
-                if not ok:
-                    links.append(url)
-                    print(tag + "download failed (%s) -> link" % reason)
-                    continue
+                    if not can_compress:
+                        links.append(url)
+                        print(tag + "too large (%d bytes), ffmpeg not found -> link" % psize)
+                        continue
+                    if len(attach) >= MAX_VIDEOS_PER_PR:
+                        links.append(url)
+                        print(tag + "attachment limit reached (%d bytes) -> link" % psize)
+                        continue
+                    ok, reason, ctype = download(url, dest, COMPRESS_SRC_MAX_BYTES, COMPRESS_DOWNLOAD_TIMEOUT)
+                    if not ok:
+                        links.append(url)
+                        print(tag + "download failed (%s) -> link" % reason)
+                        continue
+                    src_size = os.path.getsize(dest)
+                    cdest = dest + ".c.mp4"
+                    ok, reason = compress_video(dest, cdest)
+                    os.remove(dest)
+                    if not ok:
+                        links.append(url)
+                        print(tag + "compress failed (%s) -> link" % reason)
+                        continue
+                    dest, ctype, compressed = cdest, "video/mp4", True
+                    print(tag + "compressed (%d -> %d) attach" % (src_size, os.path.getsize(dest)))
+                else:
+                    ok, reason, ctype = download(url, dest)
+                    if not ok:
+                        links.append(url)
+                        print(tag + "download failed (%s) -> link" % reason)
+                        continue
                 size = os.path.getsize(dest)
                 if len(attach) < MAX_VIDEOS_PER_PR and total + size <= MAX_VIDEO_BYTES:
                     total += size
-                    attach.append((dest, "pr%d_%d%s" % (pr["number"], i + 1, video_ext(url, ctype or pctype))))
-                    print(tag + "attach (%d bytes)" % size)
+                    ext = ".mp4" if compressed else video_ext(url, ctype or pctype)
+                    attach.append((dest, "pr%d_%d%s" % (pr["number"], i + 1, ext)))
+                    if compressed:
+                        originals.append(url)
+                    else:
+                        print(tag + "attach (%d bytes)" % size)
                 else:
                     links.append(url)
                     print(tag + "attachment limit reached (%d bytes) -> link" % size)
 
             if card_mode:
-                items.append({"pr": pr, "login": login, "desc": desc, "links": links,
+                items.append({"pr": pr, "login": login, "desc": desc, "links": links, "originals": originals,
                               "files": [(path, os.path.splitext(name)[1]) for path, name in attach]})
                 print("[PR #%d] %s / 添付 %d 件 / リンク %d 件" % (pr["number"], pr["title"], len(attach), len(links)))
                 continue
 
-            content = build_content(pr, login, desc, links)
+            content = build_content(pr, login, desc, links, originals)
             payload = {"allowed_mentions": allowed, "content": content}
             print("[PR #%d] %s / 添付 %d 件 / リンク %d 件 / content %d 文字"
                   % (pr["number"], pr["title"], len(attach), len(links), len(content)))
