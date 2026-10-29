@@ -450,7 +450,7 @@ def main():
 
     # PR 本文由来の @everyone / @here などを無効化する。
     allowed = {"parse": []}
-    header = "# 📅 %s の進捗" % now.astimezone(JST).strftime("%Y-%m-%d")
+    header = "# 📅 %s の進捗" % (now.astimezone(JST) - datetime.timedelta(hours=6)).strftime("%Y-%m-%d")
     print("[header] " + header)
 
     card_mode = (os.environ.get("DIGEST_FORMAT", "") or "card").strip().lower() != "text"
