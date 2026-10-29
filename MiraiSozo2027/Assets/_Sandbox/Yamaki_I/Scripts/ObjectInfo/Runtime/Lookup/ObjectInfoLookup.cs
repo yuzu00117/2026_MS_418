@@ -77,6 +77,15 @@ namespace Aura.ObjectInfo
             return TryGetSubstanceType(part, out SubstanceType substanceType) ? substanceType.IsWaveReflective : isFallbackReflective;
         }
 
+        /// @brief その物が波を通すか（当てたまま、向こうへ真っすぐ進む）。素材が無ければ isFallbackPassThrough を返す
+        /// @param part 当たったコライダーや見た目など、物の一部
+        /// @param isFallbackPassThrough 素材が無いときに返す値
+        /// @return 通すなら true
+        public static bool IsWavePassThrough(Component part, bool isFallbackPassThrough)
+        {
+            return TryGetSubstanceType(part, out SubstanceType substanceType) ? substanceType.IsWavePassThrough : isFallbackPassThrough;
+        }
+
         /// @brief 覚えた結果をすべて捨てる。実行中に親を付け替えたとき（SetParent など）に呼ぶ
         /// 情報のコンポーネントの付け外し・有効と無効の切り替え・GameObject の表示と非表示は自動で気付くので、呼ばなくてよい
         public static void ClearCache()

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -7,6 +8,7 @@ namespace Aura.Wave
     /// @brief LineRenderer で、折れ線に沿って正弦波の線を描く。ビームの今の見た目（BeamLineView）が使う
     /// 「揺れを 0 にする曲がり目」を選べる
     /// 点と線のビームでは、跳ね返った位置だけ揺れを 0 にし、点どうしの小さな曲がり目では揺らしたまま、線に沿って流す
+    /// 見せる範囲（WaveRevealVolume）を渡すと、その中にある部分だけを描く。範囲の外で途切れるごとに別の線（子の LineRenderer）を使い、揺れはつながったまま
     /// 揺らさない折れ線（DrawStraight）も描ける。WaveEmitter が、ビームの実体の線（点どうしをつなぐ直線）を見せるのに使う
     [RequireComponent(typeof(LineRenderer))]
     public sealed class InfoBeamLine : MonoBehaviour
@@ -25,6 +27,8 @@ namespace Aura.Wave
         private static Material _defaultMaterial;  ///< マテリアルを指定しないときに使う、頂点カラーで色を付けるマテリアル
 
         private readonly Vector3[] _points = new Vector3[MaxLinePoints];
+        private readonly Vector3[] _runPoints = new Vector3[MaxLinePoints];       ///< 途切れた部分の点を写す、使い回しの配列（LineRenderer には先頭からしか渡せないため）
+        private readonly List<LineRenderer> _runLines = new List<LineRenderer>();  ///< 途切れた部分ごとの線。最初の 1 本はこの GameObject の LineRenderer、2 本目からは子に作る
         private LineRenderer _lineRenderer;
 
         /// @brief 線を持つ GameObject を作る
@@ -54,7 +58,9 @@ namespace Aura.Wave
         /// @param up 波が揺れる面を決める上の向き
         /// @param type 波の種類（色、波長、振幅、太さ）
         /// @param phase 波の位相（m）。corners の最初の点からの道のりで数える。時間とともに増やすと波が流れて見える
-        public void Draw(IReadOnlyList<Vector3> corners, IReadOnlyList<bool> fadingCorners, Vector3 up, WaveType type, float phase)
+        /// @param revealVolumes 見せる範囲。null ならすべて描く。渡すと、どれかの範囲の中にある部分だけを描く（空なら何も描かない）
+        public void Draw(IReadOnlyList<Vector3> corners, IReadOnlyList<bool> fadingCorners, Vector3 up, WaveType type, float phase,
+            IReadOnlyList<WaveRevealVolume> revealVolumes = null)
         {
             if (type == null || corners == null || corners.Count < 2)
             {
@@ -142,15 +148,13 @@ namespace Aura.Wave
                 ++segmentIndex;
             }
 
-            _lineRenderer.positionCount = count;
-            _lineRenderer.SetPositions(_points);
-            _lineRenderer.widthMultiplier = type.LineWidth;
-
-            Color endColor = type.Color;
-            endColor.a *= BeamEndAlphaScale;
-            _lineRenderer.startColor = type.Color;
-            _lineRenderer.endColor = endColor;
-            _lineRenderer.enabled = true;
+            if (revealVolumes == null)
+            {
+                ShowRun(0, 0, count, type.LineWidth, type.Color, 1.0f, BeamEndAlphaScale);
+                HideRunsFrom(1);
+                return;
+            }
+            ShowRevealedRuns(count, type.LineWidth, type.Color, revealVolumes);
         }
 
         /// @brief 折れ線を揺らさずにそのまま描く（ビームの実体の線を見せるのに使う）。終わりに向かって薄くなる
@@ -183,29 +187,129 @@ namespace Aura.Wave
                 return;
             }
 
-            _lineRenderer.positionCount = count;
-            _lineRenderer.SetPositions(_points);
-            _lineRenderer.widthMultiplier = width;
-
-            Color endColor = color;
-            endColor.a *= StraightEndAlphaScale;
-            _lineRenderer.startColor = color;
-            _lineRenderer.endColor = endColor;
-            _lineRenderer.enabled = true;
+            ShowRun(0, 0, count, width, color, 1.0f, StraightEndAlphaScale);
+            HideRunsFrom(1);
         }
 
         /// @brief 線を消す
         public void Hide()
         {
-            if (_lineRenderer != null)
-            {
-                _lineRenderer.enabled = false;
-            }
+            HideRunsFrom(0);
         }
 
         private void Awake()
         {
             _lineRenderer = GetComponent<LineRenderer>();
+            _runLines.Add(_lineRenderer);
+        }
+
+        /// @brief 点の列のうち、見せる範囲の中にある部分だけを、途切れるごとに別の線で描く
+        /// 不透明度は、ビーム全体の始めから終わりへの薄れ方（1 → BeamEndAlphaScale）を、その部分の位置で切り取る（つながって見えるように）
+        private void ShowRevealedRuns(int count, float width, Color color, IReadOnlyList<WaveRevealVolume> revealVolumes)
+        {
+            int runCount = 0;
+            int runStart = -1;
+            for (int i = 0; i <= count; ++i)
+            {
+                if (i < count && IsRevealed(_points[i], revealVolumes))
+                {
+                    if (runStart < 0)
+                    {
+                        runStart = i;
+                    }
+                    continue;
+                }
+                if (runStart < 0)
+                {
+                    continue;
+                }
+                // 範囲の外に出た（か、点が尽きた）ので、ここまでを 1 本の線にする。点が 1 つだけの部分は線にならないので描かない
+                int runLength = i - runStart;
+                if (runLength >= 2)
+                {
+                    ShowRun(runCount, runStart, runLength, width, color, GetAlphaScale(runStart, count), GetAlphaScale(i - 1, count));
+                    ++runCount;
+                }
+                runStart = -1;
+            }
+            HideRunsFrom(runCount);
+        }
+
+        /// @brief runIndex 本目の線に、_points の start から length 個の点を入れて見せる
+        private void ShowRun(int runIndex, int start, int length, float width, Color color, float startAlphaScale, float endAlphaScale)
+        {
+            LineRenderer line = GetRunLine(runIndex);
+            Vector3[] points = _points;
+            if (start > 0)
+            {
+                Array.Copy(_points, start, _runPoints, 0, length);
+                points = _runPoints;
+            }
+            line.positionCount = length;
+            line.SetPositions(points);
+            line.widthMultiplier = width;
+
+            Color startColor = color;
+            startColor.a *= startAlphaScale;
+            Color endColor = color;
+            endColor.a *= endAlphaScale;
+            line.startColor = startColor;
+            line.endColor = endColor;
+            line.enabled = true;
+        }
+
+        /// @brief runIndex 本目の線を返す。足りなければ、この GameObject の LineRenderer と同じ設定で子に作る
+        private LineRenderer GetRunLine(int runIndex)
+        {
+            while (_runLines.Count <= runIndex)
+            {
+                var runObject = new GameObject(name + " (" + _runLines.Count + ")");
+                runObject.transform.SetParent(transform, false);
+                var line = runObject.AddComponent<LineRenderer>();
+                line.useWorldSpace = _lineRenderer.useWorldSpace;
+                line.shadowCastingMode = _lineRenderer.shadowCastingMode;
+                line.receiveShadows = _lineRenderer.receiveShadows;
+                line.numCapVertices = _lineRenderer.numCapVertices;
+                line.numCornerVertices = _lineRenderer.numCornerVertices;
+                line.alignment = _lineRenderer.alignment;
+                line.textureMode = _lineRenderer.textureMode;
+                line.sharedMaterial = _lineRenderer.sharedMaterial;
+                line.positionCount = 0;
+                line.enabled = false;
+                _runLines.Add(line);
+            }
+            return _runLines[runIndex];
+        }
+
+        /// @brief runIndex 本目から後の線を消す
+        private void HideRunsFrom(int runIndex)
+        {
+            for (int i = runIndex; i < _runLines.Count; ++i)
+            {
+                if (_runLines[i] != null)
+                {
+                    _runLines[i].enabled = false;
+                }
+            }
+        }
+
+        /// @brief ビーム全体の始めから終わりへの薄れ方で、index 番目の点の不透明度の倍率
+        private static float GetAlphaScale(int index, int count)
+        {
+            return count > 1 ? Mathf.Lerp(1.0f, BeamEndAlphaScale, (float)index / (count - 1)) : 1.0f;
+        }
+
+        /// @brief その位置が、見せる範囲のどれかの中か
+        private static bool IsRevealed(Vector3 point, IReadOnlyList<WaveRevealVolume> revealVolumes)
+        {
+            for (int i = 0; i < revealVolumes.Count; ++i)
+            {
+                if (revealVolumes[i].Contains(point))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         /// @brief その曲がり目で揺れを 0 にするか。fadingCorners が null なら、すべての曲がり目で 0 にする

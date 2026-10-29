@@ -7,8 +7,10 @@ namespace Aura.ObjectInfo
     public enum SubstanceWaveResponse
     {
         [InspectorName("止める")]
-        Absorb = 0,   ///< 止める（コンクリート、吸音材など）
+        Absorb = 0,       ///< 止める（コンクリート、吸音材など）
         [InspectorName("跳ね返す")]
-        Reflect = 1,  ///< 跳ね返す（鏡、金属など）
+        Reflect = 1,      ///< 跳ね返す（鏡、金属など）
+        [InspectorName("通す")]
+        PassThrough = 2,  ///< 通す。波を当てたまま、向こうへ真っすぐ進む（電線など。2026-10-27 から）
     }
 }
