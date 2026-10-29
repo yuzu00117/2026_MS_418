@@ -7,6 +7,10 @@ PR_NUMBER(任意): 指定すると期間・マージ状態・base・Bot除外の
   通常と同じ形式で投稿する(未マージでも可。ローカルでのテスト投稿用)。DRY_RUN と併用できる。
   カンマ区切りで複数指定可(例: 53,54,55)。指定順に取得し、同じ同梱ロジックで1つの投稿にまとめる。
 Webhook URL はログに出さない。
+対象期間と見出し日付: HOURS が空(スケジュール実行)のときは「直近の21:00 JST(DIGEST_HOUR_JST)」を end とし、
+  end-24h < mergedAt <= end の PR を対象、見出し日付を end の JST 日付にする(半開区間なので前後の実行と重複・欠落しない)。
+  実行時刻(now)ではなく固定の21:00を基準にするため、cron が遅延しても期間と見出し日付がずれない。
+  HOURS が指定されたとき(手動実行)は従来どおり now から HOURS 時間さかのぼり、見出し日付は now の JST 日付。
 
 投稿形式(DIGEST_FORMAT、既定 card): card は PR ごとのカードを上限内で1メッセージに同梱する。
   card: Discord Components V2。PR ごとの Container(カード)を、1メッセージあたり Text Display 合計 3800 文字・
@@ -63,6 +67,8 @@ MAX_MESSAGE_COMPONENTS = 40
 CARD_COLOR = 0x5865F2
 IS_COMPONENTS_V2 = 1 << 15
 JST = datetime.timezone(datetime.timedelta(hours=9))
+# スケジュール実行の期間の終端(JST の時)。
+DIGEST_HOUR_JST = 21
 
 URL_CHARS = r"[^\s)\"'<>\]]"
 ASSET_RE = re.compile(r"https://github\.com/user-attachments/(?:assets|files)/" + URL_CHARS + "+")
@@ -380,20 +386,39 @@ def post(webhook, payload, files=(), with_components=False):
         sys.exit(1)
 
 
+def latest_digest_end(now):
+    """now 以前で最も近い DIGEST_HOUR_JST:00 (JST)を返す。"""
+    local = now.astimezone(JST)
+    end = local.replace(hour=DIGEST_HOUR_JST, minute=0, second=0, microsecond=0)
+    if end > local:
+        end -= datetime.timedelta(days=1)
+    return end
+
+
 def main():
     repo = os.environ["REPO"]
     webhook = os.environ.get("DISCORD_PROGRESS_WEBHOOK_URL", "")
     dry_run = os.environ.get("DRY_RUN", "false").lower() == "true"
-    hours_raw = os.environ.get("HOURS", "") or "24"
-    if not re.fullmatch(r"[0-9]+", hours_raw) or int(hours_raw) < 1:
-        print("::error::hours は 1 以上の整数で指定してください。")
-        sys.exit(1)
-    hours = int(hours_raw)
+    hours_raw = os.environ.get("HOURS", "").strip()
+    scheduled = not hours_raw
+    if scheduled:
+        hours = 24
+    else:
+        if not re.fullmatch(r"[0-9]+", hours_raw) or int(hours_raw) < 1:
+            print("::error::hours は 1 以上の整数で指定してください。")
+            sys.exit(1)
+        hours = int(hours_raw)
     if not webhook and not dry_run:
         print("::error::Secret DISCORD_PROGRESS_WEBHOOK_URL が未設定です。進捗チャンネルの Webhook URL を登録してください。")
         sys.exit(1)
 
     now = datetime.datetime.now(datetime.timezone.utc)
+    if scheduled:
+        end = latest_digest_end(now)
+        heading_date = end
+    else:
+        end = None
+        heading_date = now.astimezone(JST)
     pr_number_raw = os.environ.get("PR_NUMBER", "").strip()
     if pr_number_raw:
         numbers = []
@@ -423,7 +448,10 @@ def main():
             sys.exit(1)
         print("PR_NUMBER 指定: " + ", ".join("#" + n for n in fetched) + " を対象 (dry_run=%s)" % dry_run)
     else:
-        since = now - datetime.timedelta(hours=hours)
+        if scheduled:
+            since = end.astimezone(datetime.timezone.utc) - datetime.timedelta(hours=hours)
+        else:
+            since = now - datetime.timedelta(hours=hours)
         r = run(["gh", "pr", "list", "--repo", repo, "--state", "merged", "--base", "develop",
                  "--limit", "100", "--search", "merged:>=" + since.strftime("%Y-%m-%dT%H:%M:%SZ"),
                  "--json", "number,title,body,url,author,mergedAt"])
@@ -436,7 +464,11 @@ def main():
             merged = datetime.datetime.fromisoformat(pr["mergedAt"].replace("Z", "+00:00"))
             author = pr.get("author") or {}
             login = author.get("login", "")
-            if merged < since:
+            if scheduled:
+                # 半開区間 (since, end]
+                if merged <= since or merged > end:
+                    continue
+            elif merged < since:
                 continue
             if author.get("is_bot") or login.endswith("[bot]") or login.startswith("app/"):
                 continue
@@ -450,7 +482,7 @@ def main():
 
     # PR 本文由来の @everyone / @here などを無効化する。
     allowed = {"parse": []}
-    header = "# 📅 %s の進捗" % now.astimezone(JST).strftime("%Y-%m-%d")
+    header = "# 📅 %s の進捗" % heading_date.strftime("%Y-%m-%d")
     print("[header] " + header)
 
     card_mode = (os.environ.get("DIGEST_FORMAT", "") or "card").strip().lower() != "text"
