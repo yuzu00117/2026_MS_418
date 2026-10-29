@@ -22,6 +22,15 @@ namespace Aura.Wave
         private const float MinSegmentLength = 0.0001f; ///< これより短い線は出さない（m）
         private const float AngleRebuildEpsilon = 0.01f; ///< 扇の半角がこれ（度）より変わったら、円すいを作り直す
         private const string ShaderName = "Hidden/Internal-Colored";  ///< Unity の組み込みの、色だけで描くシェーダー（GL の線などに使われている）
+        private const float PrimitiveRadius = 0.5f;     ///< Unity の組み込みの球・円柱の半径（スケール 1 のとき）
+        private const float CylinderHeight = 2.0f;      ///< Unity の組み込みの円柱の高さ（スケール 1 のとき。y が -1〜1）
+        private const float MinDirectionSqrMagnitude = 0.5f;   ///< 扇の向きの長さの 2 乗がこれ未満なら、向きが入っていないとみなして出さない（向きは長さ 1 のはず）
+        private const float MinUpCrossSqrMagnitude = 0.0001f;  ///< 扇の向きと上向きの外積の長さの 2 乗がこれ未満なら、上向きが向きと平行とみなして別の上向きを使う
+        private static readonly int ColorId = Shader.PropertyToID("_Color");        ///< 組み込みシェーダーの色
+        private static readonly int SrcBlendId = Shader.PropertyToID("_SrcBlend");  ///< 組み込みシェーダーの、半透明の混ぜ方（描く側）
+        private static readonly int DstBlendId = Shader.PropertyToID("_DstBlend");  ///< 組み込みシェーダーの、半透明の混ぜ方（描かれる側）
+        private static readonly int CullId = Shader.PropertyToID("_Cull");          ///< 組み込みシェーダーの、裏面を描くか
+        private static readonly int ZWriteId = Shader.PropertyToID("_ZWrite");      ///< 組み込みシェーダーの、奥行きを書くか
 
         [InspectorLabel("切り替えるキー")]
         [Tooltip("押すたびに、当たり判定を出す・消すを切り替えるキー（Input System のキーボード）")]
@@ -66,6 +75,7 @@ namespace Aura.Wave
         private Material _fanRangeMaterial;
         private Material _fanFrontMaterial;
         private Material _hitMaterial;
+        private MaterialPropertyBlock _hitPropertyBlock;  ///< 当たった所の球の色を 1 つずつ変えるための入れ物（使い回す）
 
         /// @brief 当たり判定を出しているか
         public bool IsVisible { get; set; }
@@ -120,8 +130,11 @@ namespace Aura.Wave
             }
 
             float now = Time.time;
-            foreach (WaveEmitter emitter in FindObjectsByType<WaveEmitter>())
+            // 有効な WaveEmitter は、WaveEmitter が OnEnable / OnDisable で出し入れする一覧から取る（毎フレーム探さない）
+            IReadOnlyList<WaveEmitter> emitters = WaveEmitter.ActiveEmitters;
+            for (int emitterIndex = 0; emitterIndex < emitters.Count; ++emitterIndex)
             {
+                WaveEmitter emitter = emitters[emitterIndex];
                 DrawBeam(emitter);
                 DrawFanShots(emitter, now);
                 foreach (InfoBeamHit hit in emitter.LastHits)
@@ -146,7 +159,8 @@ namespace Aura.Wave
             }
             float radius = Mathf.Max(MinBeamDrawRadius, emitter.BeamHitRadius);
             var renderParams = new RenderParams(_beamMaterial);
-            Vector3 sphereScale = Vector3.one * (radius * 2.0f);
+            float diameterScale = radius / PrimitiveRadius;  // 組み込みの球・円柱を、判定の半径に合わせる倍率
+            Vector3 sphereScale = Vector3.one * diameterScale;
             for (int i = 0; i < corners.Count; ++i)
             {
                 Graphics.RenderMesh(renderParams, _sphereMesh, 0, Matrix4x4.TRS(corners[i], Quaternion.identity, sphereScale));
@@ -160,9 +174,10 @@ namespace Aura.Wave
                 {
                     continue;
                 }
-                // Unity の円柱は、高さ 2（y が -1〜1）、半径 0.5
-                Matrix4x4 matrix = Matrix4x4.TRS(corners[i] + delta * 0.5f, Quaternion.FromToRotation(Vector3.up, delta / length),
-                    new Vector3(radius * 2.0f, length * 0.5f, radius * 2.0f));
+                // 組み込みの円柱（高さ CylinderHeight、半径 PrimitiveRadius）を、線の真ん中に置いて、線の長さと判定の半径に合わせる
+                Vector3 center = (corners[i] + corners[i + 1]) / 2.0f;
+                Matrix4x4 matrix = Matrix4x4.TRS(center, Quaternion.FromToRotation(Vector3.up, delta / length),
+                    new Vector3(diameterScale, length / CylinderHeight, diameterScale));
                 Graphics.RenderMesh(renderParams, _cylinderMesh, 0, matrix);
             }
         }
@@ -173,12 +188,12 @@ namespace Aura.Wave
             emitter.GetFlyingFanShots(_fanShots);
             foreach (FanShotInfo shot in _fanShots)
             {
-                if (shot.Range <= 0.0f || shot.Direction.sqrMagnitude < 0.5f)
+                if (shot.Range <= 0.0f || shot.Direction.sqrMagnitude < MinDirectionSqrMagnitude)
                 {
                     continue;
                 }
                 EnsureFanMeshes(shot.HalfAngle);
-                Vector3 up = Vector3.Cross(shot.Direction, shot.Up).sqrMagnitude > 0.0001f ? shot.Up : Vector3.right;
+                Vector3 up = Vector3.Cross(shot.Direction, shot.Up).sqrMagnitude > MinUpCrossSqrMagnitude ? shot.Up : Vector3.right;
                 Quaternion rotation = Quaternion.LookRotation(shot.Direction, up);
                 Graphics.RenderMesh(new RenderParams(_fanRangeMaterial), _coneMesh, 0,
                     Matrix4x4.TRS(shot.Origin, rotation, Vector3.one * shot.Range));
@@ -195,15 +210,15 @@ namespace Aura.Wave
         private void DrawHitMarks(float now)
         {
             _hitMarks.RemoveAll(mark => now - mark.HitTime > _hitMarkSeconds);
-            Vector3 scale = Vector3.one * (_hitMarkRadius * 2.0f);
+            Vector3 scale = Vector3.one * (_hitMarkRadius / PrimitiveRadius);
             foreach (HitMark mark in _hitMarks)
             {
                 float fade = _hitMarkSeconds > 0.0f ? 1.0f - (now - mark.HitTime) / _hitMarkSeconds : 1.0f;
                 Color color = _hitColor;
                 color.a *= fade;
-                var block = new MaterialPropertyBlock();
-                block.SetColor("_Color", color);
-                var renderParams = new RenderParams(_hitMaterial) { matProps = block };
+                // 入れ物は 1 つを使い回す（RenderMesh は呼んだ時点の値を写すので、次の球で色を変えても前の球には効かない）
+                _hitPropertyBlock.SetColor(ColorId, color);
+                var renderParams = new RenderParams(_hitMaterial) { matProps = _hitPropertyBlock };
                 Graphics.RenderMesh(renderParams, _sphereMesh, 0, Matrix4x4.TRS(mark.Point, Quaternion.identity, scale));
             }
         }
@@ -225,6 +240,7 @@ namespace Aura.Wave
                 _hitMaterial = CreateMaterial(shader, "WaveHitboxHit");
                 _sphereMesh = CopyPrimitiveMesh(PrimitiveType.Sphere);
                 _cylinderMesh = CopyPrimitiveMesh(PrimitiveType.Cylinder);
+                _hitPropertyBlock = new MaterialPropertyBlock();
             }
             _beamMaterial.color = _beamColor;
             _fanRangeMaterial.color = _fanRangeColor;
@@ -237,10 +253,10 @@ namespace Aura.Wave
         private static Material CreateMaterial(Shader shader, string name)
         {
             var material = new Material(shader) { name = name, hideFlags = HideFlags.HideAndDontSave };
-            material.SetInt("_SrcBlend", (int)BlendMode.SrcAlpha);
-            material.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
-            material.SetInt("_Cull", (int)CullMode.Off);
-            material.SetInt("_ZWrite", 0);
+            material.SetInt(SrcBlendId, (int)BlendMode.SrcAlpha);
+            material.SetInt(DstBlendId, (int)BlendMode.OneMinusSrcAlpha);
+            material.SetInt(CullId, (int)CullMode.Off);
+            material.SetInt(ZWriteId, 0);
             material.renderQueue = (int)RenderQueue.Transparent;
             return material;
         }

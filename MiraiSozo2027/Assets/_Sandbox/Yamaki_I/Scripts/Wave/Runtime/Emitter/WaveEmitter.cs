@@ -227,6 +227,9 @@ namespace Aura.Wave
                  "点そのものは、Scene ビューに印（水色: 掴める点、灰: 掴めない点、橙: 支点、赤: 掴まれている支点）で出る")]
         [SerializeField] private bool _isBodyLineVisible;  ///< ビームの実体の線を見せるか（確かめる用）
 
+        // 有効な WaveEmitter の一覧。毎フレーム FindObjectsByType で探さずに全部を見たい物（WaveHitboxDebugger）のために持つ
+        private static readonly List<WaveEmitter> ActiveList = new List<WaveEmitter>();  ///< 有効な（OnEnable 済みの）この部品
+
         private readonly List<InfoBeamHit> _lastHits = new List<InfoBeamHit>();                ///< このフレームで波を渡した物（渡した順）
         private readonly HashSet<ReactionTrigger> _deliveredTriggers = new HashSet<ReactionTrigger>();  ///< このフレームで、もうビームを渡した受け手
         private readonly List<FanWaveShot> _fanShots = new List<FanWaveShot>();  ///< 扇の 1 発（波面が進んでいるものと、使い回すために取っておくもの）
@@ -252,6 +255,10 @@ namespace Aura.Wave
 
         /// @brief 撃ち方を切り替えた後に起きる
         public event Action<WaveFireShape> FireShapeChanged;
+
+        /// @brief 有効な WaveEmitter の一覧（OnEnable で入り、OnDisable で外れる。読み込んでいるすべてのシーンの分）
+        /// 毎フレーム FindObjectsByType で探さずに済むように持つ（WaveHitboxDebugger が使う）。一覧を変えないこと
+        public static IReadOnlyList<WaveEmitter> ActiveEmitters => ActiveList;
 
         /// @brief 今のビームの情報（BeamSourceInfo）。無ければ null
         /// 古い形の「出せるビーム」に入っていればその今の番号のもの、空なら「ビームの情報」（それも空なら自分か親から見つけたもの）
@@ -536,8 +543,14 @@ namespace Aura.Wave
             }
         }
 
+        private void OnEnable()
+        {
+            ActiveList.Add(this);
+        }
+
         private void OnDisable()
         {
+            ActiveList.Remove(this);
             StopBeam();
             // 撃った扇の波も止め（まだ届いていない物には渡さない）、見た目の部品に消させる
             foreach (FanWaveShot shot in _fanShots)
@@ -552,6 +565,13 @@ namespace Aura.Wave
                 }
             }
             _isFanShotRequested = false;
+        }
+
+        // domain reload を切っていると、前の再生の一覧が残るので、再生を始めるたびに空にする
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            ActiveList.Clear();
         }
 
         private void Update()
