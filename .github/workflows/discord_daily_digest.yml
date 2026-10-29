@@ -47,9 +47,10 @@ jobs:
           sparse-checkout: .github/scripts
 
       # ubuntu ランナーには ffmpeg が標準では入っておらず、10MB 超の動画が圧縮されずリンク表示になっていたため導入する。
+      # 導入に失敗しても投稿は続け、動画はリンク表示になる(警告のみ出す)。
       - name: Install ffmpeg
         run: |
-          command -v ffmpeg >/dev/null && command -v ffprobe >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends ffmpeg)
+          command -v ffmpeg >/dev/null && command -v ffprobe >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends ffmpeg) || echo "::warning::ffmpeg の導入に失敗しました。動画はリンク表示になります"
 
       - name: Post daily digest to Discord
         env:
