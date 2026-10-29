@@ -7,9 +7,9 @@ namespace Echo.Echolocation
     public sealed class EchoSkinnedGeometryAdapter : IEchoGeometryAdapter
     {
         /// <summary>サブメッシュ列挙用の共有メッシュを返す。描画時は現在の変形が使用される。</summary>
-        public bool TryGetGeometry(Renderer r, out Mesh mesh)
+        public bool TryGetGeometry(Renderer renderer, out Mesh mesh)
         {
-            mesh = r is SkinnedMeshRenderer s ? s.sharedMesh : null;
+            mesh = renderer is SkinnedMeshRenderer skinned ? skinned.sharedMesh : null;
             return mesh;
         }
     }

@@ -1,0 +1,9 @@
+{
+    "name": "Echo.UI",
+    "rootNamespace": "Echo.Echolocation",
+    "references": [
+        "Echo.Runtime",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
+    ]
+}

@@ -16,8 +16,9 @@ namespace Echo.Echolocation.Tests
             var target = new GameObject("Dedicated classification");
             try
             {
-                var tag = target.AddComponent<EchoTag>(); tag.Definition = definition;
-                var rule = new EchoTagColorRule { Definition = definition };
+                var tag = target.AddComponent<EchoTarget>(); tag.Definition = definition;
+                var rule = definition.Settings;
+                other.Settings.Fill.IsEnabled = false;
                 var resolver = new EchoTagResolver();
                 resolver.Update(new List<EchoTagColorRule> { rule });
                 definition.name = "Renamed";
@@ -42,12 +43,11 @@ namespace Echo.Echolocation.Tests
                 var target = new GameObject("Batch test");
                 UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(target, scene);
                 EchoTagBatchWindow.Apply(new[] { target }, definition, null, false);
-                Assert.That(target.GetComponent<EchoTag>().Definition, Is.SameAs(definition));
+                Assert.That(target.GetComponent<EchoTarget>().Definition, Is.SameAs(definition));
                 EchoTagBatchWindow.Apply(new[] { target }, other, null, false);
-                Assert.That(target.GetComponent<EchoTag>().Definition, Is.SameAs(definition));
+                Assert.That(target.GetComponent<EchoTarget>().Definition, Is.SameAs(definition));
                 Undo.FlushUndoRecordObjects();
                 Undo.PerformUndo();
-                Assert.That(target.GetComponent<EchoTag>(), Is.Null);
                 Assert.That(target.GetComponent<EchoTarget>(), Is.Null);
             }
             finally

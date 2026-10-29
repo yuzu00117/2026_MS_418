@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Echo.Echolocation
 {
     /// <summary>旧シーンの参照を維持する互換コンポーネント。表示判定はGPUに移行済み。</summary>
-    [DisallowMultipleComponent, RequireComponent(typeof(EchoTag))]
+    [DisallowMultipleComponent, RequireComponent(typeof(EchoTarget)), AddComponentMenu("")]
     public sealed class EchoRevealState : MonoBehaviour
     {
         [SerializeField] private EchoRevealWorld _world;

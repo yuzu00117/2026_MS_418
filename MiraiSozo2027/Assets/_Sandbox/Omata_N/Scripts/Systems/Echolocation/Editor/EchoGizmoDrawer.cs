@@ -7,14 +7,14 @@ namespace Echo.Echolocation.Editor
     public static class EchoGizmoDrawer
     {
         [DrawGizmo(GizmoType.Selected | GizmoType.Active)]
-        static void Draw(EchoController c, GizmoType type)
+        static void Draw(EchoController controller, GizmoType type)
         {
-            if (!c.IsGizmoVisible)
+            if (!controller.IsGizmoVisible)
                 return;
-            var f = c.GetPreview();
-            DrawVolume(f, f.OuterRadius, new Color(0, .8f, 1, .6f));
+            var frame = controller.GetPreview();
+            DrawVolume(frame, frame.OuterRadius, new Color(0, .8f, 1, .6f));
             if (Application.isPlaying)
-                foreach (var wave in c.Frames)
+                foreach (var wave in controller.Frames)
                 {
                     DrawVolume(wave, wave.OuterRadius, Color.green);
                     if (wave.State == EchoState.Hiding)
@@ -22,31 +22,31 @@ namespace Echo.Echolocation.Editor
                 }
         }
 
-        static void DrawVolume(EchoFrameData f, float radius, Color color)
+        static void DrawVolume(EchoFrameData frame, float radius, Color color)
         {
-            if (radius <= 0 || f.Angle <= 0)
+            if (radius <= 0 || frame.Angle <= 0)
                 return;
             Handles.color = color;
-            Quaternion q = Quaternion.LookRotation(f.Forward);
-            float half = f.Angle * .5f * Mathf.Deg2Rad;
+            Quaternion rotation = Quaternion.LookRotation(frame.Forward);
+            float half = frame.Angle * .5f * Mathf.Deg2Rad;
             for (int meridian = 0; meridian < 8; meridian++)
             {
-                float az = meridian * Mathf.PI / 4;
-                Vector3 prev = f.Origin + f.Forward * radius;
+                float azimuth = meridian * Mathf.PI / 4;
+                Vector3 prev = frame.Origin + frame.Forward * radius;
                 for (int i = 1; i <= 32; i++)
                 {
-                    float a = half * i / 32;
-                    var next = f.Origin + q * new Vector3(Mathf.Sin(a) * Mathf.Cos(az), Mathf.Sin(a) * Mathf.Sin(az), Mathf.Cos(a)) * radius;
+                    float polar = half * i / 32;
+                    var next = frame.Origin + rotation * new Vector3(Mathf.Sin(polar) * Mathf.Cos(azimuth), Mathf.Sin(polar) * Mathf.Sin(azimuth), Mathf.Cos(polar)) * radius;
                     Handles.DrawLine(prev, next);
                     prev = next;
                 }
 
-                if (f.Angle < 360)
-                    Handles.DrawLine(f.Origin, prev);
+                if (frame.Angle < 360)
+                    Handles.DrawLine(frame.Origin, prev);
             }
 
-            if (f.Angle < 360)
-                Handles.DrawWireDisc(f.Origin + f.Forward * (Mathf.Cos(half) * radius), f.Forward, Mathf.Sin(half) * radius);
+            if (frame.Angle < 360)
+                Handles.DrawWireDisc(frame.Origin + frame.Forward * (Mathf.Cos(half) * radius), frame.Forward, Mathf.Sin(half) * radius);
         }
     }
 }

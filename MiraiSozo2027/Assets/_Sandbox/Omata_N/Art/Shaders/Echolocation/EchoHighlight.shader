@@ -72,6 +72,20 @@ Shader "Hidden/Echo/Highlight"
                 o.positionCS=TransformWorldToHClip(o.positionWS);
                 return o;
             }
+            Texture3D<float> _EchoSurfaceMemory;
+            float4x4 _EchoWorldToMemory;
+            float _EchoContactTime, _EchoHasSurfaceMemory;
+            float GetContactAge(float3 world)
+            {
+                if(_EchoHasSurfaceMemory<.5) return 60000;
+                float3 uv=mul(_EchoWorldToMemory,float4(world,1)).xyz;
+                uint width,height,depth; _EchoSurfaceMemory.GetDimensions(width,height,depth);
+                int3 baseVoxel=int3(floor(uv*float3(width,height,depth)-.5));
+                float stamp=0;
+                [unroll] for(int z=0;z<2;z++) [unroll] for(int y=0;y<2;y++) [unroll] for(int x=0;x<2;x++)
+                    stamp=max(stamp,_EchoSurfaceMemory.Load(int4(clamp(baseVoxel+int3(x,y,z),0,int3(width,height,depth)-1),0)));
+                return stamp>0?max(0,_EchoContactTime+1-stamp):60000;
+            }
             half4 FragMask(Varyings input):SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
@@ -87,7 +101,7 @@ Shader "Hidden/Echo/Highlight"
                     visible=step(-TransformWorldToView(input.positionWS).z,-TransformWorldToView(sceneWS).z+.001);
                 }
                 float coverage=EchoCoverage(input.positionWS);
-                return half4(1,coverage,visible,coverage*visible);
+                return half4(1,coverage,visible,GetContactAge(input.positionWS));
             }
             ENDHLSL
         }

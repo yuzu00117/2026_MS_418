@@ -12,46 +12,52 @@ namespace Echo.Echolocation
         private readonly Dictionary<EchoTagDefinition, EchoTagColorRule> _definitions = new Dictionary<EchoTagDefinition, EchoTagColorRule>();
         private int _previousHash;
         private bool _isBuilt;
+        // 一覧の変更検出用ハッシュ。一般的な素数の組み合わせ。
+        private const int HashSeed = 17;
+        private const int HashMultiplier = 31;
         /// <summary>変更時だけ検索表を更新する。重複は上側を優先する。</summary>
         public void Update(List<EchoTagColorRule> rules)
         {
-            int h = 17;
+            int hash = HashSeed;
             unchecked
             {
-                foreach (var r in rules)
-                    if (r != null)
-                        h = (((h * 31 + (r.TagName?.GetHashCode() ?? 0)) * 31 + r.Color.GetHashCode()) * 31 + r.IsEnabled.GetHashCode()) * 31 + r.GetHashCode() + (r.Definition ? r.Definition.GetHashCode() : 0);
+                foreach (var rule in rules)
+                    if (rule != null)
+                        hash = (((hash * HashMultiplier + (rule.TagName?.GetHashCode() ?? 0)) * HashMultiplier + rule.Color.GetHashCode()) * HashMultiplier + rule.IsEnabled.GetHashCode()) * HashMultiplier + rule.GetHashCode() + (rule.Definition ? rule.Definition.GetHashCode() : 0);
             }
 
-            if (_isBuilt && h == _previousHash)
+            if (_isBuilt && hash == _previousHash)
                 return;
             _isBuilt = true;
-            _previousHash = h;
+            _previousHash = hash;
             _tagColors.Clear();
             _rules.Clear();
             _definitions.Clear();
             foreach (var rule in rules)
                 if (rule != null && rule.IsEnabled && rule.Definition && !_definitions.ContainsKey(rule.Definition)) _definitions.Add(rule.Definition, rule);
-            foreach (var r in rules)
-                if (r != null && r.IsEnabled && !r.Definition && !string.IsNullOrEmpty(r.TagName))
+            foreach (var rule in rules)
+                if (rule != null && rule.IsEnabled && !rule.Definition && !string.IsNullOrEmpty(rule.TagName))
                 {
-                    if (_tagColors.ContainsKey(r.TagName))
+                    if (_tagColors.ContainsKey(rule.TagName))
                     {
-                        Debug.LogWarning($"エコー：タグ「{r.TagName}」が重複しています。上の行を使用します。");
+                        Debug.LogWarning($"エコー：タグ「{rule.TagName}」が重複しています。上の行を使用します。");
                         continue;
                     }
 
-                    _tagColors.Add(r.TagName, r.Color);
-                    _rules.Add(r.TagName, r);
+                    _tagColors.Add(rule.TagName, rule.Color);
+                    _rules.Add(rule.TagName, rule);
                 }
         }
 
         /// <summary>完全一致するタグがある場合だけ色を返す。</summary>
         public bool TryGet(string tag, out Color color) => _tagColors.TryGetValue(tag, out color);
-        public bool TryGetRule(EchoTag tag, out EchoTagColorRule rule)
+        public bool TryGetRule(EchoTarget target, out EchoTagColorRule rule)
         {
             rule = null;
-            return tag && tag.isActiveAndEnabled && tag.Definition && _definitions.TryGetValue(tag.Definition, out rule);
+            var definition = target ? target.Definition : null;
+            if (!target || !target.isActiveAndEnabled || !definition) return false;
+            rule = definition.Settings;
+            return rule.HasAnyEffect;
         }
         public bool TryGetRule(string tag, out EchoTagColorRule rule) => _rules.TryGetValue(tag, out rule);
     }

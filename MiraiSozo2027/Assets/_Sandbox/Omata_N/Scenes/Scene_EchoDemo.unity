@@ -131,10 +131,7 @@ GameObject:
   - component: {fileID: 50571420}
   - component: {fileID: 50571419}
   - component: {fileID: 50571418}
-  - component: {fileID: 50571417}
   - component: {fileID: 50571416}
-  - component: {fileID: 50571415}
-  - component: {fileID: 50571414}
   m_Layer: 0
   m_Name: ClearFloor (39)
   m_TagString: EchoStructure
@@ -142,33 +139,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &50571414
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 50571413}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &50571415
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 50571413}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &50571416
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -181,21 +151,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &50571417
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 50571413}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &50571418
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -301,10 +259,7 @@ GameObject:
   - component: {fileID: 57830330}
   - component: {fileID: 57830329}
   - component: {fileID: 57830328}
-  - component: {fileID: 57830327}
   - component: {fileID: 57830326}
-  - component: {fileID: 57830325}
-  - component: {fileID: 57830324}
   m_Layer: 0
   m_Name: ClearFloor (49)
   m_TagString: EchoStructure
@@ -312,33 +267,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &57830324
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 57830323}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &57830325
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 57830323}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &57830326
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -351,21 +279,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &57830327
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 57830323}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &57830328
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -471,10 +387,7 @@ GameObject:
   - component: {fileID: 97426501}
   - component: {fileID: 97426500}
   - component: {fileID: 97426499}
-  - component: {fileID: 97426498}
   - component: {fileID: 97426497}
-  - component: {fileID: 97426496}
-  - component: {fileID: 97426495}
   m_Layer: 0
   m_Name: ClearFloor (44)
   m_TagString: EchoStructure
@@ -482,33 +395,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &97426495
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 97426494}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &97426496
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 97426494}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &97426497
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -521,21 +407,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &97426498
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 97426494}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &97426499
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -641,10 +515,7 @@ GameObject:
   - component: {fileID: 147717977}
   - component: {fileID: 147717976}
   - component: {fileID: 147717975}
-  - component: {fileID: 147717974}
   - component: {fileID: 147717973}
-  - component: {fileID: 147717972}
-  - component: {fileID: 147717971}
   m_Layer: 0
   m_Name: ClearFloor (24)
   m_TagString: EchoStructure
@@ -652,33 +523,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &147717971
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 147717970}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &147717972
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 147717970}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &147717973
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -691,21 +535,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &147717974
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 147717970}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &147717975
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -914,10 +746,7 @@ GameObject:
   - component: {fileID: 156975250}
   - component: {fileID: 156975249}
   - component: {fileID: 156975248}
-  - component: {fileID: 156975247}
   - component: {fileID: 156975246}
-  - component: {fileID: 156975245}
-  - component: {fileID: 156975244}
   m_Layer: 0
   m_Name: ClearFloor (45)
   m_TagString: EchoStructure
@@ -925,33 +754,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &156975244
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 156975243}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &156975245
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 156975243}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &156975246
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -964,21 +766,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &156975247
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 156975243}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &156975248
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1211,9 +1001,7 @@ GameObject:
   - component: {fileID: 170152577}
   - component: {fileID: 170152576}
   - component: {fileID: 170152575}
-  - component: {fileID: 170152574}
   - component: {fileID: 170152573}
-  - component: {fileID: 170152572}
   m_Layer: 0
   m_Name: Wall (7)
   m_TagString: Untagged
@@ -1221,19 +1009,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &170152572
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 170152571}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &170152573
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1246,21 +1021,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &170152574
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 170152571}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &170152575
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1354,6 +1117,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
+--- !u!1 &192618582 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5632928018133233129, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
+  m_PrefabInstance: {fileID: 610131436364379534}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &204199848
 GameObject:
   m_ObjectHideFlags: 0
@@ -1366,7 +1134,6 @@ GameObject:
   - component: {fileID: 204199852}
   - component: {fileID: 204199851}
   - component: {fileID: 204199850}
-  - component: {fileID: 204199849}
   m_Layer: 0
   m_Name: Floor (1)
   m_TagString: Untagged
@@ -1374,19 +1141,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &204199849
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 204199848}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &204199850
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1492,7 +1246,6 @@ GameObject:
   - component: {fileID: 216264114}
   - component: {fileID: 216264113}
   - component: {fileID: 216264112}
-  - component: {fileID: 216264111}
   m_Layer: 0
   m_Name: Floor (5)
   m_TagString: Untagged
@@ -1500,19 +1253,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &216264111
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 216264110}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &216264112
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1618,10 +1358,7 @@ GameObject:
   - component: {fileID: 225712879}
   - component: {fileID: 225712878}
   - component: {fileID: 225712877}
-  - component: {fileID: 225712876}
   - component: {fileID: 225712875}
-  - component: {fileID: 225712874}
-  - component: {fileID: 225712873}
   m_Layer: 0
   m_Name: ClearFloor (20)
   m_TagString: EchoStructure
@@ -1629,33 +1366,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &225712873
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 225712872}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &225712874
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 225712872}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &225712875
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1668,21 +1378,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &225712876
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 225712872}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &225712877
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1788,7 +1486,6 @@ GameObject:
   - component: {fileID: 265708448}
   - component: {fileID: 265708447}
   - component: {fileID: 265708446}
-  - component: {fileID: 265708450}
   m_Layer: 0
   m_Name: Ground
   m_TagString: Untagged
@@ -1889,19 +1586,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &265708450
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 265708445}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!1 &292836018
 GameObject:
   m_ObjectHideFlags: 0
@@ -1914,10 +1598,7 @@ GameObject:
   - component: {fileID: 292836025}
   - component: {fileID: 292836024}
   - component: {fileID: 292836023}
-  - component: {fileID: 292836022}
   - component: {fileID: 292836021}
-  - component: {fileID: 292836020}
-  - component: {fileID: 292836019}
   m_Layer: 0
   m_Name: ClearFloor (42)
   m_TagString: EchoStructure
@@ -1925,33 +1606,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &292836019
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 292836018}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &292836020
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 292836018}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &292836021
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1964,21 +1618,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &292836022
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 292836018}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &292836023
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2084,10 +1726,7 @@ GameObject:
   - component: {fileID: 316926701}
   - component: {fileID: 316926700}
   - component: {fileID: 316926699}
-  - component: {fileID: 316926698}
   - component: {fileID: 316926697}
-  - component: {fileID: 316926696}
-  - component: {fileID: 316926695}
   m_Layer: 0
   m_Name: ClearFloor (21)
   m_TagString: EchoStructure
@@ -2095,33 +1734,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &316926695
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 316926694}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &316926696
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 316926694}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &316926697
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2134,21 +1746,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &316926698
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 316926694}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &316926699
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2254,9 +1854,7 @@ GameObject:
   - component: {fileID: 319225553}
   - component: {fileID: 319225552}
   - component: {fileID: 319225551}
-  - component: {fileID: 319225550}
   - component: {fileID: 319225556}
-  - component: {fileID: 319225555}
   m_Layer: 0
   m_Name: Wall (1)
   m_TagString: Untagged
@@ -2264,19 +1862,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &319225550
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 319225549}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &319225551
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2370,19 +1955,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &319225555
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 319225549}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &319225556
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2395,6 +1967,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
 --- !u!1 &334962705
@@ -2409,7 +1982,6 @@ GameObject:
   - component: {fileID: 334962709}
   - component: {fileID: 334962708}
   - component: {fileID: 334962707}
-  - component: {fileID: 334962706}
   m_Layer: 0
   m_Name: Floor
   m_TagString: Untagged
@@ -2417,19 +1989,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &334962706
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 334962705}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &334962707
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2672,10 +2231,7 @@ GameObject:
   - component: {fileID: 385313279}
   - component: {fileID: 385313278}
   - component: {fileID: 385313277}
-  - component: {fileID: 385313276}
   - component: {fileID: 385313275}
-  - component: {fileID: 385313274}
-  - component: {fileID: 385313273}
   m_Layer: 0
   m_Name: ClearFloor (16)
   m_TagString: EchoStructure
@@ -2683,33 +2239,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &385313273
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 385313272}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &385313274
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 385313272}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &385313275
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2722,21 +2251,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &385313276
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 385313272}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &385313277
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2842,10 +2359,7 @@ GameObject:
   - component: {fileID: 386916168}
   - component: {fileID: 386916167}
   - component: {fileID: 386916166}
-  - component: {fileID: 386916165}
   - component: {fileID: 386916164}
-  - component: {fileID: 386916163}
-  - component: {fileID: 386916162}
   m_Layer: 0
   m_Name: ClearFloor (19)
   m_TagString: EchoStructure
@@ -2853,33 +2367,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &386916162
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 386916161}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &386916163
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 386916161}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &386916164
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2892,21 +2379,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &386916165
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 386916161}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &386916166
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -3012,9 +2487,7 @@ GameObject:
   - component: {fileID: 423957483}
   - component: {fileID: 423957482}
   - component: {fileID: 423957481}
-  - component: {fileID: 423957480}
   - component: {fileID: 423957479}
-  - component: {fileID: 423957478}
   m_Layer: 0
   m_Name: Wall (5)
   m_TagString: Untagged
@@ -3022,19 +2495,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &423957478
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 423957477}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &423957479
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3047,21 +2507,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &423957480
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 423957477}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &423957481
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -3167,10 +2615,7 @@ GameObject:
   - component: {fileID: 484850383}
   - component: {fileID: 484850382}
   - component: {fileID: 484850381}
-  - component: {fileID: 484850380}
   - component: {fileID: 484850379}
-  - component: {fileID: 484850378}
-  - component: {fileID: 484850377}
   m_Layer: 0
   m_Name: ClearFloor (47)
   m_TagString: EchoStructure
@@ -3178,33 +2623,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &484850377
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 484850376}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &484850378
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 484850376}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &484850379
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3217,21 +2635,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &484850380
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 484850376}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &484850381
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -3337,9 +2743,7 @@ GameObject:
   - component: {fileID: 523617451}
   - component: {fileID: 523617450}
   - component: {fileID: 523617449}
-  - component: {fileID: 523617448}
   - component: {fileID: 523617447}
-  - component: {fileID: 523617446}
   m_Layer: 0
   m_Name: Wall (4)
   m_TagString: Untagged
@@ -3347,19 +2751,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &523617446
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 523617445}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &523617447
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3372,21 +2763,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &523617448
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 523617445}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &523617449
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -3492,9 +2871,7 @@ GameObject:
   - component: {fileID: 530818042}
   - component: {fileID: 530818041}
   - component: {fileID: 530818040}
-  - component: {fileID: 530818039}
   - component: {fileID: 530818038}
-  - component: {fileID: 530818037}
   m_Layer: 0
   m_Name: Wall (6)
   m_TagString: Untagged
@@ -3502,19 +2879,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &530818037
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 530818036}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &530818038
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3527,21 +2891,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &530818039
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 530818036}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &530818040
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -3647,10 +2999,7 @@ GameObject:
   - component: {fileID: 557038150}
   - component: {fileID: 557038149}
   - component: {fileID: 557038148}
-  - component: {fileID: 557038147}
   - component: {fileID: 557038146}
-  - component: {fileID: 557038145}
-  - component: {fileID: 557038144}
   m_Layer: 0
   m_Name: ClearFloor (4)
   m_TagString: EchoStructure
@@ -3658,33 +3007,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &557038144
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 557038143}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &557038145
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 557038143}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &557038146
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3697,21 +3019,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &557038147
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 557038143}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &557038148
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -3817,10 +3127,7 @@ GameObject:
   - component: {fileID: 583231018}
   - component: {fileID: 583231017}
   - component: {fileID: 583231016}
-  - component: {fileID: 583231022}
   - component: {fileID: 583231021}
-  - component: {fileID: 583231020}
-  - component: {fileID: 583231019}
   m_Layer: 0
   m_Name: Item1
   m_TagString: EchoItem
@@ -3921,33 +3228,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 583231014}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &583231019
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 583231014}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &583231020
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 583231014}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 89348a10829f312449d1c92a0d50337c, type: 2}
 --- !u!114 &583231021
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3960,21 +3240,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 89348a10829f312449d1c92a0d50337c, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &583231022
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 583231014}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!1 &591518035
 GameObject:
   m_ObjectHideFlags: 0
@@ -3987,10 +3255,7 @@ GameObject:
   - component: {fileID: 591518042}
   - component: {fileID: 591518041}
   - component: {fileID: 591518040}
-  - component: {fileID: 591518039}
   - component: {fileID: 591518038}
-  - component: {fileID: 591518037}
-  - component: {fileID: 591518036}
   m_Layer: 0
   m_Name: ClearFloor (3)
   m_TagString: EchoStructure
@@ -3998,33 +3263,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &591518036
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 591518035}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &591518037
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 591518035}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &591518038
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4037,21 +3275,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &591518039
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 591518035}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &591518040
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -4157,7 +3383,6 @@ GameObject:
   - component: {fileID: 642820923}
   - component: {fileID: 642820922}
   - component: {fileID: 642820921}
-  - component: {fileID: 642820920}
   m_Layer: 0
   m_Name: Floor (4)
   m_TagString: Untagged
@@ -4165,19 +3390,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &642820920
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 642820919}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &642820921
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -4283,10 +3495,7 @@ GameObject:
   - component: {fileID: 657649353}
   - component: {fileID: 657649352}
   - component: {fileID: 657649351}
-  - component: {fileID: 657649350}
   - component: {fileID: 657649349}
-  - component: {fileID: 657649348}
-  - component: {fileID: 657649347}
   m_Layer: 0
   m_Name: ClearFloor (35)
   m_TagString: EchoStructure
@@ -4294,33 +3503,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &657649347
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 657649346}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &657649348
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 657649346}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &657649349
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4333,21 +3515,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &657649350
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 657649346}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &657649351
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -4453,10 +3623,7 @@ GameObject:
   - component: {fileID: 666387981}
   - component: {fileID: 666387980}
   - component: {fileID: 666387979}
-  - component: {fileID: 666387978}
   - component: {fileID: 666387977}
-  - component: {fileID: 666387976}
-  - component: {fileID: 666387975}
   m_Layer: 0
   m_Name: ClearFloor (23)
   m_TagString: EchoStructure
@@ -4464,33 +3631,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &666387975
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 666387974}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &666387976
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 666387974}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &666387977
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4503,21 +3643,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &666387978
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 666387974}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &666387979
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -4623,10 +3751,7 @@ GameObject:
   - component: {fileID: 676582972}
   - component: {fileID: 676582971}
   - component: {fileID: 676582970}
-  - component: {fileID: 676582969}
   - component: {fileID: 676582968}
-  - component: {fileID: 676582967}
-  - component: {fileID: 676582966}
   m_Layer: 0
   m_Name: ClearFloor (43)
   m_TagString: EchoStructure
@@ -4634,33 +3759,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &676582966
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 676582965}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &676582967
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 676582965}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &676582968
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4673,21 +3771,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &676582969
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 676582965}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &676582970
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -4793,10 +3879,7 @@ GameObject:
   - component: {fileID: 694296457}
   - component: {fileID: 694296456}
   - component: {fileID: 694296455}
-  - component: {fileID: 694296454}
   - component: {fileID: 694296453}
-  - component: {fileID: 694296452}
-  - component: {fileID: 694296451}
   m_Layer: 0
   m_Name: ClearFloor (46)
   m_TagString: EchoStructure
@@ -4804,33 +3887,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &694296451
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 694296450}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &694296452
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 694296450}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &694296453
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4843,21 +3899,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &694296454
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 694296450}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &694296455
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -4963,10 +4007,7 @@ GameObject:
   - component: {fileID: 714943919}
   - component: {fileID: 714943918}
   - component: {fileID: 714943917}
-  - component: {fileID: 714943916}
   - component: {fileID: 714943915}
-  - component: {fileID: 714943914}
-  - component: {fileID: 714943913}
   m_Layer: 0
   m_Name: ClearFloor (10)
   m_TagString: EchoStructure
@@ -4974,33 +4015,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &714943913
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 714943912}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &714943914
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 714943912}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &714943915
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5013,21 +4027,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &714943916
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 714943912}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &714943917
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -5133,10 +4135,7 @@ GameObject:
   - component: {fileID: 742543777}
   - component: {fileID: 742543776}
   - component: {fileID: 742543775}
-  - component: {fileID: 742543774}
   - component: {fileID: 742543773}
-  - component: {fileID: 742543772}
-  - component: {fileID: 742543771}
   m_Layer: 0
   m_Name: ClearFloor (32)
   m_TagString: EchoStructure
@@ -5144,33 +4143,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &742543771
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 742543770}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &742543772
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 742543770}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &742543773
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5183,21 +4155,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &742543774
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 742543770}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &742543775
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -5303,9 +4263,7 @@ GameObject:
   - component: {fileID: 765156223}
   - component: {fileID: 765156222}
   - component: {fileID: 765156221}
-  - component: {fileID: 765156220}
   - component: {fileID: 765156226}
-  - component: {fileID: 765156225}
   m_Layer: 0
   m_Name: Wall (2)
   m_TagString: Untagged
@@ -5313,19 +4271,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &765156220
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 765156219}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &765156221
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -5419,19 +4364,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &765156225
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 765156219}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &765156226
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5444,6 +4376,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
 --- !u!1 &776281836
@@ -5458,10 +4391,7 @@ GameObject:
   - component: {fileID: 776281843}
   - component: {fileID: 776281842}
   - component: {fileID: 776281841}
-  - component: {fileID: 776281840}
   - component: {fileID: 776281839}
-  - component: {fileID: 776281838}
-  - component: {fileID: 776281837}
   m_Layer: 0
   m_Name: ClearFloor (25)
   m_TagString: EchoStructure
@@ -5469,33 +4399,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &776281837
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 776281836}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &776281838
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 776281836}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &776281839
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5508,21 +4411,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &776281840
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 776281836}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &776281841
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -5628,10 +4519,7 @@ GameObject:
   - component: {fileID: 790515595}
   - component: {fileID: 790515594}
   - component: {fileID: 790515593}
-  - component: {fileID: 790515592}
   - component: {fileID: 790515591}
-  - component: {fileID: 790515590}
-  - component: {fileID: 790515589}
   m_Layer: 0
   m_Name: ClearFloor (50)
   m_TagString: EchoStructure
@@ -5639,33 +4527,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &790515589
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 790515588}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &790515590
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 790515588}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &790515591
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5678,21 +4539,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &790515592
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 790515588}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &790515593
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -5798,10 +4647,7 @@ GameObject:
   - component: {fileID: 838325381}
   - component: {fileID: 838325380}
   - component: {fileID: 838325379}
-  - component: {fileID: 838325378}
   - component: {fileID: 838325377}
-  - component: {fileID: 838325376}
-  - component: {fileID: 838325375}
   m_Layer: 0
   m_Name: ClearFloor (22)
   m_TagString: EchoStructure
@@ -5809,33 +4655,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &838325375
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 838325374}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &838325376
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 838325374}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &838325377
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5848,21 +4667,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &838325378
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 838325374}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &838325379
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -5968,10 +4775,7 @@ GameObject:
   - component: {fileID: 866536457}
   - component: {fileID: 866536456}
   - component: {fileID: 866536455}
-  - component: {fileID: 866536454}
   - component: {fileID: 866536453}
-  - component: {fileID: 866536452}
-  - component: {fileID: 866536451}
   m_Layer: 0
   m_Name: ClearFloor (40)
   m_TagString: EchoStructure
@@ -5979,33 +4783,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &866536451
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 866536450}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &866536452
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 866536450}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &866536453
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6018,21 +4795,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &866536454
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 866536450}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &866536455
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -6138,10 +4903,7 @@ GameObject:
   - component: {fileID: 871826654}
   - component: {fileID: 871826653}
   - component: {fileID: 871826652}
-  - component: {fileID: 871826651}
   - component: {fileID: 871826650}
-  - component: {fileID: 871826649}
-  - component: {fileID: 871826648}
   m_Layer: 0
   m_Name: ClearFloor (31)
   m_TagString: EchoStructure
@@ -6149,33 +4911,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &871826648
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 871826647}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &871826649
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 871826647}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &871826650
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6188,21 +4923,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &871826651
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 871826647}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &871826652
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -6308,10 +5031,7 @@ GameObject:
   - component: {fileID: 875559198}
   - component: {fileID: 875559197}
   - component: {fileID: 875559196}
-  - component: {fileID: 875559195}
   - component: {fileID: 875559194}
-  - component: {fileID: 875559193}
-  - component: {fileID: 875559192}
   m_Layer: 0
   m_Name: ClearFloor (34)
   m_TagString: EchoStructure
@@ -6319,33 +5039,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &875559192
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 875559191}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &875559193
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 875559191}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &875559194
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6358,21 +5051,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &875559195
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 875559191}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &875559196
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -6478,10 +5159,7 @@ GameObject:
   - component: {fileID: 919650136}
   - component: {fileID: 919650135}
   - component: {fileID: 919650134}
-  - component: {fileID: 919650140}
   - component: {fileID: 919650139}
-  - component: {fileID: 919650138}
-  - component: {fileID: 919650137}
   m_Layer: 0
   m_Name: Item2
   m_TagString: EchoItem
@@ -6582,33 +5260,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 919650132}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &919650137
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 919650132}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &919650138
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 919650132}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 89348a10829f312449d1c92a0d50337c, type: 2}
 --- !u!114 &919650139
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6621,21 +5272,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 89348a10829f312449d1c92a0d50337c, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &919650140
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 919650132}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!1 &1021386159
 GameObject:
   m_ObjectHideFlags: 0
@@ -6648,10 +5287,7 @@ GameObject:
   - component: {fileID: 1021386166}
   - component: {fileID: 1021386165}
   - component: {fileID: 1021386164}
-  - component: {fileID: 1021386163}
   - component: {fileID: 1021386162}
-  - component: {fileID: 1021386161}
-  - component: {fileID: 1021386160}
   m_Layer: 0
   m_Name: ClearFloor (6)
   m_TagString: EchoStructure
@@ -6659,33 +5295,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1021386160
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1021386159}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1021386161
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1021386159}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1021386162
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6698,21 +5307,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1021386163
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1021386159}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1021386164
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -6818,10 +5415,7 @@ GameObject:
   - component: {fileID: 1027822569}
   - component: {fileID: 1027822568}
   - component: {fileID: 1027822567}
-  - component: {fileID: 1027822566}
   - component: {fileID: 1027822565}
-  - component: {fileID: 1027822564}
-  - component: {fileID: 1027822563}
   m_Layer: 0
   m_Name: ClearFloor (2)
   m_TagString: EchoStructure
@@ -6829,33 +5423,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1027822563
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1027822562}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1027822564
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1027822562}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1027822565
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6868,21 +5435,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1027822566
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1027822562}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1027822567
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -6988,10 +5543,7 @@ GameObject:
   - component: {fileID: 1062287469}
   - component: {fileID: 1062287468}
   - component: {fileID: 1062287467}
-  - component: {fileID: 1062287466}
   - component: {fileID: 1062287465}
-  - component: {fileID: 1062287464}
-  - component: {fileID: 1062287463}
   m_Layer: 0
   m_Name: ClearFloor (26)
   m_TagString: EchoStructure
@@ -6999,33 +5551,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1062287463
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1062287462}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1062287464
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1062287462}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1062287465
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7038,21 +5563,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1062287466
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1062287462}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1062287467
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -7158,7 +5671,6 @@ GameObject:
   - component: {fileID: 1103147319}
   - component: {fileID: 1103147318}
   - component: {fileID: 1103147317}
-  - component: {fileID: 1103147316}
   m_Layer: 0
   m_Name: Floor (6)
   m_TagString: Untagged
@@ -7166,19 +5678,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1103147316
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1103147315}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1103147317
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -7284,10 +5783,7 @@ GameObject:
   - component: {fileID: 1123555094}
   - component: {fileID: 1123555093}
   - component: {fileID: 1123555092}
-  - component: {fileID: 1123555091}
   - component: {fileID: 1123555090}
-  - component: {fileID: 1123555089}
-  - component: {fileID: 1123555088}
   m_Layer: 0
   m_Name: ClearFloor (41)
   m_TagString: EchoStructure
@@ -7295,33 +5791,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1123555088
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1123555087}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1123555089
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1123555087}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1123555090
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7334,21 +5803,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1123555091
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1123555087}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1123555092
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -7454,10 +5911,7 @@ GameObject:
   - component: {fileID: 1125517618}
   - component: {fileID: 1125517617}
   - component: {fileID: 1125517616}
-  - component: {fileID: 1125517615}
   - component: {fileID: 1125517614}
-  - component: {fileID: 1125517613}
-  - component: {fileID: 1125517612}
   m_Layer: 0
   m_Name: ClearFloor (7)
   m_TagString: EchoStructure
@@ -7465,33 +5919,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1125517612
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1125517611}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1125517613
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1125517611}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1125517614
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7504,21 +5931,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1125517615
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1125517611}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1125517616
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -7624,10 +6039,7 @@ GameObject:
   - component: {fileID: 1211043498}
   - component: {fileID: 1211043497}
   - component: {fileID: 1211043496}
-  - component: {fileID: 1211043495}
   - component: {fileID: 1211043494}
-  - component: {fileID: 1211043493}
-  - component: {fileID: 1211043492}
   m_Layer: 0
   m_Name: ClearFloor (38)
   m_TagString: EchoStructure
@@ -7635,33 +6047,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1211043492
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1211043491}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1211043493
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1211043491}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1211043494
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7674,21 +6059,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1211043495
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1211043491}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1211043496
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -7794,10 +6167,7 @@ GameObject:
   - component: {fileID: 1226133498}
   - component: {fileID: 1226133497}
   - component: {fileID: 1226133496}
-  - component: {fileID: 1226133495}
   - component: {fileID: 1226133494}
-  - component: {fileID: 1226133493}
-  - component: {fileID: 1226133492}
   m_Layer: 0
   m_Name: ClearFloor (27)
   m_TagString: EchoStructure
@@ -7805,33 +6175,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1226133492
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1226133491}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1226133493
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1226133491}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1226133494
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7844,21 +6187,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1226133495
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1226133491}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1226133496
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -7969,10 +6300,7 @@ GameObject:
   - component: {fileID: 1278906933}
   - component: {fileID: 1278906932}
   - component: {fileID: 1278906931}
-  - component: {fileID: 1278906938}
   - component: {fileID: 1278906937}
-  - component: {fileID: 1278906936}
-  - component: {fileID: 1278906935}
   m_Layer: 0
   m_Name: HiddenEnemy
   m_TagString: EchoEnemy
@@ -8075,33 +6403,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1278906935
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1278906930}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1278906936
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1278906930}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 21e6963b945819a4eb1b36b067b7becf, type: 2}
 --- !u!114 &1278906937
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8114,21 +6415,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 21e6963b945819a4eb1b36b067b7becf, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1278906938
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1278906930}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!1 &1315607846
 GameObject:
   m_ObjectHideFlags: 0
@@ -8141,10 +6430,7 @@ GameObject:
   - component: {fileID: 1315607853}
   - component: {fileID: 1315607852}
   - component: {fileID: 1315607851}
-  - component: {fileID: 1315607850}
   - component: {fileID: 1315607849}
-  - component: {fileID: 1315607848}
-  - component: {fileID: 1315607847}
   m_Layer: 0
   m_Name: ClearFloor (17)
   m_TagString: EchoStructure
@@ -8152,33 +6438,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1315607847
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1315607846}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1315607848
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1315607846}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1315607849
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8191,21 +6450,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1315607850
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1315607846}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1315607851
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -8311,10 +6558,7 @@ GameObject:
   - component: {fileID: 1329563390}
   - component: {fileID: 1329563389}
   - component: {fileID: 1329563388}
-  - component: {fileID: 1329563394}
   - component: {fileID: 1329563393}
-  - component: {fileID: 1329563392}
-  - component: {fileID: 1329563391}
   m_Layer: 0
   m_Name: Item0
   m_TagString: EchoItem
@@ -8415,33 +6659,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1329563386}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!114 &1329563391
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1329563386}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1329563392
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1329563386}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 89348a10829f312449d1c92a0d50337c, type: 2}
 --- !u!114 &1329563393
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8454,21 +6671,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 89348a10829f312449d1c92a0d50337c, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1329563394
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1329563386}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!1 &1351270468
 GameObject:
   m_ObjectHideFlags: 0
@@ -8481,9 +6686,7 @@ GameObject:
   - component: {fileID: 1351270472}
   - component: {fileID: 1351270471}
   - component: {fileID: 1351270470}
-  - component: {fileID: 1351270469}
   - component: {fileID: 1351270475}
-  - component: {fileID: 1351270474}
   m_Layer: 0
   m_Name: Wall (3)
   m_TagString: Untagged
@@ -8491,19 +6694,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1351270469
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1351270468}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1351270470
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -8597,19 +6787,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1351270474
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1351270468}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1351270475
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8622,6 +6799,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
 --- !u!1 &1377807878
@@ -8636,10 +6814,7 @@ GameObject:
   - component: {fileID: 1377807885}
   - component: {fileID: 1377807884}
   - component: {fileID: 1377807883}
-  - component: {fileID: 1377807882}
   - component: {fileID: 1377807881}
-  - component: {fileID: 1377807880}
-  - component: {fileID: 1377807879}
   m_Layer: 0
   m_Name: ClearFloor (5)
   m_TagString: EchoStructure
@@ -8647,33 +6822,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1377807879
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1377807878}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1377807880
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1377807878}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1377807881
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8686,21 +6834,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1377807882
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1377807878}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1377807883
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -8866,10 +7002,7 @@ GameObject:
   - component: {fileID: 1404445677}
   - component: {fileID: 1404445676}
   - component: {fileID: 1404445675}
-  - component: {fileID: 1404445674}
   - component: {fileID: 1404445673}
-  - component: {fileID: 1404445672}
-  - component: {fileID: 1404445671}
   m_Layer: 0
   m_Name: ClearFloor (28)
   m_TagString: EchoStructure
@@ -8877,33 +7010,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1404445671
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1404445670}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1404445672
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1404445670}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1404445673
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8916,21 +7022,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1404445674
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1404445670}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1404445675
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -9036,7 +7130,6 @@ GameObject:
   - component: {fileID: 1457476266}
   - component: {fileID: 1457476265}
   - component: {fileID: 1457476264}
-  - component: {fileID: 1457476263}
   m_Layer: 0
   m_Name: Floor (3)
   m_TagString: Untagged
@@ -9044,19 +7137,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1457476263
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1457476262}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1457476264
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -9162,10 +7242,7 @@ GameObject:
   - component: {fileID: 1531458857}
   - component: {fileID: 1531458856}
   - component: {fileID: 1531458855}
-  - component: {fileID: 1531458854}
   - component: {fileID: 1531458853}
-  - component: {fileID: 1531458852}
-  - component: {fileID: 1531458851}
   m_Layer: 0
   m_Name: ClearFloor (12)
   m_TagString: EchoStructure
@@ -9173,33 +7250,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1531458851
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1531458850}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1531458852
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1531458850}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1531458853
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9212,21 +7262,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1531458854
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1531458850}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1531458855
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -9332,10 +7370,7 @@ GameObject:
   - component: {fileID: 1554309447}
   - component: {fileID: 1554309446}
   - component: {fileID: 1554309445}
-  - component: {fileID: 1554309444}
   - component: {fileID: 1554309443}
-  - component: {fileID: 1554309442}
-  - component: {fileID: 1554309441}
   m_Layer: 0
   m_Name: ClearFloor (11)
   m_TagString: EchoStructure
@@ -9343,33 +7378,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1554309441
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1554309440}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1554309442
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1554309440}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1554309443
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9382,21 +7390,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1554309444
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1554309440}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1554309445
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -9502,10 +7498,7 @@ GameObject:
   - component: {fileID: 1651462986}
   - component: {fileID: 1651462985}
   - component: {fileID: 1651462984}
-  - component: {fileID: 1651462983}
   - component: {fileID: 1651462982}
-  - component: {fileID: 1651462981}
-  - component: {fileID: 1651462980}
   m_Layer: 0
   m_Name: ClearFloor (37)
   m_TagString: EchoStructure
@@ -9513,33 +7506,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1651462980
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1651462979}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1651462981
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1651462979}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1651462982
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9552,21 +7518,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1651462983
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1651462979}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1651462984
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -9672,10 +7626,7 @@ GameObject:
   - component: {fileID: 1665106630}
   - component: {fileID: 1665106629}
   - component: {fileID: 1665106628}
-  - component: {fileID: 1665106627}
   - component: {fileID: 1665106626}
-  - component: {fileID: 1665106625}
-  - component: {fileID: 1665106624}
   m_Layer: 0
   m_Name: ClearFloor (36)
   m_TagString: EchoStructure
@@ -9683,33 +7634,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1665106624
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1665106623}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1665106625
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1665106623}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1665106626
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9722,21 +7646,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1665106627
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1665106623}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1665106628
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -9842,10 +7754,7 @@ GameObject:
   - component: {fileID: 1667003199}
   - component: {fileID: 1667003198}
   - component: {fileID: 1667003197}
-  - component: {fileID: 1667003196}
   - component: {fileID: 1667003195}
-  - component: {fileID: 1667003194}
-  - component: {fileID: 1667003193}
   m_Layer: 0
   m_Name: ClearFloor (33)
   m_TagString: EchoStructure
@@ -9853,33 +7762,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1667003193
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1667003192}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1667003194
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1667003192}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1667003195
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9892,21 +7774,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1667003196
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1667003192}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1667003197
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -10091,10 +7961,7 @@ GameObject:
   - component: {fileID: 1743361767}
   - component: {fileID: 1743361766}
   - component: {fileID: 1743361765}
-  - component: {fileID: 1743361764}
   - component: {fileID: 1743361763}
-  - component: {fileID: 1743361762}
-  - component: {fileID: 1743361761}
   m_Layer: 0
   m_Name: ClearFloor (1)
   m_TagString: EchoStructure
@@ -10102,33 +7969,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1743361761
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1743361760}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1743361762
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1743361760}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1743361763
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10141,21 +7981,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1743361764
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1743361760}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1743361765
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -10261,10 +8089,7 @@ GameObject:
   - component: {fileID: 1812222402}
   - component: {fileID: 1812222401}
   - component: {fileID: 1812222400}
-  - component: {fileID: 1812222399}
   - component: {fileID: 1812222398}
-  - component: {fileID: 1812222397}
-  - component: {fileID: 1812222396}
   m_Layer: 0
   m_Name: ClearFloor (14)
   m_TagString: EchoStructure
@@ -10272,33 +8097,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1812222396
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1812222395}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1812222397
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1812222395}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1812222398
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10311,21 +8109,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1812222399
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1812222395}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1812222400
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -10431,10 +8217,7 @@ GameObject:
   - component: {fileID: 1826259464}
   - component: {fileID: 1826259463}
   - component: {fileID: 1826259462}
-  - component: {fileID: 1826259461}
   - component: {fileID: 1826259460}
-  - component: {fileID: 1826259459}
-  - component: {fileID: 1826259458}
   m_Layer: 0
   m_Name: ClearFloor (18)
   m_TagString: EchoStructure
@@ -10442,33 +8225,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1826259458
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1826259457}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1826259459
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1826259457}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1826259460
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10481,21 +8237,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1826259461
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1826259457}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1826259462
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -10600,10 +8344,7 @@ GameObject:
   - component: {fileID: 1843459220}
   - component: {fileID: 1843459219}
   - component: {fileID: 1843459218}
-  - component: {fileID: 1843459224}
   - component: {fileID: 1843459223}
-  - component: {fileID: 1843459222}
-  - component: {fileID: 1843459221}
   m_Layer: 0
   m_Name: Item
   m_TagString: EchoItem
@@ -10683,33 +8424,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1843459221
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1843459217}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1843459222
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1843459217}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 89348a10829f312449d1c92a0d50337c, type: 2}
 --- !u!114 &1843459223
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10722,21 +8436,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 89348a10829f312449d1c92a0d50337c, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1843459224
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1843459217}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!1 &1869626369
 GameObject:
   m_ObjectHideFlags: 0
@@ -10749,10 +8451,7 @@ GameObject:
   - component: {fileID: 1869626376}
   - component: {fileID: 1869626375}
   - component: {fileID: 1869626374}
-  - component: {fileID: 1869626373}
   - component: {fileID: 1869626372}
-  - component: {fileID: 1869626371}
-  - component: {fileID: 1869626370}
   m_Layer: 0
   m_Name: ClearFloor (9)
   m_TagString: EchoStructure
@@ -10760,33 +8459,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1869626370
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1869626369}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1869626371
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1869626369}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1869626372
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10799,21 +8471,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1869626373
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1869626369}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1869626374
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -10919,10 +8579,7 @@ GameObject:
   - component: {fileID: 1883215073}
   - component: {fileID: 1883215072}
   - component: {fileID: 1883215071}
-  - component: {fileID: 1883215070}
   - component: {fileID: 1883215069}
-  - component: {fileID: 1883215068}
-  - component: {fileID: 1883215067}
   m_Layer: 0
   m_Name: ClearFloor (48)
   m_TagString: EchoStructure
@@ -10930,33 +8587,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1883215067
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1883215066}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1883215068
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1883215066}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1883215069
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10969,21 +8599,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1883215070
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1883215066}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1883215071
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -11089,10 +8707,7 @@ GameObject:
   - component: {fileID: 1905188022}
   - component: {fileID: 1905188021}
   - component: {fileID: 1905188020}
-  - component: {fileID: 1905188019}
   - component: {fileID: 1905188018}
-  - component: {fileID: 1905188017}
-  - component: {fileID: 1905188016}
   m_Layer: 0
   m_Name: ClearFloor (15)
   m_TagString: EchoStructure
@@ -11100,33 +8715,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1905188016
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1905188015}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1905188017
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1905188015}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1905188018
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11139,21 +8727,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1905188019
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1905188015}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1905188020
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -11259,7 +8835,6 @@ GameObject:
   - component: {fileID: 1955143235}
   - component: {fileID: 1955143234}
   - component: {fileID: 1955143233}
-  - component: {fileID: 1955143232}
   m_Layer: 0
   m_Name: Floor (2)
   m_TagString: Untagged
@@ -11267,19 +8842,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1955143232
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1955143231}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1955143233
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -11385,10 +8947,7 @@ GameObject:
   - component: {fileID: 1968395022}
   - component: {fileID: 1968395021}
   - component: {fileID: 1968395020}
-  - component: {fileID: 1968395027}
   - component: {fileID: 1968395026}
-  - component: {fileID: 1968395025}
-  - component: {fileID: 1968395024}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: EchoEnemy
@@ -11491,33 +9050,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1968395024
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1968395019}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1968395025
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1968395019}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 21e6963b945819a4eb1b36b067b7becf, type: 2}
 --- !u!114 &1968395026
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11530,21 +9062,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 21e6963b945819a4eb1b36b067b7becf, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1968395027
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1968395019}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!1 &1985817272
 GameObject:
   m_ObjectHideFlags: 0
@@ -11557,10 +9077,7 @@ GameObject:
   - component: {fileID: 1985817279}
   - component: {fileID: 1985817278}
   - component: {fileID: 1985817277}
-  - component: {fileID: 1985817276}
   - component: {fileID: 1985817275}
-  - component: {fileID: 1985817274}
-  - component: {fileID: 1985817273}
   m_Layer: 0
   m_Name: ClearFloor (13)
   m_TagString: EchoStructure
@@ -11568,33 +9085,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1985817273
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1985817272}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1985817274
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1985817272}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1985817275
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11607,21 +9097,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1985817276
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1985817272}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1985817277
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -11727,10 +9205,7 @@ GameObject:
   - component: {fileID: 1994348740}
   - component: {fileID: 1994348739}
   - component: {fileID: 1994348738}
-  - component: {fileID: 1994348737}
   - component: {fileID: 1994348736}
-  - component: {fileID: 1994348735}
-  - component: {fileID: 1994348734}
   m_Layer: 0
   m_Name: ClearFloor (30)
   m_TagString: EchoStructure
@@ -11738,33 +9213,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1994348734
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1994348733}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &1994348735
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1994348733}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &1994348736
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11777,21 +9225,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &1994348737
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1994348733}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &1994348738
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -11897,11 +9333,7 @@ GameObject:
   - component: {fileID: 2004631692}
   - component: {fileID: 2004631691}
   - component: {fileID: 2004631690}
-  - component: {fileID: 2004631689}
   - component: {fileID: 2004631688}
-  - component: {fileID: 2004631687}
-  - component: {fileID: 2004631686}
-  - component: {fileID: 2004631694}
   m_Layer: 0
   m_Name: ClearFloor
   m_TagString: EchoStructure
@@ -11909,33 +9341,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &2004631686
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2004631685}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &2004631687
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2004631685}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &2004631688
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11948,21 +9353,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &2004631689
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2004631685}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &2004631690
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -12056,27 +9449,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2004631694
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2004631685}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f8006f3ae3d9df5a69db252a6bd9220c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoGlitch
-  _mode: 2
-  _color: {r: 0, g: 1, b: 1, a: 1}
-  _intensity: 0.85
-  _width: 4
-  _displacement: 8
-  _blockHeight: 8
-  _speed: 18
-  _duration: 0.6
-  _isContactBoundaryEnabled: 1
 --- !u!1 &2005130472
 GameObject:
   m_ObjectHideFlags: 0
@@ -12089,9 +9461,7 @@ GameObject:
   - component: {fileID: 2005130476}
   - component: {fileID: 2005130475}
   - component: {fileID: 2005130474}
-  - component: {fileID: 2005130473}
   - component: {fileID: 2005130479}
-  - component: {fileID: 2005130478}
   m_Layer: 0
   m_Name: Wall
   m_TagString: Untagged
@@ -12099,19 +9469,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &2005130473
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2005130472}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &2005130474
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -12205,19 +9562,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2005130478
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2005130472}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &2005130479
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12230,6 +9574,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
 --- !u!1 &2097490701
@@ -12244,10 +9589,7 @@ GameObject:
   - component: {fileID: 2097490708}
   - component: {fileID: 2097490707}
   - component: {fileID: 2097490706}
-  - component: {fileID: 2097490705}
   - component: {fileID: 2097490704}
-  - component: {fileID: 2097490703}
-  - component: {fileID: 2097490702}
   m_Layer: 0
   m_Name: ClearFloor (29)
   m_TagString: EchoStructure
@@ -12255,33 +9597,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &2097490702
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2097490701}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &2097490703
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2097490701}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &2097490704
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12294,21 +9609,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &2097490705
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2097490701}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &2097490706
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -12414,10 +9717,7 @@ GameObject:
   - component: {fileID: 2144505751}
   - component: {fileID: 2144505750}
   - component: {fileID: 2144505749}
-  - component: {fileID: 2144505748}
   - component: {fileID: 2144505747}
-  - component: {fileID: 2144505746}
-  - component: {fileID: 2144505745}
   m_Layer: 0
   m_Name: ClearFloor (8)
   m_TagString: EchoStructure
@@ -12425,33 +9725,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &2144505745
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2144505744}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 617326ea917140bbac9325afe7f394e0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealState
-  _world: {fileID: 1457930049290449156}
-  _surfaces: []
---- !u!114 &2144505746
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2144505744}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
 --- !u!114 &2144505747
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12464,21 +9737,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 11400000, guid: 64aecbd9e310d9246ab14543f7d4e556, type: 2}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
---- !u!114 &2144505748
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2144505744}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
 --- !u!23 &2144505749
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -12631,7 +9892,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5632928018133233129, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8454667350626096184}
   m_SourcePrefab: {fileID: 100100000, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
 --- !u!1001 &1457930049290449150
 PrefabInstance:
@@ -12651,7 +9915,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4359029454609739195, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _isBoundaryVisible
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _targetCamera
@@ -12659,7 +9923,7 @@ PrefabInstance:
       objectReference: {fileID: 8454667350626096180}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _settings._radius
-      value: 10
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _directionTransform
@@ -12671,11 +9935,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _settings._scanMode
-      value: 0
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _settings._angleDegrees
-      value: 90
+      value: 60
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _rangeDisplay._isEnabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _rangeDisplay._waveWidth
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _settings._occlusionMode
@@ -12686,7 +9958,15 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _settings._onceStockCapacity
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _settings._pulseHoldDuration
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _settings._followWaveInterval
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
@@ -13041,16 +10321,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Test_Player
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 4359029454609739195, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 8923635859648306710, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      insertIndex: 7
-      addedObject: {fileID: 1457930049290449155}
-    - targetCorrespondingSourceObject: {fileID: 8923635859648306710, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      insertIndex: 8
-      addedObject: {fileID: 1457930049290449156}
     - targetCorrespondingSourceObject: {fileID: 8923635859648306710, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1457930049290449152}
@@ -13095,31 +10370,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
   _isBlocking: 1
---- !u!114 &1457930049290449155
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1457930049290449151}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2ac1e256a50c40f3bd70fc541ed1dcb2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoOccluder
-  _isBlocking: 1
---- !u!114 &1457930049290449156
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1457930049290449151}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b8464caa13e9471c9c85bc46f3d23e80, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoRevealWorld
 --- !u!4 &2926934273044610931 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3032123786093622285, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
@@ -13130,6 +10380,30 @@ Camera:
   m_CorrespondingSourceObject: {fileID: 7957191697469318641, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
   m_PrefabInstance: {fileID: 610131436364379534}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &8454667350626096184
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 192618582}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9a5c37f23ff229498aa00e3157b17db, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Echo.UI::Echo.Echolocation.EchoStockDisplay
+  _controller: {fileID: 0}
+  _corner: 8
+  _margin: {x: 32, y: 32}
+  _format: ECHO {0} / {1}
+  _fontSize: 36
+  _textColor: {r: 0.6, g: 0.95, b: 1, a: 1}
+  _emptyColor: {r: 1, g: 0.45, b: 0.3, a: 1}
+  _isRechargeBarVisible: 1
+  _barColor: {r: 0.05, g: 0.8, b: 1, a: 0.9}
+  _barBackgroundColor: {r: 0, g: 0, b: 0, a: 0.45}
+  _isHiddenOutsideOnceMode: 1
+  _font: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

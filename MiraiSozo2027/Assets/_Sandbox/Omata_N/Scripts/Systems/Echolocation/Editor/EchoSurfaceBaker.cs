@@ -39,22 +39,22 @@ namespace Echo.Echolocation.Editor
                     {
                         if (mesh.GetTopology(sub) != MeshTopology.Triangles) throw new InvalidOperationException("三角形Meshを指定してください。");
                         var triangles = mesh.GetTriangles(sub);
-                        for (int t = 0; t < triangles.Length; t += 3)
+                        for (int triangle = 0; triangle < triangles.Length; triangle += 3)
                         {
-                            int ia = triangles[t], ib = triangles[t + 1], ic = triangles[t + 2];
-                            Vector3 Point(Vector3 w) => vertices[ia] * w.x + vertices[ib] * w.y + vertices[ic] * w.z;
-                            void Split(Vector3 a, Vector3 b, Vector3 c, int depth)
+                            int ia = triangles[triangle], ib = triangles[triangle + 1], ic = triangles[triangle + 2];
+                            Vector3 GetPoint(Vector3 weight) => vertices[ia] * weight.x + vertices[ib] * weight.y + vertices[ic] * weight.z;
+                            void Split(Vector3 first, Vector3 second, Vector3 third, int depth)
                             {
-                                var pa = Point(a); var pb = Point(b); var pc = Point(c);
+                                var pa = GetPoint(first); var pb = GetPoint(second); var pc = GetPoint(third);
                                 float ab = source.transform.TransformVector(pb - pa).sqrMagnitude;
                                 float bc = source.transform.TransformVector(pc - pb).sqrMagnitude;
                                 float ca = source.transform.TransformVector(pa - pc).sqrMagnitude;
                                 if (Mathf.Max(ab, Mathf.Max(bc, ca)) > maxEdge * maxEdge)
                                 {
                                     if (depth > MaxSubdivisionDepth) throw new InvalidOperationException("分割が細かすぎます。最大辺長を増やしてください。");
-                                    if (ab >= bc && ab >= ca) { var m = (a + b) * .5f; Split(a, m, c, depth + 1); Split(m, b, c, depth + 1); }
-                                    else if (bc >= ca) { var m = (b + c) * .5f; Split(a, b, m, depth + 1); Split(a, m, c, depth + 1); }
-                                    else { var m = (c + a) * .5f; Split(a, b, m, depth + 1); Split(m, b, c, depth + 1); }
+                                    if (ab >= bc && ab >= ca) { var midpoint = (first + second) * .5f; Split(first, midpoint, third, depth + 1); Split(midpoint, second, third, depth + 1); }
+                                    else if (bc >= ca) { var midpoint = (second + third) * .5f; Split(first, second, midpoint, depth + 1); Split(first, midpoint, third, depth + 1); }
+                                    else { var midpoint = (third + first) * .5f; Split(first, second, midpoint, depth + 1); Split(midpoint, second, third, depth + 1); }
                                     return;
                                 }
                                 float area = Vector3.Cross(source.transform.TransformVector(pb - pa), source.transform.TransformVector(pc - pa)).magnitude * .5f;
@@ -62,24 +62,24 @@ namespace Echo.Echolocation.Editor
                                 if (++total > MaxPatches) throw new InvalidOperationException("1対象の上限1024分割を超えます。最大辺長を増やすか、対象を分けてください。");
                                 var patch = new Mesh { name = "EchoPatch_" + patches.Count };
                                 generated.Add(patch);
-                                var weights = new[] { a, b, c };
+                                var weights = new[] { first, second, third };
                                 patch.vertices = new[] { pa, pb, pc };
                                 patch.triangles = new[] { 0, 1, 2 };
                                 var ns = new Vector3[3]; var ts = new Vector4[3];
                                 var us = new Vector2[3]; var lightUvs = new Vector2[3]; var cs = new Color[3];
                                 for (int i = 0; i < 3; i++)
                                 {
-                                    var w = weights[i];
-                                    if (normals.Length == vertices.Length) ns[i] = (normals[ia] * w.x + normals[ib] * w.y + normals[ic] * w.z).normalized;
+                                    var weight = weights[i];
+                                    if (normals.Length == vertices.Length) ns[i] = (normals[ia] * weight.x + normals[ib] * weight.y + normals[ic] * weight.z).normalized;
                                     if (tangents.Length == vertices.Length)
                                     {
-                                        var tangent = tangents[ia] * w.x + tangents[ib] * w.y + tangents[ic] * w.z;
+                                        var tangent = tangents[ia] * weight.x + tangents[ib] * weight.y + tangents[ic] * weight.z;
                                         var direction = new Vector3(tangent.x, tangent.y, tangent.z).normalized;
                                         ts[i] = new Vector4(direction.x, direction.y, direction.z, tangent.w >= 0 ? 1 : -1);
                                     }
-                                    if (uv.Length == vertices.Length) us[i] = uv[ia] * w.x + uv[ib] * w.y + uv[ic] * w.z;
-                                    if (uv2.Length == vertices.Length) lightUvs[i] = uv2[ia] * w.x + uv2[ib] * w.y + uv2[ic] * w.z;
-                                    if (colors.Length == vertices.Length) cs[i] = colors[ia] * w.x + colors[ib] * w.y + colors[ic] * w.z;
+                                    if (uv.Length == vertices.Length) us[i] = uv[ia] * weight.x + uv[ib] * weight.y + uv[ic] * weight.z;
+                                    if (uv2.Length == vertices.Length) lightUvs[i] = uv2[ia] * weight.x + uv2[ib] * weight.y + uv2[ic] * weight.z;
+                                    if (colors.Length == vertices.Length) cs[i] = colors[ia] * weight.x + colors[ib] * weight.y + colors[ic] * weight.z;
                                 }
                                 if (normals.Length == vertices.Length) patch.normals = ns; else patch.RecalculateNormals();
                                 if (tangents.Length == vertices.Length) patch.tangents = ts;

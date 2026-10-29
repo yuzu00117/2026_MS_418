@@ -4,7 +4,7 @@
 int _EchoPulseCount;
 float4 _EchoOrigins[64];
 float4 _EchoForwards[64];
-float4 _EchoVolumes[64]; // 外側半径、消去半径、消去中、展開中
+float4 _EchoVolumes[64]; // 外側半径、消去半径、内側を除く（1:消去中 2:帯状の波）、展開中
 float4 _EchoTint;
 float _EchoOcclusion;
 int _EchoShadowsEnabled;

@@ -43,11 +43,11 @@ namespace Echo.Echolocation.Editor
                     EditorGUILayout.HelpBox("別シーンのControllerが選ばれています。このシーンのものを指定してください。", MessageType.Warning);
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField("3. 専用タグと表示ルールを作成", EditorStyles.boldLabel);
-                EditorGUILayout.HelpBox("専用タグは対象の種類を表すアセットです。Controllerの表示ルールと対象オブジェクトで同じタグを使います。色・輪郭・元マテリアルの表示設定はControllerのInspectorで編集します。", MessageType.None);
+                EditorGUILayout.HelpBox("専用タグは対象の種類を表すアセットです。Controllerの表示ルールと対象オブジェクトで同じタグを使います。4種類の表示設定と遮断設定は専用タグのアセットで編集します。", MessageType.None);
                 _definition = (EchoTagDefinition)EditorGUILayout.ObjectField("専用タグ", _definition, typeof(EchoTagDefinition), false);
                 if (GUILayout.Button("専用タグアセットを新規作成")) CreateTag();
                 using (new EditorGUI.DisabledScope(!_controller || _controller.gameObject.scene != scene || !_definition))
-                    if (GUILayout.Button("このタグの表示ルールを追加してInspectorを開く")) AddRule();
+                    if (GUILayout.Button("専用タグの表示設定を開く")) AddRule();
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField("4. 対象に専用タグを付与", EditorStyles.boldLabel);
                 EditorGUILayout.HelpBox("Unityタグで対象を検索し、上で作った専用タグを付与します。元表示の部分表示には接触部分表示を指定します。", MessageType.None);
@@ -55,7 +55,7 @@ namespace Echo.Echolocation.Editor
                     EchoTagBatchWindow.OpenFor(_definition, _controller && _controller.gameObject.scene == scene ? _controller.GetComponent<EchoRevealWorld>() : null);
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField("5. 接触部分表示の準備（使用する場合のみ）", EditorStyles.boldLabel);
-                EditorGUILayout.HelpBox("接触部分表示は届いた表面をGPUで表示します。ベイクやCollider追加は不要です。輪郭グリッチは管理元のタグと表示設定で調整します。", MessageType.None);
+                EditorGUILayout.HelpBox("接触部分表示は届いた表面をGPUで表示します。ベイクやCollider追加は不要です。", MessageType.None);
                 if (GUILayout.Button("部分表示の準備ツールを開く")) EchoSurfaceSetupWindow.Open();
                 EditorGUILayout.Space();
                 EditorGUILayout.LabelField("6. 保存して動作確認", EditorStyles.boldLabel);
@@ -96,17 +96,8 @@ namespace Echo.Echolocation.Editor
         }
         private void AddRule()
         {
-            bool hasRule = false;
-            foreach (var rule in _controller.Settings.TagColorRules)
-                hasRule |= rule != null && rule.Definition == _definition;
-            if (!hasRule)
-            {
-                Undo.RecordObject(_controller, "Add echo display rule");
-                _controller.Settings.TagColorRules.Add(new EchoTagColorRule { Definition = _definition });
-                PrefabUtility.RecordPrefabInstancePropertyModifications(_controller);
-                EditorSceneManager.MarkSceneDirty(_controller.gameObject.scene);
-            }
-            Selection.activeObject = _controller;
+            Selection.activeObject = _definition;
         }
+
     }
 }

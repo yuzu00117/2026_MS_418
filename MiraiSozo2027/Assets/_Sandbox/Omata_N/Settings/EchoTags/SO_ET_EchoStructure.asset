@@ -14,3 +14,59 @@ MonoBehaviour:
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTagDefinition
   _displayName: 
   _description: 
+  _isBlocking: 1
+  _hasAssetSettings: 1
+  _settings:
+    _isEnabled: 1
+    _definition: {fileID: 11400000}
+    _revealMode: 0
+    _tagName: EchoStructure
+    _color: {r: 0.1, g: 0.6, b: 1, a: 0.65}
+    _fillEnabled: 0
+    _fillOcclusion: 0
+    _outlineOcclusion: 1
+    _originalOcclusion: 2
+    _outlineEnabled: 1
+    _outlineColor: {r: 0, g: 1, b: 1, a: 1}
+    _outlineWidth: 3
+    _outlineHoldDuration: 0
+    _originalEnabled: 1
+    _hideOriginalOutsideEcho: 1
+    _originalHoldDuration: 2
+    _originalOpacity: 1
+    _contactResolution: 1024
+    _glitch:
+      _isEnabled: 0
+      _isThroughWalls: 0
+      _displayScope: 0
+      _hasPersistence: 0
+      _persistenceSeconds: 1
+      _area: 1
+      _mode: 2
+      _color: {r: 0, g: 1, b: 1, a: 1}
+      _intensity: 0.85
+      _width: 4
+      _displacement: 8
+      _blockHeight: 8
+      _speed: 18
+      _duration: 0.6
+      _isContactBoundaryEnabled: 1
+    _fill:
+      _isEnabled: 0
+      _isThroughWalls: 0
+      _displayScope: 1
+      _hasPersistence: 0
+      _persistenceSeconds: 1
+    _outline:
+      _isEnabled: 1
+      _isThroughWalls: 1
+      _displayScope: 0
+      _hasPersistence: 0
+      _persistenceSeconds: 0
+    _original:
+      _isEnabled: 1
+      _isThroughWalls: 0
+      _displayScope: 0
+      _hasPersistence: 1
+      _persistenceSeconds: 2
+    _surfaceMemoryResolution: 32
