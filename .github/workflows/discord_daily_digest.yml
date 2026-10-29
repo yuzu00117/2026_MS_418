@@ -3,7 +3,7 @@
 #      PR 通知用の DISCORD_WEBHOOK_URL(フォーラム)は流用しない。未設定の場合はエラーで失敗する(dry_run 時を除く)。
 #  (2) 対象は base=develop にマージされた PR。mergedAt が対象期間内のものだけに絞り、Bot 作成の PR は除外する。0 件の日は何も投稿しない。
 #  (3) PR 本文の「## 概要」のみを抜粋し、「## 実行動画」(無ければ本文全体)の動画 URL を取得する。
-#      動画は 10MB 超でも ffmpeg で圧縮して Webhook へファイル添付する。圧縮しても収まらない・取得失敗時のみ URL をリンクとして投稿する。
+#      動画は 10MB 超でも ffmpeg で圧縮して Webhook へファイル添付する。圧縮しても収まらない・取得失敗・1 PR あたりの添付数(3 件)/合計サイズ(10MB)の上限超過のときは、URL をリンクとして投稿する。
 #  (4) workflow_dispatch の入力: hours(対象期間・時間, 既定 24) / dry_run(true なら投稿せずログ出力のみ)。
 #  (5) 抽出・投稿のロジックは .github/scripts/discord_daily_digest.py。PR 本文はユーザー入力なので env 経由でのみ扱う。
 #  (6) schedule はデフォルトブランチ(main)の定義で動く。main に取り込まれるまで定期実行は始まらない。
