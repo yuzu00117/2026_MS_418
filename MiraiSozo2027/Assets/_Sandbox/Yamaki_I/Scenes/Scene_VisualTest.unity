@@ -1957,7 +1957,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Aura.Wave::Aura.Wave.BeamLineView
   _lineMaterial: {fileID: 0}
-  _visibility: 1
+  _visibility: 0
 --- !u!114 &204770106
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12005,8 +12005,6 @@ GameObject:
   - component: {fileID: 1020887998}
   - component: {fileID: 1020887997}
   - component: {fileID: 1020887996}
-  - component: {fileID: 1020887995}
-  - component: {fileID: 1020887994}
   - component: {fileID: 1020887993}
   m_Layer: 0
   m_Name: Star_Annex
@@ -12047,33 +12045,6 @@ MonoBehaviour:
   _style: 0
   _trueForm: {fileID: 1965694382}
   _disguiseForm: {fileID: 0}
---- !u!114 &1020887994
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1020887991}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7d0fdc0774c347bfa6ad614adc7f05a4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTag
-  _definition: {fileID: 11400000, guid: 89348a10829f312449d1c92a0d50337c, type: 2}
---- !u!114 &1020887995
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1020887991}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
-  _isManualRendererSelectionEnabled: 0
-  _renderers: []
 --- !u!114 &1020887996
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14617,78 +14588,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      propertyPath: _settings._tagColorRules.Array.size
-      value: 4
-      objectReference: {fileID: 0}
-    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      propertyPath: _settings._tagColorRules.Array.data[3]._color.a
-      value: 0.75
-      objectReference: {fileID: 0}
-    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      propertyPath: _settings._tagColorRules.Array.data[3]._color.b
-      value: 0.6
-      objectReference: {fileID: 0}
-    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      propertyPath: _settings._tagColorRules.Array.data[3]._color.g
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      propertyPath: _settings._tagColorRules.Array.data[3]._color.r
-      value: 0.2
-      objectReference: {fileID: 0}
-    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      propertyPath: _settings._tagColorRules.Array.data[3]._tagName
-      value: EchoItem
-      objectReference: {fileID: 0}
-    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      propertyPath: _settings._tagColorRules.Array.data[3]._isEnabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      propertyPath: _settings._tagColorRules.Array.data[3]._definition
-      value: 
-      objectReference: {fileID: 11400000, guid: 89348a10829f312449d1c92a0d50337c, type: 2}
-    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      propertyPath: _settings._tagColorRules.Array.data[3]._fillEnabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      propertyPath: _settings._tagColorRules.Array.data[3]._outlineWidth
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      propertyPath: _settings._tagColorRules.Array.data[3]._outlineColor.a
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      propertyPath: _settings._tagColorRules.Array.data[3]._outlineColor.b
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      propertyPath: _settings._tagColorRules.Array.data[3]._outlineColor.g
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      propertyPath: _settings._tagColorRules.Array.data[3]._originalEnabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      propertyPath: _settings._tagColorRules.Array.data[3]._originalOpacity
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      propertyPath: _settings._tagColorRules.Array.data[3]._contactResolution
-      value: 256
-      objectReference: {fileID: 0}
-    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      propertyPath: _settings._tagColorRules.Array.data[3]._originalHoldDuration
-      value: 3
-      objectReference: {fileID: 0}
-    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      propertyPath: _settings._tagColorRules.Array.data[3]._hideOriginalOutsideEcho
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 8114588384119620780, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: m_LocalPosition.x
       value: 5
@@ -14736,47 +14635,8 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 8923635859648306710, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1231939060}
-    - targetCorrespondingSourceObject: {fileID: 8923635859648306710, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1231939059}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
---- !u!1 &1231939058 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8923635859648306710, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
-  m_PrefabInstance: {fileID: 1231939057}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1231939059
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1231939058}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 812b70bfb0654046b1b4965726c65a0b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Aura.Wave.Echo::Aura.Wave.Echo.EchoWaveRevealSource
-  _controller: {fileID: 0}
-  _isWholeBeamShown: 0
---- !u!114 &1231939060
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1231939058}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b84f7a2f3c644ab6bff891493cd3ef8e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Aura.Wave::Aura.Wave.WaveRevealSource
-  _radius: 0
-  _angle: 360
 --- !u!1 &1253470080
 GameObject:
   m_ObjectHideFlags: 0
@@ -17772,7 +17632,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Aura.Wave::Aura.Wave.BeamLineView
   _lineMaterial: {fileID: 0}
-  _visibility: 1
+  _visibility: 0
 --- !u!114 &1517972640
 MonoBehaviour:
   m_ObjectHideFlags: 0
