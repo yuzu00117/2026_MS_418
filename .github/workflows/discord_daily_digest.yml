@@ -1,4 +1,4 @@
-# 毎日 21:00 JST に、直近 24 時間で develop へマージされた PR の機能紹介を Discord の進捗チャンネルへ投稿するワークフロー。
+# 毎日 21:17 JST 頃(cron 遅延あり)に、直近の 21:00 JST から 24 時間前までに develop へマージされた PR の機能紹介を Discord の進捗チャンネルへ投稿するワークフロー。
 #  (1) 必要な Secret: DISCORD_PROGRESS_WEBHOOK_URL (進捗チャンネルの Webhook URL)
 #      PR 通知用の DISCORD_WEBHOOK_URL(フォーラム)は流用しない。未設定の場合はエラーで失敗する(dry_run 時を除く)。
 #  (2) 対象は base=develop にマージされた PR。mergedAt が対象期間内のものだけに絞り、Bot 作成の PR は除外する。0 件の日は何も投稿しない。
