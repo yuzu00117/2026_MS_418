@@ -1,9 +1,9 @@
-# 毎日 21:00 JST に、直近 24 時間で develop へマージされた PR の機能紹介を Discord の進捗チャンネルへ投稿するワークフロー。
+# 毎日 21:17 JST 頃(cron 遅延あり)に、直近の 21:00 JST から 24 時間前までに develop へマージされた PR の機能紹介を Discord の進捗チャンネルへ投稿するワークフロー。
 #  (1) 必要な Secret: DISCORD_PROGRESS_WEBHOOK_URL (進捗チャンネルの Webhook URL)
 #      PR 通知用の DISCORD_WEBHOOK_URL(フォーラム)は流用しない。未設定の場合はエラーで失敗する(dry_run 時を除く)。
 #  (2) 対象は base=develop にマージされた PR。mergedAt が対象期間内のものだけに絞り、Bot 作成の PR は除外する。0 件の日は何も投稿しない。
 #  (3) PR 本文の「## 概要」のみを抜粋し、「## 実行動画」(無ければ本文全体)の動画 URL を取得する。
-#      動画は 10MB 以下なら Webhook へファイル添付し、超過・取得失敗時は URL をリンクとして投稿する。
+#      動画は 10MB 超でも ffmpeg で圧縮して Webhook へファイル添付する。圧縮しても収まらない・取得失敗・1 PR あたりの添付数(3 件)/合計サイズ(10MB)の上限超過のときは、URL をリンクとして投稿する。
 #  (4) workflow_dispatch の入力: hours(対象期間・時間, 既定 24) / dry_run(true なら投稿せずログ出力のみ)。
 #  (5) 抽出・投稿のロジックは .github/scripts/discord_daily_digest.py。PR 本文はユーザー入力なので env 経由でのみ扱う。
 #  (6) schedule はデフォルトブランチ(main)の定義で動く。main に取り込まれるまで定期実行は始まらない。
@@ -11,8 +11,8 @@ name: Discord Daily Digest
 
 on:
   schedule:
-    # 21:00 JST = 12:00 UTC
-    - cron: "0 12 * * *"
+    # 21:17 JST頃(12:17 UTC)。GitHubの遅延対策で毎時0分の混雑を避ける
+    - cron: "17 12 * * *"
   workflow_dispatch:
     inputs:
       hours:
@@ -45,6 +45,12 @@ jobs:
         with:
           persist-credentials: false
           sparse-checkout: .github/scripts
+
+      # ubuntu ランナーには ffmpeg が標準では入っておらず、10MB 超の動画が圧縮されずリンク表示になっていたため導入する。
+      # 導入に失敗しても投稿は続け、動画はリンク表示になる(警告のみ出す)。
+      - name: Install ffmpeg
+        run: |
+          command -v ffmpeg >/dev/null && command -v ffprobe >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq --no-install-recommends ffmpeg) || echo "::warning::ffmpeg の導入に失敗しました。動画はリンク表示になります"
 
       - name: Post daily digest to Discord
         env:
