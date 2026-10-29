@@ -21,8 +21,10 @@ namespace Echo.Echolocation.Editor
             if (p.FindPropertyRelative("_fillEnabled").boolValue) lines += FillLineCount;
             if (p.FindPropertyRelative("_outlineEnabled").boolValue) lines += OutlineLineCount;
             if (p.FindPropertyRelative("_originalEnabled").boolValue) lines += OriginalLineCount;
-            if (p.FindPropertyRelative("_originalEnabled").boolValue || p.FindPropertyRelative("_outlineEnabled").boolValue) lines += ContactLineCount;
-            return lines * (EditorGUIUtility.singleLineHeight + LineSpacing);
+            if (p.FindPropertyRelative("_originalEnabled").boolValue || p.FindPropertyRelative("_outlineEnabled").boolValue || p.FindPropertyRelative("_glitch._isEnabled").boolValue) lines += ContactLineCount;
+            var glitch = p.FindPropertyRelative("_glitch");
+            if (glitch.FindPropertyRelative("_isEnabled").boolValue && !p.FindPropertyRelative("_originalEnabled").boolValue) lines++;
+            return lines * (EditorGUIUtility.singleLineHeight + LineSpacing) + EditorGUI.GetPropertyHeight(glitch, true) + LineSpacing;
         }
         public override void OnGUI(Rect rect, SerializedProperty p, GUIContent label)
         {
@@ -54,21 +56,27 @@ namespace Echo.Echolocation.Editor
             if (p.FindPropertyRelative("_outlineEnabled").boolValue)
             {
                 Field("_outlineColor", "輪郭の色 / 不透明度");
-                Field("_outlineWidth", "輪郭幅（px）");
+                Field("_outlineWidth", "輪郭幅（ピクセル）");
                 Field("_outlineHoldDuration", "接触後の輪郭残存（秒）");
                 Field("_outlineOcclusion", "輪郭の壁越し表示");
             }
             Field("_originalEnabled", "元のマテリアルを表示");
             if (p.FindPropertyRelative("_originalEnabled").boolValue)
             {
-                Field("_revealMode", "表示範囲（EchoRevealState）");
+                Field("_revealMode", "表示範囲");
                 Field("_hideOriginalOutsideEcho", "通常時は非表示にする");
-                Field("_originalHoldDuration", "接触後の表示残存（秒）");
+                Field("_originalHoldDuration", "全体表示の残存（秒）");
                 Field("_originalOpacity", "元の見た目の不透明度");
                 Field("_originalOcclusion", "元マテリアルの壁越し表示");
             }
-            if (p.FindPropertyRelative("_originalEnabled").boolValue || p.FindPropertyRelative("_outlineEnabled").boolValue)
+            if (p.FindPropertyRelative("_originalEnabled").boolValue || p.FindPropertyRelative("_outlineEnabled").boolValue || p.FindPropertyRelative("_glitch._isEnabled").boolValue)
                 Field("_contactResolution", "接触判定の解像度");
+            if (!p.FindPropertyRelative("_originalEnabled").boolValue && p.FindPropertyRelative("_glitch._isEnabled").boolValue)
+                Field("_revealMode", "グリッチの表示範囲");
+            rect.y += EditorGUIUtility.singleLineHeight + LineSpacing;
+            var glitch = p.FindPropertyRelative("_glitch");
+            rect.height = EditorGUI.GetPropertyHeight(glitch, true);
+            EditorGUI.PropertyField(rect, glitch, new GUIContent("グリッチ設定"), true);
             EditorGUI.EndProperty();
         }
     }

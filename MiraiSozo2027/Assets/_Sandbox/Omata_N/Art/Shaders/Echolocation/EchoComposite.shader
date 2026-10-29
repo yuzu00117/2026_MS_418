@@ -12,7 +12,10 @@ Shader "Hidden/Echo/Composite"
     float4 _EchoOutlineColor;
     float _EchoOutlineWidth;
     float _EchoOriginalOpacity;
-    float _EchoCommittedOriginal;
+    float _EchoContactRegion;
+    float4 _EchoGlitchColor;
+    float4 _EchoGlitchShape; // width, displacement, block height, intensity
+    float4 _EchoGlitchTiming; // time, speed, duration, mode
     float _EchoOriginalOcclusion;
     float _EchoOutlineOcclusion;
     ENDHLSL
@@ -82,10 +85,12 @@ Shader "Hidden/Echo/Composite"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 float hit=step(.0001,SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_PointClamp,float2(.5,.5)).g);
-                float2 previous=SAMPLE_TEXTURE2D_X(_EchoHistory,sampler_PointClamp,float2(.5,.5)).xy;
+                float4 previous=SAMPLE_TEXTURE2D_X(_EchoHistory,sampler_PointClamp,float2(.5,.5));
                 if(_EchoEffectTiming.w>.5) previous=0;
-                float2 remaining=hit>.5?_EchoEffectTiming.yz:max(0,previous-_EchoEffectTiming.x);
-                return float4(remaining,max(hit,step(.00001,remaining)));
+                float2 remaining=hit>.5?max(.00001,_EchoEffectTiming.yz):max(0,previous.xy-_EchoEffectTiming.x);
+                float active=step(.000001,remaining.x);
+                float age=active>.5 && previous.w>.5?previous.z+_EchoEffectTiming.x:0;
+                return float4(remaining,age,active);
             }
             ENDHLSL
         }
@@ -98,7 +103,7 @@ Shader "Hidden/Echo/Composite"
             half4 Outline(Varyings input):SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                float active=SAMPLE_TEXTURE2D_X(_EchoHistory,sampler_PointClamp,float2(.5,.5)).w;
+                float active=step(.000001,SAMPLE_TEXTURE2D_X(_EchoHistory,sampler_PointClamp,float2(.5,.5)).y);
                 float4 center=SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_PointClamp,input.texcoord);
                 float inner=1;
                 [unroll] for(int i=0;i<16;i++)
@@ -122,9 +127,9 @@ Shader "Hidden/Echo/Composite"
             half4 Original(Varyings input):SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                float active=_EchoCommittedOriginal>.5?1:SAMPLE_TEXTURE2D_X(_EchoHistory,sampler_PointClamp,float2(.5,.5)).z;
+                float active=_EchoContactRegion>.5?1:SAMPLE_TEXTURE2D_X(_EchoHistory,sampler_PointClamp,float2(.5,.5)).w;
                 float4 mask=SAMPLE_TEXTURE2D_X(_EchoObjectMask,sampler_PointClamp,input.texcoord);
-                float visible=_EchoOriginalOcclusion>.5?mask.b:mask.r;
+                float visible=_EchoContactRegion>.5?(_EchoOriginalOcclusion>.5?mask.a:mask.g):(_EchoOriginalOcclusion>.5?mask.b:mask.r);
                 float4 scene=SAMPLE_TEXTURE2D_X(_EchoSceneColor,sampler_LinearClamp,input.texcoord);
                 float4 original=SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_LinearClamp,input.texcoord);
                 return lerp(scene,original,active*visible*_EchoOriginalOpacity);
@@ -141,6 +146,46 @@ Shader "Hidden/Echo/Composite"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 return SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_LinearClamp,input.texcoord);
+            }
+            ENDHLSL
+        }
+        Pass // 7: 表示領域の内側の境界を断片化。通常の輪郭線は描かない。
+        {
+            ZWrite Off ZTest Always Cull Off Blend One One
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Glitch
+            float GetBoundaryMask(float2 uv)
+            {
+                float4 mask=SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_PointClamp,uv);
+                return _EchoContactRegion>.5?(_EchoOriginalOcclusion>.5?mask.a:mask.g):(_EchoOriginalOcclusion>.5?mask.b:mask.r);
+            }
+            float GetGlitchEdge(float2 uv)
+            {
+                float center=GetBoundaryMask(uv);
+                float inner=1;
+                [unroll] for(int i=0;i<8;i++)
+                {
+                    float angle=i*6.2831853/8;
+                    inner=min(inner,GetBoundaryMask(uv+float2(cos(angle),sin(angle))*_EchoGlitchShape.x*_EchoSourceSize.zw));
+                }
+                return saturate(center-inner);
+            }
+            half4 Glitch(Varyings input):SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                float4 history=SAMPLE_TEXTURE2D_X(_EchoHistory,sampler_PointClamp,float2(.5,.5));
+                float gate=_EchoContactRegion>.5?1:history.w;
+                if(_EchoGlitchTiming.w<.5) gate=1;
+                if(_EchoGlitchTiming.w>1.5) gate*=1-step(_EchoGlitchTiming.z,history.z);
+                float tick=floor(_EchoGlitchTiming.x*_EchoGlitchTiming.y);
+                float band=floor(input.positionCS.y/max(1,_EchoGlitchShape.z));
+                float noise=frac(sin(dot(float2(band,tick),float2(12.9898,78.233)))*43758.5453);
+                float2 shift=float2((noise-.5)*2*_EchoGlitchShape.y*_EchoSourceSize.z,0);
+                float edge=max(GetGlitchEdge(input.texcoord),GetGlitchEdge(input.texcoord+shift));
+                float alpha=edge*GetBoundaryMask(input.texcoord)*step(1-_EchoGlitchShape.w,noise)*gate*_EchoGlitchColor.a;
+                float3 tint=lerp(_EchoGlitchColor.rgb,_EchoGlitchColor.brg,noise);
+                return half4(tint*alpha,alpha);
             }
             ENDHLSL
         }

@@ -20,6 +20,8 @@ namespace Echo.Echolocation
             public EchoTimeMode TimeMode;
             public int EnableVersion;
             public EchoTagColorRule Rule;
+            public EchoOriginalRevealMode RevealMode;
+            public EchoGlitchSettings Glitch;
             public float LatestPossibleContact;
             public History()
             {
@@ -38,12 +40,23 @@ namespace Echo.Echolocation
             public EchoRenderItem Item;
             public EchoOcclusionMode Occlusion;
             public RendererListHandle[] RendererLists;
-            public bool IsCommitted;
+            public bool IsPartial;
+            public EchoGlitchSettings Glitch;
+            public float Time;
         }
 
         readonly Dictionary<(EchoController, UnityEngine.Object), History> _histories = new Dictionary<(EchoController, UnityEngine.Object), History>();
         readonly List<(EchoController, UnityEngine.Object)> _stale = new List<(EchoController, UnityEngine.Object)>();
-        static readonly int CommittedId = Shader.PropertyToID("_EchoCommittedOriginal");
+        private const float ContactBoundsPadding = 1.01f;
+        private const float MinimumContactRadius = .1f;
+        private const int ReductionFactor = 4;
+        private const int MinimumContactResolution = 64;
+        private const int MaximumContactResolution = 1024;
+        private static readonly int RegionId = Shader.PropertyToID("_EchoContactRegion");
+        private static readonly int OcclusionId = Shader.PropertyToID("_EchoOcclusion");
+        private static readonly int GlitchColorId = Shader.PropertyToID("_EchoGlitchColor");
+        private static readonly int GlitchShapeId = Shader.PropertyToID("_EchoGlitchShape");
+        private static readonly int GlitchTimingId = Shader.PropertyToID("_EchoGlitchTiming");
         static readonly int HistoryId = Shader.PropertyToID("_EchoHistory");
         static readonly int SizeId = Shader.PropertyToID("_EchoSourceSize");
         static readonly int TimingId = Shader.PropertyToID("_EchoEffectTiming");
@@ -69,7 +82,7 @@ namespace Echo.Echolocation
             foreach (var entry in _histories)
                 if (!entry.Key.Item1 || !entry.Key.Item1.isActiveAndEnabled || !entry.Key.Item2 ||
                     entry.Value.Rule == null || !entry.Value.Rule.IsEnabled ||
-                    (!entry.Value.Rule.OriginalEnabled && !entry.Value.Rule.OutlineEnabled) ||
+                    (!entry.Value.Rule.OriginalEnabled && !entry.Value.Rule.OutlineEnabled && !entry.Value.Rule.Glitch.IsEnabled) ||
                     !entry.Key.Item1.Settings.TagColorRules.Contains(entry.Value.Rule))
                     _stale.Add(entry.Key);
             foreach (var key in _stale) { _histories[key].Dispose(); _histories.Remove(key); }
@@ -91,15 +104,17 @@ namespace Echo.Echolocation
         {
             var item = items[0];
             var rule = item.Rule;
+            var glitch = rule.Glitch.IsEnabled ? rule.Glitch : null;
+            bool isPartial = rule.RevealMode == EchoOriginalRevealMode.ContactRegion;
             var key = (controller, item.EffectGroup);
             float now = controller.Settings.TimeMode == EchoTimeMode.Scaled ? Time.time : Time.unscaledTime;
             var bounds = item.Renderer.bounds;
             foreach (var member in items) bounds.Encapsulate(member.Renderer.bounds);
-            bool possibleContact = false;
+            bool hasPossibleContact = false;
             foreach (var wave in controller.Frames)
-                if (EchoVolumeMath.Intersects(bounds, wave.Origin, wave.OuterRadius)) { possibleContact = true; break; }
+                if (EchoVolumeMath.Intersects(bounds, wave.Origin, wave.OuterRadius)) { hasPossibleContact = true; break; }
             _histories.TryGetValue(key, out var history);
-            if (!(item.Reveal && item.Reveal.IsActive) && !possibleContact && (history == null || history.EnableVersion != controller.EnableVersion ||
+            if (!(glitch != null && glitch.Mode == EchoGlitchMode.Always) && !hasPossibleContact && (history == null || history.EnableVersion != controller.EnableVersion ||
                 now - history.LatestPossibleContact > Mathf.Max(rule.OriginalHoldDuration, rule.OutlineHoldDuration)))
             {
                 if (history != null) { history.Dispose(); _histories.Remove(key); }
@@ -108,6 +123,11 @@ namespace Echo.Echolocation
             var maskDesc = desc;
             maskDesc.name = "Echo complete silhouette and contact";
             var mask = graph.CreateTexture(maskDesc);
+            var maskDepthDesc = desc;
+            maskDepthDesc.colorFormat = GraphicsFormat.None;
+            maskDepthDesc.depthBufferBits = DepthBits.Depth32;
+            maskDepthDesc.name = "Echo visible surface depth";
+            var maskDepth = graph.CreateTexture(maskDepthDesc);
             using (var builder = graph.AddRasterRenderPass<EchoHighlightDrawData>("Echo.ObjectContact", out var data))
             {
                 data.Waves.Capture(controller);
@@ -120,11 +140,12 @@ namespace Echo.Echolocation
                 if (shadows.IsValid()) builder.UseTexture(shadows, AccessFlags.Read);
                 if (resources.cameraDepthTexture.IsValid()) builder.UseTexture(resources.cameraDepthTexture, AccessFlags.Read);
                 builder.SetRenderAttachment(mask, 0, AccessFlags.Write);
+                builder.SetRenderAttachmentDepth(maskDepth, AccessFlags.Write);
                 builder.AllowGlobalStateModification(true);
                 builder.SetRenderFunc((EchoHighlightDrawData d, RasterGraphContext ctx) =>
                 {
                     d.Waves.Bind(ctx.cmd);
-                    ctx.cmd.SetGlobalFloat("_EchoOcclusion", d.Occlusion == EchoOcclusionMode.VisibleOnly ? 1 : 0);
+                    ctx.cmd.SetGlobalFloat(OcclusionId, d.Occlusion == EchoOcclusionMode.VisibleOnly ? 1 : 0);
                     foreach (var member in d.Items)
                         if (member.Renderer)
                             for (int s = 0; s < member.SubMeshCount; s++) ctx.cmd.DrawRenderer(member.Renderer, d.Material, s, 1);
@@ -133,52 +154,56 @@ namespace Echo.Echolocation
 
             // カメラ外・背面の接触も拾うため、物体全体を3軸方向から独立にラスタライズ。
             // Cull/ZTestを無効にし、重なる全三角形の接触を最大値で集約する。
-            int contactResolution = rule.ContactResolution;
-            var contact = graph.CreateTexture(new TextureDesc(contactResolution, contactResolution)
+            int contactResolution = Mathf.ClosestPowerOfTwo(Mathf.Clamp(rule.ContactResolution, MinimumContactResolution, MaximumContactResolution));
+            TextureHandle contact = mask;
+            if (!isPartial)
             {
-                name = "Echo world-space object contact", colorFormat = GraphicsFormat.R16G16B16A16_SFloat,
-                clearBuffer = true, clearColor = Color.clear
-            });
-            using (var builder = graph.AddRasterRenderPass<EchoHighlightDrawData>("Echo.WorldContact", out var data))
-            {
-                data.Waves.Capture(controller);
-                data.Waves.Shadows = shadows;
-                data.Items = items;
-                data.Material = backend.Highlight;
-                float radius = Mathf.Max(.1f, bounds.extents.magnitude) * 1.01f;
-                data.ContactMatrices = new Matrix4x4[3];
-                var projection = GL.GetGPUProjectionMatrix(Matrix4x4.Ortho(-radius, radius, -radius, radius, .01f, radius * 4), true);
-                for (int axis = 0; axis < 3; axis++)
+                contact = graph.CreateTexture(new TextureDesc(contactResolution, contactResolution)
                 {
-                    Vector3 forward = axis == 0 ? Vector3.forward : axis == 1 ? Vector3.right : Vector3.up;
-                    Vector3 up = axis == 2 ? Vector3.forward : Vector3.up;
-                    var view = Matrix4x4.Scale(new Vector3(1, 1, -1)) * Matrix4x4.TRS(bounds.center - forward * radius * 2,
-                        Quaternion.LookRotation(forward, up), Vector3.one).inverse;
-                    data.ContactMatrices[axis] = projection * view;
-                }
-                if (shadows.IsValid()) builder.UseTexture(shadows, AccessFlags.Read);
-                builder.SetRenderAttachment(contact, 0, AccessFlags.Write);
-                builder.AllowGlobalStateModification(true);
-                builder.SetRenderFunc((EchoHighlightDrawData d, RasterGraphContext ctx) =>
-                {
-                    d.Waves.Bind(ctx.cmd);
-                    foreach (var matrix in d.ContactMatrices)
-                    {
-                        ctx.cmd.SetGlobalMatrix(ContactMatrixId, matrix);
-                        foreach (var member in d.Items)
-                            if (member.Renderer)
-                                for (int s = 0; s < member.SubMeshCount; s++) ctx.cmd.DrawRenderer(member.Renderer, d.Material, s, 2);
-                    }
+                    name = "Echo world-space object contact", colorFormat = GraphicsFormat.R16G16B16A16_SFloat,
+                    clearBuffer = true, clearColor = Color.clear
                 });
-            }
+                using (var builder = graph.AddRasterRenderPass<EchoHighlightDrawData>("Echo.WorldContact", out var data))
+                {
+                    data.Waves.Capture(controller);
+                    data.Waves.Shadows = shadows;
+                    data.Items = items;
+                    data.Material = backend.Highlight;
+                    float radius = Mathf.Max(MinimumContactRadius, bounds.extents.magnitude) * ContactBoundsPadding;
+                    data.ContactMatrices = new Matrix4x4[3];
+                    var projection = GL.GetGPUProjectionMatrix(Matrix4x4.Ortho(-radius, radius, -radius, radius, .01f, radius * 4), true);
+                    for (int axis = 0; axis < 3; axis++)
+                    {
+                        Vector3 forward = axis == 0 ? Vector3.forward : axis == 1 ? Vector3.right : Vector3.up;
+                        Vector3 up = axis == 2 ? Vector3.forward : Vector3.up;
+                        var view = Matrix4x4.Scale(new Vector3(1, 1, -1)) * Matrix4x4.TRS(bounds.center - forward * radius * 2,
+                            Quaternion.LookRotation(forward, up), Vector3.one).inverse;
+                        data.ContactMatrices[axis] = projection * view;
+                    }
+                    if (shadows.IsValid()) builder.UseTexture(shadows, AccessFlags.Read);
+                    builder.SetRenderAttachment(contact, 0, AccessFlags.Write);
+                    builder.AllowGlobalStateModification(true);
+                    builder.SetRenderFunc((EchoHighlightDrawData d, RasterGraphContext ctx) =>
+                    {
+                        d.Waves.Bind(ctx.cmd);
+                        foreach (var matrix in d.ContactMatrices)
+                        {
+                            ctx.cmd.SetGlobalMatrix(ContactMatrixId, matrix);
+                            foreach (var member in d.Items)
+                                if (member.Renderer)
+                                    for (int s = 0; s < member.SubMeshCount; s++) ctx.cmd.DrawRenderer(member.Renderer, d.Material, s, 2);
+                        }
+                    });
+                }
 
+            }
             var reduced = contact;
-            int width = contactResolution, height = contactResolution;
+            int width = isPartial ? desc.width : contactResolution, height = isPartial ? desc.height : contactResolution;
             while (width > 1 || height > 1)
             {
                 var size = new Vector4(width, height, 1f / width, 1f / height);
-                width = (width + 3) / 4;
-                height = (height + 3) / 4;
+                width = (width + ReductionFactor - 1) / ReductionFactor;
+                height = (height + ReductionFactor - 1) / ReductionFactor;
                 var reduceDesc = new TextureDesc(width, height) { colorFormat = GraphicsFormat.R16G16B16A16_SFloat, name = "Echo contact reduction" };
                 var next = graph.CreateTexture(reduceDesc);
                 using (var builder = graph.AddRasterRenderPass<Data>("Echo.ReduceContact", out var data))
@@ -199,7 +224,7 @@ namespace Echo.Echolocation
             }
 
             if (history == null) _histories.Add(key, history = new History());
-            bool reset = history.Frame < 0 || history.TimeMode != controller.Settings.TimeMode || history.EnableVersion != controller.EnableVersion || history.Rule != rule;
+            bool reset = history.Frame < 0 || history.TimeMode != controller.Settings.TimeMode || history.EnableVersion != controller.EnableVersion || history.Rule != rule || history.RevealMode != rule.RevealMode;
             var previous = graph.ImportTexture(history.Textures[history.Index]);
             history.Index = 1 - history.Index;
             var current = graph.ImportTexture(history.Textures[history.Index]);
@@ -208,7 +233,7 @@ namespace Echo.Echolocation
                 data.Source = reduced;
                 data.Previous = previous;
                 data.Material = backend.Composite;
-                data.Timing = new Vector4(reset ? 0 : Mathf.Max(0, now - history.Time), rule.OriginalHoldDuration, rule.OutlineHoldDuration, reset ? 1 : 0);
+                data.Timing = new Vector4(reset ? 0 : Mathf.Max(0, now - history.Time), isPartial ? 0 : rule.OriginalHoldDuration, rule.OutlineHoldDuration, reset ? 1 : 0);
                 builder.UseTexture(reduced, AccessFlags.Read);
                 builder.UseTexture(previous, AccessFlags.Read);
                 builder.SetRenderAttachment(current, 0, AccessFlags.Write);
@@ -225,31 +250,14 @@ namespace Echo.Echolocation
             history.TimeMode = controller.Settings.TimeMode;
             history.EnableVersion = controller.EnableVersion;
             history.Rule = rule;
-            if (possibleContact) history.LatestPossibleContact = now;
+            history.RevealMode = rule.RevealMode;
+            history.Glitch = glitch;
+            if (hasPossibleContact) history.LatestPossibleContact = now;
 
-            if (rule.OriginalEnabled && rule.HideOriginalOutsideEcho &&
-                (item.Reveal ? item.Reveal.IsActive && item.Reveal.World && item.Reveal.World.Controller == controller :
-                    rule.RevealMode == EchoOriginalRevealMode.WholeObject))
+            if (rule.OriginalEnabled && rule.HideOriginalOutsideEcho)
             {
-                IReadOnlyList<EchoRenderItem> originalItems = item.Reveal ? item.Reveal.OriginalItems : items;
+                IReadOnlyList<EchoRenderItem> originalItems = items;
                 var originalMask = mask;
-                if (item.Reveal)
-                {
-                    originalMask = graph.CreateTexture(maskDesc);
-                    using var maskBuilder = graph.AddRasterRenderPass<EchoHighlightDrawData>("Echo.CommittedRegionMask", out var maskData);
-                    maskData.Items = originalItems;
-                    maskData.Material = backend.Highlight;
-                    if (resources.cameraDepthTexture.IsValid()) maskBuilder.UseTexture(resources.cameraDepthTexture, AccessFlags.Read);
-                    maskBuilder.SetRenderAttachment(originalMask, 0, AccessFlags.Write);
-                    maskBuilder.AllowGlobalStateModification(true);
-                    maskBuilder.SetRenderFunc((EchoHighlightDrawData d, RasterGraphContext ctx) =>
-                    {
-                        ctx.cmd.SetGlobalFloat("_EchoOcclusion", 1);
-                        foreach (var member in d.Items)
-                            if (member.Renderer)
-                                for (int s = 0; s < member.SubMeshCount; s++) ctx.cmd.DrawRenderer(member.Renderer, d.Material, s, 1);
-                    });
-                }
                 var originalDesc = desc;
                 originalDesc.name = "Echo original material background";
                 var scene = graph.CreateTexture(originalDesc);
@@ -302,7 +310,7 @@ namespace Echo.Echolocation
                     data.Source = original;
                     data.Scene = scene;
                     data.Mask = originalMask;
-                    data.IsCommitted = item.Reveal;
+                    data.IsPartial = isPartial;
                     data.Occlusion = EchoTagColorRule.ResolveOcclusion(rule.OriginalOcclusion, controller.Settings.OcclusionMode);
                     data.Previous = current;
                     data.Material = backend.Composite;
@@ -319,7 +327,7 @@ namespace Echo.Echolocation
                         ctx.cmd.SetGlobalTexture(MaskId, d.Mask);
                         ctx.cmd.SetGlobalFloat(OriginalOcclusionId, d.Occlusion == EchoOcclusionMode.VisibleOnly ? 1 : 0);
                         ctx.cmd.SetGlobalTexture(SceneId, d.Scene);
-                        ctx.cmd.SetGlobalFloat(CommittedId, d.IsCommitted ? 1 : 0);
+                        ctx.cmd.SetGlobalFloat(RegionId, d.IsPartial ? 1 : 0);
                         ctx.cmd.SetGlobalFloat(OpacityId, d.Item.Rule.OriginalOpacity);
                         Blitter.BlitTexture(ctx.cmd, d.Source, new Vector4(1, 1, 0, 0), d.Material, 5);
                     });
@@ -351,6 +359,41 @@ namespace Echo.Echolocation
                     Blitter.BlitTexture(ctx.cmd, d.Source, new Vector4(1, 1, 0, 0), d.Material, 4);
                 });
             }
+            if (glitch != null) RecordGlitch(graph, mask, current, accumulated, desc, item, glitch, controller, backend.Composite, now);
+        }
+
+
+        private static void RecordGlitch(RenderGraph graph, TextureHandle mask, TextureHandle history,
+            TextureHandle accumulated, TextureDesc desc, EchoRenderItem item, EchoGlitchSettings glitch,
+            EchoController controller, Material composite, float now)
+        {
+            using var builder = graph.AddRasterRenderPass<Data>("Echo.BoundaryGlitch", out var data);
+            data.Source = mask; data.Previous = history; data.Material = composite;
+            data.Item = item; data.Glitch = glitch; data.Time = now;
+            data.Size = new Vector4(desc.width, desc.height, 1f / desc.width, 1f / desc.height);
+            data.Occlusion = EchoTagColorRule.ResolveOcclusion(item.Rule.OriginalEnabled ?
+                item.Rule.OriginalOcclusion : item.Rule.OutlineOcclusion, controller.Settings.OcclusionMode);
+            builder.UseTexture(mask, AccessFlags.Read);
+            builder.UseTexture(history, AccessFlags.Read);
+            builder.SetRenderAttachment(accumulated, 0, AccessFlags.ReadWrite);
+            builder.AllowGlobalStateModification(true);
+            builder.SetRenderFunc((Data d, RasterGraphContext ctx) => BindGlitch(d, ctx));
+        }
+
+        private static void BindGlitch(Data data, RasterGraphContext context)
+        {
+            var glitch = data.Glitch;
+            if (glitch == null || !glitch.IsEnabled) return;
+            var color = QualitySettings.activeColorSpace == ColorSpace.Linear ? glitch.Color.linear : glitch.Color;
+            bool isPartial = data.Item.Rule.RevealMode == EchoOriginalRevealMode.ContactRegion;
+            context.cmd.SetGlobalTexture(HistoryId, data.Previous);
+            context.cmd.SetGlobalVector(SizeId, data.Size);
+            context.cmd.SetGlobalVector(GlitchColorId, color);
+            context.cmd.SetGlobalVector(GlitchShapeId, new Vector4(glitch.Width, glitch.Displacement, glitch.BlockHeight, glitch.Intensity));
+            context.cmd.SetGlobalVector(GlitchTimingId, new Vector4(data.Time, glitch.Speed, glitch.Duration, (float)glitch.Mode));
+            context.cmd.SetGlobalFloat(RegionId, isPartial && glitch.IsContactBoundaryEnabled ? 1 : 0);
+            context.cmd.SetGlobalFloat(OriginalOcclusionId, data.Occlusion == EchoOcclusionMode.VisibleOnly ? 1 : 0);
+            Blitter.BlitTexture(context.cmd, data.Source, new Vector4(1, 1, 0, 0), data.Material, 7);
         }
 
         static int FindForwardPass(Material material)

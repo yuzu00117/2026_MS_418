@@ -52,13 +52,13 @@ namespace Echo.Echolocation
         public float OutlineWidth { get => _outlineWidth; set => _outlineWidth = value; }
         [SerializeField, Min(0)] private float _outlineHoldDuration;
         public float OutlineHoldDuration { get => _outlineHoldDuration; set => _outlineHoldDuration = value; }
-        [SerializeField, Tooltip("波が当たったRenderer全体を本来のマテリアルで追加描画します。")]
+        [SerializeField, Tooltip("表示範囲に従い本来のマテリアルで描画します。ContactRegionは波が届いた表面のみ、ベイク不要です。")]
         private bool _originalEnabled;
         public bool OriginalEnabled { get => _originalEnabled; set => _originalEnabled = value; }
         [SerializeField, Tooltip("このタグの通常描画を隠します。Controller無効化時は元の状態に戻します。")]
         private bool _hideOriginalOutsideEcho = true;
         public bool HideOriginalOutsideEcho { get => _hideOriginalOutsideEcho; set => _hideOriginalOutsideEcho = value; }
-        [SerializeField, Min(0), Tooltip("最後に波が触れた後も元の見た目を残す秒数。0なら触れている間だけ。")]
+        [SerializeField, Min(0), Tooltip("WholeObjectの残存秒数。ContactRegionはライトと同じく現在届いている表面だけを表示します。")]
         private float _originalHoldDuration = 2;
         public float OriginalHoldDuration { get => _originalHoldDuration; set => _originalHoldDuration = value; }
         [SerializeField, Range(0, 1)] private float _originalOpacity = 1;
@@ -66,6 +66,9 @@ namespace Echo.Echolocation
         [SerializeField, Range(64, 1024), Tooltip("全体表示の接触判定解像度。大きい/細い物体は上げてください。高いほどGPU負荷が増えます。")]
         private int _contactResolution = 256;
         public int ContactResolution { get => _contactResolution; set => _contactResolution = value; }
+
+        [SerializeField] private EchoGlitchSettings _glitch = new EchoGlitchSettings();
+        public EchoGlitchSettings Glitch => _glitch ??= new EchoGlitchSettings();
 
         public void Validate()
         {
@@ -78,6 +81,11 @@ namespace Echo.Echolocation
 
         static float FiniteClamp(float value, float min, float max, float fallback) =>
             float.IsNaN(value) || float.IsInfinity(value) ? fallback : Mathf.Clamp(value, min, max);
-        public EchoTagColorRule Copy() => (EchoTagColorRule)MemberwiseClone();
+        public EchoTagColorRule Copy()
+        {
+            var copy = (EchoTagColorRule)MemberwiseClone();
+            copy._glitch = Glitch.Copy();
+            return copy;
+        }
     }
 }

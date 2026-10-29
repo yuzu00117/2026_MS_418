@@ -35,7 +35,7 @@ namespace Echo.Echolocation.Editor
             _isSelectionOnly = EditorGUILayout.Toggle("選択した階層だけ", _isSelectionOnly);
             _hasInactive = EditorGUILayout.Toggle("非アクティブも含む", _hasInactive);
             _canReplace = EditorGUILayout.Toggle("既存の専用タグを置換", _canReplace);
-            _world = (EchoRevealWorld)EditorGUILayout.ObjectField("表示状態の管理元（元表示には必須）", _world, typeof(EchoRevealWorld), true);
+
             if (EditorGUI.EndChangeCheck()) _candidates.Clear();
             using (new EditorGUI.DisabledScope(Application.isPlaying))
             {
@@ -82,21 +82,9 @@ namespace Echo.Echolocation.Editor
                 if (!tag) tag = Undo.AddComponent<EchoTag>(candidate);
                 Undo.RecordObject(tag, "Assign echo tag"); tag.Definition = definition;
                 PrefabUtility.RecordPrefabInstancePropertyModifications(tag);
-                if (world)
-                {
-                    var state = candidate.GetComponent<EchoRevealState>();
-                    if (!state)
-                    {
-                        state = Undo.AddComponent<EchoRevealState>(candidate);
-                        Undo.RecordObject(state, "Assign echo world");
-                        state.Configure(world, null);
-                        PrefabUtility.RecordPrefabInstancePropertyModifications(state);
-                    }
-                }
                 EditorSceneManager.MarkSceneDirty(candidate.scene);
             }
             Undo.CollapseUndoOperations(group);
         }
     }
 }
-

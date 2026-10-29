@@ -142,7 +142,7 @@ namespace Echo.Echolocation
                 var owner = e.Owner ? e.Owner.gameObject : r.gameObject;
                 if ((layers & (1 << owner.layer)) == 0 || (camera.cullingMask & (1 << r.gameObject.layer)) == 0) continue;
                 if (!TryGetRule(tags, e, owner, out var rule) || !rule.OriginalEnabled || !rule.HideOriginalOutsideEcho) continue;
-                if (e.Reveal && (!e.Reveal.isActiveAndEnabled || !e.Reveal.World || !e.Reveal.World.isActiveAndEnabled)) continue;
+
                 bool supported = false;
                 foreach (var adapter in _adapters)
                     if (adapter.TryGetGeometry(r, out _)) { supported = true; break; }
@@ -212,7 +212,7 @@ namespace Echo.Echolocation
                     GameObject owner = e.Owner ? e.Owner.gameObject : r.gameObject;
                     if ((layers & (1 << owner.layer)) == 0 || (camera.cullingMask & (1 << r.gameObject.layer)) == 0)
                         continue;
-                    if (!TryGetRule(tags, e, owner, out var rule) || (!rule.OriginalEnabled && !rule.OutlineEnabled && (!rule.FillEnabled || rule.Color.a <= 0)))
+                    if (!TryGetRule(tags, e, owner, out var rule) || (!rule.OriginalEnabled && !rule.OutlineEnabled && !rule.Glitch.IsEnabled && (!rule.FillEnabled || rule.Color.a <= 0)))
                         continue;
                     bool isIntersects = false;
                     for (int i = 0; i < frames.Count; i++)
@@ -223,7 +223,7 @@ namespace Echo.Echolocation
                         }
 
                     // 全体表示は画面外の接触も残存時間へ反映する。
-                    if (!rule.OriginalEnabled && !rule.OutlineEnabled && (!isIntersects || !GeometryUtility.TestPlanesAABB(_planes, r.bounds)))
+                    if (!rule.OriginalEnabled && !rule.OutlineEnabled && !rule.Glitch.IsEnabled && (!isIntersects || !GeometryUtility.TestPlanesAABB(_planes, r.bounds)))
                         continue;
                     if (!EchoLodSelector.Includes(e.Group, e.Lods, r, camera))
                         continue;

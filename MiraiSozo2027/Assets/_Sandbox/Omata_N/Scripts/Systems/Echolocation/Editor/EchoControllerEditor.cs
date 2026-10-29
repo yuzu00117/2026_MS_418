@@ -17,6 +17,11 @@ namespace Echo.Echolocation.Editor
                 p.enumValueIndex = v;
         }
 
+        private static string GetStateLabel(EchoState state) => state switch
+        {
+            EchoState.Hidden => "非表示", EchoState.Revealing => "表示を展開中",
+            EchoState.Active => "表示中", EchoState.Hiding => "消去中", _ => "不明"
+        };
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
@@ -32,12 +37,12 @@ namespace Echo.Echolocation.Editor
             {
                 DrawField("_settings._pulseInterval", "再展開間隔 n（秒）");
                 DrawField("_settings._pulseHoldDuration", "展開後の残存時間 m（秒）");
-                EditorGUILayout.HelpBox("ON直後に1波、その後n秒ごとに現在地から再展開します。各波の位置・向きは固定され、伝播完了後m秒残ります。同時64波を超える設定では間隔nを補正します。", MessageType.Info);
+                EditorGUILayout.HelpBox("開始直後に1波、その後n秒ごとに現在地から再展開します。各波の位置・向きは固定され、伝播完了後m秒残ります。同時64波を超える設定では間隔nを補正します。", MessageType.Info);
             }
 
-            DrawEnum("_settings._offMode", "OFF時の消し方", new[] { "即時", "手前から順番" });
+            DrawEnum("_settings._offMode", "停止時の消し方", new[] { "即時", "手前から順番" });
             DrawEnum("_settings._timeMode", "時間の基準", new[] { "ゲーム時間", "実時間" });
-            DrawField("_settings._isEnabledOnStart", "開始時にON");
+            DrawField("_settings._isEnabledOnStart", "開始時に有効");
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("エコー地点からの遮蔽", EditorStyles.boldLabel);
             DrawField("_settings._shadow._isEnabled", "影になる部分を強調しない");
@@ -57,10 +62,10 @@ namespace Echo.Echolocation.Editor
             DrawField("_excludedRoot", "除外するルート");
             DrawField("_settings._isAutoDiscoveryEnabled", "対象を自動収集");
             DrawField("_settings._tagColorRules", "タグと表示設定");
-            EditorGUILayout.HelpBox("専用タグごとに塗り・全体の輪郭・元マテリアル表示を併用できます。部分表示と状態APIにはEchoRevealWorld / EchoRevealStateを設定してください。残存時間は最後の接触から計測し、再接触で延長します。元マテリアル表示の通常時非表示は、Controller無効化時に復元します。", MessageType.Info);
+            EditorGUILayout.HelpBox("専用タグごとに塗り・全体の輪郭・元マテリアル表示を併用できます。部分表示は接触部分表示を選択するだけで使えます。全体表示の残存時間は最後の接触から計測します。グリッチも専用タグごとの表示設定で調整できます。元マテリアル表示の通常時非表示は、Controller無効化時に復元します。", MessageType.Info);
             DrawEnum("_settings._occlusionMode", "共通の壁越し表示", new[] { "表示する", "深度で隠す" });
             EditorGUILayout.HelpBox("タグ行の塗り・輪郭・元マテリアルで壁越し表示を個別に指定できます。「共通設定に従う」の機能だけ、この共通設定を使用します。波が届くかどうかは「エコー地点からの遮蔽」で別に判定します。", MessageType.Info);
-            DrawField("_isGizmoVisible", "範囲をScene Viewに表示");
+            DrawField("_isGizmoVisible", "範囲をシーン画面に表示");
             DrawField("_onStateChanged", "状態変更時の通知");
             serializedObject.ApplyModifiedProperties();
             if (GUILayout.Button("セットアップを検証"))
@@ -71,16 +76,16 @@ namespace Echo.Echolocation.Editor
             if (Application.isPlaying && c.Settings.Shadow.IsEnabled)
             {
                 var shadow = c.ShadowMaps;
-                EditorGUILayout.HelpBox($"影の発生地点：{shadow.OriginCount} ／ 遮断Renderer：{shadow.BlockerCount}\n影のDraw：{shadow.DrawCalls} ／ CPU準備：{shadow.CpuMilliseconds:F2} ms", MessageType.Info);
+                EditorGUILayout.HelpBox($"影の発生地点：{shadow.OriginCount} ／ 遮断描画対象：{shadow.BlockerCount}\n影の描画回数：{shadow.DrawCalls} ／ CPU準備：{shadow.CpuMilliseconds:F2} ms", MessageType.Info);
             }
 
-            EditorGUILayout.HelpBox($"状態：{c.CurrentState} ／ ON要求：{c.IsScanRequested}\n最新波の外側：{c.CurrentOuterRadius:F2} m ／ 消去：{c.CurrentEraseRadius:F2} m\n生存領域：{c.Frames.Count} ／ 登録：{c.RegisteredCount} ／ 候補：{c.RenderItems.Count}", MessageType.Info);
+            EditorGUILayout.HelpBox($"状態：{GetStateLabel(c.CurrentState)} ／ スキャン要求：{(c.IsScanRequested ? "有効" : "無効")}\n最新波の外側：{c.CurrentOuterRadius:F2} m ／ 消去：{c.CurrentEraseRadius:F2} m\n生存領域：{c.Frames.Count} ／ 登録：{c.RegisteredCount} ／ 候補：{c.RenderItems.Count}", MessageType.Info);
             using (new EditorGUI.DisabledScope(!Application.isPlaying))
             {
                 EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Button("ON"))
+                if (GUILayout.Button("開始"))
                     c.SetScanEnabled(true);
-                if (GUILayout.Button("OFF"))
+                if (GUILayout.Button("停止"))
                     c.SetScanEnabled(false);
                 if (GUILayout.Button("切り替え"))
                     c.ToggleScan();
