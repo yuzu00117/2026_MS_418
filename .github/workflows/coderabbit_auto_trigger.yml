@@ -1,0 +1,47 @@
+# PR を出したときに `@coderabbitai review` とコメントして、CodeRabbit のレビューを起動するワークフロー。
+#
+# 背景:
+#  - CodeRabbit の OSS 無料プランでは、star が 10 未満の公開リポジトリは自動レビューされず、
+#    手動でレビューを頼む必要がある(https://docs.coderabbit.ai/management/plans)。
+#  - その手動の依頼を、PR 作成時に自動で行う。
+#
+# トークン:
+#  - Secret CODERABBIT_TRIGGER_TOKEN があればそれでコメントする(そのアカウント名で投稿される)。
+#    CodeRabbit が github-actions[bot] のコメントに反応しない場合に使う。
+#    fine-grained PAT で、このリポジトリのみ・Pull requests と Issues の書き込み権限だけを付ける。
+#  - 無ければ GITHUB_TOKEN(github-actions[bot])でコメントする。
+#
+# push(synchronize)では動かさない。OSS 枠のレビュー回数には 1 時間あたりの上限があるため。
+# push 後に再レビューしたいときは、PR に手動で `@coderabbitai review` とコメントする。
+name: CodeRabbit Auto Trigger
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+    branches: [develop, main]
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # 最小権限にする。PR へのコメント投稿のみ。
+    permissions:
+      pull-requests: write
+      issues: write
+    # 実行条件(discord_coderabbit_notify.yml と同じ考え方):
+    #  - Draft PR は対象外(ready_for_review になった時点で動く)
+    #  - フォーク PR は Secrets が渡らないので、同一リポジトリの PR のみ対象にする
+    #  - Bot 起因のイベントは除外する
+    if: >-
+      github.event.sender.type != 'Bot' &&
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    env:
+      GH_TOKEN: ${{ secrets.CODERABBIT_TRIGGER_TOKEN || github.token }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Request CodeRabbit review
+        run: |
+          set -euo pipefail
+          gh pr comment "$PR_NUMBER" --repo "$REPO" --body "@coderabbitai review"
