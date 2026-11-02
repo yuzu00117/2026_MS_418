@@ -14,8 +14,8 @@ namespace Aura.Wave
     public sealed class InfoBeamLine : MonoBehaviour
     {
         private const int PointsPerWavelength = 12;
-        private const int MaxPoints = 512;                  ///< 波をなめらかに描くための点の数の上限。区間がこれより多いときは、区間ごとに 1 つずつ点を置く
         private const int MaxLinePoints = 2048;             ///< 線が持てる点の数の上限。点と線のビームの点（1 本 1024 個まで）と跳ね返った位置を、最後まで描けるようにする
+        private const int MaxPoints = MaxLinePoints;        ///< 波をなめらかに描くための点の数の上限。区間がこれより多いときは、区間ごとに 1 つずつ点を置く
         private const float BeamFadeInLength = 0.3f;        ///< ビームの根元で振幅を 0 から上げる長さ（m）
         private const float CornerFadeLength = 0.3f;        ///< 曲がり目の前後で振幅を 0 にする長さ（m）
         private const float MinSegmentLength = 0.0001f;     ///< これより短い区間は、向きが決まらないので描かない（m）
@@ -93,6 +93,7 @@ namespace Aura.Wave
             float angularScale = 2.0f * Mathf.PI / type.Wavelength;
             int count = 0;
             int segmentIndex = 0;
+            int usedIntervals = 0;
             float segmentStartDistance = 0.0f;
             for (int i = 1; i < corners.Count && segmentIndex < segmentCount; ++i)
             {
@@ -114,14 +115,18 @@ namespace Aura.Wave
                 Vector3 swing = Vector3.Cross(side.normalized, forward);
 
                 // 点の間の数は区間の長さに比べて割り振り、後の区間にも 1 つずつは残す
+                // 区間ごとに切り上げると、前の区間が多めに取って後ろの区間が足りなくなり、波の見た目が途中で粗くなる
+                // そのため、ここまでの道のりに見合う数（四捨五入）から、もう使った数を引いて、ビーム全体で同じ細かさにする
                 int laterSegmentCount = segmentCount - segmentIndex - 1;
-                int intervals = Mathf.Max(1, Mathf.CeilToInt(length / totalLength * intervalBudget));
+                int targetIntervals = Mathf.RoundToInt((segmentStartDistance + length) / totalLength * intervalBudget);
+                int intervals = Mathf.Max(1, targetIntervals - usedIntervals);
                 intervals = Mathf.Min(intervals, freeIntervals - laterSegmentCount);
                 if (intervals <= 0)
                 {
                     break;
                 }
                 freeIntervals -= intervals;
+                usedIntervals += intervals;
 
                 bool hasCornerAtStart = segmentIndex > 0 && IsFading(fadingCorners, i - 1);
                 bool hasCornerAtEnd = segmentIndex < segmentCount - 1 && IsFading(fadingCorners, i);
