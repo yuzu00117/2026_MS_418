@@ -12,6 +12,8 @@ namespace Aura.Gimmick
     /// 数えるのは Rigidbody のある物だけ。プレイヤーも Rigidbody があるので数える。数えたくなければ「数えるレイヤー」から外す
     public sealed class PressurePlate : MonoBehaviour
     {
+        private const int OverlapBufferSize = 64;  ///< 有効になったときに、一度に探せる重なっている物の数
+
         [InspectorLabel("起動に必要な重さ")]
         [Tooltip("載った物の Rigidbody の Mass の合計が、これ以上になると起動する。下回ると止まる")]
         [SerializeField, Min(0.01f)] private float _requiredMass = 5.0f;  ///< 起動に必要な Mass の合計
@@ -31,6 +33,7 @@ namespace Aura.Gimmick
         private readonly Dictionary<Collider, Rigidbody> _bodiesByCollider = new Dictionary<Collider, Rigidbody>();  ///< トリガーに入っているコライダーと、その物の Rigidbody
         private readonly HashSet<Rigidbody> _countedBodies = new HashSet<Rigidbody>();  ///< 数え直すときに、同じ物を 2 回数えないために使う
         private readonly List<Collider> _removedColliders = new List<Collider>();       ///< 消えたコライダーを外すときに使う
+        private readonly Collider[] _overlapBuffer = new Collider[OverlapBufferSize];   ///< 有効になったときに、重なっている物を探すのに使う
 
         /// @brief 今、載っている物の Mass の合計
         public float TotalMass { get; private set; }
@@ -40,7 +43,8 @@ namespace Aura.Gimmick
 
         private void OnTriggerEnter(Collider other)
         {
-            if (!TryGetCountedBody(other, out Rigidbody body))
+            // レイヤーは数え直すたびに見るので、ここでは数えないレイヤーの物も覚えておく（載ったままレイヤーが変わることがある）
+            if (!TryGetBody(other, out Rigidbody body))
             {
                 return;
             }
@@ -63,22 +67,61 @@ namespace Aura.Gimmick
             UpdateState();
         }
 
+        private void OnEnable()
+        {
+            // 無効の間に載った物や、無効にする前から載ったままの物は OnTriggerEnter が呼ばれないので、今重なっている物を探し直す
+            CollectOverlaps();
+        }
+
         private void OnDisable()
         {
             _bodiesByCollider.Clear();
             UpdateState();
         }
 
-        /// @brief 数える物か調べ、その物の Rigidbody を返す
-        /// @return 数える物なら true
-        private bool TryGetCountedBody(Collider other, out Rigidbody body)
+        /// @brief この GameObject のトリガーのコライダーに、今重なっている物を覚える
+        private void CollectOverlaps()
+        {
+            foreach (Collider own in GetComponents<Collider>())
+            {
+                if (!own.enabled || !own.isTrigger)
+                {
+                    continue;
+                }
+                // まず大まかな箱で候補を集め、本当に重なっているかをコライダーの形で確かめる
+                Bounds bounds = own.bounds;
+                int count = Physics.OverlapBoxNonAlloc(bounds.center, bounds.extents, _overlapBuffer, Quaternion.identity,
+                                                       Physics.AllLayers, QueryTriggerInteraction.Ignore);
+                for (int i = 0; i < count; ++i)
+                {
+                    Collider other = _overlapBuffer[i];
+                    if (other == own || !TryGetBody(other, out Rigidbody body))
+                    {
+                        continue;
+                    }
+                    Transform ownTransform = own.transform;
+                    Transform otherTransform = other.transform;
+                    if (Physics.ComputePenetration(own, ownTransform.position, ownTransform.rotation,
+                                                   other, otherTransform.position, otherTransform.rotation, out _, out _))
+                    {
+                        _bodiesByCollider[other] = body;
+                    }
+                }
+            }
+        }
+
+        /// @brief 載った物として覚えるコライダーか調べ、その物の Rigidbody を返す（トリガーではなく、Rigidbody のある物）
+        /// @return 覚えるコライダーなら true
+        private static bool TryGetBody(Collider other, out Rigidbody body)
         {
             body = other.attachedRigidbody;
-            if (other.isTrigger || body == null)
-            {
-                return false;
-            }
-            return (_countedLayers.value & (1 << other.gameObject.layer)) != 0;
+            return !other.isTrigger && body != null;
+        }
+
+        /// @brief そのコライダーが「数えるレイヤー」にあるか
+        private bool IsCountedLayer(Collider collider)
+        {
+            return (_countedLayers.value & (1 << collider.gameObject.layer)) != 0;
         }
 
         /// @brief 重さを数え直し、起動したか止まったかを決める
@@ -96,7 +139,7 @@ namespace Aura.Gimmick
                 {
                     _removedColliders.Add(collider);
                 }
-                else if (_countedBodies.Add(body))
+                else if (IsCountedLayer(collider) && _countedBodies.Add(body))
                 {
                     totalMass += body.mass;
                 }
