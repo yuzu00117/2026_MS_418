@@ -12,6 +12,8 @@ namespace Aura.Wave
     [DisallowMultipleComponent]
     public sealed class WaveRevealSource : MonoBehaviour
     {
+        private const float MinAngle = 1.0f;  ///< 「角度（度）」の下限（0 だと何も見せない扇になるため）
+
         private static readonly List<WaveRevealSource> ActiveList = new List<WaveRevealSource>();  ///< 有効なこの部品
 
         [InspectorLabel("半径（m）")]
@@ -21,7 +23,7 @@ namespace Aura.Wave
 
         [InspectorLabel("角度（度）")]
         [Tooltip("「半径（m）」の範囲を、この GameObject の正面（青い矢印）から見せる扇の全体の角度（度）。360 なら全方向")]
-        [SerializeField, Range(1.0f, 360.0f)] private float _angle = 360.0f;  ///< 「半径（m）」の範囲の、扇の全体の角度（度）
+        [SerializeField, Range(MinAngle, WaveRevealVolume.FullAngle)] private float _angle = WaveRevealVolume.FullAngle;  ///< 「半径（m）」の範囲の、扇の全体の角度（度）
 
         private readonly List<WaveRevealVolume> _volumes = new List<WaveRevealVolume>();  ///< コードから入れた範囲
 
@@ -39,7 +41,7 @@ namespace Aura.Wave
         public float Angle
         {
             get => _angle;
-            set => _angle = Mathf.Clamp(value, 1.0f, 360.0f);
+            set => _angle = Mathf.Clamp(value, MinAngle, WaveRevealVolume.FullAngle);
         }
 
         /// @brief 有効なこの部品すべての範囲を集める
@@ -53,20 +55,6 @@ namespace Aura.Wave
             }
         }
 
-        /// @brief その位置が、有効なこの部品のどれかの範囲の中か（見た目の部品が、点ごとに調べるときに使う）
-        /// @param point 調べる位置（ワールド座標）
-        public static bool IsRevealed(Vector3 point)
-        {
-            foreach (WaveRevealSource source in ActiveList)
-            {
-                if (source.Contains(point))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
         /// @brief この部品の範囲（Inspector の欄の範囲と、コードから入れた範囲）を集める
         /// @param results 入れる先。空にせず、後ろに足す
         public void GetVolumes(List<WaveRevealVolume> results)
@@ -76,24 +64,6 @@ namespace Aura.Wave
                 results.Add(new WaveRevealVolume(transform.position, transform.forward, _angle, _radius, 0.0f));
             }
             results.AddRange(_volumes);
-        }
-
-        /// @brief その位置が、この部品のどれかの範囲の中か
-        /// @param point 調べる位置（ワールド座標）
-        public bool Contains(Vector3 point)
-        {
-            if (_radius > 0.0f && new WaveRevealVolume(transform.position, transform.forward, _angle, _radius, 0.0f).Contains(point))
-            {
-                return true;
-            }
-            foreach (WaveRevealVolume volume in _volumes)
-            {
-                if (volume.Contains(point))
-                {
-                    return true;
-                }
-            }
-            return false;
         }
 
         /// @brief コードから入れた範囲を入れ替える（毎フレーム呼んでよい）

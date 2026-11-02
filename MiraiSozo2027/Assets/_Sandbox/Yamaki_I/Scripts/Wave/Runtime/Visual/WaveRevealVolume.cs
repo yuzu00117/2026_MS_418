@@ -7,6 +7,9 @@ namespace Aura.Wave
     /// InnerRadius より内側は見せない（エコーが消えていくときの、内側の輪の分）
     public readonly struct WaveRevealVolume
     {
+        /// @brief 全方向を表す、扇の全体の角度（度）。Angle がこれ以上なら球全体を見せる
+        public const float FullAngle = 360.0f;
+
         private const float MinDirectionDistance = 0.00001f;  ///< 中心からこれより近い点（m）は、向きを決めずに中とみなす
 
         private readonly float _cosHalfAngle;  ///< 扇の半角の cos。正面との向きの比べ方に使う
@@ -46,7 +49,7 @@ namespace Aura.Wave
         /// @param radius 半径（m）
         public static WaveRevealVolume Sphere(Vector3 origin, float radius)
         {
-            return new WaveRevealVolume(origin, Vector3.forward, 360.0f, radius, 0.0f);
+            return new WaveRevealVolume(origin, Vector3.forward, FullAngle, radius, 0.0f);
         }
 
         /// @brief その位置が範囲の中か
@@ -63,7 +66,7 @@ namespace Aura.Wave
             {
                 return false;
             }
-            if (Angle >= 360.0f || distance <= MinDirectionDistance)
+            if (Angle >= FullAngle || distance <= MinDirectionDistance)
             {
                 return true;
             }
