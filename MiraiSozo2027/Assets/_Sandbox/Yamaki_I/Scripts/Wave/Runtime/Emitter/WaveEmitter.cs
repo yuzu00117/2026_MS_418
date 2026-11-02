@@ -9,7 +9,7 @@ namespace Aura.Wave
     /// @brief ObjectInfo の情報だけで動くビーム。プレイヤーの手からも、フィールドのギミックからも出せる
     /// ・ビームの種類・強さ・届く距離は、撃ち手の本体に 1 つ付けた BeamSourceInfo（B1〜B3）から読む
     ///   プレイヤーの波の切り替え（Select Next Source）は、その BeamSourceInfo の「波の種類」を電磁波⇔超音波に入れ替える
-    /// ・跳ね返るかは、当たった物の素材（Substance の SubstanceType、O6）で決める。素材の無い物では止まる
+    /// ・止まるか、跳ね返るか、通す（波を当てたまま先へ進む）かは、当たった物の素材（Substance の SubstanceType、O6）で決める。素材の無い物では止まる
     /// ・当たった物に WaveReaction（O3、O4）と ReactionTrigger があれば、ビームを渡す。弱点（WeakPoint、O5）なら強さに倍率を掛ける
     /// ・ビームは、一定の間隔の点（BeamPoint）と点どうしをつなぐ直線で作る。
     ///   点を念力で掴んで動かすと、掴んだ点の前後が曲がる（BeamSourceInfo の Is Bendable がオンのときだけ）
@@ -69,7 +69,7 @@ namespace Aura.Wave
         [Header("撃ち方")]
         [InspectorLabel("撃ち方")]
         [Tooltip("波の出し方。実行中に変えてもよい（引き金を引いたままなら、次のフレームから新しい撃ち方で出る）\n" +
-                 "ビーム（点と線）: 長射程。引き金を引いている間ずっと出る。素材で跳ね返り、点を念力で掴んで曲げられる\n" +
+                 "ビーム（点と線）: 長射程。引き金を引いている間ずっと出る。素材で跳ね返ったり通ったりし、点を念力で掴んで曲げられる\n" +
                  "扇（近距離）: 低射程・広範囲の単発（ショットガンのように、引き金を引いた瞬間に 1 発撃つ）。「扇の届く距離（m）」の中で、正面から「扇の半角（度）」以内の物すべてに、" +
                  "波面（見た目では輪の先頭）が届いたときに波を渡す。曲げ・跳ね返りはせず、壁の裏には届かない\n" +
                  "切り替えの入力は、ゲームの側から Toggle Fire Shape を呼ぶ（チームの PlayerController では B キー／ゲームパッドの十字キーの上）")]
@@ -232,6 +232,8 @@ namespace Aura.Wave
 
         private readonly List<InfoBeamHit> _lastHits = new List<InfoBeamHit>();                ///< このフレームで波を渡した物（渡した順）
         private readonly HashSet<ReactionTrigger> _deliveredTriggers = new HashSet<ReactionTrigger>();  ///< このフレームで、もうビームを渡した受け手
+        private readonly List<RaycastHit> _passedHits = new List<RaycastHit>();          ///< 当たり判定で素通りした「通す」の物（近い順）。BeamPhysics.TryCast が入れる
+        private readonly HashSet<Collider> _passedColliders = new HashSet<Collider>();  ///< このフレームで、もう波を渡した「通す」の物（隣の線で同じ物に当たっても、1 回だけ渡す）
         private readonly List<FanWaveShot> _fanShots = new List<FanWaveShot>();  ///< 扇の 1 発（波面が進んでいるものと、使い回すために取っておくもの）
         private readonly List<IBeamWaveView> _beamViews = new List<IBeamWaveView>();  ///< ビームの見た目の部品（同じ GameObject に付いている物）
         private readonly List<IFanWaveView> _fanViews = new List<IFanWaveView>();     ///< 扇の見た目の部品（同じ GameObject に付いている物）
@@ -749,16 +751,26 @@ namespace Aura.Wave
                     continue;
                 }
 
-                // 遮蔽のレイ。最初に当たったのが本人でなければ、間に物がある（壁の裏）ので渡さない
+                // 遮蔽のレイ。最初に当たったのが本人でなければ、間に物がある（壁の裏）ので渡さない（素材が「通す」の物は、間にあってもさえぎらない）
                 // 当たりの distance（出る位置からの距離）で、輪の先頭が届く時が決まる
                 float targetDistance = toTarget.magnitude;
-                if (!BeamPhysics.TryCast(origin, toTarget / targetDistance, 0.0f, targetDistance + SurfaceOffset,
-                        _hitMask, _triggerInteraction, IgnoreRoot, out RaycastHit hit)
-                    || hit.collider != candidate)
+                bool hasHit = BeamPhysics.TryCast(origin, toTarget / targetDistance, 0.0f, targetDistance + SurfaceOffset,
+                    _hitMask, _triggerInteraction, IgnoreRoot, out RaycastHit hit, _passedHits);
+                if (hasHit && hit.collider == candidate)
                 {
+                    shot.AddHit(hit);
                     continue;
                 }
-                shot.AddHit(hit);
+                // 素材が「通す」の候補は、遮蔽のレイに当たらずに素通りした物に入る（本人より手前に壁があれば、入っていない）
+                // 「通す」の物は、向こうの候補もさえぎらない
+                for (int passedIndex = 0; passedIndex < _passedHits.Count; ++passedIndex)
+                {
+                    if (_passedHits[passedIndex].collider == candidate)
+                    {
+                        shot.AddHit(_passedHits[passedIndex]);
+                        break;
+                    }
+                }
             }
             shot.SortHits();
         }
@@ -780,6 +792,7 @@ namespace Aura.Wave
         private void TraceChainBeam(BeamSourceInfo source, Vector3 origin, Vector3 direction, float range, float energy)
         {
             _deliveredTriggers.Clear();
+            _passedColliders.Clear();
             bool isBendable = source.IsBendable;
             BeamPointChain chain = Chain;
             chain.UpdateAnchors(Time.time, isBendable, _bendReleaseMode, _bendHoldSeconds, _bendReturnSeconds, _bendMode);
@@ -848,8 +861,18 @@ namespace Aura.Wave
                     Vector3 segmentDirection = delta / length;
                     // 跳ね返った後は、出した本人（Ignore Root の下）にも当たるようにして、当たったらそこで止める
                     Transform ignoreRoot = reflectionCount == 0 ? IgnoreRoot : null;
-                    if (!BeamPhysics.TryCast(from, segmentDirection, _radius, length, _hitMask, _triggerInteraction,
-                            ignoreRoot, out RaycastHit hit))
+                    bool hasHit = BeamPhysics.TryCast(from, segmentDirection, _radius, length, _hitMask, _triggerInteraction,
+                        ignoreRoot, out RaycastHit hit, _passedHits);
+                    // 素材が「通す」の物には、波を当てたまま素通りする（止まらず、跳ね返らず、点も増やさない）。同じ物には 1 フレームに 1 回だけ渡す
+                    for (int passedIndex = 0; passedIndex < _passedHits.Count; ++passedIndex)
+                    {
+                        RaycastHit passedHit = _passedHits[passedIndex];
+                        if (_passedColliders.Add(passedHit.collider))
+                        {
+                            Deliver(type, energy, passedHit, reflectionCount, false, _deliveredTriggers);
+                        }
+                    }
+                    if (!hasHit)
                     {
                         chain.AddVertex(sample.Position, kind, reflectionCount, sample.AnchorIndex, sample.U);
                         from = sample.Position;

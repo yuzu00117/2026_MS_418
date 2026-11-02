@@ -1,16 +1,21 @@
+using System;
+using System.Collections.Generic;
+using Aura.ObjectInfo;
 using UnityEngine;
 
 namespace Aura.Wave
 {
     /// @brief ビーム・扇・照準の当たり判定をまとめたもの
     /// 点と線のビームの点（BeamPoint）は、念力で掴むためだけにあるので、ビームと照準には当たらない（どのビームの点でも素通りする）
+    /// 素材（Substance）が「通す」の物にも当たらず、素通りする。通った物は別に集めて返し、ビームが波を当てたまま先へ進めるようにする
     internal static class BeamPhysics
     {
         private const int MaxCastHits = 32;
+        private static readonly Comparison<RaycastHit> ByDistance = (a, b) => a.distance.CompareTo(b.distance);  ///< 近い順に並べる
         private static RaycastHit[] _castHits = new RaycastHit[MaxCastHits];  ///< 判定の結果を受ける使い回しの配列。埋まったら大きくしてやり直す
         private static Collider[] _overlapHits = new Collider[MaxCastHits];   ///< 扇の候補を受ける使い回しの配列。埋まったら大きくしてやり直す
 
-        /// @brief 球（radius が 0 なら線）を飛ばし、ignoreRoot の下を除いた一番近い当たりを返す
+        /// @brief 球（radius が 0 なら線）を飛ばし、ignoreRoot の下と素通りする物を除いた一番近い当たりを返す
         /// @param origin 始点
         /// @param direction 向き（正規化したもの）
         /// @param radius 球の半径（m）。0 なら線で判定する
@@ -19,11 +24,14 @@ namespace Aura.Wave
         /// @param triggerInteraction トリガーに当たるか
         /// @param ignoreRoot この Transform の下のコライダーには当たらない。null なら除かない
         /// @param outHit 一番近い当たり
-        /// @return 何かに当たったら true
+        /// @param passedHits 素材が「通す」で素通りした物の当たりを入れる先（近い順。返す当たりより手前の物だけ）。空にしてから入れる。null なら集めない
+        /// @return 何かに当たったら true（「通す」の物にしか当たらなければ false）
         public static bool TryCast(Vector3 origin, Vector3 direction, float radius, float distance, LayerMask mask,
-            QueryTriggerInteraction triggerInteraction, Transform ignoreRoot, out RaycastHit outHit)
+            QueryTriggerInteraction triggerInteraction, Transform ignoreRoot, out RaycastHit outHit,
+            List<RaycastHit> passedHits = null)
         {
             outHit = default;
+            passedHits?.Clear();
             if (distance <= 0.0f)
             {
                 return false;
@@ -65,6 +73,13 @@ namespace Aura.Wave
                     hit.normal = -direction;
                 }
 
+                // 素材が「通す」の物は素通りする（当たりとしては返さず、通った物として集める）
+                if (ObjectInfoLookup.IsWavePassThrough(hit.collider, false))
+                {
+                    passedHits?.Add(hit);
+                    continue;
+                }
+
                 if (hit.distance < nearestDistance)
                 {
                     nearestDistance = hit.distance;
@@ -72,10 +87,26 @@ namespace Aura.Wave
                     hasHit = true;
                 }
             }
+
+            // 通った物は、返す当たりより手前の物だけを近い順に残す（当たりより向こうの物には、そこまで届いていない）
+            if (passedHits != null && passedHits.Count > 0)
+            {
+                if (hasHit)
+                {
+                    for (int i = passedHits.Count - 1; i >= 0; --i)
+                    {
+                        if (passedHits[i].distance > nearestDistance)
+                        {
+                            passedHits.RemoveAt(i);
+                        }
+                    }
+                }
+                passedHits.Sort(ByDistance);
+            }
             return hasHit;
         }
 
-        /// @brief 球の中のコライダーを集める。ignoreRoot の下と、ビームの点（BeamPoint）は除く
+        /// @brief 球の中のコライダーを集める。ignoreRoot の下と、ビームの点（BeamPoint）は除く（素材が「通す」の物は入る）
         /// @param center 球の中心
         /// @param radius 球の半径（m）
         /// @param mask 当たるレイヤー

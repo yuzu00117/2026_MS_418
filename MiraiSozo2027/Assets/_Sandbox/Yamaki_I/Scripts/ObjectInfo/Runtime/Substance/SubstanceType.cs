@@ -15,7 +15,8 @@ namespace Aura.ObjectInfo
         [InspectorLabel("当たった波の扱い")]
         [Tooltip("波（ビーム）が当たったときの扱い。波の種類によらず同じ\n" +
                  "止める: 止める（コンクリート、吸音材など）\n" +
-                 "跳ね返す: 跳ね返す（鏡、金属など）")]
+                 "跳ね返す: 跳ね返す（鏡、金属など）\n" +
+                 "通す: 波を当てたまま、向こうへ真っすぐ進む（電線など）。扇でも、この物は向こうの物をさえぎらない")]
         [SerializeField] private SubstanceWaveResponse _waveResponse; ///< 波が当たったときの扱い
 
         [InspectorLabel("エコーの扱い")]
@@ -35,6 +36,9 @@ namespace Aura.ObjectInfo
 
         /// @brief 波を跳ね返すか
         public bool IsWaveReflective => _waveResponse == SubstanceWaveResponse.Reflect;
+
+        /// @brief 波を通すか（当てたまま、向こうへ真っすぐ進む）
+        public bool IsWavePassThrough => _waveResponse == SubstanceWaveResponse.PassThrough;
 
         /// @brief エコーをさえぎるか
         public bool IsEchoBlocking => _echoResponse == SubstanceEchoResponse.Block;
