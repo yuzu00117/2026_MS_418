@@ -1,8 +1,12 @@
-# CodeRabbit のレビューが終わったことを、PR 作成時に Discord フォーラムへ作られたスレッドへ通知するワークフロー。
-#  - PR を出す / push すると、CodeRabbit の commit status をポーリングして完了を待つ。
-#  - レビューが成功で終わったときだけ、メンション付きのメッセージを 1 件投稿する。
-#  - タイムアウト・ステータス取得の失敗・CodeRabbit 側の失敗/エラー・スキップ・連続 push によるキャンセルでは
-#    Discord に何も投稿しない(通知がうるさくならないようにするため)。結果は Actions のログで確認する。
+# CodeRabbit のレビュー状況を、PR 作成時に Discord フォーラムへ作られたスレッドへ書き込むワークフロー。
+# 通知がうるさくならないよう、投稿は 1 回のレビューにつき 1 件にまとめ、メンションは完了時だけにする。
+#  (1) CodeRabbit のレビューが始まったら、スレッドに「⏳ CodeRabbit レビュー中…」を投稿する(メンションなし)。
+#      20 分以内に始まらなければ(push で再レビューされない・スキップ・回数上限など)何も投稿しない。
+#  (2) レビューが成功で終わったら、その投稿を「✅ 完了」表示に編集し、
+#      さらにメンション付きの短い別メッセージを新規投稿して通知を鳴らす。
+#      (Discord はメッセージの編集ではメンション通知が飛ばないため、別メッセージにしている)
+#  (3) 失敗・タイムアウト・状態の取得失敗・連続 push によるキャンセル・予期しないエラーのときは、
+#      投稿を編集して状態を表示するだけで、メンションはしない。
 #
 # 必要な Secret / Variables は discord_pr_notify.yml と同じ。
 #   Secret   DISCORD_WEBHOOK_URL: フォーラムチャンネルの Webhook URL
@@ -11,10 +15,9 @@
 #
 # 前提:
 #  - 書き込み先のスレッド ID は discord_pr_notify.yml が PR コメント(<!-- discord-thread-id:ID -->)に保存したものを使う。
-#  - CodeRabbit は commit status `CodeRabbit` を付ける(レビュー中は pending / description="Review in progress")。
-#    success / failure / error になった時点を「終了」とみなし、そのうち success(スキップ以外)だけを通知する。
-#  - `status` イベントで起動する方式は、デフォルトブランチ上の workflow しか動かないため使えない。
-#    そのため、このワークフロー内で commit status をポーリングして完了を待つ方式にしている。
+#  - CodeRabbit は check run `CodeRabbit` で状態を出す(以前は commit status `CodeRabbit` だったため、そちらも見る)。
+#  - `check_run` / `status` イベントで起動する方式は、デフォルトブランチ上の workflow しか動かないため使えない。
+#    そのため、このワークフロー内で状態をポーリングして開始・完了を待つ方式にしている。
 name: Discord CodeRabbit Notify
 
 on:
@@ -30,11 +33,13 @@ concurrency:
 jobs:
   notify:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    # 最小権限にする。PR コメントと commit status の読み取りのみ。
+    # 開始待ち 20 分 + 完了待ち 30 分 + 余裕。
+    timeout-minutes: 55
+    # 最小権限にする。PR コメント・check run・commit status の読み取りのみ。
     permissions:
       contents: read
       pull-requests: read
+      checks: read
       statuses: read
     # 実行条件(discord_pr_notify.yml と同じ考え方):
     #  - Draft PR は対象外(ready_for_review になった時点で動く)
@@ -107,27 +112,143 @@ jobs:
           fi
           echo "THREAD_ID=${thread_id}" >> "$GITHUB_ENV"
 
-      - name: Wait for CodeRabbit status
+      - name: Prepare CodeRabbit state script
         run: |
           set -euo pipefail
 
-          # 20 秒おきに commit status を確認する。上限は 20 分。
+          # CodeRabbit の状態を「state<TAB>説明」の 1 行で出すスクリプトを作る。
+          # state は none / in_progress / success / skipped / failure のいずれか。
+          #  - 現在の CodeRabbit は check run(name=CodeRabbit)で状態を出す。
+          #  - 以前は commit status(context=CodeRabbit)だったため、check run が無いときはそちらも見る。
+          #  - スキップ時も success になることがあるため、説明に "skip" を含む success は skipped とみなす。
+          cat > "${RUNNER_TEMP}/cr_state.sh" <<'SCRIPT'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          runs="$(gh api "repos/${REPO}/commits/${HEAD_SHA}/check-runs?check_name=CodeRabbit")"
+          statuses="$(gh api "repos/${REPO}/commits/${HEAD_SHA}/statuses")"
+          jq -rn --argjson runs "$runs" --argjson st "$statuses" '
+            def skip: test("skip"; "i");
+            def oneline: gsub("[\r\n\t]"; " ");
+            ($runs.check_runs | sort_by(.id) | last) as $r
+            | ([ $st[] | select(.context == "CodeRabbit") ] | first) as $s
+            | if $r != null then
+                (($r.output.title // "") | oneline) as $d
+                | (((($r.output.title // "") + " " + ($r.output.summary // "")) | skip)) as $skipped
+                | if $r.status != "completed" then "in_progress\t" + $d
+                  elif $r.conclusion == "success" then (if $skipped then "skipped" else "success" end) + "\t" + $d
+                  elif $r.conclusion == "skipped" or $r.conclusion == "neutral" then "skipped\t" + $d
+                  else "failure\t" + $d end
+              elif $s != null then
+                (($s.description // "") | oneline) as $d
+                | if $s.state == "pending" then "in_progress\t" + $d
+                  elif $s.state == "success" then (if ($d | skip) then "skipped" else "success" end) + "\t" + $d
+                  else "failure\t" + $d end
+              else "none\t" end
+          '
+          SCRIPT
+          chmod +x "${RUNNER_TEMP}/cr_state.sh"
+
+      - name: Wait for CodeRabbit review to start
+        run: |
+          set -euo pipefail
+
+          # レビューが始まる(または終わる)まで 20 秒おきに確認する。上限は 20 分。
+          # 始まらなければ(push で再レビューされない・スキップ・回数上限など)Discord には何も投稿しない。
           interval=20
           limit=1200
           elapsed=0
-          state=""
+          state="none"
           description=""
-          result="timeout"
-          # API の一時的な失敗には耐え、連続 5 回失敗したら api_error として終了する。
           fail_count=0
           max_fail=5
 
           while [ "$elapsed" -lt "$limit" ]; do
-            # context == "CodeRabbit" のうち最新(配列の先頭)を見る。未作成なら空。
-            if ! latest="$(gh api "repos/${REPO}/commits/${HEAD_SHA}/statuses" \
-              | jq -c '[ .[] | select(.context == "CodeRabbit") ] | first // empty')"; then
+            if ! line="$("${RUNNER_TEMP}/cr_state.sh")"; then
               fail_count=$((fail_count + 1))
-              echo "ステータス取得に失敗しました (連続 ${fail_count}/${max_fail})"
+              echo "状態の取得に失敗しました (連続 ${fail_count}/${max_fail})"
+              if [ "$fail_count" -ge "$max_fail" ]; then
+                state="api_error"
+                break
+              fi
+              sleep "$interval"
+              elapsed=$((elapsed + interval))
+              continue
+            fi
+            fail_count=0
+            state="${line%%$'\t'*}"
+            description="${line#*$'\t'}"
+            echo "state=${state} elapsed=${elapsed}s"
+
+            case "$state" in
+              in_progress|success|failure|skipped) break ;;
+            esac
+
+            sleep "$interval"
+            elapsed=$((elapsed + interval))
+          done
+
+          {
+            echo "START_STATE=${state}"
+            echo "CR_DESCRIPTION=${description}"
+          } >> "$GITHUB_ENV"
+
+      - name: Post "review in progress"
+        if: env.START_STATE == 'in_progress'
+        run: |
+          set -euo pipefail
+
+          short_sha="${HEAD_SHA:0:7}"
+          # メンションなし(parse: [])。
+          payload="$(jq -n \
+            --arg sha "$short_sha" \
+            --arg title "$PR_TITLE" \
+            --arg url "$PR_URL" \
+            '{
+              content: ("⏳ CodeRabbit レビュー中… (コミット " + $sha + ")"),
+              allowed_mentions: { parse: [] },
+              embeds: [{
+                title: ($title | if length > 256 then .[0:255] + "…" else . end),
+                url: $url,
+                color: 16776960
+              }]
+            }')"
+
+          resp="$(printf '%s' "$payload" | curl -sS --fail-with-body \
+            -X POST \
+            -H "Content-Type: application/json" \
+            --data-binary @- \
+            "${DISCORD_WEBHOOK_URL}?wait=true&thread_id=${THREAD_ID}")" || { echo "$resp"; exit 1; }
+
+          message_id="$(printf '%s' "$resp" | jq -r '.id // empty')"
+          if ! [[ "$message_id" =~ ^[0-9]+$ ]]; then
+            echo "::error::Discord のレスポンスからメッセージ ID を取得できませんでした。"
+            exit 1
+          fi
+          echo "MESSAGE_ID=${message_id}" >> "$GITHUB_ENV"
+
+      - name: Wait for CodeRabbit review to finish
+        run: |
+          set -euo pipefail
+
+          # 開始待ちの時点で終わっていれば、その結果をそのまま使う。
+          if [ "${START_STATE}" != "in_progress" ]; then
+            echo "RESULT=${START_STATE}" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          # 20 秒おきに確認する。上限は 30 分。
+          interval=20
+          limit=1800
+          elapsed=0
+          result="timeout"
+          description="${CR_DESCRIPTION}"
+          fail_count=0
+          max_fail=5
+
+          while [ "$elapsed" -lt "$limit" ]; do
+            if ! line="$("${RUNNER_TEMP}/cr_state.sh")"; then
+              fail_count=$((fail_count + 1))
+              echo "状態の取得に失敗しました (連続 ${fail_count}/${max_fail})"
               if [ "$fail_count" -ge "$max_fail" ]; then
                 result="api_error"
                 break
@@ -137,17 +258,13 @@ jobs:
               continue
             fi
             fail_count=0
-            state=""
-            description=""
-            if [ -n "$latest" ]; then
-              state="$(printf '%s' "$latest" | jq -r '.state // ""')"
-              description="$(printf '%s' "$latest" | jq -r '.description // ""')"
-            fi
-            echo "state=${state:-none} elapsed=${elapsed}s"
+            state="${line%%$'\t'*}"
+            description="${line#*$'\t'}"
+            echo "state=${state} elapsed=${elapsed}s"
 
             case "$state" in
-              success|failure|error)
-                result="done"
+              success|failure|skipped)
+                result="$state"
                 break
                 ;;
             esac
@@ -158,35 +275,89 @@ jobs:
 
           {
             echo "RESULT=${result}"
-            echo "CR_STATE=${state}"
-            # description は 1 行にして保存する(GITHUB_ENV の書式を壊さないため)。
-            echo "CR_DESCRIPTION=$(printf '%s' "$description" | tr '\r\n' '  ')"
+            echo "CR_DESCRIPTION=${description}"
           } >> "$GITHUB_ENV"
 
-      - name: Notify when review completed
+      - name: Update message and notify
         run: |
           set -euo pipefail
 
-          # レビューが成功で終わったときだけ通知する。
-          # タイムアウト・取得失敗・CodeRabbit 側の失敗/エラーはログに残すだけで、Discord には投稿しない。
-          if [ "${RESULT}" != "done" ] || [ "${CR_STATE}" != "success" ]; then
-            echo "レビュー完了ではないため通知しません (result=${RESULT} state=${CR_STATE} description=${CR_DESCRIPTION})"
-            exit 0
-          fi
-          # レビューがスキップされたときも success になる(description="Review skipped: ...")ため、除外する。
-          if printf '%s' "$CR_DESCRIPTION" | grep -qi 'skip'; then
-            echo "レビューがスキップされたため通知しません (description=${CR_DESCRIPTION})"
+          # 結果ごとの見出しを決める。メンションを付けるのは success のときだけ。
+          # レビューが始まらなかった場合(none / skipped / api_error で投稿なし)は何もしない。
+          mention="false"
+          case "${RESULT}" in
+            success)
+              heading="✅ CodeRabbit レビュー完了"
+              color=5763719
+              mention="true"
+              ;;
+            failure)
+              heading="❌ CodeRabbit レビューが失敗/エラーで終了"
+              color=15548997
+              ;;
+            timeout)
+              heading="⚠️ CodeRabbit の完了を確認できませんでした(タイムアウト)"
+              color=16776960
+              ;;
+            api_error)
+              heading="⚠️ CodeRabbit の状態を取得できませんでした"
+              color=16776960
+              ;;
+            *)
+              heading="⏭ CodeRabbit のレビューはスキップされました"
+              color=9807270
+              ;;
+          esac
+
+          if [ -z "${MESSAGE_ID:-}" ] && [ "${RESULT}" != "success" ] && [ "${RESULT}" != "failure" ]; then
+            echo "レビューが始まらなかったため投稿しません (result=${RESULT} description=${CR_DESCRIPTION})"
             exit 0
           fi
 
           short_sha="${HEAD_SHA:0:7}"
 
-          # メンション付きのメッセージを 1 件投稿する。
+          # (a) 「レビュー中」の投稿を編集する。開始を見ないまま終わっていた場合は新規投稿する(メンションなし)。
+          payload="$(jq -n \
+            --arg heading "$heading" \
+            --arg sha "$short_sha" \
+            --arg title "$PR_TITLE" \
+            --arg url "$PR_URL" \
+            --arg desc "$CR_DESCRIPTION" \
+            --argjson color "$color" \
+            '{
+              content: ($heading + " (コミット " + $sha + ")"),
+              allowed_mentions: { parse: [] },
+              embeds: [{
+                title: ($title | if length > 256 then .[0:255] + "…" else . end),
+                url: $url,
+                description: (if ($desc | length) == 0 then "(ステータスの説明なし)" else $desc end),
+                color: $color
+              }]
+            }')"
+
+          if [ -n "${MESSAGE_ID:-}" ]; then
+            resp="$(printf '%s' "$payload" | curl -sS --fail-with-body \
+              -X PATCH \
+              -H "Content-Type: application/json" \
+              --data-binary @- \
+              "${DISCORD_WEBHOOK_URL}/messages/${MESSAGE_ID}?thread_id=${THREAD_ID}")" || { echo "$resp"; exit 1; }
+          else
+            resp="$(printf '%s' "$payload" | curl -sS --fail-with-body \
+              -X POST \
+              -H "Content-Type: application/json" \
+              --data-binary @- \
+              "${DISCORD_WEBHOOK_URL}?thread_id=${THREAD_ID}")" || { echo "$resp"; exit 1; }
+          fi
+
+          if [ "$mention" != "true" ]; then
+            exit 0
+          fi
+
+          # (b) 完了時だけ、メンション付きの短い別メッセージを新規投稿して通知を鳴らす。
+          #  (Discord はメッセージの編集ではメンション通知が飛ばないため、別メッセージにしている)
           #  - allowed_mentions は users に有効な ID のみ許可し、parse は空にして @everyone / @here を無効化する
           #  - PR 作成者は対応表にあれば <@ID>、無ければ @ログイン名 のプレーンテキスト(担当者と同一なら重複させない)
           notify_payload="$(jq -n \
-            --arg sha "$short_sha" \
-            --arg title "$PR_TITLE" \
             --arg url "$PR_URL" \
             --arg author "$PR_AUTHOR" \
             --arg reviewer_id "$REVIEWER_USER_ID" \
@@ -205,13 +376,8 @@ jobs:
             | ([$rid, $author_id] | map(select(. != null)) | unique) as $users
             | {
                 content: ((if ($mentions | length) > 0 then $mentions + "\n" else "" end)
-                          + "✅ CodeRabbit のレビューが終わりました (コミット " + $sha + ")"),
-                allowed_mentions: { parse: [], users: $users },
-                embeds: [{
-                  title: ($title | if length > 256 then .[0:255] + "…" else . end),
-                  url: $url,
-                  color: 5763719
-                }]
+                          + "CodeRabbit のレビューが終わりました: " + $url),
+                allowed_mentions: { parse: [], users: $users }
               }
             ')"
 
@@ -220,3 +386,68 @@ jobs:
             -H "Content-Type: application/json" \
             --data-binary @- \
             "${DISCORD_WEBHOOK_URL}?thread_id=${THREAD_ID}")" || { echo "$resp"; exit 1; }
+
+      - name: Mark message as superseded on cancel
+        if: cancelled()
+        run: |
+          set -euo pipefail
+
+          # 「レビュー中」を投稿する前にキャンセルされた場合は何もしない。
+          if [ -z "${MESSAGE_ID:-}" ] || [ -z "${THREAD_ID:-}" ]; then
+            echo "更新対象のメッセージがないため何もしません。"
+            exit 0
+          fi
+
+          payload="$(jq -n \
+            --arg title "$PR_TITLE" \
+            --arg url "$PR_URL" \
+            '{
+              content: "⏭ 新しいコミットで置き換えられました",
+              allowed_mentions: { parse: [] },
+              embeds: [{
+                title: ($title | if length > 256 then .[0:255] + "…" else . end),
+                url: $url,
+                color: 9807270
+              }]
+            }')"
+
+          resp="$(printf '%s' "$payload" | curl -sS --fail-with-body \
+            -X PATCH \
+            -H "Content-Type: application/json" \
+            --data-binary @- \
+            "${DISCORD_WEBHOOK_URL}/messages/${MESSAGE_ID}?thread_id=${THREAD_ID}")" || { echo "$resp"; exit 1; }
+
+      - name: Mark message as failed on error
+        if: failure()
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          # 「レビュー中」を投稿する前に失敗した場合は何もしない。
+          if [ -z "${MESSAGE_ID:-}" ] || [ -z "${THREAD_ID:-}" ]; then
+            echo "更新対象のメッセージがないため何もしません。"
+            exit 0
+          fi
+
+          # 編集のみ(メンションなし)。Actions の実行ログへのリンクを付ける。
+          payload="$(jq -n \
+            --arg title "$PR_TITLE" \
+            --arg url "$PR_URL" \
+            --arg run_url "$RUN_URL" \
+            '{
+              content: "⚠️ 通知処理でエラーが発生しました(Actions のログを確認してください)",
+              allowed_mentions: { parse: [] },
+              embeds: [{
+                title: ($title | if length > 256 then .[0:255] + "…" else . end),
+                url: $url,
+                description: ("[Actions の実行ログ](" + $run_url + ")"),
+                color: 15548997
+              }]
+            }')"
+
+          resp="$(printf '%s' "$payload" | curl -sS --fail-with-body \
+            -X PATCH \
+            -H "Content-Type: application/json" \
+            --data-binary @- \
+            "${DISCORD_WEBHOOK_URL}/messages/${MESSAGE_ID}?thread_id=${THREAD_ID}")" || { echo "$resp"; exit 1; }
