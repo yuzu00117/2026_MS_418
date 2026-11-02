@@ -94,12 +94,13 @@ namespace Aura.Wave
             {
                 _line.Hide();
             }
+            // ビームが止まったら「触れた後も見せる秒数」も終わりにする（すぐ撃ち直したとき、範囲に触れていないのに全体が見えないように）
+            _revealedUntil = float.NegativeInfinity;
         }
 
         private void OnDisable()
         {
             HideBeam();
-            _revealedUntil = float.NegativeInfinity;
         }
 
         /// @brief 折れ線のどこかが、範囲のどれかに入っているか
