@@ -380,6 +380,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Aura.Gimmick::Aura.Gimmick.GimmickMover
   _activeOffset: {x: 0, y: 0, z: 5.4166665}
   _speed: 1.25
+  _motionMode: 0
+  _endWaitSeconds: 1
+  _isActiveOnStart: 0
 --- !u!23 &82177428
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1062,6 +1065,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Aura.Gimmick::Aura.Gimmick.GimmickMover
   _activeOffset: {x: 0, y: 5.3125, z: 0}
   _speed: 1.6666666
+  _motionMode: 0
+  _endWaitSeconds: 1
+  _isActiveOnStart: 0
 --- !u!23 &137658865
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -1855,6 +1861,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Aura.Gimmick::Aura.Gimmick.GimmickMover
   _activeOffset: {x: 0, y: 0, z: -3.3333333}
   _speed: 1.6666666
+  _motionMode: 0
+  _endWaitSeconds: 1
+  _isActiveOnStart: 0
 --- !u!23 &200407321
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2012,7 +2021,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Aura.Wave::Aura.Wave.BeamLineView
   _lineMaterial: {fileID: 0}
-  _visibility: 0
+  _visibility: 2
+  _revealHoldSeconds: 2
 --- !u!114 &204770106
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5391,6 +5401,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Aura.Gimmick::Aura.Gimmick.GimmickMover
   _activeOffset: {x: 4.583333, y: 0, z: 0}
   _speed: 1.6666666
+  _motionMode: 0
+  _endWaitSeconds: 1
+  _isActiveOnStart: 0
 --- !u!23 &465465956
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -7179,6 +7192,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Aura.Gimmick::Aura.Gimmick.GimmickMover
   _activeOffset: {x: 0, y: 0, z: 3.75}
   _speed: 1.6666666
+  _motionMode: 0
+  _endWaitSeconds: 1
+  _isActiveOnStart: 0
 --- !u!23 &572247108
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -14649,6 +14665,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Aura.Gimmick::Aura.Gimmick.GimmickMover
   _activeOffset: {x: 9.583333, y: 0, z: 0}
   _speed: 2.0833333
+  _motionMode: 0
+  _endWaitSeconds: 1
+  _isActiveOnStart: 0
 --- !u!23 &1178320793
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -15136,6 +15155,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Aura.Gimmick::Aura.Gimmick.GimmickMover
   _activeOffset: {x: 0, y: 0, z: 3.3333333}
   _speed: 1.6666666
+  _motionMode: 0
+  _endWaitSeconds: 1
+  _isActiveOnStart: 0
 --- !u!23 &1266788721
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -17986,7 +18008,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Aura.Wave::Aura.Wave.BeamLineView
   _lineMaterial: {fileID: 0}
-  _visibility: 0
+  _visibility: 2
+  _revealHoldSeconds: 2
 --- !u!114 &1517972640
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18445,7 +18468,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6042694990893444771, guid: c8b3915861a55de4399092bfdebd9d45, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -18.75
+      value: -0.93
       objectReference: {fileID: 0}
     - target: {fileID: 8708323630682758489, guid: c8b3915861a55de4399092bfdebd9d45, type: 3}
       propertyPath: _playerPrefab
