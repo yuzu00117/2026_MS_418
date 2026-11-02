@@ -328,7 +328,7 @@ public class Phononkinesis : MonoBehaviour
             // プレイヤーの表面からターゲット表面までで最も近い点
             Vector3 closestOnPlayer = _playerCollider.ClosestPoint(closestOnTarget);
             float surfaceDistance = Vector3.Distance(closestOnTarget, closestOnPlayer);
-            return surfaceDistance < _minDistance; //半径の半分以内なら接触とみなす
+            return surfaceDistance < _minDistance;
         }
         return false;
     }
