@@ -18,7 +18,7 @@
 #  - cubic は check run `cubic · AI code reviewer`(中点 · を含む)を付ける。
 #    status が completed になった時点を「完了」とみなし、conclusion で結果表示を分ける。
 #    (success=完了 / neutral・skipped=スキップ・中立 / それ以外=失敗扱い)
-#    同名の check run が複数ある場合は started_at が最新のものを採用する。
+#    同名の check run が複数ある場合は created_at が最新のものを採用する。
 #  - `check_run` イベントで起動する方式は、デフォルトブランチ上の workflow しか動かないため使えない。
 #    そのため、このワークフロー内で check run をポーリングして完了を待つ方式にしている。
 name: Discord Cubic Notify
@@ -67,32 +67,20 @@ jobs:
       # 各ステップとも set -x は使わない(Webhook URL をログに出さないため)。
       # URL は curl の引数に渡すだけで echo しない。失敗時(HTTP 4xx/5xx)のみ本文を出力して失敗させる。
       - name: Find Discord thread ID
-        env:
-          EVENT_ACTION: ${{ github.event.action }}
-          PR_UPDATED_AT: ${{ github.event.pull_request.updated_at }}
         run: |
           set -euo pipefail
 
-          # opened / reopened / ready_for_review では discord_pr_notify.yml が毎回新しいスレッドと
-          # 新しいマーカーコメントを作る。再オープン時などに旧スレッドへ投稿しないよう、
-          # 今回のイベント以降(10 秒の余裕を見る)に作られたマーカーだけを採用する。
-          # synchronize では新しいスレッドは作られないため、従来どおり最新のマーカーを使う。
-          cutoff=""
-          case "${EVENT_ACTION}" in
-            opened|reopened|ready_for_review)
-              cutoff="$(date -u -d "${PR_UPDATED_AT} - 10 seconds" +%Y-%m-%dT%H:%M:%SZ)"
-              ;;
-          esac
+          # discord_pr_notify.yml が保存した通知済みマーカーのうち、常に最新のものを使う。
+          # (reopened / ready_for_review では既存のマーカーが再利用されるため、作成日時では絞らない)
 
           # opened 直後は discord_pr_notify.yml と同時に走るため、コメントが付くまで 10 秒おきに最大 3 分待つ。
           thread_id=""
           for i in $(seq 1 18); do
             thread_id="$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate \
-              | jq -rs --arg cutoff "$cutoff" '
+              | jq -rs '
                   [ .[][]
                     | select(.user.login == "github-actions[bot]")
                     | select(.body | test("<!-- discord-thread-id:[0-9]+ -->"))
-                    | select($cutoff == "" or .created_at >= $cutoff)
                   ]
                   | last
                   | if . == null then empty
@@ -163,11 +151,11 @@ jobs:
           max_fail=5
 
           while [ "$elapsed" -lt "$limit" ]; do
-            # name が完全一致する check run のうち、started_at が最新のものを見る。未作成なら空。
+            # name が完全一致する check run のうち、created_at が最新のものを見る。未作成なら空。
             if ! latest="$(gh api "repos/${REPO}/commits/${HEAD_SHA}/check-runs" --paginate \
               | jq -sc '
                   [ .[].check_runs[] | select(.name == "cubic · AI code reviewer") ]
-                  | sort_by(.started_at // "")
+                  | sort_by(.created_at // "")
                   | last // empty
                 '
             )"; then
@@ -295,7 +283,8 @@ jobs:
               }
             ')"
 
-          resp="$(printf '%s' "$notify_payload" | curl -sS --fail-with-body \
+          # 通知の取りこぼしを避けるため、429 / 5xx のときだけ最大 3 回再試行する。
+          resp="$(printf '%s' "$notify_payload" | curl -sS --fail-with-body --retry 3 \
             -X POST \
             -H "Content-Type: application/json" \
             --data-binary @- \
@@ -312,11 +301,25 @@ jobs:
             exit 0
           fi
 
+          # 現在の PR の head SHA と比較して、キャンセルの理由を分ける。
+          #  - 異なる: 新しいコミットが push された(置き換え)
+          #  - 同じ: 手動キャンセルなど
+          #  - 取得失敗: 理由を断定しない文言にする(ステップ自体は失敗させない)
+          current_sha="$(gh api "repos/${REPO}/pulls/${PR_NUMBER}" --jq .head.sha 2>/dev/null || true)"
+          if ! [[ "$current_sha" =~ ^[0-9a-f]{40}$ ]]; then
+            message="⏹ 待機が中断されました"
+          elif [ "$current_sha" != "$HEAD_SHA" ]; then
+            message="⏭ 新しいコミットで置き換えられました"
+          else
+            message="⏹ キャンセルされました"
+          fi
+
           payload="$(jq -n \
+            --arg message "$message" \
             --arg title "$PR_TITLE" \
             --arg url "$PR_URL" \
             '{
-              content: "⏭ 新しいコミットで置き換えられました",
+              content: $message,
               allowed_mentions: { parse: [] },
               embeds: [{
                 title: ($title | if length > 256 then .[0:255] + "…" else . end),
