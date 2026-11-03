@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=https://cubic.dev/schema/cubic-repository-config.schema.json
+
+version: 1
+
+reviews:
+  # 生成物・ログ等はレビュー対象から除外する(.coderabbit.yaml の path_filters と同じ)
+  ignore:
+    files:
+      - "**/*.meta"
+      - "**/Library/**"
+      - "**/Temp/**"
+      - "**/Logs/**"
+      - "**/Packages/packages-lock.json"
+
+  custom_rules:
+    - name: コーディング規約
+      description: |
+        docs/coding-rules.md の規約に従って C# コードをレビューしてください。
+        汎用的なバグ指摘より、規約違反の指摘を優先してください。
+        違反を指摘するときは、docs/coding-rules.md のどの章に反するかを必ず明記してください。
+        返信はすべて日本語で書いてください。
+      file_paths:
+        - docs/coding-rules.md
+      include:
+        - "**/*.cs"
+
+    - name: PR運用規約
+      description: |
+        docs/CONTRIBUTING.md の規約に沿っているかをPR全体で確認してください。
+        確認観点: PRタイトル形式、マージ先、動作確認欄、アセット命名接頭辞、
+        Misc フォルダ禁止、_Sandbox/_Template の扱い、他メンバーの領域の無断変更、
+        秘匿情報の混入、CREDITS.md への出典記録。
+        詳細は参照ファイルに従い、返信はすべて日本語で書いてください。
+      file_paths:
+        - docs/CONTRIBUTING.md
