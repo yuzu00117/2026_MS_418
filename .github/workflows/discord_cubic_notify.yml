@@ -26,7 +26,7 @@ name: Discord Cubic Notify
 on:
   pull_request:
     types: [opened, reopened, ready_for_review, synchronize]
-    branches: [develop]
+    branches: [develop, main]
 
 # 同じ PR で新しい push が来たら、古い待機はキャンセルする(古い投稿はキャンセル時ステップで更新される)。
 concurrency:
