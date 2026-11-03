@@ -13,23 +13,14 @@ reviews:
       - "**/Packages/packages-lock.json"
 
   custom_rules:
-    - name: コーディング規約
+    - name: プロジェクト規約
       description: |
-        docs/coding-rules.md の規約に従って C# コードをレビューしてください。
+        docs/ai-review-rules.md の規約に従ってレビューしてください。
         汎用的なバグ指摘より、規約違反の指摘を優先してください。
-        違反を指摘するときは、docs/coding-rules.md のどの章に反するかを必ず明記してください。
+        違反を指摘するときは、該当の章番号(例: coding-rules 1.4 / CONTRIBUTING 4.1)を必ず明記してください。
+        確認観点: C# コード、アセット命名(接頭辞)、フォルダ構成(Misc 禁止・_Template の扱い)、
+        PR 運用(タイトル形式・マージ先・動作確認欄)、秘匿情報の混入、CREDITS.md への出典記録、
+        他メンバーの領域の無断変更。
         返信はすべて日本語で書いてください。
       file_paths:
-        - docs/coding-rules.md
-      include:
-        - "**/*.cs"
-
-    - name: PR運用規約
-      description: |
-        docs/CONTRIBUTING.md の規約に沿っているかをPR全体で確認してください。
-        確認観点: PRタイトル形式、マージ先、動作確認欄、アセット命名接頭辞、
-        Misc フォルダ禁止、_Sandbox/_Template の扱い、他メンバーの領域の無断変更、
-        秘匿情報の混入、CREDITS.md への出典記録。
-        詳細は参照ファイルに従い、返信はすべて日本語で書いてください。
-      file_paths:
-        - docs/CONTRIBUTING.md
+        - docs/ai-review-rules.md
