@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://cubic.dev/schema/cubic-repository-config.schema.json
+
+version: 1
+
+# PR の AI 要約を日本語にする
+pr_descriptions:
+  generate: true
+  instructions: |
+    要約はすべて日本語で書いてください。
+
+reviews:
+  # 生成物・ログ等はレビュー対象から除外する(.coderabbit.yaml の path_filters と同じ)
+  ignore:
+    files:
+      - "**/*.meta"
+      - "**/Library/**"
+      - "**/Temp/**"
+      - "**/Logs/**"
+      - "**/Packages/packages-lock.json"
+
+  custom_rules:
+    - name: プロジェクト規約
+      description: |
+        docs/ai-review-rules.md の規約に従ってレビューしてください。
+        汎用的なバグ指摘より、規約違反の指摘を優先してください。
+        違反を指摘するときは、該当の章番号(例: coding-rules 1.4 / CONTRIBUTING 4.1)を必ず明記してください。
+        確認観点(例。これに限らず docs/ai-review-rules.md の全ルールを確認すること): C# コード、アセット命名(接頭辞)、フォルダ構成(Misc 禁止・_Template の扱い)、
+        PR 運用(タイトル形式・マージ先・動作確認欄)、秘匿情報の混入、CREDITS.md への出典記録、
+        他メンバーの領域の無断変更、
+        ブランチ名・コミットメッセージの形式、大容量素材。
+        返信はすべて日本語で書いてください。
+      file_paths:
+        - docs/ai-review-rules.md
