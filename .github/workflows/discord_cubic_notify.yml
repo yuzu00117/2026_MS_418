@@ -73,9 +73,9 @@ jobs:
           # discord_pr_notify.yml が保存した通知済みマーカーのうち、常に最新のものを使う。
           # (reopened / ready_for_review では既存のマーカーが再利用されるため、作成日時では絞らない)
 
-          # opened 直後は discord_pr_notify.yml と同時に走るため、コメントが付くまで 10 秒おきに最大 3 分待つ。
+          # opened 直後は discord_pr_notify.yml と同時に走るため、コメントが付くまで 10 秒おきに最大 5 分待つ。
           thread_id=""
-          for i in $(seq 1 18); do
+          for i in $(seq 1 30); do
             thread_id="$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate \
               | jq -rs '
                   [ .[][]
@@ -91,7 +91,7 @@ jobs:
               break
             fi
             thread_id=""
-            echo "スレッド ID のコメントが未作成です。リトライします (${i}/18)"
+            echo "スレッド ID のコメントが未作成です。リトライします (${i}/30)"
             sleep 10
           done
 
@@ -283,8 +283,7 @@ jobs:
               }
             ')"
 
-          # 通知の取りこぼしを避けるため、429 / 5xx のときだけ最大 3 回再試行する。
-          resp="$(printf '%s' "$notify_payload" | curl -sS --fail-with-body --retry 3 \
+          resp="$(printf '%s' "$notify_payload" | curl -sS --fail-with-body \
             -X POST \
             -H "Content-Type: application/json" \
             --data-binary @- \
@@ -305,7 +304,8 @@ jobs:
           #  - 異なる: 新しいコミットが push された(置き換え)
           #  - 同じ: 手動キャンセルなど
           #  - 取得失敗: 理由を断定しない文言にする(ステップ自体は失敗させない)
-          current_sha="$(gh api "repos/${REPO}/pulls/${PR_NUMBER}" --jq .head.sha 2>/dev/null || true)"
+          # API が応答しない場合に備えて timeout で 20 秒の上限を付ける。失敗時は空になり「待機が中断されました」になる。
+          current_sha="$(timeout 20 gh api "repos/${REPO}/pulls/${PR_NUMBER}" --jq .head.sha 2>/dev/null || true)"
           if ! [[ "$current_sha" =~ ^[0-9a-f]{40}$ ]]; then
             message="⏹ 待機が中断されました"
           elif [ "$current_sha" != "$HEAD_SHA" ]; then
