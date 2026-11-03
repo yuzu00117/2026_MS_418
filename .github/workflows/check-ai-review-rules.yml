@@ -1,0 +1,35 @@
+name: Check AI Review Rules
+
+# docs/coding-rules.md または docs/CONTRIBUTING.md を変更した PR で、
+# AI レビュー用の要約 docs/ai-review-rules.md が更新されていなければ失敗させる。
+# 信頼できない PR のコードを扱うため pull_request を使う(pull_request_target は使わない)。
+on:
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    # 最小権限にする。読み取りのみ。
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          # ベースとの差分を取るため全履歴を取得する。
+          fetch-depth: 0
+
+      - name: Check ai-review-rules.md is updated
+        env:
+          # スクリプトインジェクションを避けるため、値は env 経由で渡す。
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          changed=$(git diff --name-only "origin/${BASE_REF}...HEAD")
+          if echo "$changed" | grep -qxE 'docs/(coding-rules|CONTRIBUTING)\.md'; then
+            if ! echo "$changed" | grep -qx 'docs/ai-review-rules.md'; then
+              echo "::error::docs/coding-rules.md または docs/CONTRIBUTING.md が変更されていますが、docs/ai-review-rules.md が更新されていません。同じPRで要約も更新してください。"
+              exit 1
+            fi
+          fi
+          echo "OK: ai-review-rules.md の更新チェックを通過しました。"
