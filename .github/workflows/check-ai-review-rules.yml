@@ -19,13 +19,26 @@ jobs:
         with:
           # ベースとの差分を取るため全履歴を取得する。
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Check ai-review-rules.md is updated
         env:
           # スクリプトインジェクションを避けるため、値は env 経由で渡す。
           BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
-          changed=$(git diff --name-only "origin/${BASE_REF}...HEAD")
+          # main 向けの feature/* は develop に付け替えられるため、develop と比べる。
+          # (main と比べると develop だけにある差分が混ざり、誤って成功するため)
+          base="origin/${BASE_REF}"
+          case "$HEAD_REF" in
+            feature/*)
+              if [ "$BASE_REF" = main ]; then
+                base="origin/develop"
+              fi
+              ;;
+          esac
+          changed=$(git diff --name-only "${base}...${HEAD_SHA}")
           if echo "$changed" | grep -qxE 'docs/(coding-rules|CONTRIBUTING)\.md'; then
             if ! echo "$changed" | grep -qx 'docs/ai-review-rules.md'; then
               echo "::error::docs/coding-rules.md または docs/CONTRIBUTING.md が変更されていますが、docs/ai-review-rules.md が更新されていません。同じPRで要約も更新してください。"
