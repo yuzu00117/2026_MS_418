@@ -139,6 +139,8 @@ git push origin --delete feature/1001_player-movement
 | 承認数 | 最低 **1名** の承認を得てからマージする |
 | `develop` → `main` | **リーダーの承認**が必要 |
 
+> **📌 ルール**: `docs/coding-rules.md` または `docs/CONTRIBUTING.md` を変更する PR では、同じ PR で `docs/ai-review-rules.md`（AI レビュー用の要約）も更新してください。未更新だと CI が失敗します。
+
 ---
 
 ## 5. コンフリクト解消
