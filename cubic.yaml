@@ -2,6 +2,12 @@
 
 version: 1
 
+# PR の AI 要約を日本語にする
+pr_descriptions:
+  generate: true
+  instructions: |
+    要約はすべて日本語で書いてください。
+
 reviews:
   # 生成物・ログ等はレビュー対象から除外する(.coderabbit.yaml の path_filters と同じ)
   ignore:
