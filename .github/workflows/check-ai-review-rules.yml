@@ -38,9 +38,10 @@ jobs:
               fi
               ;;
           esac
-          changed=$(git diff --name-only "${base}...${HEAD_SHA}")
+          changed=$(git diff --no-renames --name-only "${base}...${HEAD_SHA}")
+          updated=$(git diff --no-renames --name-only --diff-filter=AMR "${base}...${HEAD_SHA}")
           if echo "$changed" | grep -qxE 'docs/(coding-rules|CONTRIBUTING)\.md'; then
-            if ! echo "$changed" | grep -qx 'docs/ai-review-rules.md'; then
+            if ! echo "$updated" | grep -qx 'docs/ai-review-rules.md'; then
               echo "::error::docs/coding-rules.md または docs/CONTRIBUTING.md が変更されていますが、docs/ai-review-rules.md が更新されていません。同じPRで要約も更新してください。"
               exit 1
             fi
