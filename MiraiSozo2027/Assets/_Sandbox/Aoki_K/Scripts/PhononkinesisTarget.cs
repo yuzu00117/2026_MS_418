@@ -15,7 +15,7 @@ public class PhononkinesisTarget : MonoBehaviour
     [SerializeField] private ReleaseBehavior _releaseBehavior = ReleaseBehavior.Auto;
     [Tooltip("手放したときの慣性減衰率（0～1、0で慣性なし）")]
     [SerializeField] private float _inertiaDamping = 0.5f; // 手放したときの慣性減衰率（0～1、1で慣性なし）
-    [Tooltip("接触面の法専線がこの値以上なら上方向とみなす（0～1、1で完全に上向き）")]
+    [Tooltip("接触時の法線Y成分がこの値の負値以下なら上に乗っていると判定（0～1）")]
     //上方向にいるかどうかの判定用の変数
     [SerializeField] private float _diagonalUpwardThreshold = 0.7f;
 
