@@ -9,6 +9,7 @@ namespace Aura.Gimmick
     /// 念力で箱を運んで載せる、などに使う。「起動したときの処理」に GimmickMover の Activate などをつなぐ
     /// 載った物は、この GameObject の「トリガー」にしたコライダーで数える。床の上に少しはみ出すように置く
     /// （乗るための床のコライダーは別に要る。子の GameObject に付けてよい）
+    /// トリガーは 1 つで使う（2 つ以上あると、片方から出ただけで載っていない扱いになる）
     /// 数えるのは Rigidbody のある物だけ。プレイヤーも Rigidbody があるので数える。数えたくなければ「数えるレイヤー」から外す
     public sealed class PressurePlate : MonoBehaviour
     {
@@ -43,8 +44,9 @@ namespace Aura.Gimmick
 
         private void OnTriggerEnter(Collider other)
         {
+            // 無効の間も OnTriggerEnter は届くので、無効なら何もしない（有効に戻したときに OnEnable で探し直す）
             // レイヤーは数え直すたびに見るので、ここでは数えないレイヤーの物も覚えておく（載ったままレイヤーが変わることがある）
-            if (!TryGetBody(other, out Rigidbody body))
+            if (!enabled || !TryGetBody(other, out Rigidbody body))
             {
                 return;
             }
