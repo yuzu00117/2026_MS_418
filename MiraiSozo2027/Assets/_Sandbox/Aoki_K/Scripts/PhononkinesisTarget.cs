@@ -13,6 +13,11 @@ public class PhononkinesisTarget : MonoBehaviour
     [Header("Settings")]
     [Tooltip("手放した（配置確定した）ときの挙動")]
     [SerializeField] private ReleaseBehavior _releaseBehavior = ReleaseBehavior.Auto;
+    [Tooltip("手放したときの慣性減衰率（0～1、0で慣性なし）")]
+    [SerializeField] private float _inertiaDamping = 0.5f; // 手放したときの慣性減衰率（0～1、1で慣性なし）
+    [Tooltip("接触面の法専線がこの値以上なら上方向とみなす（0～1、1で完全に上向き）")]
+    //上方向にいるかどうかの判定用の変数
+    [SerializeField] private float _diagonalUpwardThreshold = 0.7f;
 
     [Tooltip("念力で掴めるかどうかのフラグ")]
     [SerializeField] private bool _canBeGrabbed = true;
@@ -48,7 +53,7 @@ public class PhononkinesisTarget : MonoBehaviour
             IsPlayerRiding = false;
             for(int i = 0; i < collision.contactCount; i++)
             {
-                if(collision.GetContact(i).normal.y < -0.7f)
+                if(collision.GetContact(i).normal.y < -_diagonalUpwardThreshold)
                 {
                     IsPlayerRiding = true;
                     break;
@@ -89,7 +94,7 @@ public class PhononkinesisTarget : MonoBehaviour
         {
             case ReleaseBehavior.Auto:
                 // 元々の設定に忠実に復帰
-                Rb.linearVelocity *= 0.5f; // 少し減速して落下
+                Rb.linearVelocity *= _inertiaDamping; // 少し減速して落下
                 Rb.angularVelocity = Vector3.zero;
                 Rb.isKinematic = _initialIsKinematic;
                 Rb.useGravity = _initialUseGravity;
@@ -105,7 +110,7 @@ public class PhononkinesisTarget : MonoBehaviour
 
             case ReleaseBehavior.AlwaysGravity:
                 // 通常の物理落下
-                Rb.linearVelocity *= 0.5f; // 少し減速して落下
+                Rb.linearVelocity *= _inertiaDamping; // 少し減速して落下
                 Rb.isKinematic = false;
                 Rb.useGravity = true;
                 break;

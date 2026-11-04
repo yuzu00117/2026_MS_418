@@ -30,6 +30,8 @@ public class Phononkinesis : MonoBehaviour
     [SerializeField] private float _maxDistance = 25.0f;
     private float _activeMinDistance;
     private float _activeMaxDistance;
+    [SerializeField] private float _marginPlayerWidth = 1.2f; // プレイヤーの横幅分の余裕
+    [SerializeField] private float _marginPlayerHeight = 4.0f; // プレイヤーの上方向の余裕（ジャンプ中含む）
 
     [Header("Distance Adjustment Sensitivity")]
     [Tooltip("マウスホイール1ノッチあたりの移動量（メートル）")]
@@ -268,7 +270,7 @@ public class Phononkinesis : MonoBehaviour
         if (IsNearOrTouchingPlayer())
         {//プレイヤーに接触している場合はプレイヤーに向かう推力をゼロにする
             //プレイヤーの中心座標
-            Vector3 playerCenter = _playerCenter.position != null ?
+            Vector3 playerCenter = _playerCenter != null ?
                                     _playerCenter.position : transform.position;
             Vector3 toPlayer = (playerCenter - rb.position).normalized;
 
@@ -277,8 +279,8 @@ public class Phononkinesis : MonoBehaviour
             float approachSpeed = Vector3.Dot(desiredVelocity, toPlayer);
 
             if(approachSpeed > 0f)
-            {//プレイヤーに向かう場合はゼロ
-                desiredVelocity = Vector3.zero;
+            {//プレイヤーに向かう成分のみ引く
+                desiredVelocity -= toPlayer * approachSpeed;
             }
         }
 
@@ -301,15 +303,15 @@ public class Phononkinesis : MonoBehaviour
         // 足元がオブジェクトの中心より下にあるなら「上にはいない」
         if (feetPos.y < objPos.y) return false;
         // オブジェクトのコライダー範囲（＋プレイヤーの半径マージン）の真上にいるかチェック
-        Collider col = _heldTarget.GetComponentInChildren<Collider>();
+        Collider col = _heldTargetCollider;
         if (col != null)
         {
             Bounds b = col.bounds;
-            float margin = 1.2f; // プレイヤーの横幅分の余裕
-            bool inX = feetPos.x >= b.min.x - margin && feetPos.x <= b.max.x + margin;
-            bool inZ = feetPos.z >= b.min.z - margin && feetPos.z <= b.max.z + margin;
+
+            bool inX = feetPos.x >= b.min.x - _marginPlayerWidth && feetPos.x <= b.max.x + _marginPlayerWidth;
+            bool inZ = feetPos.z >= b.min.z - _marginPlayerWidth && feetPos.z <= b.max.z + _marginPlayerWidth;
             // オブジェクトの上面から上方向 4m 以内に足がある（ジャンプ中含む）なら真上とみなす
-            bool inY = feetPos.y <= b.max.y + 4.0f;
+            bool inY = feetPos.y <= b.max.y + _marginPlayerHeight;
             return inX && inZ && inY;
         }
         return false;
