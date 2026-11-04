@@ -6,7 +6,8 @@ namespace Aura.Gimmick
     /// @brief 起動で決めた角度まで回り、止めると元の向きに戻るギミック（回る鏡、回る扉、首を振るタレットなど）
     /// GimmickMover の回る版。受け手（ReactionTrigger）の「起動したときの処理」に Activate、「止まったときの処理」に Deactivate をつなぐ
     /// 回る中心はこの GameObject の位置。扉の蝶番のように端で回したいときは、空の親に付けて、扉の見た目を子としてずらして置く
-    public sealed class GimmickRotator : MonoBehaviour
+    /// 起動・停止・往復の切り替えは親の GimmickMotion にある
+    public sealed class GimmickRotator : GimmickMotion
     {
         private const float MinAxisSqrLength = 0.0001f;  ///< これより短い「回る軸」は、向きが決まらないので回さない
 
@@ -24,90 +25,25 @@ namespace Aura.Gimmick
         [Tooltip("回る速さ（度/s）。起動したときも、元の向きに戻るときも、この速さで回る。0.01 以上")]
         [SerializeField, Min(0.01f)] private float _speed = 90.0f;                        ///< 回る速さ（度/s）
 
-        [InspectorLabel("動き方")]
-        [Tooltip("起動している間の動き方\n" +
-                 "・起動で動く: 起動した向きまで回って止まる\n" +
-                 "・起動中は往復する: 起動している間、元の向きと起動した向きをずっと行き来する（首振り）。止めると元の向きに戻る")]
-        [SerializeField] private GimmickMotionMode _motionMode = GimmickMotionMode.Once;  ///< 起動している間の動き方
-
-        [InspectorLabel("端で止まる時間（秒）")]
-        [Tooltip("「起動中は往復する」のとき、端に着いてから折り返すまでに止まる時間（秒）。0 ならすぐ折り返す")]
-        [SerializeField, Min(0.0f)] private float _endWaitSeconds = 1.0f;                ///< 往復で、端に着いてから折り返すまでの時間（秒）
-
-        [InspectorLabel("始めから起動しておく")]
-        [Tooltip("ON なら、ゲーム開始時から起動している（Activate を呼ばなくても回る）。首を振り続けるタレットなどに使う")]
-        [SerializeField] private bool _isActiveOnStart;                                  ///< ゲーム開始時から起動しているか
-
         private Quaternion _inactiveRotation;  ///< 止まっているときの向き（ローカル座標）
         private float _angle;                  ///< 今、元の向きから回っている角度（度）
-        private bool _isActive;                ///< 起動しているか
-        private bool _isReturning;             ///< 往復で、元の向きへ戻っている途中か
-        private float _waitSeconds;            ///< 往復で、端に着いてから止まっている時間（秒）
 
-        /// @brief 起動した向きへ回す
-        [ShowInEventMenu]
-        public void Activate()
-        {
-            _isActive = true;
-        }
-
-        /// @brief 元の向きへ戻す
-        [ShowInEventMenu]
-        public void Deactivate()
-        {
-            _isActive = false;
-            _isReturning = false;
-            _waitSeconds = 0.0f;
-        }
-
-        /// @brief 起動と停止を入れ替える
-        [ShowInEventMenu]
-        public void Toggle()
-        {
-            if (_isActive)
-            {
-                Deactivate();
-            }
-            else
-            {
-                Activate();
-            }
-        }
-
-        private void Awake()
+        protected override void RememberInactivePose()
         {
             _inactiveRotation = transform.localRotation;
-            if (_isActiveOnStart)
-            {
-                Activate();
-            }
         }
 
-        private void Update()
+        protected override bool MoveStep(bool isHeadingToActive)
         {
             if (_axis.sqrMagnitude < MinAxisSqrLength)
             {
-                return;
+                return false;
             }
-            float target = _isActive && !_isReturning ? _activeAngle : 0.0f;
+            float target = isHeadingToActive ? _activeAngle : 0.0f;
             _angle = Mathf.MoveTowards(_angle, target, _speed * Time.deltaTime);
             // 軸は親から見た向きなので、元の向きの「前」から掛ける
             transform.localRotation = Quaternion.AngleAxis(_angle, _axis) * _inactiveRotation;
-            if (_isActive && _motionMode == GimmickMotionMode.PingPong && Mathf.Approximately(_angle, target))
-            {
-                WaitAndTurn();
-            }
-        }
-
-        /// @brief 往復で端に着いているとき、「端で止まる時間（秒）」だけ待ってから折り返す
-        private void WaitAndTurn()
-        {
-            _waitSeconds += Time.deltaTime;
-            if (_waitSeconds >= _endWaitSeconds)
-            {
-                _isReturning = !_isReturning;
-                _waitSeconds = 0.0f;
-            }
+            return Mathf.Approximately(_angle, target);
         }
     }
 }

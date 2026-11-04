@@ -75,6 +75,8 @@ namespace Aura.Gimmick
 
         private void OnDisable()
         {
+            // 無効のスイッチは「押されていない」扱いにする。起動中に無効にしたときは、ここで「止まったときの処理」を呼ぶ（わざと）
+            // そうしないと、扉を開けたまま無効にすると閉める手段がなくなる
             _bodiesByCollider.Clear();
             UpdateState();
         }
