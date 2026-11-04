@@ -78,8 +78,8 @@ namespace Aura.Wave.Echo
                         _volumes.Add(WaveRevealVolume.Sphere(frame.Origin, WholeBeamRadius));
                         break;
                     }
-                    // 消えていく間は、内側の消えた分（EraseRadius）を見せない（エコーの表示と同じ）
-                    float innerRadius = frame.State == EchoState.Hiding ? frame.EraseRadius : 0.0f;
+                    // 消えていく間と、スキャン方式「一回だけ」の帯状の波（IsBand）は、内側の分（EraseRadius）を見せない（エコーの表示・当たりと同じ）
+                    float innerRadius = frame.State == EchoState.Hiding || frame.IsBand ? frame.EraseRadius : 0.0f;
                     _volumes.Add(new WaveRevealVolume(frame.Origin, frame.Forward, frame.Angle, frame.OuterRadius, innerRadius));
                 }
             }

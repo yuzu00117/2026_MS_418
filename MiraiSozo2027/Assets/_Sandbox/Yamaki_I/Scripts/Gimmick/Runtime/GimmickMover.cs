@@ -5,7 +5,9 @@ namespace Aura.Gimmick
 {
     /// @brief 起動で決めた位置まで動き、止めると元の位置に戻るギミック（扉、リフトなど）
     /// 受け手（ReactionTrigger、古い WaveReceiver）の On Activated に Activate、On Deactivated に Deactivate をつなぐ
-    public sealed class GimmickMover : MonoBehaviour
+    /// 「動き方」を「起動中は往復する」にすると、起動している間ずっと往復する足場になる
+    /// 起動・停止・往復の切り替えは親の GimmickMotion にある
+    public sealed class GimmickMover : GimmickMotion
     {
         [InspectorLabel("起動で動く量（m）")]
         [Tooltip("起動したときに動く量（m）。ゲーム開始時の位置から、この分だけずらした位置まで動く\n" +
@@ -17,38 +19,17 @@ namespace Aura.Gimmick
         [SerializeField, Min(0.01f)] private float _speed = 2.0f;                        ///< 動く速さ（m/s）
 
         private Vector3 _inactivePosition;  ///< 止まっているときの位置（ローカル座標）
-        private bool _isActive;             ///< 起動しているか
 
-        /// @brief 起動した位置へ動かす
-        [ShowInEventMenu]
-        public void Activate()
-        {
-            _isActive = true;
-        }
-
-        /// @brief 元の位置へ戻す
-        [ShowInEventMenu]
-        public void Deactivate()
-        {
-            _isActive = false;
-        }
-
-        /// @brief 起動と停止を入れ替える
-        [ShowInEventMenu]
-        public void Toggle()
-        {
-            _isActive = !_isActive;
-        }
-
-        private void Awake()
+        protected override void RememberInactivePose()
         {
             _inactivePosition = transform.localPosition;
         }
 
-        private void Update()
+        protected override bool MoveStep(bool isHeadingToActive)
         {
-            Vector3 target = _isActive ? _inactivePosition + _activeOffset : _inactivePosition;
+            Vector3 target = isHeadingToActive ? _inactivePosition + _activeOffset : _inactivePosition;
             transform.localPosition = Vector3.MoveTowards(transform.localPosition, target, _speed * Time.deltaTime);
+            return transform.localPosition == target;
         }
     }
 }

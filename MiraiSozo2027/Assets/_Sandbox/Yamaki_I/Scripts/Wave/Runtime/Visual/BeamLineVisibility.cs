@@ -11,5 +11,8 @@ namespace Aura.Wave
 
         [InspectorName("見える範囲の中だけ")]
         InRevealVolumes = 1,  ///< 見せる範囲（WaveRevealSource）の中にある部分だけ見せる。範囲が無ければ見せない（エコーロケーション中だけ波が見える、など）
+
+        [InspectorName("範囲に触れたら全体を見せる")]
+        WholeWhenTouched = 2,  ///< 線のどこかが見せる範囲に触れたら、線の全体を見せる。触れなくなってからも「触れた後も見せる秒数」の間は見せる
     }
 }
