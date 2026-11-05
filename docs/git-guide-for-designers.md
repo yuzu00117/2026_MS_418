@@ -117,18 +117,63 @@ Git を使ったことがない人向けに、**GitHub Desktop** というアプ
 2. 名前を入力します。形式は次のとおりです。
 
    ```
-   feature/<タスク番号>_<機能名>
+   feature/<機能名>
    ```
 
-   例: `feature/1001_title-logo`
+   例: `feature/title-logo`
 
    - 機能名は**英小文字とハイフン**で書きます。
-   - タスク番号が分からない場合は Discord で聞いてください。
+   - タスク番号を割り振られている作業なら、`feature/1001_title-logo` のように番号を前に付けます。番号がなければ付けなくて大丈夫です。
+   - 名前の付け方は、下の「機能名の付け方」を参考にしてください。
 3. 「Create branch from」が **develop** になっていることを確認して、**Create Branch** を押します。
 
 <!-- 画像: New Branch の画面 -->
 
 > 画面上部の Current Branch に、自分のブランチ名が表示されていれば成功です。
+
+#### 機能名の付け方
+
+**「何を」＋「どうする（何の素材か）」**を、英単語2〜3個で書くと分かりやすくなります。
+
+| やる作業 | ブランチ名の例 |
+|---|---|
+| タイトルロゴを追加する | `feature/title-logo` |
+| タイトル画面の UI を作る | `feature/title-ui` |
+| ステージ1の背景を作る | `feature/stage1-background` |
+| プレイヤーのテクスチャを差し替える | `feature/player-texture` |
+| 敵キャラのモデルを追加する | `feature/enemy-model` |
+| 敵の歩きアニメーションを作る | `feature/enemy-walk-animation` |
+| 爆発エフェクトを作る | `feature/explosion-effect` |
+| ボタンなどのアイコン一式を追加する | `feature/ui-icons` |
+| 使うフォントを変える | `feature/font-change` |
+| ボタンの見た目のずれを直す | `feature/button-design-fix` |
+
+よく使う単語です。
+
+| 日本語 | 英単語 |
+|---|---|
+| 背景 | `background` |
+| ロゴ | `logo` |
+| アイコン | `icon` / `icons` |
+| 画面・メニュー | `ui` / `menu` |
+| テクスチャ・マテリアル | `texture` / `material` |
+| 3Dモデル | `model` |
+| アニメーション | `animation` |
+| エフェクト | `effect` |
+| 効果音・BGM | `se` / `bgm` |
+| 差し替え・変更 | `change` / `update` |
+| 修正 | `fix` |
+
+**避けたい名前の例**
+
+| 名前 | 理由 |
+|---|---|
+| `feature/タイトルロゴ` | 日本語は使えません |
+| `feature/Title_Logo` | 大文字・アンダーバーではなく、英小文字とハイフンにします |
+| `feature/yamada` | 人の名前ではなく、作業の内容を書きます |
+| `feature/sozai` / `feature/fix` | 何の作業か分かりません |
+
+> 迷ったら、それっぽい名前で大丈夫です。あとから困ることはほとんどないので、作業を止めずに進めましょう。
 
 ### 3.3 作業する
 
@@ -332,7 +377,7 @@ Unity は、素材（画像・モデル・音など）1つにつき `.meta` と�
 PR を作る前に、すべてチェックできるか確認してください。
 
 - [ ] `develop` を最新にしてからブランチを作った
-- [ ] ブランチ名が `feature/<タスク番号>_<機能名>` の形式になっている
+- [ ] ブランチ名が `feature/<機能名>`（英小文字とハイフン）の形式になっている
 - [ ] Changes を確認し、自分が触ったファイルだけが入っている
 - [ ] 素材には `.meta` ファイルも一緒に入っている
 - [ ] `Library` / `Temp` / `Logs` / `obj` / `UserSettings` が入っていない

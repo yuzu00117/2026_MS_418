@@ -111,6 +111,7 @@ PascalCase で記述し、動詞から始めることを基本とする。接頭
 
 ### feature ブランチ [CONTRIBUTING 1.3]
 - 命名: `feature/<タスク番号>_<機能名>` (例: `feature/1001_player-movement`)
+- タスク番号がない作業は番号を省略して `feature/<機能名>` (例: `feature/title-logo`)。番号の有無は指摘しない
 - 機能名は英小文字とハイフン
 - マージ後はブランチを削除する
 - 展示前・提出前に `develop` から `main` へマージし、マイルストーンタグを付ける
