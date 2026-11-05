@@ -11,6 +11,10 @@ Webhook URL はログに出さない。
   end-24h < mergedAt <= end の PR を対象、見出し日付を end の JST 日付にする(半開区間なので前後の実行と重複・欠落しない)。
   実行時刻(now)ではなく固定の21:00を基準にするため、cron が遅延しても期間と見出し日付がずれない。
   HOURS が指定されたとき(手動実行)は従来どおり now から HOURS 時間さかのぼり、見出し日付は now の JST 日付。
+起動時刻の調整(GITHUB_EVENT_NAME=schedule のときだけ): GitHub の cron は数時間遅れるため、ワークフローは昼から複数回起動する。
+  21:00 JST より前に起動した回は 21:00 まで待って投稿する(待ちが 5.5 時間を超える回は何もせず終了)。
+  0:00〜8:59 JST に起動した回は深夜・早朝の投稿を避けて何もしない(警告のみ)。
+  直近の 21:00 以降に成功で終わったスケジュール実行が既にあれば、その日の分は処理済みとして何もしない(二重投稿防止)。
 
 投稿形式(DIGEST_FORMAT、既定 card): card は PR ごとのカードを上限内で1メッセージに同梱する。
   card: Discord Components V2。PR ごとの Container(カード)を、1メッセージあたり Text Display 合計 3800 文字・
@@ -69,6 +73,12 @@ IS_COMPONENTS_V2 = 1 << 15
 JST = datetime.timezone(datetime.timedelta(hours=9))
 # スケジュール実行の期間の終端(JST の時)。
 DIGEST_HOUR_JST = 21
+# GitHub の cron は数時間遅れるため、早めに複数回起動し、21:00 より前に起動した回は 21:00 まで待って投稿する。
+# 待ち時間がこれより長い回は待たずに終了する(ジョブ上限 360 分から投稿の時間を残す)。
+MAX_WAIT_SECONDS = 5 * 3600 + 30 * 60
+# この時刻(JST)より前に起動した回は、前日分が遅れて来たものとみなし、深夜・早朝の投稿を避けて何もしない。
+QUIET_END_HOUR_JST = 9
+WORKFLOW_FILE = "discord_daily_digest.yml"
 
 URL_CHARS = r"[^\s)\"'<>\]]"
 ASSET_RE = re.compile(r"https://github\.com/user-attachments/(?:assets|files)/" + URL_CHARS + "+")
@@ -395,6 +405,40 @@ def latest_digest_end(now):
     return end
 
 
+def decide_schedule(now):
+    """スケジュール実行で、起動時刻 now に対して (動作, 秒数) を返す。
+    動作は post(すぐ投稿) / wait(秒数だけ待ってから投稿) / quiet(深夜・早朝なので何もしない) / early(早すぎるので何もしない)。
+    """
+    local = now.astimezone(JST)
+    if local.hour < QUIET_END_HOUR_JST:
+        return "quiet", 0
+    target = local.replace(hour=DIGEST_HOUR_JST, minute=0, second=0, microsecond=0)
+    if local >= target:
+        return "post", 0
+    wait = (target - local).total_seconds()
+    if wait > MAX_WAIT_SECONDS:
+        return "early", wait
+    return "wait", wait
+
+
+def is_already_handled(repo, end, run_id):
+    """end 以降に成功で終わったスケジュール実行があれば True(その日の分は投稿済み、または投稿対象なし)。
+    取得に失敗したら二重投稿を避けるためエラーで終了し、後の回に任せる。"""
+    r = run(["gh", "run", "list", "--repo", repo, "--workflow", WORKFLOW_FILE,
+             "--event", "schedule", "--status", "success", "--limit", "30",
+             "--json", "databaseId,updatedAt"])
+    if r.returncode != 0:
+        print("::error::実行履歴の取得に失敗したため投稿しません(後の回に任せます): " + r.stderr[:300])
+        sys.exit(1)
+    for item in json.loads(r.stdout):
+        if str(item.get("databaseId")) == run_id:
+            continue
+        updated = datetime.datetime.fromisoformat(item["updatedAt"].replace("Z", "+00:00"))
+        if updated >= end:
+            return True
+    return False
+
+
 def main():
     repo = os.environ["REPO"]
     webhook = os.environ.get("DISCORD_PROGRESS_WEBHOOK_URL", "")
@@ -413,6 +457,25 @@ def main():
         sys.exit(1)
 
     now = datetime.datetime.now(datetime.timezone.utc)
+    # cron からの起動だけ、待機・深夜スキップ・二重投稿防止を行う(手動実行やローカル実行は即時に動く)。
+    if scheduled and os.environ.get("GITHUB_EVENT_NAME") == "schedule":
+        action, seconds = decide_schedule(now)
+        local_text = now.astimezone(JST).strftime("%m/%d %H:%M JST")
+        if action == "quiet":
+            print("::warning::%s の起動は深夜・早朝のため投稿しません。前日分が必要なら手動実行してください。" % local_text)
+            return
+        if action == "early":
+            print("%s の起動は %d:00 まで %.1f 時間あるため、待たずに終了します(後の回に任せます)。"
+                  % (local_text, DIGEST_HOUR_JST, seconds / 3600))
+            return
+        if action == "wait":
+            print("%s に起動しました。%d:00 JST まで %d 分待ってから投稿します。" % (local_text, DIGEST_HOUR_JST, seconds // 60))
+            # 起きる時刻が 21:00 をわずかに下回らないよう少し余裕を持たせる。
+            time.sleep(seconds + 5)
+            now = datetime.datetime.now(datetime.timezone.utc)
+        if is_already_handled(repo, latest_digest_end(now), os.environ.get("GITHUB_RUN_ID", "")):
+            print("今日の分は別の回で処理済みのため、何もしません。")
+            return
     if scheduled:
         end = latest_digest_end(now)
         heading_date = end
