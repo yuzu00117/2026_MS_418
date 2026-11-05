@@ -5,6 +5,8 @@
 
 > **📖 コーディングルール**: コーディングルールは [coding-rules.md](coding-rules.md) を参照してください。
 
+> **🎨 デザイナー向け**: GitHub Desktop を使った手順は [git-guide-for-designers.md](git-guide-for-designers.md) を参照してください。
+
 ---
 
 ## 1. ブランチ戦略
@@ -43,6 +45,7 @@ gitGraph
 ### 1.3 feature ブランチの運用
 
 - 命名規則: `feature/<タスク番号>_<機能名>`（例: `feature/1001_player-movement`）
+- タスク番号がない作業（デザイン素材の追加など）は番号を省略し、`feature/<機能名>` とする（例: `feature/title-logo`）
 - 機能名は英小文字とハイフンで記述する
 - マージ後はブランチを**削除**する
 - 展示前・提出前に `develop` から `main` へマージし、マイルストーンタグを付ける（→ [6. マイルストーンタグ](#6-マイルストーンタグ)）
@@ -82,7 +85,7 @@ git push origin --delete feature/1001_player-movement
 
 > [!CAUTION]
 > **シーン・Prefab は同時編集しないでください。**  
-> 編集前に **事前宣言**（Slack 等で共有）し、同じファイルは **1人が担当** してください。
+> 編集前に **事前宣言**（Discord で共有）し、同じファイルは **1人が担当** してください。
 
 ---
 
