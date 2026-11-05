@@ -103,11 +103,10 @@ Git を使ったことがない人向けに、**GitHub Desktop** というアプ
 
 作業を始める前に、必ず行います。
 
-1. Unity を閉じておきます（開いたままだと切り替えで不具合が出ることがあります）。
-2. GitHub Desktop 上部の **Current Branch** をクリックします。
-3. 一覧から **develop** を選びます。
-4. 上部の **Fetch origin** ボタンを押します。
-5. ボタンが **Pull origin** に変わったら、それを押して最新の内容を取り込みます。
+1. GitHub Desktop 上部の **Current Branch** をクリックします。
+2. 一覧から **develop** を選びます。
+3. 上部の **Fetch origin** ボタンを押します。
+4. ボタンが **Pull origin** に変わったら、それを押して最新の内容を取り込みます。
 
 <!-- 画像: Current Branch から develop を選ぶ画面 -->
 <!-- 画像: Fetch origin / Pull origin ボタンの位置 -->
