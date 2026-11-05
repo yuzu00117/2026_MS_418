@@ -1411,6 +1411,9 @@ MonoBehaviour:
     _scanMode: 0
     _pulseInterval: 2
     _pulseHoldDuration: 3
+    _followWaveInterval: 0
+    _onceStockCapacity: 1
+    _onceRechargeSeconds: 2
     _offMode: 1
     _timeMode: 0
     _occlusionMode: 0
@@ -1425,55 +1428,112 @@ MonoBehaviour:
       _revealMode: 0
       _tagName: EchoEnemy
       _color: {r: 1, g: 0, b: 0, a: 1}
-      _fillEnabled: 1
+      _isFillEnabled: 1
       _fillOcclusion: 0
       _outlineOcclusion: 0
       _originalOcclusion: 0
-      _outlineEnabled: 0
+      _isOutlineEnabled: 0
       _outlineColor: {r: 0, g: 1, b: 1, a: 1}
       _outlineWidth: 3
       _outlineHoldDuration: 0
-      _originalEnabled: 0
-      _hideOriginalOutsideEcho: 1
+      _isOriginalEnabled: 0
+      _isOriginalHiddenOutsideEcho: 1
       _originalHoldDuration: 2
       _originalOpacity: 1
       _contactResolution: 256
+      _fill:
+        _isEnabled: 1
+        _isThroughWalls: 0
+        _displayScope: 1
+        _hasPersistence: 0
+        _persistenceSeconds: 1
+      _outline:
+        _isEnabled: 0
+        _isThroughWalls: 0
+        _displayScope: 0
+        _hasPersistence: 0
+        _persistenceSeconds: 1
+      _original:
+        _isEnabled: 0
+        _isThroughWalls: 0
+        _displayScope: 0
+        _hasPersistence: 0
+        _persistenceSeconds: 1
+      _surfaceMemoryResolution: 32
     - _isEnabled: 1
       _definition: {fileID: 0}
       _revealMode: 0
       _tagName: EchoItem
       _color: {r: 0.38614586, g: 1, b: 0.058490515, a: 1}
-      _fillEnabled: 1
+      _isFillEnabled: 1
       _fillOcclusion: 0
       _outlineOcclusion: 0
       _originalOcclusion: 0
-      _outlineEnabled: 0
+      _isOutlineEnabled: 0
       _outlineColor: {r: 0, g: 1, b: 1, a: 1}
       _outlineWidth: 3
       _outlineHoldDuration: 0
-      _originalEnabled: 0
-      _hideOriginalOutsideEcho: 1
+      _isOriginalEnabled: 0
+      _isOriginalHiddenOutsideEcho: 1
       _originalHoldDuration: 2
       _originalOpacity: 1
       _contactResolution: 256
+      _fill:
+        _isEnabled: 1
+        _isThroughWalls: 0
+        _displayScope: 1
+        _hasPersistence: 0
+        _persistenceSeconds: 1
+      _outline:
+        _isEnabled: 0
+        _isThroughWalls: 0
+        _displayScope: 0
+        _hasPersistence: 0
+        _persistenceSeconds: 1
+      _original:
+        _isEnabled: 0
+        _isThroughWalls: 0
+        _displayScope: 0
+        _hasPersistence: 0
+        _persistenceSeconds: 1
+      _surfaceMemoryResolution: 32
     - _isEnabled: 1
       _definition: {fileID: 0}
       _revealMode: 0
       _tagName: EchoStructure
       _color: {r: 0, g: 0.60691047, b: 1, a: 1}
-      _fillEnabled: 1
+      _isFillEnabled: 1
       _fillOcclusion: 0
       _outlineOcclusion: 0
       _originalOcclusion: 0
-      _outlineEnabled: 0
+      _isOutlineEnabled: 0
       _outlineColor: {r: 0, g: 1, b: 1, a: 1}
       _outlineWidth: 3
       _outlineHoldDuration: 0
-      _originalEnabled: 0
-      _hideOriginalOutsideEcho: 1
+      _isOriginalEnabled: 0
+      _isOriginalHiddenOutsideEcho: 1
       _originalHoldDuration: 2
       _originalOpacity: 1
       _contactResolution: 256
+      _fill:
+        _isEnabled: 1
+        _isThroughWalls: 0
+        _displayScope: 1
+        _hasPersistence: 0
+        _persistenceSeconds: 1
+      _outline:
+        _isEnabled: 0
+        _isThroughWalls: 0
+        _displayScope: 0
+        _hasPersistence: 0
+        _persistenceSeconds: 1
+      _original:
+        _isEnabled: 0
+        _isThroughWalls: 0
+        _displayScope: 0
+        _hasPersistence: 0
+        _persistenceSeconds: 1
+      _surfaceMemoryResolution: 32
     _shadow:
       _isEnabled: 1
       _layers:
@@ -1487,6 +1547,15 @@ MonoBehaviour:
         _definition: {fileID: 0}
         _tagName: 
         _isBlocking: 0
+  _rangeDisplay:
+    _isEnabled: 0
+    _isSurfaceVisible: 1
+    _isBoundaryVisible: 1
+    _fillColor: {r: 0.05, g: 0.7, b: 1, a: 0.09}
+    _waveColor: {r: 0.05, g: 0.9, b: 1, a: 0.85}
+    _eraseColor: {r: 1, g: 0.45, b: 0.08, a: 0.85}
+    _boundaryColor: {r: 0.1, g: 0.8, b: 1, a: 0.32}
+    _waveWidth: 0.3
   _isGizmoVisible: 1
   _onStateChanged:
     m_PersistentCalls:
@@ -1530,6 +1599,8 @@ MonoBehaviour:
   _currentDistance: 6
   _minDistance: 2
   _maxDistance: 15
+  _marginPlayerWidth: 1.2
+  _marginPlayerHeight: 4
   _wheelStep: 0.2
   _controllerSpeed: 8
   _baseFollowSpeed: 15
@@ -1673,9 +1744,10 @@ MonoBehaviour:
   _fireShape: 0
   _fanRange: 6
   _fanHalfAngle: 40
-  _fanRingCount: 8
-  _fanRingFadeStart: 0.6
-  _fanRingFarWidthScale: 2
+  _fanCooldownSeconds: 0
+  _fanShotSeconds: 1
+  _fanShotSpeed: 20
+  _isFanAutoRepeat: 0
   _muzzle: {fileID: 6191001033493183197}
   _aimOrigin: {fileID: 0}
   _ignoreRoot: {fileID: 8114588384119620780}
@@ -1685,7 +1757,6 @@ MonoBehaviour:
   _triggerInteraction: 1
   _radius: 0.1
   _maxReflections: 8
-  _lineMaterial: {fileID: 0}
   _pointSpacing: 0.1
   _bendMode: 1
   _bendRange: 3
