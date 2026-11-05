@@ -49,8 +49,8 @@ PascalCase で記述し、動詞から始めることを基本とする。接頭
 
 ### 全体構成 [coding-rules 2.3]
 `MiraiSozo2027/Assets/` 直下は次の3つ。
-- `_Project/` 本番用(共有): `Scripts/`(`Player/` `Enemy/` `UI/` `Systems/` `Utils/`), `Prefabs/`, `Scenes/`, `Art/`, `Audio/`, `Animations/`, `Settings/`
-- `_Sandbox/` 個人の試作・検証用: `_Template/`(雛形。`Scripts/` `Prefabs/` `Scenes/` `Art/` `Audio/` `Animations/`)、`<名前>/`(`_Template` を複製して作成)
+- `_Project/` 本番用(共有): `Scripts/`(`Player/` `Enemy/` `UI/` `Systems/` `Utils/`), `Prefabs/`, `Scenes/`, `Models/`, `Textures/`, `Materials/`, `Sprites/`, `Effects/`, `Fonts/`, `Audio/`, `Animations/`, `Settings/`
+- `_Sandbox/` 個人の試作・検証用: `_Template/`(雛形。`Scripts/` `Prefabs/` `Scenes/` `Models/` `Textures/` `Materials/` `Sprites/` `Audio/` `Animations/`)、`<名前>/`(`_Template` を複製して作成)
 - `ThirdParty/` 外部アセット置き場
 - 禁止: `Misc` フォルダの作成 (分類できないものは適切なフォルダ名をチームで相談して決める)
 
