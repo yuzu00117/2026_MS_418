@@ -27,6 +27,16 @@
                     "priority": 0
                 },
                 {
+                    "name": "FocusAim",
+                    "type": "Button",
+                    "id": "e8b45c33-3f7f-48d9-b910-87e2e2b940ee",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
+                },
+                {
                     "name": "Fire",
                     "type": "Button",
                     "id": "6c2ab1b8-8984-453a-af3d-a3c78ae1679a",
@@ -683,6 +693,28 @@
                     "processors": "",
                     "groups": ";Gamepad",
                     "action": "EchoScan",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "7c20aadc-50ab-4c14-904e-bf5338a94b2e",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "FocusAim",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "6c5a0326-e41d-4248-845a-82d90e95f35d",
+                    "path": "<Gamepad>/leftTrigger",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Gamepad",
+                    "action": "FocusAim",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
