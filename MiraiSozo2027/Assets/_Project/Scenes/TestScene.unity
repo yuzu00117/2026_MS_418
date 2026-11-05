@@ -1055,6 +1055,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PhononkinesisTarget
   _releaseBehavior: 0
+  _inertiaDamping: 0.5
+  _diagonalUpwardThreshold: 0.7
   _canBeGrabbed: 1
 --- !u!1 &731642874
 GameObject:
@@ -1582,6 +1584,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PhononkinesisTarget
   _releaseBehavior: 0
+  _inertiaDamping: 0.5
+  _diagonalUpwardThreshold: 0.7
   _canBeGrabbed: 1
 --- !u!54 &899961374
 Rigidbody:
@@ -2188,6 +2192,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PhononkinesisTarget
   _releaseBehavior: 0
+  _inertiaDamping: 0.5
+  _diagonalUpwardThreshold: 0.7
   _canBeGrabbed: 1
 --- !u!54 &1177036395
 Rigidbody:
@@ -2341,6 +2347,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33c8cdbf026f6624ca5da32892ec487b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.Prototype::Aura.Prototype.DemoGimmickMover
+  _motionMode: 0
+  _endWaitSeconds: 1
+  _isActiveOnStart: 0
   _activeOffset: {x: 0, y: 2.6, z: 0}
   _speed: 1.5
 --- !u!23 &1210832819
@@ -2692,6 +2701,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33c8cdbf026f6624ca5da32892ec487b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.Prototype::Aura.Prototype.DemoGimmickMover
+  _motionMode: 0
+  _endWaitSeconds: 1
+  _isActiveOnStart: 0
   _activeOffset: {x: 0, y: 3.2, z: 0}
   _speed: 2
 --- !u!23 &1303517696
@@ -4275,6 +4287,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: PF_MainCamera
       objectReference: {fileID: 0}
+    - target: {fileID: 7150550199315190158, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
+      propertyPath: _adsDistance
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7150550199315190158, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
+      propertyPath: _adsTransitionDuration
+      value: 0.3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -4309,6 +4329,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 25ea442e8ad1ad744968855be702cbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTarget
+  _definition: {fileID: 0}
   _isManualRendererSelectionEnabled: 0
   _renderers: []
 --- !u!4 &1804882223
