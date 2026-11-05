@@ -123,6 +123,8 @@ flowchart LR
 
 > **📌 例外**: 共有物(ステージ用 Prefab など)を `_Project/` に直接用意することが目的の PR は、PR 本文にその旨を明記すれば `_Project/` へ直接追加してよいです。
 
+> **📌 例外**: 本番で使う素材(モデル・テクスチャ・マテリアル・スプライト・エフェクト・フォント・音・アニメーション)は、Sandbox を経由せず `_Project/` の該当フォルダ(`Models/` `Textures/` `Materials/` `Sprites/` `Effects/` `Fonts/` `Audio/` `Animations/`)へ直接追加してよいです。試作中・比較中など採用が決まっていない素材は `_Sandbox/<名前>/` に置いてください。
+
 ### 2.3 MiraiSozo2027/Assets/ 全体の構成
 
 ```
