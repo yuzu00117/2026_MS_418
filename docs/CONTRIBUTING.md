@@ -5,6 +5,8 @@
 
 > **📖 コーディングルール**: コーディングルールは [coding-rules.md](coding-rules.md) を参照してください。
 
+> **🎨 デザイナー向け**: GitHub Desktop を使った手順は [git-guide-for-designers.md](git-guide-for-designers.md) を参照してください。
+
 ---
 
 ## 1. ブランチ戦略
@@ -82,7 +84,7 @@ git push origin --delete feature/1001_player-movement
 
 > [!CAUTION]
 > **シーン・Prefab は同時編集しないでください。**  
-> 編集前に **事前宣言**（Slack 等で共有）し、同じファイルは **1人が担当** してください。
+> 編集前に **事前宣言**（Discord で共有）し、同じファイルは **1人が担当** してください。
 
 ---
 

@@ -41,7 +41,7 @@ PascalCase で記述し、動詞から始めることを基本とする。接頭
 - 作り方: Unity の Project ウィンドウで `_Sandbox/_Template` を右クリック → Duplicate → 自分の名前にリネーム
 - 禁止: Windows エクスプローラーでのコピー (`.meta` の GUID が重複し参照が壊れる。必ず Unity 上で Duplicate)
 - 禁止: `_Template` に個人の作業物を置くこと (雛形のため。作業はリネーム後のフォルダで行う)
-- 禁止: 他メンバーのフォルダ・共有アセット・シーン・Prefab の無断編集 (必要なら事前に Slack 等で宣言)
+- 禁止: 他メンバーのフォルダ・共有アセット・シーン・Prefab の無断編集 (必要なら事前に Discord で宣言)
 
 ### 作業の流れ [coding-rules 2.2]
 個人フォルダ(`_Sandbox/<名前>/`)で作業 → PR 作成 → レビュー・承認 → `_Project/` 配下の該当フォルダへ移動。シーンは担当ごとに分割し、同時編集を避ける。
@@ -91,7 +91,7 @@ PascalCase で記述し、動詞から始めることを基本とする。接頭
 - コミットしないフォルダ: `Library/`, `Temp/`, `Logs/`, `obj/`, `UserSettings/` など。`.gitignore` で除外されているか確認する
 - Asset Serialization は `Edit > Project Settings > Editor` で Force Text にする
 - 動画・高解像度テクスチャ・音源などの大容量素材はコミット前に相談する。Git LFS は現時点では使わない
-- シーン・Prefab は同時編集しない。編集前に事前宣言(Slack 等)し、同じファイルは1人が担当する
+- シーン・Prefab は同時編集しない。編集前に事前宣言(Discord)し、同じファイルは1人が担当する
 
 ## 6. 生成AI・素材 [coding-rules 6]
 
