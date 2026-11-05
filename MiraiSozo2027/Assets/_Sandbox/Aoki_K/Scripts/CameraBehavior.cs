@@ -53,7 +53,7 @@ public class CameraBehavior : MonoBehaviour
     [Tooltip("壁から離れた際に元の距離へ戻る補間速度")]
     [SerializeField] private float _distanceReturnSpeed = 12.0f;
     [Tooltip("フォノンキネシスで掴んでいるオブジェクトとのカメラ衝突を無視するか")]
-    [SerializeField] private bool _ignoreHeldObject = true;
+    [SerializeField] private bool _isIgnoreHeldObject = true;
 
     [Header("Player Transparency Settings (近距離時のプレイヤー透過)")]
     [Tooltip("プレイヤーが透け始めるカメラ距離")]
@@ -88,6 +88,11 @@ public class CameraBehavior : MonoBehaviour
     public float SensitivityY => _sensitivityY;
     public bool InvertX => _invertX;
     public bool InvertY => _invertY;
+
+    private const float MinOffsetDistance = 0.0001f; // フェード開始距離と終了距離の最小ギャップ
+    private const float MinFadeDistanceGap = 0.01f; // フェード開始距離と終了距離の最小ギャップ
+    private const float InvisibleAlphaThreshold = 0.001f; // 完全透明とみなすアルファ値の閾値
+    private const float OpaqueAlphaThreshold = 0.999f; // 不透明とみなすアルファ値の閾値
 
     /// <summary>
     /// オプション設定からカメラの感度・反転を反映する
@@ -185,8 +190,8 @@ public class CameraBehavior : MonoBehaviour
             Vector3 idealOffset = (cameraRotation * Vector3.right * _sideOffset)
                                 - (cameraRotation * Vector3.forward * _distance);
             float idealDistance = idealOffset.magnitude;
-
-            if (idealDistance > 0.0001f)
+            
+            if (idealDistance > MinOffsetDistance)
             {
                 Vector3 castDirection = idealOffset / idealDistance;
                 float collisionDistance = CalculateCollisionDistance(targetFocusPosition, castDirection, idealDistance);
@@ -236,7 +241,7 @@ public class CameraBehavior : MonoBehaviour
             QueryTriggerInteraction.Ignore
         );
 
-        Transform heldTargetTransform = (_ignoreHeldObject && _playerPhononkinesis != null && _playerPhononkinesis.HeldTarget != null)
+        Transform heldTargetTransform = (_isIgnoreHeldObject && _playerPhononkinesis != null && _playerPhononkinesis.HeldTarget != null)
             ? _playerPhononkinesis.HeldTarget.transform
             : null;
 
@@ -344,15 +349,15 @@ public class CameraBehavior : MonoBehaviour
     private void UpdatePlayerTransparency(float cameraDistance)
     {
         if (_playerRenderers.Count == 0) return;
-
-        float startDist = Mathf.Max(_fadeStartDistance, _fadeEndDistance + 0.01f);
+        
+        float startDist = Mathf.Max(_fadeStartDistance, _fadeEndDistance + MinFadeDistanceGap); // フェード開始距離と終了距離の最小ギャップを確保
         float targetAlpha = Mathf.Clamp01(Mathf.InverseLerp(_fadeEndDistance, startDist, cameraDistance));
 
         if (Mathf.Approximately(_currentPlayerAlpha, targetAlpha)) return;
         _currentPlayerAlpha = targetAlpha;
 
         // 完全透明距離以下の場合はRenderer自体を非表示にしてカメラNear平面へのめり込みを完全に防ぐ
-        if (targetAlpha <= 0.001f)
+        if (targetAlpha <= InvisibleAlphaThreshold)
         {
             for (int i = 0; i < _playerRenderers.Count; i++)
             {
@@ -374,9 +379,9 @@ public class CameraBehavior : MonoBehaviour
                 rend.enabled = true;
             }
         }
-
+        
         // 通常距離（不透明）に戻った場合
-        if (targetAlpha >= 0.999f)
+        if (targetAlpha >= OpaqueAlphaThreshold)
         {
             if (_isMaterialTransparent)
             {
