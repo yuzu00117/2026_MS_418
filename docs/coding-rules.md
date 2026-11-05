@@ -136,7 +136,12 @@ MiraiSozo2027/Assets/
 │   │   └── Utils/
 │   ├── Prefabs/
 │   ├── Scenes/
-│   ├── Art/
+│   ├── Models/               # 3Dモデル
+│   ├── Textures/             # 3D用テクスチャ
+│   ├── Materials/            # マテリアル
+│   ├── Sprites/              # UI画像・2D画像
+│   ├── Effects/              # エフェクト
+│   ├── Fonts/                # フォント
 │   ├── Audio/
 │   ├── Animations/
 │   └── Settings/
@@ -145,7 +150,10 @@ MiraiSozo2027/Assets/
 │   │   ├── Scripts/
 │   │   ├── Prefabs/
 │   │   ├── Scenes/
-│   │   ├── Art/
+│   │   ├── Models/
+│   │   ├── Textures/
+│   │   ├── Materials/
+│   │   ├── Sprites/
 │   │   ├── Audio/
 │   │   └── Animations/
 │   └── <名前>/               # 個人作業フォルダ(_Template を複製して作成)
