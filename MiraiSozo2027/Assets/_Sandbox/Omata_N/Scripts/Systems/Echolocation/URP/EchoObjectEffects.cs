@@ -429,7 +429,6 @@ namespace Echo.Echolocation
             if (rule.Fill.IsEnabled) RecordFill(graph, mask, current, accumulated, item, backend.Composite, now, screenRect);
         }
 
-
         private static TextureHandle RecordWholeObjectContact(RenderGraph graph, EchoController controller,
             List<EchoRenderItem> items, Bounds bounds, TextureHandle shadows, EchoUrpRenderBackend backend)
         {

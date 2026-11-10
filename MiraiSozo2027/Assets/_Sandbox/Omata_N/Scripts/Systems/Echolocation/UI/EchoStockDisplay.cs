@@ -16,6 +16,14 @@ namespace Echo.Echolocation
         // 画面サイズが変わっても同じ見た目の大きさにするための基準。幅と高さを半々で合わせる。
         private static readonly Vector2 ReferenceResolution = new Vector2(1920, 1080);
         private const float WidthHeightBalance = .5f;
+        // TextAnchorは左上から3列×3行の順に並ぶ。列・行の番号を0、0.5、1の基準点へ変換する。
+        private const int AnchorColumnCount = 3;
+        private const float AnchorStep = .5f;
+        private const float AnchorCenter = .5f;
+        private const int LeftColumn = 0;
+        private const int CenterColumn = 1;
+        // 中央からのずれ（-0.5〜0.5）を、画面の内側へ向かう-1〜1の向きに変える係数。
+        private const float InwardDirectionScale = -2;
 
         [SerializeField, Tooltip("表示するController。未設定ならシーン内から探します。")]
         private EchoController _controller;
@@ -137,7 +145,7 @@ namespace Echo.Echolocation
             var pivot = GetPivot(_corner);
             var panel = CreateRect("Panel", canvasObject.transform);
             panel.anchorMin = panel.anchorMax = panel.pivot = pivot;
-            panel.anchoredPosition = new Vector2((pivot.x - .5f) * -2 * _margin.x, (pivot.y - .5f) * -2 * _margin.y);
+            panel.anchoredPosition = new Vector2((pivot.x - AnchorCenter) * InwardDirectionScale * _margin.x, (pivot.y - AnchorCenter) * InwardDirectionScale * _margin.y);
             var layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
             layout.childAlignment = _corner;
             layout.spacing = BarSpacing;
@@ -178,13 +186,13 @@ namespace Echo.Echolocation
         private static Vector2 GetPivot(TextAnchor corner)
         {
             int index = (int)corner;
-            return new Vector2(index % 3 * .5f, 1 - index / 3 * .5f);
+            return new Vector2(index % AnchorColumnCount * AnchorStep, 1 - index / AnchorColumnCount * AnchorStep);
         }
 
         private static TextAlignmentOptions GetTextAlignment(TextAnchor corner)
         {
-            int column = (int)corner % 3;
-            return column == 0 ? TextAlignmentOptions.Left : column == 1 ? TextAlignmentOptions.Center : TextAlignmentOptions.Right;
+            int column = (int)corner % AnchorColumnCount;
+            return column == LeftColumn ? TextAlignmentOptions.Left : column == CenterColumn ? TextAlignmentOptions.Center : TextAlignmentOptions.Right;
         }
     }
 }
