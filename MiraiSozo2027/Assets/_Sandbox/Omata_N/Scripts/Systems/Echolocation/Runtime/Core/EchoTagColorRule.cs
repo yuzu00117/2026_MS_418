@@ -88,7 +88,7 @@ namespace Echo.Echolocation
         [NonSerialized] private EchoTagColorRule _transitionTarget;
 
         /// <summary>通常の描画を隠すか。隠す対象は透明状態から始まり、照射で実体化する。</summary>
-        public bool IsNormalRenderingHidden { get => _isNormalRenderingHidden; set { _isNormalRenderingHidden = value; InvalidateDisplayRules(); } }
+        public bool IsNormalRenderingHidden { get => _isNormalRenderingHidden; set => _isNormalRenderingHidden = value; }
         /// <summary>透明・照射中に使う表示。</summary>
         public EchoDisplaySettings Irradiated => _irradiated ??= new EchoDisplaySettings();
         public EchoMaterializationSettings Materialization => _materialization ??= new EchoMaterializationSettings();
@@ -116,23 +116,30 @@ namespace Echo.Echolocation
         public EchoTagColorRule GetDisplayRule(EchoMaterializationState state)
         {
             if (!IsNormalRenderingHidden || state == EchoMaterializationState.Materialized) return this;
-            return _irradiatedRule ??= CreateIrradiatedRule();
+            if (_irradiatedRule == null)
+            {
+                _irradiatedRule = (EchoTagColorRule)MemberwiseClone();
+                _irradiatedRule._irradiatedRule = null;
+                _irradiatedRule._transitionTarget = this;
+            }
+            SyncIrradiatedRule(_irradiatedRule);
+            return _irradiatedRule;
         }
 
-        /// <summary>照射中の表示用に作った設定を捨てる。設定を変更した後に呼ぶ。</summary>
-        public void InvalidateDisplayRules() => _irradiatedRule = null;
-
         // 描画側は1つのEchoTagColorRuleを前提に組まれているため、表示部分だけを差し替えた複製を渡す。
-        EchoTagColorRule CreateIrradiatedRule()
+        // 毎フレーム複製すると確保が発生するため複製は使い回し、実行中に他のスクリプトから変えた設定も反映されるよう使うたびに値を写す。
+        void SyncIrradiatedRule(EchoTagColorRule rule)
         {
             var display = Irradiated;
-            var rule = (EchoTagColorRule)MemberwiseClone();
-            rule._fill = display.Fill.Copy(); rule._outline = display.Outline.Copy(); rule._original = display.Original.Copy();
+            // 参照を共有し、照射中の表示①②③の変更がそのまま描画に届くようにする。
+            rule._fill = display.Fill; rule._outline = display.Outline; rule._original = display.Original;
             rule._color = display.Color; rule._outlineColor = display.OutlineColor;
             rule._outlineWidth = display.OutlineWidth; rule._originalOpacity = display.OriginalOpacity;
-            rule._irradiatedRule = null;
-            rule._transitionTarget = this;
-            return rule;
+            // 公開プロパティで実行中に変更できる、表示以外の設定。
+            rule._isEnabled = _isEnabled; rule._tagName = _tagName; rule._definition = _definition;
+            rule._isNormalRenderingHidden = _isNormalRenderingHidden; rule._contactResolution = _contactResolution;
+            rule._fillOcclusion = _fillOcclusion; rule._outlineOcclusion = _outlineOcclusion; rule._originalOcclusion = _originalOcclusion;
+            rule._materialization = Materialization;
         }
 
         /// <summary>①の色。progressは実体化までの進み具合（0～1）。</summary>
@@ -169,13 +176,11 @@ namespace Echo.Echolocation
         bool IsTransitioning(EchoEffectSettings effect) => _transitionTarget != null && effect.IsSeamlessTransition;
         static Color WithoutAlpha(Color color) => new Color(color.r, color.g, color.b, 0);
 
-        void ISerializationCallbackReceiver.OnBeforeSerialize() { }
+        // 新規作成したデータが0のまま保存されると、次の読み込みで旧データとして移行され設定が上書きされるため、保存時に現行の版を書く。
+        // 旧データは保存より先に読み込み時の移行を通るため、ここで版を進めても移行は失われない。
+        void ISerializationCallbackReceiver.OnBeforeSerialize() => _settingsVersion = CurrentSettingsVersion;
         // 既存アセットを開き直さなくても新しい設定で動くよう、読み込み時に移行する。Unity APIは使わないため読み込み中でも安全。
-        void ISerializationCallbackReceiver.OnAfterDeserialize()
-        {
-            MigrateSettings();
-            InvalidateDisplayRules();
-        }
+        void ISerializationCallbackReceiver.OnAfterDeserialize() => MigrateSettings();
 
         /// <summary>照射中の表示を追加する前のデータを、見た目が変わらないように移行する。</summary>
         public void MigrateSettings()
@@ -202,7 +207,6 @@ namespace Echo.Echolocation
         {
             Irradiated.Color = _color;
             Irradiated.Fill.CopyFrom(Fill);
-            InvalidateDisplayRules();
         }
 
         /// <summary>実体化しているときの②アウトラインだけを、照射中の表示へ写す。</summary>
@@ -211,7 +215,6 @@ namespace Echo.Echolocation
             Irradiated.OutlineColor = _outlineColor;
             Irradiated.OutlineWidth = _outlineWidth;
             Irradiated.Outline.CopyFrom(Outline);
-            InvalidateDisplayRules();
         }
 
         /// <summary>実体化しているときの③元のマテリアルだけを、照射中の表示へ写す。</summary>
@@ -219,7 +222,6 @@ namespace Echo.Echolocation
         {
             Irradiated.OriginalOpacity = _originalOpacity;
             Irradiated.Original.CopyFrom(Original);
-            InvalidateDisplayRules();
         }
         public bool NeedsWholeObjectContact => Fill.NeedsWholeObjectContact || Outline.NeedsWholeObjectContact ||
             Original.NeedsWholeObjectContact;
@@ -243,7 +245,6 @@ namespace Echo.Echolocation
             _originalOpacity = FiniteClamp(_originalOpacity, 0, 1, 1);
             _contactResolution = Mathf.ClosestPowerOfTwo(Mathf.Clamp(_contactResolution, MinimumContactResolution, MaximumContactResolution));
             Irradiated.Validate();
-            InvalidateDisplayRules();
         }
 
         internal static float FiniteClamp(float value, float min, float max, float fallback) =>

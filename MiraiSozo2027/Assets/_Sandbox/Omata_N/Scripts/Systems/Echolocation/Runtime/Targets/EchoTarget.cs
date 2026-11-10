@@ -94,6 +94,8 @@ namespace Echo.Echolocation
         private readonly EchoMaterializationTracker _materialization = new EchoMaterializationTracker();
         private readonly EchoColliderSwitch _colliderSwitch = new EchoColliderSwitch();
         private bool _isMaterializationInitialized;
+        // 前回の更新で通常の描画を隠す設定だったか。隠す設定に切り替わった瞬間を見つけるために使う。
+        private bool _wasNormalRenderingHidden;
 
         /// <summary>透明・照射中・実体化の状態。通常の描画を隠さない専用タグでは常に実体化。</summary>
         public EchoMaterializationState State { get { EnsureMaterializationInitialized(); return _materialization.State; } }
@@ -130,7 +132,11 @@ namespace Echo.Echolocation
             var settings = MaterializationSettings;
             if (settings == null) return;
             EnsureMaterializationInitialized();
-            if (_materialization.Materialize(settings.RequiredSeconds)) HandleStateChanged(settings);
+            var previous = _materialization.State;
+            // 先に隠す設定への切り替えを済ませ、次の更新で透明に戻されないようにする。
+            RestartIfHidingStarted(settings);
+            _materialization.Materialize(settings.RequiredSeconds);
+            if (_materialization.State != previous) HandleStateChanged(settings);
         }
 
         /// <summary>蓄積を捨てて透明状態へ戻す。通常の描画を隠さない専用タグでは何もしない。</summary>
@@ -139,7 +145,8 @@ namespace Echo.Echolocation
             var settings = MaterializationSettings;
             if (settings == null) return;
             EnsureMaterializationInitialized();
-            if (_materialization.ResetToTransparent()) HandleStateChanged(settings);
+            bool hasRestarted = RestartIfHidingStarted(settings);
+            if (_materialization.ResetToTransparent() || hasRestarted) HandleStateChanged(settings);
         }
 
         // 初回は前回の状態がないため、通知せずに現在の設定へ合わせる。
@@ -148,15 +155,26 @@ namespace Echo.Echolocation
             if (_isMaterializationInitialized) return;
             _isMaterializationInitialized = true;
             var settings = MaterializationSettings;
+            _wasNormalRenderingHidden = settings != null;
             if (settings == null) _materialization.ForceMaterialized();
             else _materialization.ResetToTransparent();
             ApplyColliders(settings);
+        }
+
+        // 隠さない設定の間は実体化に固定しているため、定義を後から設定した場合や実行中に隠す設定へ切り替えた場合は、
+        // そのままだと実体化したまま残り通常の描画が隠れない。隠す対象として透明から始め直す。状態が変わったらtrue。
+        bool RestartIfHidingStarted(EchoMaterializationSettings settings)
+        {
+            bool hasHidingStarted = settings != null && !_wasNormalRenderingHidden;
+            _wasNormalRenderingHidden = settings != null;
+            return hasHidingStarted && _materialization.ResetToTransparent();
         }
 
         void UpdateMaterialization()
         {
             EnsureMaterializationInitialized();
             var settings = MaterializationSettings;
+            bool hasRestarted = RestartIfHidingStarted(settings);
             if (settings == null)
             {
                 if (_materialization.ForceMaterialized()) HandleStateChanged(null);
@@ -165,6 +183,12 @@ namespace Echo.Echolocation
             }
             // 照射の判定にはGPUの接触結果の読み戻しが必要なため、隠す対象は常に追跡する。
             _isRevealTracked = true;
+            // 照射時間は透明に戻した次の更新から数える。
+            if (hasRestarted)
+            {
+                HandleStateChanged(settings);
+                return;
+            }
             float delta = _timeMode == EchoTimeMode.Scaled ? Time.deltaTime : Time.unscaledDeltaTime;
             if (_materialization.Advance(_isInContact && !IsStale, delta, settings)) HandleStateChanged(settings);
             // 専用タグの設定が実行中に変わっても反映する。

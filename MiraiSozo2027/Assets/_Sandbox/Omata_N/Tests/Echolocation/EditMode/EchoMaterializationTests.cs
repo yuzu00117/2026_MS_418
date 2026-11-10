@@ -102,6 +102,38 @@ namespace Echo.Echolocation.Tests
         }
 
         [Test]
+        public void IrradiatedRuleReflectsChangesMadeAfterCreation()
+        {
+            var rule = new EchoTagColorRule { IsNormalRenderingHidden = true };
+            var irradiated = rule.GetDisplayRule(EchoMaterializationState.Irradiated);
+            rule.Irradiated.Fill.IsEnabled = true;
+            rule.Irradiated.Color = Color.red;
+            rule.IsEnabled = false;
+            Assert.That(rule.GetDisplayRule(EchoMaterializationState.Irradiated), Is.SameAs(irradiated), "毎フレーム作り直さない");
+            Assert.That(irradiated.IsFillEnabled, Is.True);
+            Assert.That(irradiated.Color, Is.EqualTo(Color.red));
+            Assert.That(irradiated.IsEnabled, Is.False);
+        }
+
+        [Test]
+        public void NewRuleKeepsHiddenSettingAfterSaveAndLoad()
+        {
+            var definition = ScriptableObject.CreateInstance<EchoTagDefinition>();
+            var restored = ScriptableObject.CreateInstance<EchoTagDefinition>();
+            try
+            {
+                // ③を表示しない新規データは、旧データとして移行されると隠す設定が外れてしまう。
+                definition.Settings.Original.IsEnabled = false;
+                definition.Settings.IsNormalRenderingHidden = true;
+                definition.Settings.Irradiated.OutlineColor = Color.red;
+                JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(definition), restored);
+                Assert.That(restored.Settings.IsNormalRenderingHidden, Is.True);
+                Assert.That(restored.Settings.Irradiated.OutlineColor, Is.EqualTo(Color.red));
+            }
+            finally { Object.DestroyImmediate(definition); Object.DestroyImmediate(restored); }
+        }
+
+        [Test]
         public void SeamlessTransitionBlendsTowardMaterializedDisplay()
         {
             var rule = new EchoTagColorRule { IsNormalRenderingHidden = true };
