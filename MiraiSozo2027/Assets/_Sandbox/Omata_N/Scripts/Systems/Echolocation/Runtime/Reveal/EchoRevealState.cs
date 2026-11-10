@@ -11,7 +11,6 @@ namespace Echo.Echolocation
         [SerializeField] private EchoSurfaceBinding[] _surfaces = Array.Empty<EchoSurfaceBinding>();
         public EchoRevealWorld World => _world;
         public IReadOnlyList<EchoSurfaceBinding> Surfaces => _surfaces;
-        public EchoTag Tag => GetComponent<EchoTag>();
         // GPUのピクセル可視性をCPUの物理状態として公開しない。旧APIは非稼働を返す。
         public bool IsActive => false;
         public bool HasActiveCollision => false;
