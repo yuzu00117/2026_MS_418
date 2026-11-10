@@ -85,6 +85,10 @@ namespace Echo.Echolocation
             return rule.HasAnyEffect;
         }
 
+        // 実体化は透明化の解除でもあるため、実体化中は通常の描画に戻す。
+        private static bool IsNormalRenderingHidden(EchoTagColorRule rule, EchoTarget owner) =>
+            rule.IsNormalRenderingHidden && owner.State != EchoMaterializationState.Materialized;
+
         /// <summary>専用形状取得を追加する。再収集前に登録する。</summary>
         public void AddAdapter(IEchoGeometryAdapter adapter)
         {
@@ -145,7 +149,7 @@ namespace Echo.Echolocation
                 if (entry.Owner && (!entry.Owner.isActiveAndEnabled || !entry.IsOwned)) continue;
                 var owner = entry.Owner ? entry.Owner.gameObject : renderer.gameObject;
                 if ((layers & (1 << owner.layer)) == 0 || (camera.cullingMask & (1 << renderer.gameObject.layer)) == 0) continue;
-                if (!TryGetRule(tags, entry, owner, out var rule) || !rule.IsOriginalEnabled || !rule.IsOriginalHiddenOutsideEcho) continue;
+                if (!TryGetRule(tags, entry, owner, out var rule) || !IsNormalRenderingHidden(rule, entry.Owner)) continue;
 
                 bool isSupported = false;
                 foreach (var adapter in _adapters)
@@ -218,14 +222,18 @@ namespace Echo.Echolocation
                     GameObject owner = entry.Owner ? entry.Owner.gameObject : renderer.gameObject;
                     if ((layers & (1 << owner.layer)) == 0 || (camera.cullingMask & (1 << renderer.gameObject.layer)) == 0)
                         continue;
-                    if (!TryGetRule(tags, entry, owner, out var rule) || (!rule.IsOriginalEnabled && !rule.IsOutlineEnabled && (!rule.IsFillEnabled || rule.Color.a <= 0)))
+                    if (!TryGetRule(tags, entry, owner, out var baseRule))
+                        continue;
+                    var rule = baseRule.GetDisplayRule(entry.Owner.State);
+                    // 隠す対象は表示がなくても、実体化の判定に使う接触を調べるため描画対象に残す。
+                    if (!rule.IsNormalRenderingHidden && !rule.IsOriginalEnabled && !rule.IsOutlineEnabled && (!rule.IsFillEnabled || rule.Color.a <= 0))
                         continue;
                     if (!EchoLodSelector.Includes(entry.Group, entry.Lods, renderer, camera))
                         continue;
                     foreach (var adapter in _adapters)
                         if (adapter.TryGetGeometry(renderer, out var mesh))
                         {
-                            outputItems.Add(new EchoRenderItem(renderer, rule, mesh.subMeshCount, entry.Owner, entry.Reveal));
+                            outputItems.Add(new EchoRenderItem(renderer, rule, mesh.subMeshCount, entry.Owner, entry.Reveal, entry.Owner.MaterializationProgress));
                             break;
                         }
                 }

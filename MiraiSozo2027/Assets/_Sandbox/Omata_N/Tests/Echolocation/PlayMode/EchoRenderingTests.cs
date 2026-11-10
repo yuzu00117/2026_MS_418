@@ -70,6 +70,16 @@ namespace Echo.Echolocation.Tests
             yield return null;
         }
 
+        // 旧仕様の「③が有効なら通常時は隠し、エコーが当たった時だけ表示する」挙動を再現する。
+        // 実体化すると通常の描画に戻るため、テスト中は実体化しない長さにして照射中の表示だけを検証する。
+        private const float NeverMaterializeSeconds = 3600;
+        private static void UseLegacyHiddenDisplay(EchoTagColorRule rule)
+        {
+            rule.IsNormalRenderingHidden = true;
+            rule.Materialization.RequiredSeconds = NeverMaterializeSeconds;
+            rule.CopyMaterializedDisplayToIrradiated();
+        }
+
         private EchoTagDefinition AssignTag(GameObject target, Color color, bool hasFill = true)
         {
             var definition = ScriptableObject.CreateInstance<EchoTagDefinition>(); _definitions.Add(definition);
@@ -146,6 +156,7 @@ namespace Echo.Echolocation.Tests
                 _controller.Settings.OcclusionMode = EchoOcclusionMode.VisibleOnly;
             _definition.Settings.Fill.IsThroughWalls = false;
             _definition.Settings.Fill.IsThroughWalls = false;
+                UseLegacyHiddenDisplay(rule);
                 _controller.SetScanEnabled(true);
                 yield return null;
                 yield return null;
@@ -236,6 +247,7 @@ namespace Echo.Echolocation.Tests
             rule.IsFillEnabled = false;
             rule.IsOriginalEnabled = true;
             rule.OriginalHoldDuration = 1;
+            UseLegacyHiddenDisplay(rule);
             _mat.SetColor("_BaseColor", Color.red);
             _camera.transform.rotation = Quaternion.Euler(0, 180, 0);
             _controller.SetScanEnabled(true);
@@ -258,6 +270,7 @@ namespace Echo.Echolocation.Tests
             rule.IsFillEnabled = false;
             rule.IsOriginalEnabled = true;
             rule.OriginalHoldDuration = .6f;
+            UseLegacyHiddenDisplay(rule);
             _mat.SetColor("_BaseColor", Color.red);
             _controller.SetScanEnabled(true);
             yield return null;
@@ -287,6 +300,7 @@ namespace Echo.Echolocation.Tests
             rule.IsFillEnabled = false;
             rule.IsOriginalEnabled = true;
             rule.OriginalHoldDuration = 0;
+            UseLegacyHiddenDisplay(rule);
             _mat.SetColor("_BaseColor", Color.red);
             _controller.SetScanEnabled(true);
             yield return null;
@@ -328,6 +342,7 @@ namespace Echo.Echolocation.Tests
             var rule = _controller.Settings.TagColorRules[0];
             rule.IsFillEnabled = false;
             rule.IsOriginalEnabled = true;
+            UseLegacyHiddenDisplay(rule);
             _controller.SetScanEnabled(true);
             yield return null;
             yield return null;
@@ -363,6 +378,7 @@ namespace Echo.Echolocation.Tests
             rule.IsOriginalEnabled = true;
             rule.IsOutlineEnabled = true;
             rule.OutlineColor = Color.green;
+            UseLegacyHiddenDisplay(rule);
             _controller.RefreshTargets();
             _controller.SetScanEnabled(true);
             yield return null;
@@ -412,6 +428,7 @@ namespace Echo.Echolocation.Tests
             rule.OutlineColor = Color.green;
             rule.IsOriginalEnabled = true;
             rule.OriginalHoldDuration = .3f;
+            UseLegacyHiddenDisplay(rule);
             _mat.SetColor("_BaseColor", Color.red);
             yield return null;
             yield return null;

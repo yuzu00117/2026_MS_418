@@ -39,6 +39,27 @@ namespace Echo.Echolocation.Editor
             if (GUILayout.Button("子Rendererの登録を更新"))
                 foreach (var selected in targets)
                     ((EchoTarget)selected).RefreshRenderers();
+            DrawRuntimeState();
+        }
+
+        // 実体化の進み具合は実行中にしか変わらないため、再生中だけ毎フレーム描き直す。
+        public override bool RequiresConstantRepaint() => Application.isPlaying;
+
+        private void DrawRuntimeState()
+        {
+            if (!Application.isPlaying || targets.Length != 1) return;
+            var echoTarget = (EchoTarget)target;
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("実行中の状態", EditorStyles.boldLabel);
+            using (new EditorGUI.DisabledScope(true))
+                EditorGUILayout.EnumPopup("状態", echoTarget.State);
+            var rect = EditorGUILayout.GetControlRect();
+            EditorGUI.ProgressBar(rect, echoTarget.MaterializationProgress, $"実体化 {echoTarget.MaterializationProgress:P0}（照射 {echoTarget.IrradiationSeconds:F2}秒）");
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("実体化させる")) echoTarget.Materialize();
+                if (GUILayout.Button("透明に戻す")) echoTarget.ResetToTransparent();
+            }
         }
     }
 }

@@ -62,7 +62,7 @@ namespace Echo.Echolocation.Editor
             if (property.FindPropertyRelative("_isOriginalEnabled").boolValue)
             {
                 DrawField("_revealMode", "表示範囲");
-                DrawField("_isOriginalHiddenOutsideEcho", "通常時は非表示にする");
+                DrawField("_isNormalRenderingHidden", "通常時は非表示にする");
                 DrawField("_originalHoldDuration", "全体表示の残存（秒）");
                 DrawField("_originalOpacity", "元の見た目の不透明度");
                 DrawField("_originalOcclusion", "元マテリアルの壁越し表示");

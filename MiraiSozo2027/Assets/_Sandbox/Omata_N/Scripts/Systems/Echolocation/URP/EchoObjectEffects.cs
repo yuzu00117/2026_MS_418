@@ -318,7 +318,8 @@ namespace Echo.Echolocation
         {
             var item = items[0];
             var rule = item.Rule;
-            if (rule.IsOriginalEnabled && rule.IsOriginalHiddenOutsideEcho)
+            // 通常の描画に戻った実体化中の対象は元から見えているため、③を重ねて描かない。
+            if (rule.IsOriginalEnabled && HasHiddenRenderer(items))
             {
                 var originalMask = mask;
                 var originalDesc = desc;
@@ -392,7 +393,7 @@ namespace Echo.Echolocation
                         ctx.cmd.SetGlobalFloat(OriginalOcclusionId, passData.Occlusion == EchoOcclusionMode.VisibleOnly ? 1 : 0);
                         ctx.cmd.SetGlobalTexture(SceneId, passData.Scene);
                         BindEffect(passData, ctx);
-                        ctx.cmd.SetGlobalFloat(OpacityId, passData.Item.Rule.OriginalOpacity);
+                        ctx.cmd.SetGlobalFloat(OpacityId, passData.Item.Rule.GetOriginalOpacity(passData.Item.MaterializationProgress));
                         BlitInRect(ctx, passData, OriginalPass);
                     });
                 }
@@ -415,13 +416,13 @@ namespace Echo.Echolocation
                 builder.AllowGlobalStateModification(true);
                 builder.SetRenderFunc((Data passData, RasterGraphContext ctx) =>
                 {
-                    var outlineColor = passData.Item.Rule.OutlineColor;
+                    var outlineColor = passData.Item.Rule.GetOutlineColor(passData.Item.MaterializationProgress);
                     if (QualitySettings.activeColorSpace == ColorSpace.Linear) outlineColor = outlineColor.linear;
                     ctx.cmd.SetGlobalTexture(HistoryId, passData.Previous);
                     BindEffect(passData, ctx);
                     ctx.cmd.SetGlobalVector(SizeId, passData.Size);
                     ctx.cmd.SetGlobalVector(OutlineColorId, outlineColor);
-                    ctx.cmd.SetGlobalFloat(OutlineWidthId, passData.Item.Rule.OutlineWidth);
+                    ctx.cmd.SetGlobalFloat(OutlineWidthId, passData.Item.Rule.GetOutlineWidth(passData.Item.MaterializationProgress));
                     ctx.cmd.SetGlobalFloat(OutlineOcclusionId, passData.Occlusion == EchoOcclusionMode.VisibleOnly ? 1 : 0);
                     BlitInRect(ctx, passData, OutlinePass);
                 });
@@ -529,10 +530,17 @@ namespace Echo.Echolocation
             builder.SetRenderFunc((Data passData, RasterGraphContext ctx) =>
             {
                 BindEffect(passData, ctx); ctx.cmd.SetGlobalTexture(HistoryId, passData.Previous);
-                var color = QualitySettings.activeColorSpace == ColorSpace.Linear ? passData.Item.Rule.Color.linear : passData.Item.Rule.Color;
+                var fillColor = passData.Item.Rule.GetFillColor(passData.Item.MaterializationProgress);
+                var color = QualitySettings.activeColorSpace == ColorSpace.Linear ? fillColor.linear : fillColor;
                 ctx.cmd.SetGlobalVector(OutlineColorId, color);
                 BlitInRect(ctx, passData, FillPass);
             });
+        }
+        static bool HasHiddenRenderer(List<EchoRenderItem> items)
+        {
+            foreach (var member in items)
+                if (member.Renderer && EchoTargetRegistry.GetInvisibleMaterials(member.Renderer) != null) return true;
+            return false;
         }
         static int FindForwardPass(Material material)
         {

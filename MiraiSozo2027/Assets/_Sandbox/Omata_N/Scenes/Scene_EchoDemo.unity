@@ -9935,7 +9935,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _settings._scanMode
-      value: 2
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _settings._angleDegrees
@@ -10126,6 +10126,14 @@ PrefabInstance:
       value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _settings._tagColorRules.Array.data[0]._isFillEnabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _settings._tagColorRules.Array.data[1]._isFillEnabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _settings._tagColorRules.Array.data[3]._glitch._speed
       value: 5
       objectReference: {fileID: 0}
@@ -10194,11 +10202,27 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _settings._tagColorRules.Array.data[3]._settingsVersion
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _settings._tagColorRules.Array.data[0]._isOutlineEnabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _settings._tagColorRules.Array.data[0]._outlineOcclusion
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _settings._tagColorRules.Array.data[1]._isOutlineEnabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _settings._tagColorRules.Array.data[1]._outlineOcclusion
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _settings._tagColorRules.Array.data[2]._isOutlineEnabled
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
@@ -10214,12 +10238,20 @@ PrefabInstance:
       value: 1024
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _settings._tagColorRules.Array.data[0]._isOriginalEnabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _settings._tagColorRules.Array.data[0]._originalOcclusion
       value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _settings._tagColorRules.Array.data[1]._contactResolution
       value: 1024
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _settings._tagColorRules.Array.data[1]._isOriginalEnabled
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _settings._tagColorRules.Array.data[1]._originalOcclusion
@@ -10239,6 +10271,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _settings._tagColorRules.Array.data[3]._glitch._isEnabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _settings._tagColorRules.Array.data[3]._isOriginalEnabled
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
@@ -10263,6 +10299,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _settings._tagColorRules.Array.data[3]._hideOriginalOutsideEcho
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _settings._tagColorRules.Array.data[3]._irradiated._outlineWidth
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _settings._tagColorRules.Array.data[3]._isOriginalHiddenOutsideEcho
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
