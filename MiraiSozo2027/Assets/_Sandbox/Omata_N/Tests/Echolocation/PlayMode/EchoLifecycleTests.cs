@@ -155,5 +155,29 @@ namespace Echo.Echolocation.Tests
             yield return null;
             Assert.That(controller.FollowWaveRadius, Is.LessThan(0));
         }
+
+        [UnityTest]
+        public IEnumerator HidingEnabledAfterAddComponentStartsTransparent()
+        {
+            var definition = ScriptableObject.CreateInstance<EchoTagDefinition>();
+            try
+            {
+                // AddComponentの時点で初期化されるため、定義は後から設定される。
+                _go = new GameObject("Late definition target", typeof(EchoTarget));
+                var target = _go.GetComponent<EchoTarget>();
+                Assert.That(target.State, Is.EqualTo(EchoMaterializationState.Materialized), "隠す設定がない間は実体化");
+                definition.Settings.IsNormalRenderingHidden = true;
+                target.Definition = definition;
+                yield return null;
+                Assert.That(target.State, Is.EqualTo(EchoMaterializationState.Transparent), "定義を後から設定しても透明から始める");
+                definition.Settings.IsNormalRenderingHidden = false;
+                yield return null;
+                Assert.That(target.State, Is.EqualTo(EchoMaterializationState.Materialized));
+                definition.Settings.IsNormalRenderingHidden = true;
+                yield return null;
+                Assert.That(target.State, Is.EqualTo(EchoMaterializationState.Transparent), "実行中に隠す設定へ切り替えても透明に戻す");
+            }
+            finally { Object.Destroy(definition); }
+        }
     }
 }

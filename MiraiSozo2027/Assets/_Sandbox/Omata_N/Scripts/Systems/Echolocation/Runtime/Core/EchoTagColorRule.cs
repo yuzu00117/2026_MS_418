@@ -6,11 +6,16 @@ namespace Echo.Echolocation
 {
     /// <summary>タグ完全一致による表示色。アルファは不透明度。</summary>
     [Serializable]
-    public sealed class EchoTagColorRule
+    public sealed class EchoTagColorRule : ISerializationCallbackReceiver
     {
-        private const float DefaultOutlineWidth = 3;
-        private const float MinimumOutlineWidth = 1;
-        private const float MaximumOutlineWidth = 16;
+        // 照射中の表示（EchoDisplaySettings）と同じ範囲にそろえるため共有する。
+        internal const float DefaultOutlineWidth = 3;
+        internal const float MinimumOutlineWidth = 1;
+        internal const float MaximumOutlineWidth = 16;
+        // 照射中の表示を追加する前のデータは0のまま読み込まれる。
+        private const int CurrentSettingsVersion = 1;
+        // 実体化すると通常の描画が完全に見えるため、③はその見た目（不透明度1）へ近づける。
+        private const float MaterializedOriginalOpacity = 1;
         private const float DefaultOriginalHoldDuration = 2;
         private const float MaximumHoldDuration = 3600;
         private const int DefaultContactResolution = 256;
@@ -68,10 +73,25 @@ namespace Echo.Echolocation
         [UnityEngine.Serialization.FormerlySerializedAs("_originalEnabled")]
         private bool _isOriginalEnabled;
         public bool IsOriginalEnabled { get => Original.IsEnabled; set { _isOriginalEnabled = value; Original.IsEnabled = value; } }
-        [SerializeField, Tooltip("このタグの通常描画を隠します。Controller無効化時は元の状態に戻します。")]
+        // 旧仕様では③元のマテリアル表示の中の設定だった。移行時に_isNormalRenderingHiddenへ引き継ぐためだけに残す。
+        [SerializeField]
         [UnityEngine.Serialization.FormerlySerializedAs("_hideOriginalOutsideEcho")]
         private bool _isOriginalHiddenOutsideEcho = true;
-        public bool IsOriginalHiddenOutsideEcho { get => _isOriginalHiddenOutsideEcho; set => _isOriginalHiddenOutsideEcho = value; }
+        [SerializeField, Tooltip("このタグの通常描画を隠し、透明状態から始めます。Controller無効化時は元の状態に戻します。")]
+        private bool _isNormalRenderingHidden;
+        [SerializeField] private EchoDisplaySettings _irradiated = new EchoDisplaySettings();
+        [SerializeField] private EchoMaterializationSettings _materialization = new EchoMaterializationSettings();
+        // 新規作成時も0だが、移行しても既定値が変わらないため問題ない。
+        [SerializeField] private int _settingsVersion;
+        [NonSerialized] private EchoTagColorRule _irradiatedRule;
+        // 照射中の表示用の複製だけが持つ、移行先（実体化しているときの表示）。
+        [NonSerialized] private EchoTagColorRule _transitionTarget;
+
+        /// <summary>通常の描画を隠すか。隠す対象は透明状態から始まり、照射で実体化する。</summary>
+        public bool IsNormalRenderingHidden { get => _isNormalRenderingHidden; set => _isNormalRenderingHidden = value; }
+        /// <summary>透明・照射中に使う表示。</summary>
+        public EchoDisplaySettings Irradiated => _irradiated ??= new EchoDisplaySettings();
+        public EchoMaterializationSettings Materialization => _materialization ??= new EchoMaterializationSettings();
         [SerializeField, Min(0), Tooltip("WholeObjectの残存秒数。ContactRegionはライトと同じく現在届いている表面だけを表示します。")]
         private float _originalHoldDuration = DefaultOriginalHoldDuration;
         public float OriginalHoldDuration { get => Original.EffectivePersistence; set { _originalHoldDuration = value; Original.HasPersistence = value > 0; Original.PersistenceSeconds = value; } }
@@ -89,7 +109,120 @@ namespace Echo.Echolocation
         public EchoEffectSettings Outline => _outline ??= new EchoEffectSettings();
         public EchoEffectSettings Original => _original ??= new EchoEffectSettings();
         public int SurfaceMemoryResolution => Mathf.ClosestPowerOfTwo(Mathf.Clamp(_surfaceMemoryResolution, MinimumSurfaceMemoryResolution, MaximumSurfaceMemoryResolution));
-        public bool HasAnyEffect => IsEnabled && (Fill.IsEnabled || Outline.IsEnabled || Original.IsEnabled);
+        // 隠す対象は表示がなくても実体化のために接触を調べ続ける必要があるため、描画対象に含める。
+        public bool HasAnyEffect => IsEnabled && (Fill.IsEnabled || Outline.IsEnabled || Original.IsEnabled || IsNormalRenderingHidden);
+
+        /// <summary>状態に応じて描画に使う設定。透明・照射中は照射中の表示、実体化中はこの設定自身。</summary>
+        public EchoTagColorRule GetDisplayRule(EchoMaterializationState state)
+        {
+            if (!IsNormalRenderingHidden || state == EchoMaterializationState.Materialized) return this;
+            if (_irradiatedRule == null)
+            {
+                _irradiatedRule = (EchoTagColorRule)MemberwiseClone();
+                _irradiatedRule._irradiatedRule = null;
+                _irradiatedRule._transitionTarget = this;
+            }
+            SyncIrradiatedRule(_irradiatedRule);
+            return _irradiatedRule;
+        }
+
+        // 描画側は1つのEchoTagColorRuleを前提に組まれているため、表示部分だけを差し替えた複製を渡す。
+        // 毎フレーム複製すると確保が発生するため複製は使い回し、実行中に他のスクリプトから変えた設定も反映されるよう使うたびに値を写す。
+        void SyncIrradiatedRule(EchoTagColorRule rule)
+        {
+            var display = Irradiated;
+            // 参照を共有し、照射中の表示①②③の変更がそのまま描画に届くようにする。
+            rule._fill = display.Fill; rule._outline = display.Outline; rule._original = display.Original;
+            rule._color = display.Color; rule._outlineColor = display.OutlineColor;
+            rule._outlineWidth = display.OutlineWidth; rule._originalOpacity = display.OriginalOpacity;
+            // 公開プロパティで実行中に変更できる、表示以外の設定。
+            rule._isEnabled = _isEnabled; rule._tagName = _tagName; rule._definition = _definition;
+            rule._isNormalRenderingHidden = _isNormalRenderingHidden; rule._contactResolution = _contactResolution;
+            rule._fillOcclusion = _fillOcclusion; rule._outlineOcclusion = _outlineOcclusion; rule._originalOcclusion = _originalOcclusion;
+            rule._materialization = Materialization;
+        }
+
+        /// <summary>①の色。progressは実体化までの進み具合（0～1）。</summary>
+        public Color GetFillColor(float progress)
+        {
+            if (!IsTransitioning(Fill)) return _color;
+            // 実体化後に①を表示しない場合は、同じ色のまま消えていくようにする。
+            var target = _transitionTarget.Fill.IsEnabled ? _transitionTarget._color : WithoutAlpha(_color);
+            return Color.Lerp(_color, target, Mathf.Clamp01(progress));
+        }
+
+        /// <summary>②の色。progressは実体化までの進み具合（0～1）。</summary>
+        public Color GetOutlineColor(float progress)
+        {
+            if (!IsTransitioning(Outline)) return _outlineColor;
+            var target = _transitionTarget.Outline.IsEnabled ? _transitionTarget._outlineColor : WithoutAlpha(_outlineColor);
+            return Color.Lerp(_outlineColor, target, Mathf.Clamp01(progress));
+        }
+
+        /// <summary>②の幅。progressは実体化までの進み具合（0～1）。</summary>
+        public float GetOutlineWidth(float progress)
+        {
+            if (!IsTransitioning(Outline) || !_transitionTarget.Outline.IsEnabled) return _outlineWidth;
+            return Mathf.Lerp(_outlineWidth, _transitionTarget._outlineWidth, Mathf.Clamp01(progress));
+        }
+
+        /// <summary>③の不透明度。progressは実体化までの進み具合（0～1）。</summary>
+        public float GetOriginalOpacity(float progress)
+        {
+            if (!IsTransitioning(Original)) return _originalOpacity;
+            return Mathf.Lerp(_originalOpacity, MaterializedOriginalOpacity, Mathf.Clamp01(progress));
+        }
+
+        bool IsTransitioning(EchoEffectSettings effect) => _transitionTarget != null && effect.IsSeamlessTransition;
+        static Color WithoutAlpha(Color color) => new Color(color.r, color.g, color.b, 0);
+
+        // 新規作成したデータが0のまま保存されると、次の読み込みで旧データとして移行され設定が上書きされるため、保存時に現行の版を書く。
+        // 旧データは保存より先に読み込み時の移行を通るため、ここで版を進めても移行は失われない。
+        void ISerializationCallbackReceiver.OnBeforeSerialize() => _settingsVersion = CurrentSettingsVersion;
+        // 既存アセットを開き直さなくても新しい設定で動くよう、読み込み時に移行する。Unity APIは使わないため読み込み中でも安全。
+        void ISerializationCallbackReceiver.OnAfterDeserialize() => MigrateSettings();
+
+        /// <summary>照射中の表示を追加する前のデータを、見た目が変わらないように移行する。</summary>
+        public void MigrateSettings()
+        {
+            if (_settingsVersion >= CurrentSettingsVersion) return;
+            _settingsVersion = CurrentSettingsVersion;
+            // 旧仕様は③が有効なときだけ通常の描画を隠していた。
+            _isNormalRenderingHidden = Original.IsEnabled && _isOriginalHiddenOutsideEcho;
+            if (!_isNormalRenderingHidden) return;
+            // 旧仕様の隠す対象は実体化の概念がなかったため、実体化するまでは従来と同じ表示を使う。
+            CopyMaterializedDisplayToIrradiated();
+        }
+
+        /// <summary>実体化しているときの表示①②③を、照射中の表示へ写す。</summary>
+        public void CopyMaterializedDisplayToIrradiated()
+        {
+            CopyMaterializedFillToIrradiated();
+            CopyMaterializedOutlineToIrradiated();
+            CopyMaterializedOriginalToIrradiated();
+        }
+
+        /// <summary>実体化しているときの①塗りつぶしだけを、照射中の表示へ写す。</summary>
+        public void CopyMaterializedFillToIrradiated()
+        {
+            Irradiated.Color = _color;
+            Irradiated.Fill.CopyFrom(Fill);
+        }
+
+        /// <summary>実体化しているときの②アウトラインだけを、照射中の表示へ写す。</summary>
+        public void CopyMaterializedOutlineToIrradiated()
+        {
+            Irradiated.OutlineColor = _outlineColor;
+            Irradiated.OutlineWidth = _outlineWidth;
+            Irradiated.Outline.CopyFrom(Outline);
+        }
+
+        /// <summary>実体化しているときの③元のマテリアルだけを、照射中の表示へ写す。</summary>
+        public void CopyMaterializedOriginalToIrradiated()
+        {
+            Irradiated.OriginalOpacity = _originalOpacity;
+            Irradiated.Original.CopyFrom(Original);
+        }
         public bool NeedsWholeObjectContact => Fill.NeedsWholeObjectContact || Outline.NeedsWholeObjectContact ||
             Original.NeedsWholeObjectContact;
         public bool NeedsSurfaceMemory => Fill.NeedsSurfaceMemory || Outline.NeedsSurfaceMemory || Original.NeedsSurfaceMemory;
@@ -111,14 +244,17 @@ namespace Echo.Echolocation
             _originalHoldDuration = FiniteClamp(_originalHoldDuration, 0, MaximumHoldDuration, DefaultOriginalHoldDuration);
             _originalOpacity = FiniteClamp(_originalOpacity, 0, 1, 1);
             _contactResolution = Mathf.ClosestPowerOfTwo(Mathf.Clamp(_contactResolution, MinimumContactResolution, MaximumContactResolution));
+            Irradiated.Validate();
         }
 
-        static float FiniteClamp(float value, float min, float max, float fallback) =>
+        internal static float FiniteClamp(float value, float min, float max, float fallback) =>
             float.IsNaN(value) || float.IsInfinity(value) ? fallback : Mathf.Clamp(value, min, max);
         public EchoTagColorRule Copy()
         {
             var copy = (EchoTagColorRule)MemberwiseClone();
             copy._fill = Fill.Copy(); copy._outline = Outline.Copy(); copy._original = Original.Copy();
+            copy._irradiated = Irradiated.Copy(); copy._materialization = Materialization.Copy();
+            copy._irradiatedRule = null;
             return copy;
         }
     }
