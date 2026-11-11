@@ -45,10 +45,12 @@ namespace MiraiSozo.Options.Editor
         {
             var options = GameOptions.Instance;
             int frameRate = options.Values.frameRate;
+            int activeTab = menu.ActiveTab;
             string savedSettings = PlayerPrefs.HasKey(GameOptions.SettingsKey)
                 ? PlayerPrefs.GetString(GameOptions.SettingsKey) : null;
             try { RunChecks(manager, menu); }
-            finally { RestoreSettings(manager, options, frameRate, savedSettings); }
+            finally { RestoreSettings(manager, menu, options, frameRate, activeTab, savedSettings); }
+            Assert(menu.ActiveTab == activeTab, "検証前のオプションタブを復元");
         }
 
         private static void RunChecks(GameManager manager, InGameOptionMenu menu)
@@ -132,7 +134,8 @@ namespace MiraiSozo.Options.Editor
             Checks.Add("PASS: " + message);
         }
 
-        private static void RestoreSettings(GameManager manager, GameOptions options, int frameRate, string savedSettings)
+        private static void RestoreSettings(
+            GameManager manager, InGameOptionMenu menu, GameOptions options, int frameRate, int activeTab, string savedSettings)
         {
             try
             {
@@ -144,6 +147,7 @@ namespace MiraiSozo.Options.Editor
                 try { manager.ResumePause(); }
                 finally
                 {
+                    menu.SelectTab(activeTab);
                     // メニューを閉じると保存されるため、元の値の復元は最後に行う。
                     if (savedSettings != null) PlayerPrefs.SetString(GameOptions.SettingsKey, savedSettings);
                     else PlayerPrefs.DeleteKey(GameOptions.SettingsKey);

@@ -361,8 +361,11 @@ namespace MiraiSozo.Options
 
         public void SelectTab(int tab)
         {
-            if (IsRebinding || _confirmation.activeSelf) return;
+            bool isOpen = IsOpen;
+            if (IsRebinding || (isOpen && _confirmation.activeSelf)) return;
             _tab = Mathf.Clamp(tab, OptionMenuLayout.SystemTab, OptionMenuLayout.ControlsTab);
+            // 閉じている間は選択だけを記憶し、次に開いたときに画面へ反映する。
+            if (!isOpen) return;
             for (int i = 0; i < OptionMenuLayout.TabCount; i++)
             {
                 GetView("Page " + i).gameObject.SetActive(i == _tab);

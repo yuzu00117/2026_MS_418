@@ -97,16 +97,23 @@ namespace MiraiSozo.Options.Editor
             var prefabRoot = new GameObject("PF_InGameOptions");
             prefabRoot.AddComponent<GameOptions>();
             var menuComponent = prefabRoot.AddComponent<InGameOptionMenu>();
-            var canvasPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(CanvasPrefabPath);
-            if (canvasPrefab == null) throw new InvalidOperationException("配置済みCanvasのPrefabが見つかりません: " + CanvasPrefabPath);
-            var canvasInstance = (GameObject)PrefabUtility.InstantiatePrefab(canvasPrefab, prefabRoot.transform);
-            menuComponent.ConfigureCanvas(canvasInstance.GetComponent<Canvas>());
+            menuComponent.ConfigureCanvas(InstantiateOptionsCanvas(prefabRoot.transform));
             var prefab = PrefabUtility.SaveAsPrefabAsset(prefabRoot, PrefabPath);
             UnityEngine.Object.DestroyImmediate(prefabRoot);
             var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
             var menuInstance = instance.GetComponent<InGameOptionMenu>();
             menuInstance.ConfigureCanvas(instance.GetComponentInChildren<Canvas>(true), isTestHudVisible: true);
             PrefabUtility.RecordPrefabInstancePropertyModifications(menuInstance);
+        }
+
+        private static Canvas InstantiateOptionsCanvas(Transform parent)
+        {
+            var canvasPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(CanvasPrefabPath);
+            if (canvasPrefab == null) throw new InvalidOperationException("配置済みCanvasのPrefabが見つかりません: " + CanvasPrefabPath);
+            var canvasInstance = (GameObject)PrefabUtility.InstantiatePrefab(canvasPrefab, parent);
+            canvasInstance.transform.localScale = Vector3.one;
+            PrefabUtility.RecordPrefabInstancePropertyModifications(canvasInstance.transform);
+            return canvasInstance.GetComponent<Canvas>();
         }
 
         private static GameObject CreateTestEnvironment()
