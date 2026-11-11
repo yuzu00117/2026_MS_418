@@ -48,6 +48,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Aura.Gimmick::Aura.Gimmick.GimmickMover
   _activeOffset: {x: 0, y: 0, z: 5}
   _speed: 1.6666666
+  _canCarryRiders: 1
   _motionMode: 1
   _endWaitSeconds: 1
   _isActiveOnStart: 1
