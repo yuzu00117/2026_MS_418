@@ -18,7 +18,7 @@ namespace Aura.Wave
     ///   波面（見た目では輪の先頭）が届いたときに波を渡す。曲げ・跳ね返りはせず、壁の裏には届かない
     /// ・これは波の実体（当たり判定と、波を渡すこと）だけを受け持つ。見た目は、同じ GameObject に付けた見た目の部品
     ///   （ビームは IBeamWaveView、扇は IFanWaveView）に形を渡して描かせる。部品が無ければ、再生を始めるときに今の見た目
-    ///   （BeamLineView、FanRingView）を足す。見た目の部品を替えても、当たり方は変わらない
+    ///   （BeamLineView、泡の輪の ConeRingView）を足す。見た目の部品を替えても、当たり方は変わらない
     public sealed class WaveEmitter : MonoBehaviour
     {
         private const int MaxReflectionLimit = 16;           ///< Max Reflections に決められる最大の回数
@@ -81,7 +81,7 @@ namespace Aura.Wave
         [SerializeField, Min(0.0f)] private float _fanRange = 6.0f;  ///< 扇の届く距離（m）
 
         [InspectorLabel("扇の半角（度）")]
-        [Tooltip("扇の広がりの半分の角度（度）。正面からこの角度以内の物に当たる（例: 40 なら全体で 80 度の扇）。今の見た目（FanRingView）の輪も、同じ広がりの円すいに沿って広がる\n" +
+        [Tooltip("扇の広がりの半分の角度（度）。正面からこの角度以内の物に当たる（例: 40 なら全体で 80 度の扇）。今の見た目（ConeRingView）の泡の輪も、同じ広がりの円すいに沿って大きくなる\n" +
                  "当たるかは、出る位置から見た「候補のいちばん近い点」の向きで決める（大きい物は、端が扇に入っていても、いちばん近い点が外なら当たらない）")]
         [SerializeField, Range(1.0f, 89.0f)] private float _fanHalfAngle = 40.0f;  ///< 扇の半角（度）
 
@@ -1041,7 +1041,8 @@ namespace Aura.Wave
             _chain?.Stop();
         }
 
-        /// @brief 見た目の部品が 1 つも付いていなければ、今の見た目（BeamLineView、FanRingView）を足す
+        /// @brief 見た目の部品が 1 つも付いていなければ、今の見た目（BeamLineView、泡の輪の ConeRingView）を足す
+        /// 扇をこれまでの線の輪（FanRingView）にしたいときは、その部品を付けておく
         /// 無効にした部品も「付いている」に数える（見た目を出したくないときは、部品を付けて無効にしておく）
         private void AddDefaultViews()
         {
@@ -1051,7 +1052,7 @@ namespace Aura.Wave
             }
             if (!TryGetComponent(out IFanWaveView _))
             {
-                gameObject.AddComponent<FanRingView>();
+                gameObject.AddComponent<ConeRingView>();
             }
         }
 
