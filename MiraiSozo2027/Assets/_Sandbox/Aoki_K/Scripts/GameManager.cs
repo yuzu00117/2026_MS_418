@@ -19,12 +19,14 @@ public class GameManager : MonoBehaviour
     private bool _isPaused = false;
 
     public bool IsPaused => _isPaused;
+    public GameObject MenuUI => _menuUI;
 
     //ポーズ前の状態保存
     private float _resumeTimeScale = 1f;
     private CursorLockMode _resumeCursorLock = CursorLockMode.Locked;
     private bool _resumeCursorVisible = false;
     private bool _resumePlayerEnabled = true;
+    private bool _resumeUIEnabled;
 
     //ゲームで使用する用のInput
     public static InputSystem_Actions Actions { get; private set; }
@@ -110,7 +112,7 @@ public class GameManager : MonoBehaviour
                 //ポーズ中ならInGameOptionMenuにCancel処理を委譲
                 if(InGameOptionMenu.Instance != null && InGameOptionMenu.Instance.IsOpen)
                 {
-                    InGameOptionMenu.Instance.Back();
+                    InGameOptionMenu.Instance.HandlePause();
                 }
                 else
                 {
@@ -123,10 +125,9 @@ public class GameManager : MonoBehaviour
     public void Pause()
     {
         if(_isPaused || Actions == null) return;
-        _resumeTimeScale = Time.timeScale;
-        _resumeCursorLock = Cursor.lockState;
-        _resumeCursorVisible = Cursor.visible;
-        _resumePlayerEnabled = Actions.Player.enabled;
+        var menu = InGameOptionMenu.Instance;
+        if (menu != null && menu.BoundCanvas == null) return;
+        CacheResumeState();
 
         _isPaused = true;
         Time.timeScale = 0f;
@@ -136,10 +137,17 @@ public class GameManager : MonoBehaviour
         Actions.Player.Disable();
         Actions.UI.Enable();
 
-        if(InGameOptionMenu.Instance != null)
-        {//UI表示
-            InGameOptionMenu.Instance.OpenMenu();
-        }
+        if (_menuUI != null) _menuUI.SetActive(true);
+        if (menu != null) menu.OpenMenu();
+    }
+
+    private void CacheResumeState()
+    {
+        _resumeTimeScale = Time.timeScale;
+        _resumeCursorLock = Cursor.lockState;
+        _resumeCursorVisible = Cursor.visible;
+        _resumePlayerEnabled = Actions.Player.enabled;
+        _resumeUIEnabled = Actions.UI.enabled;
     }
 
     public void ResumePause()
@@ -150,8 +158,8 @@ public class GameManager : MonoBehaviour
         Cursor.lockState = _resumeCursorLock;
         Cursor.visible = _resumeCursorVisible;
 
-        if(_resumePlayerEnabled) Actions.Player.Enable();
-        Actions.UI.Disable();
+        if (_resumePlayerEnabled) Actions.Player.Enable(); else Actions.Player.Disable();
+        if (_resumeUIEnabled) Actions.UI.Enable(); else Actions.UI.Disable();
 
         //UIの非表示
         if(InGameOptionMenu.Instance != null && InGameOptionMenu.Instance.IsOpen)
