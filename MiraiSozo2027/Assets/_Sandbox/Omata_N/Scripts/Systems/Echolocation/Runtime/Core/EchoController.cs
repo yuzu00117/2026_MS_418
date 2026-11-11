@@ -78,7 +78,7 @@ namespace Echo.Echolocation
         private readonly EchoLightSustain _lightSustain = new EchoLightSustain();
         private float _lightAngleDegrees;
         /// <summary>ライト方式の残りの持続可能な時間（秒）。時間制限がない設定では0。</summary>
-        public float LightSustainRemainingSeconds => _lightSustain.RemainingSeconds;
+        public float LightSustainRemainingSeconds => _lightSustain.GetRemainingSeconds(_settings.LightSustain);
         /// <summary>ライト方式の残りの持続可能な時間の割合（0～1）。時間制限がない設定では1。ゲージの表示に使う。</summary>
         public float LightSustainRatio => _lightSustain.GetRatio(_settings.LightSustain);
         /// <summary>ライト方式の持続可能な時間を指定した秒数だけ回復する。アイテムなどで回復させる場合に使う。</summary>

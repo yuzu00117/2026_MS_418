@@ -45,11 +45,11 @@ namespace Echo.Echolocation.Tests
             refill.Advance(true, 3, refillSettings); refill.Advance(false, 0, refillSettings);
             none.Advance(true, 3, noneSettings); none.Advance(false, 100, noneSettings);
             // 回復の速さ0.5のため、2秒で1秒分だけ回復する。
-            Assert.That(gradual.RemainingSeconds, Is.EqualTo(2).Within(1e-5f));
-            Assert.That(refill.RemainingSeconds, Is.EqualTo(4));
-            Assert.That(none.RemainingSeconds, Is.EqualTo(1).Within(1e-5f));
+            Assert.That(gradual.GetRemainingSeconds(gradualSettings), Is.EqualTo(2).Within(1e-5f));
+            Assert.That(refill.GetRemainingSeconds(refillSettings), Is.EqualTo(4));
+            Assert.That(none.GetRemainingSeconds(noneSettings), Is.EqualTo(1).Within(1e-5f));
             none.Recover(10, noneSettings);
-            Assert.That(none.RemainingSeconds, Is.EqualTo(4), "持続可能な時間を超えて回復しない");
+            Assert.That(none.GetRemainingSeconds(noneSettings), Is.EqualTo(4), "持続可能な時間を超えて回復しない");
         }
 
         [Test]
@@ -60,7 +60,7 @@ namespace Echo.Echolocation.Tests
             sustain.Advance(true, 3, settings);
             settings.SustainSeconds = 8;
             Assert.That(sustain.GetRatio(settings), Is.EqualTo(1));
-            Assert.That(sustain.RemainingSeconds, Is.EqualTo(8));
+            Assert.That(sustain.GetRemainingSeconds(settings), Is.EqualTo(8));
         }
 
         [Test]
@@ -73,9 +73,7 @@ namespace Echo.Echolocation.Tests
             Assert.That(sustain.Advance(true, 100, settings), Is.False, "時間制限なしでは使い切らない");
             Assert.That(sustain.GetRatio(settings), Is.EqualTo(1));
             settings.HasSustainLimit = true;
-            Assert.That(sustain.RemainingSeconds, Is.EqualTo(0), "切り替えるまでは前の状態のまま");
-            Assert.That(sustain.GetRatio(settings), Is.EqualTo(1), "時間制限をオンにしたら満タンから始める");
-            Assert.That(sustain.RemainingSeconds, Is.EqualTo(4));
+            Assert.That(sustain.GetRemainingSeconds(settings), Is.EqualTo(4), "時間制限をオンにしたら満タンから始める");
         }
 
         [Test]

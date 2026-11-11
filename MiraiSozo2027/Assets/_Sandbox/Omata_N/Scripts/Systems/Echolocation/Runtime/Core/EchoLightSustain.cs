@@ -11,8 +11,13 @@ namespace Echo.Echolocation
         private float _remainingSeconds;
         private float _appliedSustainSeconds = NotAppliedSeconds;
 
+        // 再生前や最初の更新前でも設定どおりの値を返すよう、割合と同じく設定を反映してから読む。
         /// <summary>残りの持続可能な時間（秒）。時間制限がない設定では0。</summary>
-        public float RemainingSeconds => _remainingSeconds;
+        public float GetRemainingSeconds(EchoLightSustainSettings settings)
+        {
+            Apply(settings);
+            return _remainingSeconds;
+        }
 
         /// <summary>残り時間の割合（0～1）。時間制限がない設定では1。</summary>
         public float GetRatio(EchoLightSustainSettings settings)
