@@ -702,7 +702,7 @@ namespace Echo.Echolocation.Tests
             origin.SetParent(_cameraObject.transform, false);
             origin.position = Vector3.right * 2;
             _controller.OriginTransform = origin;
-            _controller.Settings.ScanMode = EchoScanMode.Sonar;
+            _controller.Settings.ScanMode = EchoScanMode.Intermittent;
             _controller.Settings.PulseInterval = .15f;
             _controller.Settings.PulseHoldDuration = .8f;
             _controller.SetScanEnabled(true);
@@ -971,7 +971,7 @@ namespace Echo.Echolocation.Tests
             _wall = new GameObject("PulseOrigin");
             _wall.transform.position = new Vector3(-1.5f, 0, 5);
             _controller.OriginTransform = _wall.transform;
-            _controller.Settings.ScanMode = EchoScanMode.Sonar;
+            _controller.Settings.ScanMode = EchoScanMode.Intermittent;
             _controller.Settings.Radius = 1;
             _controller.Settings.Duration = 0;
             _controller.Settings.PulseInterval = .2f;
@@ -1013,7 +1013,7 @@ namespace Echo.Echolocation.Tests
         [UnityTest]
         public IEnumerator OverlappingSonarWavesDoNotAccumulateHighlightOpacity()
         {
-            _controller.Settings.ScanMode = EchoScanMode.Sonar;
+            _controller.Settings.ScanMode = EchoScanMode.Intermittent;
             _controller.Settings.PulseInterval = .1f;
             _controller.Settings.PulseHoldDuration = 1;
             _controller.Settings.TagColorRules[0].Color = new Color(0, 1, 0, .5f);

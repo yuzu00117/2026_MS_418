@@ -66,7 +66,7 @@ namespace Echo.Echolocation.Tests
         {
             _go = new GameObject("Once scan test");
             var controller = _go.AddComponent<EchoController>();
-            controller.Settings.ScanMode = EchoScanMode.Once;
+            controller.Settings.ScanMode = EchoScanMode.Single;
             controller.Settings.Radius = 2;
             controller.Settings.Duration = .5f;
             controller.Settings.OnceRechargeSeconds = 0;
@@ -103,7 +103,7 @@ namespace Echo.Echolocation.Tests
         {
             _go = new GameObject("Once stock test");
             var controller = _go.AddComponent<EchoController>();
-            controller.Settings.ScanMode = EchoScanMode.Once;
+            controller.Settings.ScanMode = EchoScanMode.Single;
             controller.Settings.Radius = 10;
             controller.Settings.Duration = 5;
             controller.Settings.OnceStockCapacity = 2;

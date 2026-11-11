@@ -19,7 +19,7 @@ namespace Echo.Echolocation.Tests
                 Duration = 2,
                 PulseInterval = 1,
                 PulseHoldDuration = 3,
-                ScanMode = EchoScanMode.Sonar
+                ScanMode = EchoScanMode.Intermittent
             };
             _timeline = new EchoPulseTimeline();
             _frames = new List<EchoFrameData>();
