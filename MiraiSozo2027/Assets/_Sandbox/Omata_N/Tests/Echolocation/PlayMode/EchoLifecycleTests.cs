@@ -62,9 +62,9 @@ namespace Echo.Echolocation.Tests
         }
 
         [UnityTest]
-        public IEnumerator OnceModePropagatesBandOnceThenTurnsOff()
+        public IEnumerator SingleModePropagatesBandOnceThenTurnsOff()
         {
-            _go = new GameObject("Once scan test");
+            _go = new GameObject("Single scan test");
             var controller = _go.AddComponent<EchoController>();
             controller.Settings.ScanMode = EchoScanMode.Single;
             controller.Settings.Radius = 2;
@@ -99,9 +99,9 @@ namespace Echo.Echolocation.Tests
         }
 
         [UnityTest]
-        public IEnumerator OnceModeStockLimitsRapidFireAndRecharges()
+        public IEnumerator SingleModeStockLimitsRapidFireAndRecharges()
         {
-            _go = new GameObject("Once stock test");
+            _go = new GameObject("Single stock test");
             var controller = _go.AddComponent<EchoController>();
             controller.Settings.ScanMode = EchoScanMode.Single;
             controller.Settings.Radius = 10;
@@ -128,9 +128,9 @@ namespace Echo.Echolocation.Tests
         }
 
         [UnityTest]
-        public IEnumerator FollowModeRepeatsExpandingWaveAfterInterval()
+        public IEnumerator LightModeRepeatsExpandingWaveAfterInterval()
         {
-            _go = new GameObject("Follow wave test");
+            _go = new GameObject("Light wave test");
             var controller = _go.AddComponent<EchoController>();
             // 帯が端を抜ける0.3秒間を低いフレームレートでも観測できるよう、1m/秒で進める。
             controller.Settings.Radius = 1;
