@@ -367,7 +367,7 @@ namespace Aura.Gimmick
             return nearest;
         }
 
-        /// @brief その WaveEmitter の波に乗れるか。ビームを出していて、線があり、反応する波の種類であること
+        /// @brief その WaveEmitter の波に乗れるか。ビームを出していて、線があり、WaveReaction が有効で、反応する波の種類であること
         private bool CanRide(WaveEmitter emitter)
         {
             BeamSourceInfo source = emitter.CurrentSource;
@@ -377,6 +377,7 @@ namespace Aura.Gimmick
                 && emitter.FireShape == WaveFireShape.Beam
                 && source != null
                 && emitter.BeamCorners.Count >= 2
+                && _reaction.enabled
                 && _reaction.CanReactTo(source.WaveKind);
         }
 
