@@ -27,45 +27,38 @@ namespace MS.Toon.Editor
         // これ未満の二乗長は退化(長さ 0)として扱う
         private const float DegenerateSqrEpsilon = 1e-12f;
 
-        /// <summary>
-        /// 頂点位置ごとに法線を平均したスムース法線を返す。法線が無いメッシュでは null。
-        /// 平均は面の頂点角で重み付けする(分割数に依存しないため)。
-        /// </summary>
-        public static Vector3[] CalculateSmoothNormals(Mesh mesh)
+        // モデルのインポート時に、含まれる全メッシュへ自動で焼き込む
+        private void OnPostprocessModel(GameObject root)
         {
-            Vector3[] vertices = mesh.vertices;
-            Vector3[] normals = mesh.normals;
-            if (normals == null || normals.Length != vertices.Length || vertices.Length == 0)
+            foreach (MeshFilter meshFilter in root.GetComponentsInChildren<MeshFilter>(true))
             {
-                return null;
+                BakeToMesh(meshFilter.sharedMesh);
             }
-
-            int[] groupOfVertex = GroupVerticesByPosition(vertices, out int groupCount);
-            Vector3[] sums = AccumulateAngleWeightedNormals(mesh, vertices, normals, groupOfVertex, groupCount);
-
-            var result = new Vector3[vertices.Length];
-            for (int i = 0; i < vertices.Length; i++)
+            foreach (SkinnedMeshRenderer skinned in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
             {
-                Vector3 sum = sums[groupOfVertex[i]];
-                // どの三角形にも使われていない頂点は元の法線を使う
-                result[i] = sum.sqrMagnitude > DegenerateSqrEpsilon ? sum.normalized : normals[i];
+                BakeToMesh(skinned.sharedMesh);
             }
-            return result;
         }
 
         /// <summary>
         /// スムース法線を UV3 の xyz へ、焼き込みの種類を表す目印を w へ書き込む。
         /// 可能なら各頂点のタンジェント空間(tangent, bitangent, normal 基準)に変換して保存する。
+        /// メッシュが無い、または法線が無いときは何もしない。
         /// </summary>
-        public static bool BakeToMesh(Mesh mesh)
+        private static void BakeToMesh(Mesh mesh)
         {
-            Vector3[] smoothNormals = CalculateSmoothNormals(mesh);
-            if (smoothNormals == null)
+            if (mesh == null)
             {
-                return false;
+                return;
+            }
+            Vector3[] vertices = mesh.vertices;
+            Vector3[] normals = mesh.normals;
+            if (normals == null || normals.Length != vertices.Length || vertices.Length == 0)
+            {
+                return;
             }
 
-            Vector3[] normals = mesh.normals;
+            Vector3[] smoothNormals = CalculateSmoothNormals(mesh, vertices, normals);
             Vector4[] tangents = GetOrCalculateTangents(mesh);
             bool canUseTangentSpace = tangents != null;
 
@@ -77,7 +70,25 @@ namespace MS.Toon.Editor
                     : new Vector4(smoothNormals[i].x, smoothNormals[i].y, smoothNormals[i].z, ObjectSpaceMarker));
             }
             mesh.SetUVs(SmoothNormalChannel, packed);
-            return true;
+        }
+
+        /// <summary>
+        /// 頂点位置ごとに法線を平均したスムース法線を返す。
+        /// 平均は面の頂点角で重み付けする(分割数に依存しないため)。
+        /// </summary>
+        private static Vector3[] CalculateSmoothNormals(Mesh mesh, Vector3[] vertices, Vector3[] normals)
+        {
+            int[] groupOfVertex = GroupVerticesByPosition(vertices, out int groupCount);
+            Vector3[] sums = AccumulateAngleWeightedNormals(mesh, vertices, normals, groupOfVertex, groupCount);
+
+            var result = new Vector3[vertices.Length];
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                Vector3 sum = sums[groupOfVertex[i]];
+                // どの三角形にも使われていない頂点は元の法線を使う
+                result[i] = sum.sqrMagnitude > DegenerateSqrEpsilon ? sum.normalized : normals[i];
+            }
+            return result;
         }
 
         // タンジェントが無ければ UV0 から計算する。UV0 も無く計算できない場合は null。
@@ -172,27 +183,5 @@ namespace MS.Toon.Editor
             float angle = Vector3.Angle(edgeA, edgeB) * Mathf.Deg2Rad;
             sums[groupOfVertex[corner]] += normals[corner] * angle;
         }
-
-        // モデルのインポート時に、含まれる全メッシュへ自動で焼き込む
-        private void OnPostprocessModel(GameObject root)
-        {
-            foreach (MeshFilter meshFilter in root.GetComponentsInChildren<MeshFilter>(true))
-            {
-                BakeIfPresent(meshFilter.sharedMesh);
-            }
-            foreach (SkinnedMeshRenderer skinned in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
-            {
-                BakeIfPresent(skinned.sharedMesh);
-            }
-        }
-
-        private static void BakeIfPresent(Mesh mesh)
-        {
-            if (mesh != null)
-            {
-                BakeToMesh(mesh);
-            }
-        }
-
     }
 }

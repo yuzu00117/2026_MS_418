@@ -8,7 +8,6 @@
 // - 輪郭線・ポスト用に DepthOnly / DepthNormals パスを持つ。
 // - 裏面押し出し法の Outline パスを持つ(処理は Includes/ToonOutline.hlsl)。
 //   ワールド空間で法線方向に押し出すだけの単純な方式。太さはワールド上の長さで、遠いほど細く見える(拡大率には影響されない)。
-//   (カメラ側への引き寄せは遠近投影で線が片側にずれるため行わない)
 //   押し出し方向は自動で選ぶ: 焼き込みスムース法線(UV3, ToonSmoothNormalBaker)があればそれ、無ければモデル中心からの向き。
 // - オブジェクト下側ほど暗くする高さグラデーション(Gradient 項目)を持つ。
 // - 未対応(意図的): ライトマップ(焼き込みGI)、透過、アルファテスト。必要になったら追加する。
@@ -319,7 +318,7 @@ Shader "MS/Toon"
                 float4 positionOS : POSITION;
                 float3 normalOS   : NORMAL;
                 float4 tangentOS  : TANGENT; // 焼き込みスムース法線をタンジェント空間から戻すのに使う
-                float4 smoothNormalOS : TEXCOORD3; // xyz: ToonSmoothNormalBaker が焼いたスムース法線, w: 座標の種類の目印
+                float4 bakedNormal : TEXCOORD3; // xyz: ToonSmoothNormalBaker が焼いたスムース法線, w: 座標の種類の目印
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -353,10 +352,10 @@ Shader "MS/Toon"
                     return output;
                 }
 
-                float3 directionWS = GetOutlineDirectionWS(input.normalOS, input.tangentOS, input.smoothNormalOS,
+                float3 directionWS = GetOutlineDirectionWS(input.normalOS, input.tangentOS, input.bakedNormal,
                                                            input.positionOS.xyz);
-                float3 positionWS = ExtrudeOutlineWS(TransformObjectToWorld(input.positionOS.xyz), directionWS,
-                                                     outline.width);
+                // ワールド空間で押し出すので、太さは拡大率に関係なくワールド上の長さになる
+                float3 positionWS = TransformObjectToWorld(input.positionOS.xyz) + directionWS * outline.width;
 
                 output.positionCS = TransformWorldToHClip(positionWS);
                 output.fogFactor = ComputeFogFactor(output.positionCS.z);

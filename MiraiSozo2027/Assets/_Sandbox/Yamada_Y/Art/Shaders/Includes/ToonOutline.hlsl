@@ -9,7 +9,6 @@
 //
 //   GetOutlineDirectionWS : 押し出し方向(ワールド空間)の選択
 //                           (焼き込みスムース法線 → 中心からの向き → 通常法線)
-//   ExtrudeOutlineWS      : ワールド空間で押し出す(太さはワールド上の長さ)
 // ============================================================================
 
 // 「実質ゼロ」とみなすしきい値(法線の長さの2乗に使う)
@@ -48,13 +47,6 @@ float3 GetOutlineDirectionWS(float3 normalOS, float4 tangentOS, float4 bakedNorm
     if (dot(positionOS, positionOS) > TOON_OUTLINE_THRESHOLD)
         return TransformObjectToWorldNormal(positionOS);
     return TransformObjectToWorldNormal(normalOS);
-}
-
-// 頂点をワールド空間で方向 directionWS(正規化済み)へ outlineWidth だけ押し出す。
-// ワールド空間で行うので、オブジェクトの拡大率に関係なく太さはワールド上の長さになる(遠いほど細く見える)。
-float3 ExtrudeOutlineWS(float3 positionWS, float3 directionWS, float outlineWidth)
-{
-    return positionWS + directionWS * outlineWidth;
 }
 
 #endif // MS_TOON_OUTLINE_INCLUDED
