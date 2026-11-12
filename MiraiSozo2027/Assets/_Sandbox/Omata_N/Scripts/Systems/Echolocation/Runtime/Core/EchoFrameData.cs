@@ -14,10 +14,13 @@ namespace Echo.Echolocation
         public EchoState State { get; }
         public EchoOcclusionMode Occlusion { get; }
         public long PulseId { get; }
+        /// <summary>消去半径より内側を含まない帯状の波か。消去中と違い、消去波の色では描かない。</summary>
+        public bool IsBand { get; }
 
         /// <summary>ワールド座標の中心・方向と現在の表示領域を固定する。</summary>
-        public EchoFrameData(Vector3 origin, Vector3 forward, float angle, float outer, float erase, EchoState state, EchoOcclusionMode occlusion, long pulseId = 0)
+        public EchoFrameData(Vector3 origin, Vector3 forward, float angle, float outer, float erase, EchoState state, EchoOcclusionMode occlusion, long pulseId = 0, bool isBand = false)
         {
+            IsBand = isBand;
             Origin = origin;
             Forward = forward.normalized;
             Angle = angle;

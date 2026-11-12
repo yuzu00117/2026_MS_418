@@ -61,6 +61,7 @@ namespace MiraiSozo.Options
             if(Actions.All.Pause.triggered)
             {
                 TogglePause();
+                Debug.Log("OptonGameManager: TogglePause");
             }
         }
 

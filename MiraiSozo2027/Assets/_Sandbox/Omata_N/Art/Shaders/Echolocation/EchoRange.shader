@@ -10,6 +10,7 @@ Shader "Hidden/Echo/Range"
         #include "EchoVolume.hlsl"
         float4 _EchoRangeFill,_EchoRangeWave,_EchoRangeErase,_EchoRangeLine;
         float _EchoRangeWidth;
+        float _EchoFollowWave; // 追従モードで繰り返す拡張波の先端半径。負なら非表示
         int _EchoBoundaryWave;
         float3 RangeWorld(float2 uv,out bool valid)
         {
@@ -41,7 +42,11 @@ Shader "Hidden/Echo/Range"
                     inside=true;float distance=length(p-_EchoOrigins[i].xyz);float4 volume=_EchoVolumes[i];
                     coverage=1;
                     outer=max(outer,volume.w*(1-smoothstep(0,_EchoRangeWidth,volume.x-distance)));
-                    inner=max(inner,volume.z*(1-smoothstep(0,_EchoRangeWidth,distance-volume.y)));
+                    // 追従モードの波は1つだけ。最初の展開と同じ形の帯を、先端の内側に描く。
+                    if(i==0&&_EchoFollowWave>=0)
+                        outer=max(outer,step(distance,_EchoFollowWave)*(1-smoothstep(0,_EchoRangeWidth,_EchoFollowWave-distance)));
+                    // z=2の帯状の波は後端も拡張波の一部なので、消去波の色を付けない。
+                    inner=max(inner,step(abs(volume.z-1),.5)*(1-smoothstep(0,_EchoRangeWidth,distance-volume.y)));
                 }
                 if(!inside)discard;
                 half4 color=lerp(_EchoRangeFill,_EchoRangeWave,outer);

@@ -15,6 +15,7 @@ public class Phononkinesis : MonoBehaviour
     [Header("State")]
     [SerializeField] private State _currentState = State.Inactive;
     public State CurrentState => _currentState;
+    public bool IsActive => _currentState != State.Inactive;
 
     [Header("Raycast & Detection")]
     [Tooltip("掴める最大射程距離（メートル）")]
@@ -29,12 +30,14 @@ public class Phononkinesis : MonoBehaviour
     [SerializeField] private float _maxDistance = 25.0f;
     private float _activeMinDistance;
     private float _activeMaxDistance;
+    [SerializeField] private float _marginPlayerWidth = 1.2f; // プレイヤーの横幅分の余裕
+    [SerializeField] private float _marginPlayerHeight = 4.0f; // プレイヤーの上方向の余裕（ジャンプ中含む）
 
-    [Header("Distance Adjustment Sensitivity (ObjectPlacer流用)")]
+    [Header("Distance Adjustment Sensitivity")]
     [Tooltip("マウスホイール1ノッチあたりの移動量（メートル）")]
     [SerializeField] private float _wheelStep = 0.2f;
     [Tooltip("コントローラーボタン長押し時の移動速度（メートル/秒）")]
-    [SerializeField] private float _controllerSpeed = 2.0f;
+    [SerializeField] private float _controllerSpeed = 8.0f;
 
     [Header("Physics Settings (重さと追従挙動)")]
     [Tooltip("追従の基準速度")]
@@ -58,6 +61,8 @@ public class Phononkinesis : MonoBehaviour
     public Transform CameraTransform { get => _cameraTransform; set => _cameraTransform = value; }
     [Tooltip("プレイヤーの頭（三人称時の基準点）")]
     [SerializeField] private Transform _targetHeadTransform;
+    [SerializeField] private Transform _playerCenter;
+    [SerializeField] private Transform _playerFeet;
 
     // 内部変数
     private InputSystem_Actions _actions => GameManager.Actions;
@@ -73,6 +78,9 @@ public class Phononkinesis : MonoBehaviour
     // 掴んだ際の回転状態
     private Quaternion _targetRotation;
 
+    private Collider _playerCollider;
+    private Collider _heldTargetCollider;
+
     private LineRenderer _lineRenderer;
 
     public PhononkinesisTarget HeldTarget => _heldTarget;
@@ -81,6 +89,7 @@ public class Phononkinesis : MonoBehaviour
     private void Awake()
     {
         SetupLineRenderer();
+        _playerCollider = GetComponent<Collider>();
     }
 
     private void OnEnable()
@@ -190,6 +199,7 @@ public class Phononkinesis : MonoBehaviour
     private void GrabObject(PhononkinesisTarget target)
     {
         _heldTarget = target;
+        _heldTargetCollider = _heldTarget.GetComponentInChildren<Collider>();
         _heldTarget.OnGrabbed();
 
         _targetRotation = _heldTarget.Rb.rotation;
@@ -213,7 +223,7 @@ public class Phononkinesis : MonoBehaviour
     }
 
     /// <summary>
-    /// ② 運搬状態
+    /// 運搬状態
     /// </summary>
     private void UpdateHolding()
     {
@@ -253,10 +263,76 @@ public class Phononkinesis : MonoBehaviour
         {
             desiredVelocity = desiredVelocity.normalized * _maxVelocity;
         }
+        if(IsPlayerAboveOrRiding() && desiredVelocity.y > 0f)
+        {//プレイヤーが上部にいる場合は上昇推力を０
+            desiredVelocity.y = 0f;
+        }
+        if (IsNearOrTouchingPlayer())
+        {//プレイヤーに接触している場合はプレイヤーに向かう推力をゼロにする
+            //プレイヤーの中心座標
+            Vector3 playerCenter = _playerCenter != null ?
+                                    _playerCenter.position : transform.position;
+            Vector3 toPlayer = (playerCenter - rb.position).normalized;
+
+            //速度ベクトルとプレイや間でのベクトルの内積(プレイヤーに向かう度合い)
+            //(正：プレイヤーに近づく　負：プレイヤーから離れる)
+            float approachSpeed = Vector3.Dot(desiredVelocity, toPlayer);
+
+            if(approachSpeed > 0f)
+            {//プレイヤーに向かう成分のみ引く
+                desiredVelocity -= toPlayer * approachSpeed;
+            }
+        }
 
         rb.linearVelocity = desiredVelocity;
         rb.MoveRotation(_targetRotation);
         rb.angularVelocity = Vector3.zero;
+    }
+
+    /// <summary>
+    /// プレイヤーがオブジェクトに乗っている、または真上の空間にいるかを判定
+    /// </summary>
+    /// <returns></returns>
+    private bool IsPlayerAboveOrRiding()
+    {
+        if (_heldTarget == null || _heldTarget.Rb == null) return false;
+        if (_heldTarget.IsPlayerRiding) return true;
+        // プレイヤーの足元座標と中心座標
+        Vector3 feetPos = _playerFeet != null ? _playerFeet.position : transform.position;
+        Vector3 objPos = _heldTarget.Rb.position;
+        // 足元がオブジェクトの中心より下にあるなら「上にはいない」
+        if (feetPos.y < objPos.y) return false;
+        // オブジェクトのコライダー範囲（＋プレイヤーの半径マージン）の真上にいるかチェック
+        Collider col = _heldTargetCollider;
+        if (col != null)
+        {
+            Bounds b = col.bounds;
+
+            bool inX = feetPos.x >= b.min.x - _marginPlayerWidth && feetPos.x <= b.max.x + _marginPlayerWidth;
+            bool inZ = feetPos.z >= b.min.z - _marginPlayerWidth && feetPos.z <= b.max.z + _marginPlayerWidth;
+            // オブジェクトの上面から上方向 4m 以内に足がある（ジャンプ中含む）なら真上とみなす
+            bool inY = feetPos.y <= b.max.y + _marginPlayerHeight;
+            return inX && inZ && inY;
+        }
+        return false;
+    }
+
+    private bool IsNearOrTouchingPlayer()
+    {
+        if(_heldTarget == null || _heldTarget.Rb == null) return false;
+        if(_heldTarget.IsTouchingPlayer) return true;
+
+        if(_playerCollider != null && _heldTargetCollider != null)
+        {
+            Vector3 playerCenter = _playerCenter != null ? _playerCenter.position : transform.position;
+            // ターゲットの表面からプレイヤー表面までで最も近い点
+            Vector3 closestOnTarget = _heldTargetCollider.ClosestPoint(playerCenter);
+            // プレイヤーの表面からターゲット表面までで最も近い点
+            Vector3 closestOnPlayer = _playerCollider.ClosestPoint(closestOnTarget);
+            float surfaceDistance = Vector3.Distance(closestOnTarget, closestOnPlayer);
+            return surfaceDistance < _minDistance;
+        }
+        return false;
     }
 
     /// <summary>
@@ -267,10 +343,22 @@ public class Phononkinesis : MonoBehaviour
         Vector3 origin = GetOriginPosition();
 
         // 基準点 + (横オフセット) + (縦オフセット) + (前方距離)
-        return origin 
+        Vector3 targetPos = origin 
              + (_cameraTransform.right * _localOffsetX) 
              + (_cameraTransform.up * _localOffsetY) 
              + (_cameraTransform.forward * _currentDistance);
+
+        if(IsPlayerAboveOrRiding())
+        {
+            // プレイヤーの足元の座標
+            float maxAllowedY = _heldTarget.Rb.position.y;
+            if(targetPos.y > maxAllowedY)
+            {
+                targetPos.y = maxAllowedY;
+            }
+        }
+
+        return targetPos;
     }
 
     /// <summary>
@@ -294,22 +382,46 @@ public class Phononkinesis : MonoBehaviour
 
     private void HandleDistanceAdjustment()
     {
-        if (Mouse.current != null)
+
+        float distanceInput = _actions.Player.AdjustDistance.ReadValue<float>();
+        if (Mathf.Abs(distanceInput) > 0.01f) //微細な入力検知
         {
-            float mouseScrollY = _actions.Player.ScrollDistance.ReadValue<Vector2>().y;
-            if (Mathf.Abs(mouseScrollY) > 0.01f)
+
+            // 入力デバイス検知
+            var activeControl = _actions.Player.AdjustDistance.activeControl;
+            bool isMouse = activeControl != null && activeControl.device is Mouse;
+
+            if((IsPlayerAboveOrRiding() || IsNearOrTouchingPlayer()) 
+                && distanceInput < -0.01f)
+            {//プレイヤーに接触した状態で、距離を縮める入力があった場合は、距離調整を無効化する
+                return;
+            }
+
+            if(IsNearOrTouchingPlayer() && distanceInput > 0.01f)
+            {//プレイヤーに接触した状態で、距離を伸ばす入力があって
+            //目標距離が実際のオブジェクトの位置より手前にめり込んでいる場合同期
+                float actualDistance = Vector3.Dot(_heldTarget.Rb.position
+                - GetOriginPosition(), _cameraTransform.forward);
+                if(actualDistance > _currentDistance)
+                {
+                    _currentDistance = actualDistance;
+                }
+            }
+
+            //マウスホイール用の大きな入力検知
+            if(isMouse)
             {
-                float scrollDir = Mathf.Sign(mouseScrollY);
+                float scrollDir = Mathf.Sign(distanceInput);
                 _currentDistance += scrollDir * _wheelStep;
+            }
+            //コントローラー用の小さな入力検知
+            else
+            {
+                _currentDistance += distanceInput * _controllerSpeed * Time.deltaTime;
             }
         }
 
-        float controllerAxis = _actions.Player.AdjustDistance.ReadValue<float>();
-        if (Mathf.Abs(controllerAxis) > 0.01f)
-        {
-            _currentDistance += controllerAxis * _controllerSpeed * Time.deltaTime;
-        }
-
+        //距離制限
         _currentDistance = Mathf.Clamp(_currentDistance, _activeMinDistance, _activeMaxDistance);
 
         //一旦の上限より近づいたら、本来の上限値まで戻す
@@ -330,7 +442,7 @@ public class Phononkinesis : MonoBehaviour
     }
 
     /// <summary>
-    /// ★ LineRenderer の初期セットアップ
+    /// LineRenderer の初期セットアップ
     /// </summary>
     private void SetupLineRenderer()
     {
@@ -349,7 +461,7 @@ public class Phononkinesis : MonoBehaviour
     }
 
     /// <summary>
-    /// ★ Gameビュー用のレイ描画ロジック
+    /// Gameビュー用のレイ描画ロジック
     /// </summary>
     private void UpdateLaserVisual()
     {

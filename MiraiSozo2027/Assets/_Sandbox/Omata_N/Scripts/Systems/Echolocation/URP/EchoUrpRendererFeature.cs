@@ -56,7 +56,7 @@ namespace Echo.Echolocation
             var controller = EchoController.GetForCamera(data.cameraData.camera);
             if (!controller)
                 return;
-            if (_rangeMaterial && controller.TryGetComponent<EchoRangeDisplay>(out var display) && display.isActiveAndEnabled)
+            if (_rangeMaterial && controller.RangeDisplay.IsEnabled)
             {
                 _rangePass.ConfigureInput(ScriptableRenderPassInput.Depth);
                 renderer.EnqueuePass(_rangePass);

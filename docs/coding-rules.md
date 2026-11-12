@@ -108,7 +108,7 @@ public void speed(float s) { }      // 動詞から始まっていない、引�
 
 > [!CAUTION]
 > **他メンバーのフォルダ・共有アセット・シーン・Prefab は無断で編集しないでください。**  
-> 編集が必要な場合は、**事前に宣言**（Slack 等で共有）してから作業してください。
+> 編集が必要な場合は、**事前に宣言**（Discord で共有）してから作業してください。
 
 ### 2.2 作業の流れ
 
@@ -120,6 +120,10 @@ flowchart LR
 ```
 
 > **📌 ルール**: シーンは**担当ごとに分割**し、同時編集を避けてください。
+
+> **📌 例外**: 共有物(ステージ用 Prefab など)を `_Project/` に直接用意することが目的の PR は、PR 本文にその旨を明記すれば `_Project/` へ直接追加してよいです。
+
+> **📌 例外**: 本番で使う素材(モデル・テクスチャ・マテリアル・スプライト・エフェクト・フォント・音・アニメーション)は、Sandbox を経由せず `_Project/` の該当フォルダ(`Models/` `Textures/` `Materials/` `Sprites/` `Effects/` `Fonts/` `Audio/` `Animations/`)へ直接追加してよいです。試作中・比較中など採用が決まっていない素材は `_Sandbox/<名前>/` に置いてください。
 
 ### 2.3 MiraiSozo2027/Assets/ 全体の構成
 
@@ -134,7 +138,12 @@ MiraiSozo2027/Assets/
 │   │   └── Utils/
 │   ├── Prefabs/
 │   ├── Scenes/
-│   ├── Art/
+│   ├── Models/               # 3Dモデル
+│   ├── Textures/             # 3D用テクスチャ
+│   ├── Materials/            # マテリアル
+│   ├── Sprites/              # UI画像・2D画像
+│   ├── Effects/              # エフェクト
+│   ├── Fonts/                # フォント
 │   ├── Audio/
 │   ├── Animations/
 │   └── Settings/
@@ -143,7 +152,10 @@ MiraiSozo2027/Assets/
 │   │   ├── Scripts/
 │   │   ├── Prefabs/
 │   │   ├── Scenes/
-│   │   ├── Art/
+│   │   ├── Models/
+│   │   ├── Textures/
+│   │   ├── Materials/
+│   │   ├── Sprites/
 │   │   ├── Audio/
 │   │   └── Animations/
 │   └── <名前>/               # 個人作業フォルダ(_Template を複製して作成)

@@ -1,0 +1,17 @@
+{
+    "name": "Aura.Wave.Legacy",
+    "rootNamespace": "Aura.Wave",
+    "references": [
+        "Aura.ObjectInfo",
+        "Aura.Inspector"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

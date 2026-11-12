@@ -223,39 +223,6 @@ Transform:
   - {fileID: 1128454028601594561}
   m_Father: {fileID: 3276936003608362837}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1299515331968351082
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 568201897151595178}
-  m_Layer: 0
-  m_Name: BeamSources
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &568201897151595178
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1299515331968351082}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2.1902697, y: -0.37295347, z: 105.086815}
-  m_LocalScale: {x: 2.868873, y: 2.868873, z: 2.868873}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 3822346058766622372}
-  - {fileID: 2545044328603150817}
-  m_Father: {fileID: 8114588384119620780}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1443179979802634227
 GameObject:
   m_ObjectHideFlags: 0
@@ -350,7 +317,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 3358255277107729385}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2450211375738412953
+--- !u!1 &2431662751521383985
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -358,46 +325,29 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2545044328603150817}
-  - component: {fileID: 978583336786811104}
+  - component: {fileID: 3779562508528942917}
   m_Layer: 0
-  m_Name: Electromagnetic
+  m_Name: Feet
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2545044328603150817
+--- !u!4 &3779562508528942917
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2450211375738412953}
+  m_GameObject: {fileID: 2431662751521383985}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 568201897151595178}
+  m_Father: {fileID: 8114588384119620780}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &978583336786811104
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2450211375738412953}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 823e90421c50475a9d98050712127b42, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.BeamSourceInfo
-  _waveType: {fileID: 11400000, guid: c5dab73c0020e384cbfaf5e7956aec02, type: 2}
-  _energyPerSecond: 1
-  _range: 25
-  _isBendable: 1
 --- !u!1 &2467040867723270092
 GameObject:
   m_ObjectHideFlags: 0
@@ -430,54 +380,6 @@ Transform:
   - {fileID: 4257218392683802013}
   m_Father: {fileID: 4381050160742425656}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &2612721506966262103
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 3822346058766622372}
-  - component: {fileID: 1662085989712540730}
-  m_Layer: 0
-  m_Name: Ultrasound
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &3822346058766622372
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2612721506966262103}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 568201897151595178}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1662085989712540730
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2612721506966262103}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 823e90421c50475a9d98050712127b42, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.BeamSourceInfo
-  _waveType: {fileID: 11400000, guid: 21953a811a19f67419eff1a24511da1a, type: 2}
-  _energyPerSecond: 1
-  _range: 25
-  _isBendable: 1
 --- !u!1 &3390714500635507670
 GameObject:
   m_ObjectHideFlags: 0
@@ -866,6 +768,37 @@ Transform:
   m_Children:
   - {fileID: 1809248979091653274}
   m_Father: {fileID: 4970234536925584204}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &5560471028929981594
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6058487434095899072}
+  m_Layer: 0
+  m_Name: Center
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6058487434095899072
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5560471028929981594}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 6.5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8114588384119620780}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5804751825615806794
 GameObject:
@@ -1333,6 +1266,7 @@ GameObject:
   - component: {fileID: 6134690973577495771}
   - component: {fileID: 4837906352872215815}
   - component: {fileID: 6655375391944685074}
+  - component: {fileID: 1662085989712540730}
   m_Layer: 0
   m_Name: Test_Player
   m_TagString: Untagged
@@ -1349,7 +1283,7 @@ Transform:
   m_GameObject: {fileID: 8923635859648306710}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.76346, y: 0.13, z: 1.32}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.34856898, y: 0.34856898, z: 0.34856898}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1358,7 +1292,8 @@ Transform:
   - {fileID: 288407115917047506}
   - {fileID: 8451176360228398916}
   - {fileID: 6191001033493183197}
-  - {fileID: 568201897151595178}
+  - {fileID: 6058487434095899072}
+  - {fileID: 3779562508528942917}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &2773342094520737494
@@ -1395,9 +1330,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2848166820a21424dacfa7ac6bdf7ecb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  _moveSpeed: 5
+  _runSpeed: 8
+  _walkSpeed: 5.5
+  _walkOnModifierKey: 1
   _jumpForce: 5
   _rotateSpeed: 720
+  _animDampTime: 0.1
   _cameraTransform: {fileID: 0}
   _groundChecker: {fileID: 4120551395615623928}
 --- !u!54 &2045787908689986872
@@ -1473,6 +1411,9 @@ MonoBehaviour:
     _scanMode: 0
     _pulseInterval: 2
     _pulseHoldDuration: 3
+    _followWaveInterval: 0
+    _onceStockCapacity: 1
+    _onceRechargeSeconds: 2
     _offMode: 1
     _timeMode: 0
     _occlusionMode: 0
@@ -1483,44 +1424,116 @@ MonoBehaviour:
     _isAutoDiscoveryEnabled: 1
     _tagColorRules:
     - _isEnabled: 1
+      _definition: {fileID: 0}
+      _revealMode: 0
       _tagName: EchoEnemy
       _color: {r: 1, g: 0, b: 0, a: 1}
-      _fillEnabled: 1
-      _outlineEnabled: 0
+      _isFillEnabled: 1
+      _fillOcclusion: 0
+      _outlineOcclusion: 0
+      _originalOcclusion: 0
+      _isOutlineEnabled: 0
       _outlineColor: {r: 0, g: 1, b: 1, a: 1}
       _outlineWidth: 3
       _outlineHoldDuration: 0
-      _originalEnabled: 0
-      _hideOriginalOutsideEcho: 1
+      _isOriginalEnabled: 0
+      _isOriginalHiddenOutsideEcho: 1
       _originalHoldDuration: 2
       _originalOpacity: 1
       _contactResolution: 256
+      _fill:
+        _isEnabled: 1
+        _isThroughWalls: 0
+        _displayScope: 1
+        _hasPersistence: 0
+        _persistenceSeconds: 1
+      _outline:
+        _isEnabled: 0
+        _isThroughWalls: 0
+        _displayScope: 0
+        _hasPersistence: 0
+        _persistenceSeconds: 1
+      _original:
+        _isEnabled: 0
+        _isThroughWalls: 0
+        _displayScope: 0
+        _hasPersistence: 0
+        _persistenceSeconds: 1
+      _surfaceMemoryResolution: 32
     - _isEnabled: 1
+      _definition: {fileID: 0}
+      _revealMode: 0
       _tagName: EchoItem
       _color: {r: 0.38614586, g: 1, b: 0.058490515, a: 1}
-      _fillEnabled: 1
-      _outlineEnabled: 0
+      _isFillEnabled: 1
+      _fillOcclusion: 0
+      _outlineOcclusion: 0
+      _originalOcclusion: 0
+      _isOutlineEnabled: 0
       _outlineColor: {r: 0, g: 1, b: 1, a: 1}
       _outlineWidth: 3
       _outlineHoldDuration: 0
-      _originalEnabled: 0
-      _hideOriginalOutsideEcho: 1
+      _isOriginalEnabled: 0
+      _isOriginalHiddenOutsideEcho: 1
       _originalHoldDuration: 2
       _originalOpacity: 1
       _contactResolution: 256
+      _fill:
+        _isEnabled: 1
+        _isThroughWalls: 0
+        _displayScope: 1
+        _hasPersistence: 0
+        _persistenceSeconds: 1
+      _outline:
+        _isEnabled: 0
+        _isThroughWalls: 0
+        _displayScope: 0
+        _hasPersistence: 0
+        _persistenceSeconds: 1
+      _original:
+        _isEnabled: 0
+        _isThroughWalls: 0
+        _displayScope: 0
+        _hasPersistence: 0
+        _persistenceSeconds: 1
+      _surfaceMemoryResolution: 32
     - _isEnabled: 1
+      _definition: {fileID: 0}
+      _revealMode: 0
       _tagName: EchoStructure
       _color: {r: 0, g: 0.60691047, b: 1, a: 1}
-      _fillEnabled: 1
-      _outlineEnabled: 0
+      _isFillEnabled: 1
+      _fillOcclusion: 0
+      _outlineOcclusion: 0
+      _originalOcclusion: 0
+      _isOutlineEnabled: 0
       _outlineColor: {r: 0, g: 1, b: 1, a: 1}
       _outlineWidth: 3
       _outlineHoldDuration: 0
-      _originalEnabled: 0
-      _hideOriginalOutsideEcho: 1
+      _isOriginalEnabled: 0
+      _isOriginalHiddenOutsideEcho: 1
       _originalHoldDuration: 2
       _originalOpacity: 1
       _contactResolution: 256
+      _fill:
+        _isEnabled: 1
+        _isThroughWalls: 0
+        _displayScope: 1
+        _hasPersistence: 0
+        _persistenceSeconds: 1
+      _outline:
+        _isEnabled: 0
+        _isThroughWalls: 0
+        _displayScope: 0
+        _hasPersistence: 0
+        _persistenceSeconds: 1
+      _original:
+        _isEnabled: 0
+        _isThroughWalls: 0
+        _displayScope: 0
+        _hasPersistence: 0
+        _persistenceSeconds: 1
+      _surfaceMemoryResolution: 32
     _shadow:
       _isEnabled: 1
       _layers:
@@ -1531,8 +1544,18 @@ MonoBehaviour:
       _bias: 0.03
       _rules:
       - _isEnabled: 0
+        _definition: {fileID: 0}
         _tagName: 
         _isBlocking: 0
+  _rangeDisplay:
+    _isEnabled: 0
+    _isSurfaceVisible: 1
+    _isBoundaryVisible: 1
+    _fillColor: {r: 0.05, g: 0.7, b: 1, a: 0.09}
+    _waveColor: {r: 0.05, g: 0.9, b: 1, a: 0.85}
+    _eraseColor: {r: 1, g: 0.45, b: 0.08, a: 0.85}
+    _boundaryColor: {r: 0.1, g: 0.8, b: 1, a: 0.32}
+    _waveWidth: 0.3
   _isGizmoVisible: 1
   _onStateChanged:
     m_PersistentCalls:
@@ -1576,8 +1599,10 @@ MonoBehaviour:
   _currentDistance: 6
   _minDistance: 2
   _maxDistance: 15
+  _marginPlayerWidth: 1.2
+  _marginPlayerHeight: 4
   _wheelStep: 0.2
-  _controllerSpeed: 2
+  _controllerSpeed: 8
   _baseFollowSpeed: 15
   _massWeightFactor: 0.5
   _maxVelocity: 20
@@ -1586,6 +1611,8 @@ MonoBehaviour:
   _lockColor: {r: 0.1695311, g: 1, b: 0, a: 1}
   _cameraTransform: {fileID: 0}
   _targetHeadTransform: {fileID: 8451176360228398916}
+  _playerCenter: {fileID: 6058487434095899072}
+  _playerFeet: {fileID: 3779562508528942917}
 --- !u!120 &4837906352872215815
 LineRenderer:
   serializedVersion: 3
@@ -1707,13 +1734,20 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f9f01e989a494a479c25973e13e94e2f, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Aura.ObjectInfoDemo::Aura.ObjectInfoDemo.InfoBeamEmitter
-  _sources:
-  - {fileID: 1662085989712540730}
-  - {fileID: 978583336786811104}
+  m_EditorClassIdentifier: Aura.Wave::Aura.Wave.WaveEmitter
+  _source: {fileID: 1662085989712540730}
+  _canSwitchWaveKindByInput: 1
+  _sources: []
   _sourceIndex: 0
   _sourceKind: 3
   _isFiringOnStart: 0
+  _fireShape: 0
+  _fanRange: 6
+  _fanHalfAngle: 40
+  _fanCooldownSeconds: 0
+  _fanShotSeconds: 1
+  _fanShotSpeed: 20
+  _isFanAutoRepeat: 0
   _muzzle: {fileID: 6191001033493183197}
   _aimOrigin: {fileID: 0}
   _ignoreRoot: {fileID: 8114588384119620780}
@@ -1723,7 +1757,6 @@ MonoBehaviour:
   _triggerInteraction: 1
   _radius: 0.1
   _maxReflections: 8
-  _lineMaterial: {fileID: 0}
   _pointSpacing: 0.1
   _bendMode: 1
   _bendRange: 3
@@ -1735,6 +1768,23 @@ MonoBehaviour:
   _pointLayer: 0
   _pointPrefab: {fileID: 3311711355854517144, guid: 1362f66c5301bb64aab30b1147bfdf58, type: 3}
   _isBodyLineVisible: 0
+--- !u!114 &1662085989712540730
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8923635859648306710}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 823e90421c50475a9d98050712127b42, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Aura.ObjectInfo::Aura.ObjectInfo.BeamSourceInfo
+  _waveKind: 1
+  _waveType: {fileID: 0}
+  _energyPerSecond: 1
+  _range: 25
+  _isBendable: 1
 --- !u!1 &8978512811936796963
 GameObject:
   m_ObjectHideFlags: 0
@@ -1746,7 +1796,7 @@ GameObject:
   - component: {fileID: 4966742196512038857}
   - component: {fileID: 271922240208463577}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: Human
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

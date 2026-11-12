@@ -2,8 +2,8 @@ using UnityEngine;
 
 namespace Echo.Echolocation
 {
-    /// <summary>表示分類とは独立した発生地点遮蔽。Renderer自身に付ける。</summary>
-    [DisallowMultipleComponent]
+    /// <summary>旧シーンの互換用。遮断はEchoTargetの専用タグで設定する。</summary>
+    [DisallowMultipleComponent, AddComponentMenu("")]
     public sealed class EchoOccluder : MonoBehaviour
     {
         [SerializeField] private bool _isBlocking = true;

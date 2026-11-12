@@ -13,6 +13,11 @@ public class PhononkinesisTarget : MonoBehaviour
     [Header("Settings")]
     [Tooltip("手放した（配置確定した）ときの挙動")]
     [SerializeField] private ReleaseBehavior _releaseBehavior = ReleaseBehavior.Auto;
+    [Tooltip("手放したときの慣性減衰率（0～1、0で慣性なし）")]
+    [SerializeField] private float _inertiaDamping = 0.5f; // 手放したときの慣性保持率（0～1、0で慣性なし）
+    [Tooltip("接触時の法線Y成分がこの値の負値以下なら上に乗っていると判定（0～1）")]
+    //上方向にいるかどうかの判定用の変数
+    [SerializeField] private float _diagonalUpwardThreshold = 0.7f;
 
     [Tooltip("念力で掴めるかどうかのフラグ")]
     [SerializeField] private bool _canBeGrabbed = true;
@@ -25,6 +30,9 @@ public class PhononkinesisTarget : MonoBehaviour
     private float _initialLinearDamping;
     private RigidbodyConstraints _initialConstraints;
 
+    public bool IsTouchingPlayer { get; private set; }
+    public bool IsPlayerRiding { get; private set; }
+
     private void Awake()
     {
         Rb = GetComponent<Rigidbody>();
@@ -32,6 +40,36 @@ public class PhononkinesisTarget : MonoBehaviour
         _initialIsKinematic = Rb.isKinematic;
         _initialLinearDamping = Rb.linearDamping;
         _initialConstraints = Rb.constraints;
+    }
+
+    private void OnCollisionStay(Collision collision)
+    {
+        if(collision.gameObject.CompareTag("Player") || 
+        collision.gameObject.GetComponent<PlayerController>() != null)
+        {
+            IsTouchingPlayer = true;
+
+            // 接触面の法線をチェック
+            IsPlayerRiding = false;
+            for(int i = 0; i < collision.contactCount; i++)
+            {
+                if(collision.GetContact(i).normal.y < -_diagonalUpwardThreshold)
+                {
+                    IsPlayerRiding = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        if(collision.gameObject.CompareTag("Player") || 
+        collision.gameObject.GetComponent<PlayerController>() != null)
+        {
+            IsTouchingPlayer = false;
+            IsPlayerRiding = false;
+        }
     }
 
     /// <summary>
@@ -43,6 +81,8 @@ public class PhononkinesisTarget : MonoBehaviour
         Rb.useGravity = false;
         Rb.linearDamping = 1.0f; // ブレ防止
         Rb.constraints = _initialConstraints | RigidbodyConstraints.FreezeRotation;
+        IsTouchingPlayer = false;
+        IsPlayerRiding = false;
     }
 
     /// <summary>
@@ -54,7 +94,7 @@ public class PhononkinesisTarget : MonoBehaviour
         {
             case ReleaseBehavior.Auto:
                 // 元々の設定に忠実に復帰
-                Rb.linearVelocity = Vector3.zero;
+                Rb.linearVelocity *= _inertiaDamping; // 少し減速して落下
                 Rb.angularVelocity = Vector3.zero;
                 Rb.isKinematic = _initialIsKinematic;
                 Rb.useGravity = _initialUseGravity;
@@ -70,6 +110,7 @@ public class PhononkinesisTarget : MonoBehaviour
 
             case ReleaseBehavior.AlwaysGravity:
                 // 通常の物理落下
+                Rb.linearVelocity *= _inertiaDamping; // 少し減速して落下
                 Rb.isKinematic = false;
                 Rb.useGravity = true;
                 break;
@@ -77,5 +118,8 @@ public class PhononkinesisTarget : MonoBehaviour
 
         Rb.linearDamping = _initialLinearDamping;
         Rb.constraints = _initialConstraints;
+        IsTouchingPlayer = false;
+        IsPlayerRiding = false;
     }
+
 }

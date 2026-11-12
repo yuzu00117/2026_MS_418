@@ -1,3 +1,5 @@
 MiraiSozo2027/.vscode/extensions.json
 MiraiSozo2027/.vscode/launch.json
 MiraiSozo2027/.vscode/settings.json
+__pycache__/
+*.pyc

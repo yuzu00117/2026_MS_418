@@ -43,9 +43,9 @@ namespace LoadingTest.B
         {
             _isLoading = true;
 
-            // 1. ロードUIをフェードイン
-            yield return Fade(0f, 1f);
+            // 1. ロードUIをフェードイン(フェードイン中に前回の満タンが見えないよう、表示前にバーを戻す)
             _progressBar.value = 0f;
+            yield return Fade(0f, 1f);
 
             // 2. 旧シーンを先にアンロードしてメモリのピークを抑える
             if (_currentScene.IsValid() && _currentScene.isLoaded)
@@ -59,7 +59,7 @@ namespace LoadingTest.B
             op.allowSceneActivation = false;
 
             // 実読み込みが一瞬で終わってもバーが見えるよう、表示値を一定速度で追従させる。
-            // 0→1 に最低 _minDisplayTime 秒かかる(timeScale = 0 でも進むよう unscaledDeltaTime を使う)
+            // 0->1 に最低 _minDisplayTime 秒かかる(timeScale = 0 でも進むよう unscaledDeltaTime を使う)
             float shown = 0f;
             float fillSpeed = 1f / Mathf.Max(_minDisplayTime, MinFillSeconds);
             while (op.progress < ProgressLoadedThreshold || shown < 1f)

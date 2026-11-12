@@ -1,0 +1,18 @@
+{
+    "name": "Aura.Wave",
+    "rootNamespace": "Aura.Wave",
+    "references": [
+        "Aura.ObjectInfo",
+        "Aura.Inspector",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

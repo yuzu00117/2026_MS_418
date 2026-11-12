@@ -29,5 +29,14 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Sandbox/Miyata_M/Scenes/LoadingTest/LT_C_Next.unity
     guid: 81df30fd58781174cb3f2f93579f7978
+  - enabled: 1
+    path: Assets/_Sandbox/Miyata_M/Scenes/SceneTransition/Scene_Title.unity
+    guid: 32cd0459d629d744e87c15bbd40f1244
+  - enabled: 1
+    path: Assets/_Sandbox/Miyata_M/Scenes/SceneTransition/Scene_StageSelect.unity
+    guid: 16836d0a4577a55439da48412a13f388
+  - enabled: 1
+    path: Assets/_Sandbox/Miyata_M/Scenes/SceneTransition/Scene_Game.unity
+    guid: e50cc2b1a211a044997dbe4c26c0c56c
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

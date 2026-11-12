@@ -10,7 +10,6 @@ namespace Echo.Echolocation
         public Renderer Renderer { get; set; }
         public EchoTarget Owner { get; set; }
         public bool IsOwned { get; set; }
-        public EchoTag Tag { get; set; }
         public EchoRevealState Reveal { get; set; }
         public LODGroup Group { get; set; }
         public LOD[] Lods { get; set; }

@@ -12,6 +12,8 @@ namespace Echo.Echolocation
         public EchoTagColorRule Rule { get; }
         public Object EffectGroup { get; }
         public EchoRevealState Reveal { get; }
+        /// <summary>実体化までの進み具合（0～1）。照射中の表示のシームレス移行に使う。</summary>
+        public float MaterializationProgress { get; }
 
         /// <summary>対象・色・サブメッシュ数を固定する。</summary>
         public EchoRenderItem(Renderer renderer, Color color, int count)
@@ -22,9 +24,10 @@ namespace Echo.Echolocation
             Rule = new EchoTagColorRule { Color = color };
             EffectGroup = renderer;
             Reveal = null;
+            MaterializationProgress = 0;
         }
 
-        public EchoRenderItem(Renderer renderer, EchoTagColorRule rule, int count, Object effectGroup = null, EchoRevealState reveal = null)
+        public EchoRenderItem(Renderer renderer, EchoTagColorRule rule, int count, Object effectGroup = null, EchoRevealState reveal = null, float materializationProgress = 0)
         {
             Renderer = renderer;
             Color = rule.Color;
@@ -32,6 +35,7 @@ namespace Echo.Echolocation
             Rule = rule;
             EffectGroup = effectGroup ? effectGroup : renderer;
             Reveal = reveal;
+            MaterializationProgress = materializationProgress;
         }
     }
 }

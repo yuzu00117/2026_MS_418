@@ -6,6 +6,8 @@ namespace Echo.Echolocation
     /// <summary>対象カメラに対応するLOD選択。</summary>
     public static class EchoLodSelector
     {
+        // カメラと同じ位置で0除算しないための最小距離。
+        private const float MinimumDistance = .00001f;
         /// <summary>LOD一覧はRegistry構築時に保存し、毎フレームの配列確保を避ける。</summary>
         public static bool Includes(LODGroup group, LOD[] lods, Renderer renderer, Camera camera)
         {
@@ -14,13 +16,13 @@ namespace Echo.Echolocation
             var scale = group.transform.lossyScale;
             float size = group.size * Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z));
             float distance = Vector3.Distance(camera.transform.position, group.transform.TransformPoint(group.localReferencePoint));
-            float height = camera.orthographic ? size / (2 * camera.orthographicSize) : size / (2 * Mathf.Max(.00001f, distance) * Mathf.Tan(camera.fieldOfView * Mathf.Deg2Rad * .5f));
+            float height = camera.orthographic ? size / (2 * camera.orthographicSize) : size / (2 * Mathf.Max(MinimumDistance, distance) * Mathf.Tan(camera.fieldOfView * Mathf.Deg2Rad * .5f));
             height *= QualitySettings.lodBias;
             for (int i = 0; i < lods.Length; i++)
                 if (height >= lods[i].screenRelativeTransitionHeight)
                 {
-                    foreach (var r in lods[i].renderers)
-                        if (r == renderer)
+                    foreach (var lodRenderer in lods[i].renderers)
+                        if (lodRenderer == renderer)
                             return true;
                     return false;
                 }

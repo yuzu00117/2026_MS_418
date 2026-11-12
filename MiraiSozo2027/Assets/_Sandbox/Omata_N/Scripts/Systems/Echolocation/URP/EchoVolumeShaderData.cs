@@ -33,14 +33,27 @@ namespace Echo.Echolocation
             Count = Mathf.Min(frames.Count, EchoPulseTimeline.MaxPulses);
             for (int i = 0; i < Count; i++)
             {
-                var f = frames[i];
-                Frames[i] = f;
-                _origins[i] = new Vector4(f.Origin.x, f.Origin.y, f.Origin.z, f.Angle);
-                _forwards[i] = new Vector4(f.Forward.x, f.Forward.y, f.Forward.z, Mathf.Cos(f.Angle * .5f * Mathf.Deg2Rad));
-                _volumes[i] = new Vector4(f.OuterRadius, f.EraseRadius, f.State == EchoState.Hiding ? 1 : 0, f.State == EchoState.Revealing ? 1 : 0);
+                var frame = frames[i];
+                Frames[i] = frame;
+                _origins[i] = new Vector4(frame.Origin.x, frame.Origin.y, frame.Origin.z, frame.Angle);
+                _forwards[i] = new Vector4(frame.Forward.x, frame.Forward.y, frame.Forward.z, Mathf.Cos(frame.Angle * .5f * Mathf.Deg2Rad));
+                // z：1は消去中（消去波の色で描く）、2は帯状の波（内側を含まないが消去波の色では描かない）。
+                _volumes[i] = new Vector4(frame.OuterRadius, frame.EraseRadius, frame.State == EchoState.Hiding ? 1 : frame.IsBand ? 2 : 0, frame.State == EchoState.Revealing ? 1 : 0);
             }
         }
 
+        public void Bind(CommandBuffer cmd, RenderTexture shadows)
+        {
+            cmd.SetGlobalInteger("_EchoPulseCount", Count);
+            cmd.SetGlobalInteger("_EchoShadowsEnabled", _shadowsEnabled);
+            cmd.SetGlobalFloat("_EchoShadowBias", _bias);
+            if (shadows) cmd.SetGlobalTexture("_EchoShadowMaps", shadows);
+            cmd.SetGlobalVectorArray("_EchoShadowSlots", _slots);
+            cmd.SetGlobalMatrixArray("_EchoShadowMatrices", _shadowMatrices);
+            cmd.SetGlobalVectorArray("_EchoOrigins", _origins);
+            cmd.SetGlobalVectorArray("_EchoForwards", _forwards);
+            cmd.SetGlobalVectorArray("_EchoVolumes", _volumes);
+        }
         /// <summary>タグ強調と範囲表示へ同じ包含条件を渡す。</summary>
         public void Bind(RasterCommandBuffer cmd)
         {

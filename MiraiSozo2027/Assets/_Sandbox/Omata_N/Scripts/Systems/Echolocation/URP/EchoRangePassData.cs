@@ -16,6 +16,8 @@ namespace Echo.Echolocation
         public Color Erase { get; set; }
         public Color Boundary { get; set; }
         public float Width { get; set; }
+        /// <summary>ライト方式で繰り返す拡張波の先端半径。負なら表示しない。</summary>
+        public float FollowWave { get; set; }
         public bool IsSurfaceVisible { get; set; }
         public bool IsBoundaryVisible { get; set; }
     }

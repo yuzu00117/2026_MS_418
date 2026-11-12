@@ -1,0 +1,72 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c451352f26f4ad2a1f1cc4dfbcc7dd6, type: 3}
+  m_Name: SO_Effect0
+  m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoTagDefinition
+  _displayName: 
+  _description: 
+  _isBlocking: 0
+  _hasAssetSettings: 1
+  _settings:
+    _isEnabled: 1
+    _definition: {fileID: 11400000}
+    _revealMode: 0
+    _tagName: Untagged
+    _color: {r: 0, g: 1, b: 1, a: 0.65}
+    _fillEnabled: 0
+    _fillOcclusion: 0
+    _outlineOcclusion: 0
+    _originalOcclusion: 0
+    _outlineEnabled: 0
+    _outlineColor: {r: 0, g: 1, b: 1, a: 1}
+    _outlineWidth: 3
+    _outlineHoldDuration: 0
+    _originalEnabled: 0
+    _hideOriginalOutsideEcho: 1
+    _originalHoldDuration: 2
+    _originalOpacity: 1
+    _contactResolution: 256
+    _glitch:
+      _isEnabled: 0
+      _isThroughWalls: 0
+      _displayScope: 1
+      _hasPersistence: 0
+      _persistenceSeconds: 1
+      _area: 0
+      _mode: 2
+      _color: {r: 0, g: 1, b: 1, a: 1}
+      _intensity: 0.85
+      _width: 4
+      _displacement: 8
+      _blockHeight: 8
+      _speed: 18
+      _duration: 0.6
+      _isContactBoundaryEnabled: 1
+    _fill:
+      _isEnabled: 1
+      _isThroughWalls: 0
+      _displayScope: 1
+      _hasPersistence: 1
+      _persistenceSeconds: 1
+    _outline:
+      _isEnabled: 0
+      _isThroughWalls: 0
+      _displayScope: 0
+      _hasPersistence: 0
+      _persistenceSeconds: 1
+    _original:
+      _isEnabled: 0
+      _isThroughWalls: 0
+      _displayScope: 0
+      _hasPersistence: 0
+      _persistenceSeconds: 1
+    _surfaceMemoryResolution: 32

@@ -35,7 +35,7 @@ namespace Echo.Echolocation.Editor
             _isSelectionOnly = EditorGUILayout.Toggle("選択した階層だけ", _isSelectionOnly);
             _hasInactive = EditorGUILayout.Toggle("非アクティブも含む", _hasInactive);
             _canReplace = EditorGUILayout.Toggle("既存の専用タグを置換", _canReplace);
-            _world = (EchoRevealWorld)EditorGUILayout.ObjectField("表示状態の管理元（元表示には必須）", _world, typeof(EchoRevealWorld), true);
+
             if (EditorGUI.EndChangeCheck()) _candidates.Clear();
             using (new EditorGUI.DisabledScope(Application.isPlaying))
             {
@@ -58,7 +58,7 @@ namespace Echo.Echolocation.Editor
                 if (!candidate.scene.IsValid() || !candidate.scene.path.StartsWith("Assets/_Sandbox/Omata_N/") ||
                     (_isActiveSceneOnly && candidate.scene != UnityEngine.SceneManagement.SceneManager.GetActiveScene()) ||
                     (!_hasInactive && !candidate.activeInHierarchy) || !candidate.CompareTag(_unityTag) ||
-                    (!_canReplace && candidate.GetComponent<EchoTag>())) continue;
+                    (!_canReplace && candidate.TryGetComponent<EchoTarget>(out var existing) && existing.Definition)) continue;
                 if (_isSelectionOnly)
                 {
                     bool isSelected = false;
@@ -76,27 +76,14 @@ namespace Echo.Echolocation.Editor
             foreach (var candidate in candidates)
             {
                 if (!candidate || !candidate.scene.path.StartsWith("Assets/_Sandbox/Omata_N/")) continue;
-                var tag = candidate.GetComponent<EchoTag>();
-                if (tag && !canReplace) continue;
-                if (!candidate.GetComponent<EchoTarget>()) Undo.AddComponent<EchoTarget>(candidate);
-                if (!tag) tag = Undo.AddComponent<EchoTag>(candidate);
-                Undo.RecordObject(tag, "Assign echo tag"); tag.Definition = definition;
-                PrefabUtility.RecordPrefabInstancePropertyModifications(tag);
-                if (world)
-                {
-                    var state = candidate.GetComponent<EchoRevealState>();
-                    if (!state)
-                    {
-                        state = Undo.AddComponent<EchoRevealState>(candidate);
-                        Undo.RecordObject(state, "Assign echo world");
-                        state.Configure(world, null);
-                        PrefabUtility.RecordPrefabInstancePropertyModifications(state);
-                    }
-                }
+                var target = candidate.GetComponent<EchoTarget>();
+                if (target && target.Definition && !canReplace) continue;
+                if (!target) target = Undo.AddComponent<EchoTarget>(candidate);
+                Undo.RecordObject(target, "Assign echo tag"); target.Definition = definition;
+                PrefabUtility.RecordPrefabInstancePropertyModifications(target);
                 EditorSceneManager.MarkSceneDirty(candidate.scene);
             }
             Undo.CollapseUndoOperations(group);
         }
     }
 }
-

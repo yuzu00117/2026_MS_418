@@ -19,7 +19,7 @@ namespace Echo.Echolocation.Tests
                 Duration = 2,
                 PulseInterval = 1,
                 PulseHoldDuration = 3,
-                ScanMode = EchoScanMode.Sonar
+                ScanMode = EchoScanMode.Intermittent
             };
             _timeline = new EchoPulseTimeline();
             _frames = new List<EchoFrameData>();
@@ -50,8 +50,8 @@ namespace Echo.Echolocation.Tests
             Tick(2.99f, Vector3.right);
             Assert.That(_frames[0].Origin, Is.EqualTo(Vector3.zero));
             Tick(.02f, Vector3.right);
-            foreach (var f in _frames)
-                Assert.That(f.Origin, Is.Not.EqualTo(Vector3.zero));
+            foreach (var frame in _frames)
+                Assert.That(frame.Origin, Is.Not.EqualTo(Vector3.zero));
         }
 
         [Test]

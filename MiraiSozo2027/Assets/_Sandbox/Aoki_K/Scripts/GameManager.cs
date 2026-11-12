@@ -1,7 +1,9 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
+using System;
 using UnityEngine.SceneManagement;
+using MiraiSozo.Options;
 
+[DefaultExecutionOrder(-600)]
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
@@ -18,8 +20,16 @@ public class GameManager : MonoBehaviour
 
     public bool IsPaused => _isPaused;
 
+    //ポーズ前の状態保存
+    private float _resumeTimeScale = 1f;
+    private CursorLockMode _resumeCursorLock = CursorLockMode.Locked;
+    private bool _resumeCursorVisible = false;
+    private bool _resumePlayerEnabled = true;
+
     //ゲームで使用する用のInput
     public static InputSystem_Actions Actions { get; private set; }
+
+    public static event Action ActionsChanged;
 
     private void Awake()
     {
@@ -29,6 +39,7 @@ public class GameManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
             Actions = new InputSystem_Actions();
             Actions.Enable();
+            ActionsChanged?.Invoke();
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
         else
@@ -44,15 +55,18 @@ public class GameManager : MonoBehaviour
         if(Instance == this)
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
+            Actions?.Disable();
             Actions?.Dispose();
             Actions = null;
+            ActionsChanged?.Invoke();
+            Instance = null;
         }
     }
 
     private void TrySpawnPlayer()
     {
         //プレイヤースタートを検索
-        var starts = Object.FindObjectsByType<PlayerStart>(FindObjectsSortMode.None);
+        var starts = GameObject.FindObjectsByType<PlayerStart>(FindObjectsSortMode.None);
         if(starts.Length == 0) return;
 
         if(PlayerController.Instance != null) return;
@@ -70,6 +84,7 @@ public class GameManager : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         TrySpawnPlayer();
+        ResumePause();
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -81,42 +96,71 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(Actions == null) return;
+        
+        // ポーズ入力の検出(Actions.All.Pause)
         if(Actions.All.Pause.triggered)
         {
-            TogglePause();
+            if(!_isPaused)
+            {
+                Pause();
+            }
+            else
+            {
+                //ポーズ中ならInGameOptionMenuにCancel処理を委譲
+                if(InGameOptionMenu.Instance != null && InGameOptionMenu.Instance.IsOpen)
+                {
+                    InGameOptionMenu.Instance.Back();
+                }
+                else
+                {
+                    ResumePause();
+                }
+            }
         }
     }
 
-    public void TogglePause()
+    public void Pause()
     {
-        _isPaused = !_isPaused;
+        if(_isPaused || Actions == null) return;
+        _resumeTimeScale = Time.timeScale;
+        _resumeCursorLock = Cursor.lockState;
+        _resumeCursorVisible = Cursor.visible;
+        _resumePlayerEnabled = Actions.Player.enabled;
 
-        Time.timeScale = _isPaused ? 0f : 1f;
-        Cursor.lockState = _isPaused ? CursorLockMode.None : CursorLockMode.Locked;
-        Cursor.visible = _isPaused;
+        _isPaused = true;
+        Time.timeScale = 0f;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
 
-        if(_menuUI != null)
-        {
-            _menuUI.SetActive(_isPaused);
-        }
+        Actions.Player.Disable();
+        Actions.UI.Enable();
 
-        if(_isPaused)
-        {
-            Actions.Player.Disable();
-            Actions.UI.Enable();
-        }
-        else
-        {
-            Actions.Player.Enable();
-            Actions.UI.Disable();
+        if(InGameOptionMenu.Instance != null)
+        {//UI表示
+            InGameOptionMenu.Instance.OpenMenu();
         }
     }
 
     public void ResumePause()
     {
-        if(_isPaused)
+        if(!_isPaused || Actions == null) return;
+        _isPaused = false;
+        Time.timeScale = _resumeTimeScale;
+        Cursor.lockState = _resumeCursorLock;
+        Cursor.visible = _resumeCursorVisible;
+
+        if(_resumePlayerEnabled) Actions.Player.Enable();
+        Actions.UI.Disable();
+
+        //UIの非表示
+        if(InGameOptionMenu.Instance != null && InGameOptionMenu.Instance.IsOpen)
         {
-            TogglePause();
+            InGameOptionMenu.Instance.CloseMenu();
+        }
+        if(_menuUI != null)
+        {
+            _menuUI.SetActive(false);
         }
     }
 }

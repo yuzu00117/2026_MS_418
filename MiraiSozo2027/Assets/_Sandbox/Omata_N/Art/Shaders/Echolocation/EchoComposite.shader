@@ -12,9 +12,25 @@ Shader "Hidden/Echo/Composite"
     float4 _EchoOutlineColor;
     float _EchoOutlineWidth;
     float _EchoOriginalOpacity;
-    float _EchoCommittedOriginal;
+    float _EchoContactRegion;
     float _EchoOriginalOcclusion;
     float _EchoOutlineOcclusion;
+    float4 _EchoEffect; // enabled, through walls, whole display, time
+    float4 _EchoPersistence; // enabled, seconds, whole persistence, unused
+    float GetEffectCoverage(float4 mask, float4 history)
+    {
+        float current=_EchoEffect.z>.5?history.x:mask.g;
+        float age=_EchoPersistence.z>.5?(history.y>0?max(0,_EchoEffect.w+1-history.y):60000):mask.a;
+        float held=_EchoPersistence.x>.5 && _EchoPersistence.y>0?step(age,_EchoPersistence.y):0;
+        float visible=_EchoEffect.y>.5?mask.r:mask.b;
+        return saturate(max(current,held))*visible*_EchoEffect.x;
+    }
+    float GetMaskCoverage(float2 uv)
+    {
+        float4 mask=SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_PointClamp,uv);
+        float4 history=SAMPLE_TEXTURE2D_X(_EchoHistory,sampler_PointClamp,float2(.5,.5));
+        return GetEffectCoverage(mask,history);
+    }
     ENDHLSL
     SubShader
     {
@@ -82,10 +98,9 @@ Shader "Hidden/Echo/Composite"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 float hit=step(.0001,SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_PointClamp,float2(.5,.5)).g);
-                float2 previous=SAMPLE_TEXTURE2D_X(_EchoHistory,sampler_PointClamp,float2(.5,.5)).xy;
+                float4 previous=SAMPLE_TEXTURE2D_X(_EchoHistory,sampler_PointClamp,float2(.5,.5));
                 if(_EchoEffectTiming.w>.5) previous=0;
-                float2 remaining=hit>.5?_EchoEffectTiming.yz:max(0,previous-_EchoEffectTiming.x);
-                return float4(remaining,max(hit,step(.00001,remaining)));
+                return float4(hit,hit>.5?_EchoEffectTiming.x+1:previous.y,0,0);
             }
             ENDHLSL
         }
@@ -98,17 +113,16 @@ Shader "Hidden/Echo/Composite"
             half4 Outline(Varyings input):SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                float active=SAMPLE_TEXTURE2D_X(_EchoHistory,sampler_PointClamp,float2(.5,.5)).w;
-                float4 center=SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_PointClamp,input.texcoord);
+                float center=GetMaskCoverage(input.texcoord);
+                [branch] if(center<=0) return 0;
                 float inner=1;
                 [unroll] for(int i=0;i<16;i++)
                 {
                     float angle=i*6.2831853/16;
                     float2 uv=input.texcoord+float2(cos(angle),sin(angle))*_EchoOutlineWidth*_EchoSourceSize.zw;
-                    inner=min(inner,SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_PointClamp,uv).r);
+                    inner=min(inner,GetMaskCoverage(uv));
                 }
-                float visible=_EchoOutlineOcclusion>.5?center.b:center.r;
-                float alpha=center.r*visible*(1-inner)*active*_EchoOutlineColor.a;
+                float alpha=center*(1-inner)*_EchoOutlineColor.a;
                 return half4(_EchoOutlineColor.rgb*alpha,alpha);
             }
             ENDHLSL
@@ -122,12 +136,12 @@ Shader "Hidden/Echo/Composite"
             half4 Original(Varyings input):SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                float active=_EchoCommittedOriginal>.5?1:SAMPLE_TEXTURE2D_X(_EchoHistory,sampler_PointClamp,float2(.5,.5)).z;
+                float4 history=SAMPLE_TEXTURE2D_X(_EchoHistory,sampler_PointClamp,float2(.5,.5));
                 float4 mask=SAMPLE_TEXTURE2D_X(_EchoObjectMask,sampler_PointClamp,input.texcoord);
-                float visible=_EchoOriginalOcclusion>.5?mask.b:mask.r;
+                float coverage=GetEffectCoverage(mask,history);
                 float4 scene=SAMPLE_TEXTURE2D_X(_EchoSceneColor,sampler_LinearClamp,input.texcoord);
                 float4 original=SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_LinearClamp,input.texcoord);
-                return lerp(scene,original,active*visible*_EchoOriginalOpacity);
+                return lerp(scene,original,coverage*_EchoOriginalOpacity);
             }
             ENDHLSL
         }
@@ -141,6 +155,20 @@ Shader "Hidden/Echo/Composite"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 return SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_LinearClamp,input.texcoord);
+            }
+            ENDHLSL
+        }
+        Pass // 7: タグアセットの塗りつぶし。部分/全体、残存、壁越しを独立指定。
+        {
+            ZWrite Off ZTest Always Cull Off Blend One One
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Fill
+            half4 Fill(Varyings input):SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                float alpha=GetMaskCoverage(input.texcoord)*_EchoOutlineColor.a;
+                return half4(_EchoOutlineColor.rgb*alpha,alpha);
             }
             ENDHLSL
         }

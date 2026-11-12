@@ -1,0 +1,52 @@
+# yaml-language-server: $schema=https://cubic.dev/schema/cubic-repository-config.schema.json
+
+version: 1
+
+# PR の AI 要約を日本語にする
+pr_descriptions:
+  generate: true
+  instructions: |
+    要約はすべて日本語で書いてください。
+
+reviews:
+  # 指摘の厳しさ。細かい指摘が多いので low を試す(挙動の説明は公式 docs に未記載。効果がなければ戻す)
+  sensitivity: low
+
+  # レビューコメント・要約を日本語にする(cubic は main の設定のみ読む)
+  custom_instructions: |
+    すべてのレビューコメント、指摘、要約は日本語で書いてください。
+    コード、識別子、ファイル名、コマンドは原文のままで構いません。
+
+    指摘は「実際に起きるバグ」「データ消失・クラッシュ」「規約違反」に絞ってください。
+    次のものは指摘しないでください。
+    - 好みやスタイルの範囲の指摘、1フレーム未満のずれ、現実的に入力されない値の扱い
+    - 設計意図としてコードのコメントや PR 本文に書かれている挙動
+    - 将来対応する旨が PR 本文に書かれている事項
+    同じ種類の規約違反が複数ファイルにあるときは、代表の1件にまとめ、
+    「ほか○件(ファイル名を列挙)」と書いてください。ファイルごとに別の指摘を出さないでください。
+    Prefab・シーンの YAML は入れ子 Prefab の上書き(Overrides)が読み取れないことがあります。
+    「接続されていない」「設定がない」と断定せず、確実に誤りと分かる場合だけ指摘してください。
+
+  # 生成物・ログ等はレビュー対象から除外する(.coderabbit.yaml の path_filters と同じ)
+  ignore:
+    files:
+      - "**/*.meta"
+      - "**/Library/**"
+      - "**/Temp/**"
+      - "**/Logs/**"
+      - "**/Packages/packages-lock.json"
+
+  custom_rules:
+    - name: プロジェクト規約
+      description: |
+        docs/ai-review-rules.md の規約に従ってレビューしてください。
+        規約違反は、明確に違反しているものだけを指摘してください。
+        PR 本文に書かれた目的と規約の例外が衝突する場合は、指摘しないでください。
+        違反を指摘するときは、該当の章番号(例: coding-rules 1.4 / CONTRIBUTING 4.1)を必ず明記してください。
+        確認観点(例。これに限らず docs/ai-review-rules.md の全ルールを確認すること): C# コード、アセット命名(接頭辞)、フォルダ構成(Misc 禁止・_Template の扱い)、
+        PR 運用(タイトル形式・マージ先・動作確認欄)、秘匿情報の混入、CREDITS.md への出典記録、
+        他メンバーの領域の無断変更、
+        ブランチ名・コミットメッセージの形式、大容量素材。
+        返信はすべて日本語で書いてください。
+      file_paths:
+        - docs/ai-review-rules.md

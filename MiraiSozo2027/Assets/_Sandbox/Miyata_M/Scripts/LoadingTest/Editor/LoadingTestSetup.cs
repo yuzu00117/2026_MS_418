@@ -20,7 +20,7 @@ namespace LoadingTest.EditorTools
     {
         private const string SceneDir = "Assets/_Sandbox/Miyata_M/Scenes/LoadingTest";
         private const string ResourcesDir = "Assets/_Sandbox/Miyata_M/Resources";
-        private const string PrefabPath = ResourcesDir + "/SceneLoader.prefab";
+        private const string PrefabPath = ResourcesDir + "/PF_SceneLoader.prefab";
 
         // 方式A / B / C のシーン名(Build Settings へ登録する)
         private const string SceneA1 = "LT_A_Start";
@@ -48,8 +48,8 @@ namespace LoadingTest.EditorTools
         // ---- 方式A: 各シーンにロードUI ----
         private static void BuildA()
         {
-            BuildASceneWithLoader(SceneA1, "シーンA1(→ A2へ)", SceneA2);
-            BuildASceneWithLoader(SceneA2, "シーンA2(→ A1へ)", SceneA1);
+            BuildASceneWithLoader(SceneA1, "シーンA1(-> A2へ)", SceneA2);
+            BuildASceneWithLoader(SceneA2, "シーンA2(-> A1へ)", SceneA1);
         }
 
         private static void BuildASceneWithLoader(string name, string label, string target)
@@ -91,8 +91,8 @@ namespace LoadingTest.EditorTools
             CreateEventSystem();
             Save(boot, SceneBoot);
 
-            BuildBGameScene(SceneTitle, "タイトル(→ Gameへ)", SceneGame, new Color(0.15f, 0.25f, 0.45f));
-            BuildBGameScene(SceneGame, "ゲーム(→ Titleへ)", SceneTitle, new Color(0.45f, 0.25f, 0.15f));
+            BuildBGameScene(SceneTitle, "タイトル(-> Gameへ)", SceneGame, new Color(0.15f, 0.25f, 0.45f));
+            BuildBGameScene(SceneGame, "ゲーム(-> Titleへ)", SceneTitle, new Color(0.45f, 0.25f, 0.15f));
         }
 
         private static void BuildBGameScene(string name, string label, string target, Color bgColor)
@@ -113,6 +113,16 @@ namespace LoadingTest.EditorTools
         // ---- 方式C: シングルトン ----
         private static void BuildC()
         {
+            BuildSceneLoaderPrefab();
+
+            BuildCScene(SceneC1, "シーンC1(-> C2へ)", SceneC2, new Color(0.2f, 0.4f, 0.2f));
+            BuildCScene(SceneC2, "シーンC2(-> C1へ)", SceneC1, new Color(0.4f, 0.2f, 0.4f));
+        }
+
+        /// <summary>方式C の PF_SceneLoader.prefab を生成する(シーン遷移の Setup からも使う)。</summary>
+        public static void BuildSceneLoaderPrefab()
+        {
+            Directory.CreateDirectory(ResourcesDir);
             var root = new GameObject("SceneLoader");
             var canvas = CreateCanvas("LoadingCanvas", 100, root.transform);
             var group = canvas.gameObject.AddComponent<CanvasGroup>();
@@ -125,9 +135,6 @@ namespace LoadingTest.EditorTools
             SetObject(loader, "_progressBar", slider);
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             Object.DestroyImmediate(root);
-
-            BuildCScene(SceneC1, "シーンC1(→ C2へ)", SceneC2, new Color(0.2f, 0.4f, 0.2f));
-            BuildCScene(SceneC2, "シーンC2(→ C1へ)", SceneC1, new Color(0.4f, 0.2f, 0.4f));
         }
 
         private static void BuildCScene(string name, string label, string target, Color bgColor)
