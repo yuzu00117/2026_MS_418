@@ -43,7 +43,7 @@ CBUFFER_START(MSToonGlobals)
     float  _GlobalRampWidth;        // グローバルランプの幅(px)。0 ならグローバルランプなし
     float  _GlobalRimIntensity;     // リムの強さ
     float4 _GlobalOutlineColor;     // rgb: 輪郭線の色
-    float  _GlobalOutlineWidth;     // 輪郭線の太さ(モデル上の長さ)
+    float  _GlobalOutlineWidth;     // 輪郭線の太さ(ワールド上の長さ)
 CBUFFER_END
 
 TEXTURE2D(_GlobalRampMap);

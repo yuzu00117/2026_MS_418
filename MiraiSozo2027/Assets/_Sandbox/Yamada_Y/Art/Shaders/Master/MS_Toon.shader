@@ -7,7 +7,7 @@
 // - Mobile 向け: "Lite" をオンにすると 法線マップ / リム / スペキュラ / 追加ライト を無効化する。
 // - 輪郭線・ポスト用に DepthOnly / DepthNormals パスを持つ。
 // - 裏面押し出し法の Outline パスを持つ(処理は Includes/ToonOutline.hlsl)。
-//   オブジェクト空間で法線方向に押し出すだけの単純な方式。太さはモデル上の長さで、遠いほど細く、拡大したオブジェクトほど太く見える。
+//   ワールド空間で法線方向に押し出すだけの単純な方式。太さはワールド上の長さで、遠いほど細く見える(拡大率には影響されない)。
 //   (カメラ側への引き寄せは遠近投影で線が片側にずれるため行わない)
 //   押し出し方向は自動で選ぶ: 焼き込みスムース法線(UV3, ToonSmoothNormalBaker)があればそれ、無ければモデル中心からの向き。
 // - オブジェクト下側ほど暗くする高さグラデーション(Gradient 項目)を持つ。
@@ -294,7 +294,7 @@ Shader "MS/Toon"
             ENDHLSL
         }
 
-        // 裏面押し出し法の輪郭線。Cull Front で裏面だけを描き、オブジェクト空間で法線方向に押し出す。
+        // 裏面押し出し法の輪郭線。Cull Front で裏面だけを描き、ワールド空間で法線方向に押し出す。
         Pass
         {
             Name "Outline"
@@ -318,7 +318,8 @@ Shader "MS/Toon"
             {
                 float4 positionOS : POSITION;
                 float3 normalOS   : NORMAL;
-                float4 smoothNormalOS : TEXCOORD3; // xyz: ToonSmoothNormalBaker が焼いたスムース法線, w: 焼き込み済みの目印
+                float4 tangentOS  : TANGENT; // 焼き込みスムース法線をタンジェント空間から戻すのに使う
+                float4 smoothNormalOS : TEXCOORD3; // xyz: ToonSmoothNormalBaker が焼いたスムース法線, w: 座標の種類の目印
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -352,10 +353,12 @@ Shader "MS/Toon"
                     return output;
                 }
 
-                float3 extrudeOS = SelectOutlineNormalOS(input.normalOS, input.smoothNormalOS, input.positionOS.xyz);
-                float3 positionOS = ExtrudeOutlineOS(input.positionOS.xyz, extrudeOS, outline.width);
+                float3 directionWS = GetOutlineDirectionWS(input.normalOS, input.tangentOS, input.smoothNormalOS,
+                                                           input.positionOS.xyz);
+                float3 positionWS = ExtrudeOutlineWS(TransformObjectToWorld(input.positionOS.xyz), directionWS,
+                                                     outline.width);
 
-                output.positionCS = TransformObjectToHClip(positionOS);
+                output.positionCS = TransformWorldToHClip(positionWS);
                 output.fogFactor = ComputeFogFactor(output.positionCS.z);
                 return output;
             }

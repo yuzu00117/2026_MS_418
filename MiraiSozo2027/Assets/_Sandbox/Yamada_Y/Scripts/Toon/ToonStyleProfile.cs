@@ -50,7 +50,7 @@ namespace MS.Toon
         // 範囲と既定値は MS_Toon.shader の _Outline* マテリアルプロパティに合わせている
         [Header("Outline")]
         [SerializeField] private Color _outlineColor = new Color(0.1f, 0.1f, 0.1f, 1f);
-        [Tooltip("輪郭線の太さ(モデル上の長さ)。カメラから遠いほど細く見える")]
+        [Tooltip("輪郭線の太さ(ワールド上の長さ)。カメラから遠いほど細く見える")]
         [SerializeField, Range(0f, 0.1f)] private float _outlineWidth = 0.02f;
 
         /// <summary>インスペクターで値が変わったときに通知する(Applier が再反映する)。</summary>

@@ -9,16 +9,19 @@ namespace MS.Toon.Editor
     /// 角が硬いメッシュでは頂点が面ごとに分かれ法線がバラバラになり、押し出すと角で輪郭線が割れるため、
     /// 同一位置の頂点の法線を平均した値を別チャンネルに持たせる。
     /// モデルのインポート時に自動で焼き込む。焼かれていないメッシュ(Unity 標準の Cube 等)は、
-    /// シェーダー側でモデル中心からの向きに押し出して代用する(ToonOutline.hlsl の SelectOutlineNormalOS)。
+    /// シェーダー側でモデル中心からの向きに押し出して代用する(ToonOutline.hlsl の GetOutlineDirectionWS)。
     /// </summary>
     public class ToonSmoothNormalBaker : AssetPostprocessor
     {
         // シェーダー側 TEXCOORD3 に対応する UV チャンネル
         private const int SmoothNormalChannel = 3;
-        // UV3 の w に書く「焼き込み済み」の目印。ToonOutline.hlsl の TOON_OUTLINE_BAKED_MARKER と一致させること。
+        // UV3 の w に書く「焼き込み済み」の目印。ToonOutline.hlsl の TOON_OUTLINE_MARKER_* と一致させること。
         // UV3 を持たないメッシュでは、シェーダーが 0 ではなく別チャンネル(UV0 等)の値を受け取ることがあるため、
-        // 「0 かどうか」ではなく目印で焼き込み済みかを判定する。UV0 等の w は 0 か 1 になるので 2 を使う。
-        private const float BakedMarker = 2f;
+        // 「0 かどうか」ではなく目印で焼き込み済みかを判定する。UV0 等の w は 0 か 1 になるので 2 以上を使う。
+        // タンジェント空間: スキンメッシュでも骨の回転に追従する(法線・タンジェントは GPU で回るが UV は回らないため)
+        private const float TangentSpaceMarker = 2f;
+        // オブジェクト空間: タンジェントを用意できないメッシュ(UV が無い等)の代替
+        private const float ObjectSpaceMarker = 3f;
         // 同一位置とみなすための量子化精度(1 / この値 単位)
         private const float PositionQuantize = 10000f;
         // これ未満の二乗長は退化(長さ 0)として扱う
@@ -50,7 +53,10 @@ namespace MS.Toon.Editor
             return result;
         }
 
-        /// <summary>スムース法線を UV3 の xyz へ、焼き込み済みの目印を w へ書き込む。他の UV チャンネルには触れない。</summary>
+        /// <summary>
+        /// スムース法線を UV3 の xyz へ、焼き込みの種類を表す目印を w へ書き込む。
+        /// 可能なら各頂点のタンジェント空間(tangent, bitangent, normal 基準)に変換して保存する。
+        /// </summary>
         public static bool BakeToMesh(Mesh mesh)
         {
             Vector3[] smoothNormals = CalculateSmoothNormals(mesh);
@@ -58,13 +64,51 @@ namespace MS.Toon.Editor
             {
                 return false;
             }
+
+            Vector3[] normals = mesh.normals;
+            Vector4[] tangents = GetOrCalculateTangents(mesh);
+            bool canUseTangentSpace = tangents != null;
+
             var packed = new List<Vector4>(smoothNormals.Length);
-            foreach (Vector3 normal in smoothNormals)
+            for (int i = 0; i < smoothNormals.Length; i++)
             {
-                packed.Add(new Vector4(normal.x, normal.y, normal.z, BakedMarker));
+                packed.Add(canUseTangentSpace
+                    ? ToTangentSpace(smoothNormals[i], normals[i], tangents[i])
+                    : new Vector4(smoothNormals[i].x, smoothNormals[i].y, smoothNormals[i].z, ObjectSpaceMarker));
             }
             mesh.SetUVs(SmoothNormalChannel, packed);
             return true;
+        }
+
+        // タンジェントが無ければ UV0 から計算する。UV0 も無く計算できない場合は null。
+        private static Vector4[] GetOrCalculateTangents(Mesh mesh)
+        {
+            int vertexCount = mesh.vertexCount;
+            Vector4[] tangents = mesh.tangents;
+            if (tangents != null && tangents.Length == vertexCount)
+            {
+                return tangents;
+            }
+            if (!mesh.HasVertexAttribute(UnityEngine.Rendering.VertexAttribute.TexCoord0))
+            {
+                return null;
+            }
+            mesh.RecalculateTangents();
+            tangents = mesh.tangents;
+            return tangents != null && tangents.Length == vertexCount ? tangents : null;
+        }
+
+        // スムース法線を、その頂点の (tangent, bitangent, normal) を軸とする座標へ変換する。
+        // bitangent の向きは URP の GetVertexNormalInputs と同じ cross(normal, tangent) * tangent.w に揃える。
+        private static Vector4 ToTangentSpace(Vector3 smoothNormal, Vector3 normal, Vector4 tangent)
+        {
+            Vector3 n = normal.normalized;
+            Vector3 t = new Vector3(tangent.x, tangent.y, tangent.z);
+            // 法線と直交するよう補正する(シェーダー側の行列とずれないようにするため)
+            t = (t - n * Vector3.Dot(n, t)).normalized;
+            Vector3 b = Vector3.Cross(n, t) * (tangent.w < 0f ? -1f : 1f);
+            return new Vector4(Vector3.Dot(smoothNormal, t), Vector3.Dot(smoothNormal, b), Vector3.Dot(smoothNormal, n),
+                               TangentSpaceMarker);
         }
 
         // 同一位置の頂点を同じグループ番号にまとめる(面ごとに分かれた頂点を一つとして扱うため)

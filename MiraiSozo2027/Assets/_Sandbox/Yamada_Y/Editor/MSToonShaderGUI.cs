@@ -49,7 +49,7 @@ namespace MS.Toon.Editor
             // Outline
             { "_UseGlobalOutline", "プロジェクト共通の輪郭線設定(ToonStyleProfile)を使う。オフにするとこのマテリアルの個別値で描く。" },
             { "_OutlineColor", "輪郭線の色。" },
-            { "_OutlineWidth", "輪郭線の太さ(モデル上の長さ)。カメラから遠い物ほど細く、拡大した物ほど太く見える。0 で輪郭線を描かない。" },
+            { "_OutlineWidth", "輪郭線の太さ(ワールド上の長さ)。カメラから遠い物ほど細く見える。オブジェクトの拡大率には影響されない。0 で輪郭線を描かない。" },
 
             // Gradient
             { "_GradientStrength", "オブジェクトの下側を暗くする強さ。0 でグラデーションなし、上げるほど足元が暗くなる。" },
