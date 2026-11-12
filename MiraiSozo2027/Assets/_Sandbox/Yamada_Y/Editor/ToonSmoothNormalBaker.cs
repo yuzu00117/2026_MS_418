@@ -8,22 +8,21 @@ namespace MS.Toon.Editor
     /// 輪郭線(裏面押し出し)用のスムース法線を UV3(TEXCOORD3)へ焼き込む。
     /// 角が硬いメッシュでは頂点が面ごとに分かれ法線がバラバラになり、押し出すと角で輪郭線が割れるため、
     /// 同一位置の頂点の法線を平均した値を別チャンネルに持たせる。
-    /// モデルのインポート時に自動で焼き込み、Mesh アセットは Tools/MS/Toon メニューからコピーして焼く。
+    /// モデルのインポート時に自動で焼き込む。焼かれていないメッシュ(Unity 標準の Cube 等)は、
+    /// シェーダー側でモデル中心からの向きに押し出して代用する(ToonOutline.hlsl の SelectOutlineNormalOS)。
     /// </summary>
     public class ToonSmoothNormalBaker : AssetPostprocessor
     {
         // シェーダー側 TEXCOORD3 に対応する UV チャンネル
         private const int SmoothNormalChannel = 3;
+        // UV3 の w に書く「焼き込み済み」の目印。ToonOutline.hlsl の TOON_OUTLINE_BAKED_MARKER と一致させること。
+        // UV3 を持たないメッシュでは、シェーダーが 0 ではなく別チャンネル(UV0 等)の値を受け取ることがあるため、
+        // 「0 かどうか」ではなく目印で焼き込み済みかを判定する。UV0 等の w は 0 か 1 になるので 2 を使う。
+        private const float BakedMarker = 2f;
         // 同一位置とみなすための量子化精度(1 / この値 単位)
         private const float PositionQuantize = 10000f;
         // これ未満の二乗長は退化(長さ 0)として扱う
         private const float DegenerateSqrEpsilon = 1e-12f;
-        private const string MeshParentFolder = "Assets/_Sandbox/Yamada_Y/Art";
-        private const string MeshFolderName = "Meshes";
-        private const string MeshFolder = MeshParentFolder + "/" + MeshFolderName;
-        private const string MenuCopySelected = "Tools/MS/Toon/Bake Smooth Normals (Copy Selected Mesh)";
-        private const string MenuCreateCube = "Tools/MS/Toon/Create Smooth Cube";
-        private const string BuiltinCubeName = "Cube.fbx";
 
         /// <summary>
         /// 頂点位置ごとに法線を平均したスムース法線を返す。法線が無いメッシュでは null。
@@ -51,7 +50,7 @@ namespace MS.Toon.Editor
             return result;
         }
 
-        /// <summary>スムース法線を UV3 へ書き込む。他の UV チャンネルには触れない。</summary>
+        /// <summary>スムース法線を UV3 の xyz へ、焼き込み済みの目印を w へ書き込む。他の UV チャンネルには触れない。</summary>
         public static bool BakeToMesh(Mesh mesh)
         {
             Vector3[] smoothNormals = CalculateSmoothNormals(mesh);
@@ -59,7 +58,12 @@ namespace MS.Toon.Editor
             {
                 return false;
             }
-            mesh.SetUVs(SmoothNormalChannel, new List<Vector3>(smoothNormals));
+            var packed = new List<Vector4>(smoothNormals.Length);
+            foreach (Vector3 normal in smoothNormals)
+            {
+                packed.Add(new Vector4(normal.x, normal.y, normal.z, BakedMarker));
+            }
+            mesh.SetUVs(SmoothNormalChannel, packed);
             return true;
         }
 
@@ -146,58 +150,5 @@ namespace MS.Toon.Editor
             }
         }
 
-        [MenuItem(MenuCopySelected)]
-        private static void CopySelectedMeshes()
-        {
-            Mesh[] meshes = Selection.GetFiltered<Mesh>(SelectionMode.Assets);
-            if (meshes.Length == 0)
-            {
-                Debug.LogWarning("Project で Mesh アセットを選択してください。組み込みの Cube は 'Tools/MS/Toon/Create Smooth Cube' を使います。");
-                return;
-            }
-            foreach (Mesh mesh in meshes)
-            {
-                CreateBakedCopy(mesh, mesh.name);
-            }
-            AssetDatabase.SaveAssets();
-        }
-
-        [MenuItem(MenuCreateCube)]
-        private static void CreateSmoothCube()
-        {
-            Mesh cube = Resources.GetBuiltinResource<Mesh>(BuiltinCubeName);
-            Mesh created = CreateBakedCopy(cube, "Cube");
-            AssetDatabase.SaveAssets();
-            if (created != null)
-            {
-                Selection.activeObject = created;
-            }
-        }
-
-        private static Mesh CreateBakedCopy(Mesh source, string baseName)
-        {
-            // 組み込みメッシュは読み取り不可の場合があるため、複製してから処理する
-            Mesh copy = Object.Instantiate(source);
-            copy.name = baseName + "_SmoothNormals";
-            if (!BakeToMesh(copy))
-            {
-                Debug.LogWarning($"{source.name} は法線が無いためスキップしました。");
-                Object.DestroyImmediate(copy);
-                return null;
-            }
-
-            EnsureMeshFolder();
-            string path = AssetDatabase.GenerateUniqueAssetPath($"{MeshFolder}/{copy.name}.asset");
-            AssetDatabase.CreateAsset(copy, path);
-            return copy;
-        }
-
-        private static void EnsureMeshFolder()
-        {
-            if (!AssetDatabase.IsValidFolder(MeshFolder))
-            {
-                AssetDatabase.CreateFolder(MeshParentFolder, MeshFolderName);
-            }
-        }
     }
 }

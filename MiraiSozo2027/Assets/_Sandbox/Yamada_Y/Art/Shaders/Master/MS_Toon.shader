@@ -3,13 +3,13 @@
 // - ライティング処理は Includes/ProjectLighting.hlsl に集約。絵作りを変える場合は基本そちらを触る。
 // - 全体の見た目は _Global* (ToonStyleProfile -> ToonStyleApplier) で一括変更できる。
 //   マテリアルの "Use Global Style" をオフにすると、そのマテリアルだけ個別値で動く。
-//   共通値の対応: リム(色・絞り・強さ)は Use Global Style、輪郭線(色・太さ・ZPull)は Use Global Outline で切り替わる。
+//   共通値の対応: リム(色・絞り・強さ)は Use Global Style、輪郭線(色・太さ)は Use Global Outline で切り替わる。
 // - Mobile 向け: "Lite" をオンにすると 法線マップ / リム / スペキュラ / 追加ライト を無効化する。
 // - 輪郭線・ポスト用に DepthOnly / DepthNormals パスを持つ。
 // - 裏面押し出し法の Outline パスを持つ(処理は Includes/ToonOutline.hlsl)。
-//   クリップ空間押し出しで、画面上の太さ(画面高に対する比率)が距離に依らず一定。
-//   地面等との深度干渉を避けるためカメラ側へ引き寄せて描く。_OutlineZPull を負にすると逆向き。
-//   スムース法線(UV3, ToonSmoothNormalBaker)は _OutlineUseBakedNormal = 1 のときだけ使う(焼き込み済みメッシュのみ)。既定は通常の法線。
+//   オブジェクト空間で法線方向に押し出すだけの単純な方式。太さはモデル上の長さで、遠いほど細く、拡大したオブジェクトほど太く見える。
+//   (カメラ側への引き寄せは遠近投影で線が片側にずれるため行わない)
+//   押し出し方向は自動で選ぶ: 焼き込みスムース法線(UV3, ToonSmoothNormalBaker)があればそれ、無ければモデル中心からの向き。
 // - オブジェクト下側ほど暗くする高さグラデーション(Gradient 項目)を持つ。
 // - 未対応(意図的): ライトマップ(焼き込みGI)、透過、アルファテスト。必要になったら追加する。
 Shader "MS/Toon"
@@ -50,11 +50,7 @@ Shader "MS/Toon"
         [Header(Outline)]
         [Toggle] _UseGlobalOutline ("Use Global Outline", Float) = 1
         _OutlineColor ("Outline Color", Color) = (0.1, 0.1, 0.1, 1)
-        _OutlineWidth ("Outline Width", Range(0, 0.01)) = 0.002
-        _OutlineZPull ("Outline Z Pull", Range(-10, 10)) = 2
-        _OutlineZPullMin ("Outline Z Pull Min", Range(0, 0.1)) = 0.005
-        _OutlineZPullMax ("Outline Z Pull Max", Range(0, 1)) = 0.2
-        [Toggle] _OutlineUseBakedNormal ("Outline Use Baked Normal", Float) = 0
+        _OutlineWidth ("Outline Width", Range(0, 0.1)) = 0.02
 
         [Header(Gradient)]
         _GradientStrength ("Gradient Strength", Range(0, 1)) = 0.3
@@ -99,10 +95,6 @@ Shader "MS/Toon"
             float  _UseGlobalOutline;
             float4 _OutlineColor;
             float  _OutlineWidth;
-            float  _OutlineZPull;
-            float  _OutlineZPullMin;
-            float  _OutlineZPullMax;
-            float  _OutlineUseBakedNormal;
             float  _GradientStrength;
             float  _GradientHeight;
             float  _GradientOffset;
@@ -302,8 +294,7 @@ Shader "MS/Toon"
             ENDHLSL
         }
 
-        // 裏面押し出し法の輪郭線。Cull Front で裏面だけを描き、法線方向に押し出す。
-        // 深度はカメラ側へ引き寄せる(_OutlineZPull × 輪郭幅、Min/Max で制限)。地面等との干渉を避けるため。
+        // 裏面押し出し法の輪郭線。Cull Front で裏面だけを描き、オブジェクト空間で法線方向に押し出す。
         Pass
         {
             Name "Outline"
@@ -327,7 +318,7 @@ Shader "MS/Toon"
             {
                 float4 positionOS : POSITION;
                 float3 normalOS   : NORMAL;
-                float3 smoothNormalOS : TEXCOORD3; // ToonSmoothNormalBaker が焼いたスムース法線
+                float4 smoothNormalOS : TEXCOORD3; // xyz: ToonSmoothNormalBaker が焼いたスムース法線, w: 焼き込み済みの目印
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -342,8 +333,7 @@ Shader "MS/Toon"
             // 共通値(プロファイル)かマテリアル値かを解決した輪郭線の設定を返す。
             ToonOutlineStyle ResolveMaterialOutline()
             {
-                return ToonResolveOutline(_UseGlobalOutline, _OutlineColor.rgb, _OutlineWidth,
-                                          _OutlineZPull, _OutlineZPullMin, _OutlineZPullMax);
+                return ToonResolveOutline(_UseGlobalOutline, _OutlineColor.rgb, _OutlineWidth);
             }
 
             Varyings OutlineVertex(Attributes input)
@@ -362,18 +352,10 @@ Shader "MS/Toon"
                     return output;
                 }
 
-                float focalLength = max(abs(UNITY_MATRIX_P[1][1]), TOON_OUTLINE_EPSILON);
+                float3 extrudeOS = SelectOutlineNormalOS(input.normalOS, input.smoothNormalOS, input.positionOS.xyz);
+                float3 positionOS = ExtrudeOutlineOS(input.positionOS.xyz, extrudeOS, outline.width);
 
-                float3 extrudeOS = SelectOutlineNormalOS(input.normalOS, input.smoothNormalOS, _OutlineUseBakedNormal);
-                float3 normalVS = TransformWorldToViewDir(TransformObjectToWorldNormal(extrudeOS));
-
-                float3 positionVS = TransformWorldToView(TransformObjectToWorld(input.positionOS.xyz));
-                float viewDepth = -positionVS.z; // ビュー空間の前方は -z
-                positionVS.z += ComputeOutlineZPull(viewDepth, focalLength, outline.width,
-                                                    outline.zPull, outline.zPullMin, outline.zPullMax);
-
-                float4 positionCS = TransformWViewToHClip(positionVS);
-                output.positionCS = ExtrudeOutlineCS(positionCS, normalVS, focalLength, outline.width);
+                output.positionCS = TransformObjectToHClip(positionOS);
                 output.fogFactor = ComputeFogFactor(output.positionCS.z);
                 return output;
             }

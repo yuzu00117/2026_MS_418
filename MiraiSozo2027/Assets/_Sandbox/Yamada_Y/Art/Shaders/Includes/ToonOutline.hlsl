@@ -6,53 +6,39 @@
 // 裏面押し出し法の輪郭線用の部品。マテリアル定数(CBUFFER)には依存せず、
 // 値はすべて引数で受け取る(どのシェーダーからも再利用できるようにするため)。
 //
-//   SelectOutlineNormalOS : 押し出しに使う法線の選択(通常法線 or 焼き込みスムース法線)
-//   ComputeOutlineZPull   : 深度干渉を避けるためのビュー空間 z のずらし量
-//   ExtrudeOutlineCS      : クリップ空間での押し出し
+//   SelectOutlineNormalOS : 押し出し方向の選択(焼き込みスムース法線 → 中心からの向き → 通常法線)
+//   ExtrudeOutlineOS      : オブジェクト空間で法線方向に押し出す(太さはモデル上の長さ)
 // ============================================================================
 
-// 0 除算を避けるための下限(焦点距離・ベクトル長に使う)
-#define TOON_OUTLINE_EPSILON   1e-8
-// 「実質ゼロ」とみなすしきい値(法線の長さの2乗・ZPull 値に使う)
+// 「実質ゼロ」とみなすしきい値(法線の長さの2乗に使う)
 #define TOON_OUTLINE_THRESHOLD 1e-6
+// UV3.w に書かれた「焼き込み済み」の目印。ToonSmoothNormalBaker.BakedMarker と一致させること。
+// UV3 を持たないメッシュでは 0 ではなく別チャンネル(UV0 等)の値が届くことがあり、
+// それを法線とみなすと押し出しが一方向に揃って輪郭線がずれるため、目印で判定する。
+#define TOON_OUTLINE_BAKED_MARKER 2.0
 
-// 焼き込みスムース法線(UV3)は useBakedNormal = 1 のときだけ使う。
-// 未焼き込みメッシュの UV3 は 0 なので、ゼロ長のときは通常法線にフォールバックする。
-float3 SelectOutlineNormalOS(float3 normalOS, float3 smoothNormalOS, float useBakedNormal)
+// 押し出し方向を次の優先順で選ぶ(角で輪郭線が割れないようにするため)。
+//   1. 焼き込みスムース法線(UV3.xyz)。w が目印と一致するもの(読み込み時に焼いたモデル)だけ使う。
+//   2. 焼かれていないときは、原点(モデル中心)から頂点への向き。
+//      Unity 標準の Cube/Cylinder など、中心が原点で凹みの無い形なら角でも線がつながる。
+//      凹んだ形では太さがゆがむが、焼き込み無しのメッシュに限られる。
+//   3. 頂点が原点上にあり向きが決まらないときは通常法線。
+float3 SelectOutlineNormalOS(float3 normalOS, float4 bakedNormalOS, float3 positionOS)
 {
-    if (useBakedNormal > 0.5 && dot(smoothNormalOS, smoothNormalOS) > TOON_OUTLINE_THRESHOLD)
-        return normalize(smoothNormalOS);
+    bool isBaked = abs(bakedNormalOS.w - TOON_OUTLINE_BAKED_MARKER) < 0.5
+                && dot(bakedNormalOS.xyz, bakedNormalOS.xyz) > TOON_OUTLINE_THRESHOLD;
+    if (isBaked)
+        return normalize(bakedNormalOS.xyz);
+    if (dot(positionOS, positionOS) > TOON_OUTLINE_THRESHOLD)
+        return normalize(positionOS);
     return normalOS;
 }
 
-// ビュー空間 z に加算する量を返す(カメラ側が +)。輪郭幅に比例させ、Min/Max で制限する。
-// zPull を負にすると逆向き(奥側)にずらす。
-float ComputeOutlineZPull(float viewDepth, float focalLength, float outlineWidth,
-                          float zPull, float zPullMin, float zPullMax)
+// 頂点をオブジェクト空間で方向 directionOS(正規化済み)へ outlineWidth だけ押し出す。
+// オブジェクト空間で行うので太さはモデル上の長さになり、遠いほど細く・拡大したオブジェクトほど太く見える。
+float3 ExtrudeOutlineOS(float3 positionOS, float3 directionOS, float outlineWidth)
 {
-    if (abs(zPull) <= TOON_OUTLINE_THRESHOLD)
-        return 0.0;
-
-    // 世界空間での輪郭幅(画面高 2 がビュー深度 viewDepth 相当になる換算)
-    float worldWidth = 2.0 * outlineWidth * viewDepth / focalLength;
-    float pull = clamp(abs(zPull) * worldWidth + zPullMin, 0.0, zPullMax);
-    return pull * ((zPull < 0.0) ? -1.0 : 1.0);
-}
-
-// クリップ空間押し出し: 画面上の太さが距離に依らず一定(outlineWidth = 画面高に対する比率)
-// focalLength は |P11|。呼び出し側で epsilon 以上にして渡すこと。
-float4 ExtrudeOutlineCS(float4 positionCS, float3 normalVS, float focalLength, float outlineWidth)
-{
-    // 投影行列を通して Y 反転(RT描画時)を吸収する
-    // P00 = f/aspect なのでアスペクトもここで掛かる(以降で aspect 除算はしない)
-    // 割るのは view xy の長さと |P11|(= f) → 太さが方向・画角に依らず一定になる
-    float2 nxy = normalVS.xy;
-    float2 dirCS = mul((float2x2)UNITY_MATRIX_P, nxy);
-    // ゼロ長でも 0 除算しないよう epsilon を入れる
-    float2 dir = dirCS * (rsqrt(max(dot(nxy, nxy), TOON_OUTLINE_EPSILON)) / focalLength);
-    float2 offset = dir * (outlineWidth * 2.0); // NDC は高さ 2 なので x2
-    positionCS.xy += offset * positionCS.w;
-    return positionCS;
+    return positionOS + directionOS * outlineWidth;
 }
 
 #endif // MS_TOON_OUTLINE_INCLUDED

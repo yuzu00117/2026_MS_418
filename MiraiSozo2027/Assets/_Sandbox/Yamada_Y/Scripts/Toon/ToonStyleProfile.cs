@@ -22,9 +22,6 @@ namespace MS.Toon
         private static readonly int RimIntensityId = Shader.PropertyToID("_GlobalRimIntensity");
         private static readonly int OutlineColorId = Shader.PropertyToID("_GlobalOutlineColor");
         private static readonly int OutlineWidthId = Shader.PropertyToID("_GlobalOutlineWidth");
-        private static readonly int OutlineZPullId = Shader.PropertyToID("_GlobalOutlineZPull");
-        private static readonly int OutlineZPullMinId = Shader.PropertyToID("_GlobalOutlineZPullMin");
-        private static readonly int OutlineZPullMaxId = Shader.PropertyToID("_GlobalOutlineZPullMax");
 
         // インスペクタで開いた時点で、そのスタイルが何を狙った設定か分かるようにするための説明文
         [Header("Description")]
@@ -53,12 +50,8 @@ namespace MS.Toon
         // 範囲と既定値は MS_Toon.shader の _Outline* マテリアルプロパティに合わせている
         [Header("Outline")]
         [SerializeField] private Color _outlineColor = new Color(0.1f, 0.1f, 0.1f, 1f);
-        [Tooltip("輪郭線の幅")]
-        [SerializeField, Range(0f, 0.01f)] private float _outlineWidth = 0.002f;
-        [Tooltip("輪郭線をカメラ側へ引き寄せる量。地面等との深度干渉を避ける")]
-        [SerializeField, Range(-10f, 10f)] private float _outlineZPull = 2f;
-        [SerializeField, Range(0f, 0.1f)] private float _outlineZPullMin = 0.005f;
-        [SerializeField, Range(0f, 1f)] private float _outlineZPullMax = 0.2f;
+        [Tooltip("輪郭線の太さ(モデル上の長さ)。カメラから遠いほど細く見える")]
+        [SerializeField, Range(0f, 0.1f)] private float _outlineWidth = 0.02f;
 
         /// <summary>インスペクターで値が変わったときに通知する(Applier が再反映する)。</summary>
         public event Action Changed;
@@ -73,9 +66,6 @@ namespace MS.Toon
         public float RimIntensity => _rimIntensity;
         public Color OutlineColor => _outlineColor;
         public float OutlineWidth => _outlineWidth;
-        public float OutlineZPull => _outlineZPull;
-        public float OutlineZPullMin => _outlineZPullMin;
-        public float OutlineZPullMax => _outlineZPullMax;
 
         /// <summary>この内容を _Global* としてシェーダーへ設定する。</summary>
         public void ApplyToGlobals()
@@ -89,9 +79,6 @@ namespace MS.Toon
             Shader.SetGlobalFloat(RimIntensityId, _rimIntensity);
             Shader.SetGlobalVector(OutlineColorId, ToVector(_outlineColor, _outlineColor.a));
             Shader.SetGlobalFloat(OutlineWidthId, _outlineWidth);
-            Shader.SetGlobalFloat(OutlineZPullId, _outlineZPull);
-            Shader.SetGlobalFloat(OutlineZPullMinId, _outlineZPullMin);
-            Shader.SetGlobalFloat(OutlineZPullMaxId, _outlineZPullMax);
 
             // ランプ未設定のときは幅0を送り、シェーダー側でマテリアルのランプにフォールバックさせる
             if (_ramp != null)

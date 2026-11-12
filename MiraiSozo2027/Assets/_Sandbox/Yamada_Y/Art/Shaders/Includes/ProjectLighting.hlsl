@@ -43,10 +43,7 @@ CBUFFER_START(MSToonGlobals)
     float  _GlobalRampWidth;        // グローバルランプの幅(px)。0 ならグローバルランプなし
     float  _GlobalRimIntensity;     // リムの強さ
     float4 _GlobalOutlineColor;     // rgb: 輪郭線の色
-    float  _GlobalOutlineWidth;     // 輪郭線の太さ(画面高に対する比率)
-    float  _GlobalOutlineZPull;     // 輪郭線のカメラ側への引き寄せ量
-    float  _GlobalOutlineZPullMin;  // 引き寄せ量の下限
-    float  _GlobalOutlineZPullMax;  // 引き寄せ量の上限
+    float  _GlobalOutlineWidth;     // 輪郭線の太さ(モデル上の長さ)
 CBUFFER_END
 
 TEXTURE2D(_GlobalRampMap);
@@ -104,24 +101,17 @@ struct ToonOutlineStyle
 {
     float3 color;
     float  width;
-    float  zPull;
-    float  zPullMin;
-    float  zPullMax;
 };
 
 // useGlobalOutline: マテリアル側の「グローバル輪郭線を使う」トグル(0/1)
 ToonOutlineStyle ToonResolveOutline(float useGlobalOutline,
-                                    float3 localColor, float localWidth,
-                                    float localZPull, float localZPullMin, float localZPullMax)
+                                    float3 localColor, float localWidth)
 {
     ToonOutlineStyle o;
     bool g = ToonUseGlobal(useGlobalOutline);
 
     o.color    = g ? _GlobalOutlineColor.rgb : localColor;
     o.width    = g ? _GlobalOutlineWidth     : localWidth;
-    o.zPull    = g ? _GlobalOutlineZPull     : localZPull;
-    o.zPullMin = g ? _GlobalOutlineZPullMin  : localZPullMin;
-    o.zPullMax = g ? _GlobalOutlineZPullMax  : localZPullMax;
     return o;
 }
 

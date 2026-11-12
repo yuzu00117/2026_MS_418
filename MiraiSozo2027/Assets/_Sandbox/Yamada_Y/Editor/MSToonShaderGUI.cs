@@ -49,11 +49,7 @@ namespace MS.Toon.Editor
             // Outline
             { "_UseGlobalOutline", "プロジェクト共通の輪郭線設定(ToonStyleProfile)を使う。オフにするとこのマテリアルの個別値で描く。" },
             { "_OutlineColor", "輪郭線の色。" },
-            { "_OutlineWidth", "輪郭線の太さ(画面高に対する比率)。距離に関係なく画面上で一定の太さになり、0 で輪郭線を描かない。" },
-            { "_OutlineZPull", "地面などに輪郭線が隠れるのを防ぐため、輪郭線をカメラ側に引き寄せる倍率(輪郭幅に比例)。上げるほど隠れにくいが、他の物体に食い込んで見えることがある。負の値で逆向きになる。" },
-            { "_OutlineZPullMin", "カメラ側への引き寄せ量の下限(ワールド長)。近距離で引き寄せが小さすぎて地面に埋もれるのを防ぐ。" },
-            { "_OutlineZPullMax", "カメラ側への引き寄せ量の上限(ワールド長)。遠距離で引き寄せすぎて輪郭線が手前の物体を突き抜けるのを防ぐ。" },
-            { "_OutlineUseBakedNormal", "ToonSmoothNormalBaker で UV3 に焼いたスムース法線を使う。角で輪郭線が割れにくくなる。未焼き込みのメッシュではオフにする。" },
+            { "_OutlineWidth", "輪郭線の太さ(モデル上の長さ)。カメラから遠い物ほど細く、拡大した物ほど太く見える。0 で輪郭線を描かない。" },
 
             // Gradient
             { "_GradientStrength", "オブジェクトの下側を暗くする強さ。0 でグラデーションなし、上げるほど足元が暗くなる。" },
@@ -103,7 +99,7 @@ namespace MS.Toon.Editor
         {
             new GlobalGroup(UseGlobalOutlineName, new[]
             {
-                "_OutlineColor", "_OutlineWidth", "_OutlineZPull", "_OutlineZPullMin", "_OutlineZPullMax",
+                "_OutlineColor", "_OutlineWidth",
             }),
             new GlobalGroup(UseGlobalStyleName, new[]
             {
@@ -128,9 +124,6 @@ namespace MS.Toon.Editor
                 { "_RimIntensity", p => p.RimIntensity },
                 { "_Smoothness", p => p.Smoothness },
                 { "_OutlineWidth", p => p.OutlineWidth },
-                { "_OutlineZPull", p => p.OutlineZPull },
-                { "_OutlineZPullMin", p => p.OutlineZPullMin },
-                { "_OutlineZPullMax", p => p.OutlineZPullMax },
             };
 
         // Profile.Changed の購読は static で1つだけ持つ。インスタンスごとに登録するとインスペクタを閉じた後に残るため
