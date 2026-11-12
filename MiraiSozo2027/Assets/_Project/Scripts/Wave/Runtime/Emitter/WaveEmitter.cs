@@ -18,7 +18,7 @@ namespace Aura.Wave
     ///   波面（見た目では輪の先頭）が届いたときに波を渡す。曲げ・跳ね返りはせず、壁の裏には届かない
     /// ・これは波の実体（当たり判定と、波を渡すこと）だけを受け持つ。見た目は、同じ GameObject に付けた見た目の部品
     ///   （ビームは IBeamWaveView、扇は IFanWaveView）に形を渡して描かせる。部品が無ければ、再生を始めるときに今の見た目
-    ///   （BeamLineView、FanRingView）を足す。見た目の部品を替えても、当たり方は変わらない
+    ///   （BeamLineView、泡の輪の ConeRingView）を足す。見た目の部品を替えても、当たり方は変わらない
     public sealed class WaveEmitter : MonoBehaviour
     {
         private const int MaxReflectionLimit = 16;           ///< Max Reflections に決められる最大の回数
@@ -32,6 +32,9 @@ namespace Aura.Wave
         private const float BodyLineWhiteBlend = 0.5f;       ///< ビームの実体の線の色を、ビームの色から白へ寄せる割合
         private const float MinFanShotSpeed = 0.1f;          ///< 「扇の波の速さ（m/s）」に決められる最小の速さ
         private const float MinFanRepeatInterval = 0.1f;     ///< 「押し続けると連射」で撃つ間隔の最小（秒）。クールタイムが 0 でも、毎フレームは撃たない
+        private const float DefaultFanHalfAngle = 20.0f;         ///< 「扇の半角（度）」の初期値（泡の輪の見た目に合わせた、押している間ずっと輪を出す出し方）
+        private const float DefaultFanCooldownSeconds = 0.12f;   ///< 「扇のクールタイム（秒）」の初期値（同じ出し方）
+        private const float DefaultFanShotSpeed = 4.0f;          ///< 「扇の波の速さ（m/s）」の初期値（同じ出し方）
 
         [Header("ビームの種類")]
         [InspectorLabel("ビームの情報")]
@@ -81,14 +84,15 @@ namespace Aura.Wave
         [SerializeField, Min(0.0f)] private float _fanRange = 6.0f;  ///< 扇の届く距離（m）
 
         [InspectorLabel("扇の半角（度）")]
-        [Tooltip("扇の広がりの半分の角度（度）。正面からこの角度以内の物に当たる（例: 40 なら全体で 80 度の扇）。今の見た目（FanRingView）の輪も、同じ広がりの円すいに沿って広がる\n" +
+        [Tooltip("扇の広がりの半分の角度（度）。正面からこの角度以内の物に当たる（例: 20 なら全体で 40 度の円すい）。今の見た目（ConeRingView）の泡の輪も、同じ広がりの円すいに沿って大きくなる\n" +
                  "当たるかは、出る位置から見た「候補のいちばん近い点」の向きで決める（大きい物は、端が扇に入っていても、いちばん近い点が外なら当たらない）")]
-        [SerializeField, Range(1.0f, 89.0f)] private float _fanHalfAngle = 40.0f;  ///< 扇の半角（度）
+        [SerializeField, Range(1.0f, 89.0f)] private float _fanHalfAngle = DefaultFanHalfAngle;  ///< 扇の半角（度）
 
         [InspectorLabel("扇のクールタイム（秒）")]
         [Tooltip("扇を 1 発撃ってから、次を撃てるまでの時間（秒）。この間に引き金を引き直しても撃たない\n" +
+                 "「押し続けると連射」がオン（既定）なら、押している間この間隔で撃ち続ける（既定 0.12 秒。速さ 4 m/s なら、泡の輪がおよそ 0.5 m おきに並ぶ）\n" +
                  "0 なら、引き直すたびに撃てる（連射できる）。実行中に変えてもよい")]
-        [SerializeField, Min(0.0f)] private float _fanCooldownSeconds;  ///< 扇を 1 発撃ってから、次を撃てるまでの時間（秒）
+        [SerializeField, Min(0.0f)] private float _fanCooldownSeconds = DefaultFanCooldownSeconds;  ///< 扇を 1 発撃ってから、次を撃てるまでの時間（秒）
 
         [InspectorLabel("扇の 1 発の量（秒分）")]
         [Tooltip("扇の 1 発で受け手に渡す量を、ビームを当て続ける秒数で表したもの。渡る量は「強さ（1 秒あたり）」（BeamSourceInfo）× これ × 弱点の倍率\n" +
@@ -99,14 +103,16 @@ namespace Aura.Wave
         [InspectorLabel("扇の波の速さ（m/s）")]
         [Tooltip("撃った 1 発の波面が進む速さ（m/s）。物に波が渡るのは、波面がその物に届いたとき（遠い物ほど少し遅れる）\n" +
                  "1 発の当たる物は撃った瞬間に決める。撃った後に撃ち手が動いても、波は撃った位置から広がる\n" +
-                 "波面が「扇の届く距離（m）」に着くと、その 1 発の当たりは終わる。見た目の部品も、この速さに合わせて描く（今の見た目では、輪の先頭が波面）")]
-        [SerializeField, Min(MinFanShotSpeed)] private float _fanShotSpeed = 20.0f;  ///< 扇の 1 発の波面が進む速さ（m/s）
+                 "波面が「扇の届く距離（m）」に着くと、その 1 発の当たりは終わる。見た目の部品も、この速さに合わせて描く（今の見た目では、先頭の泡の輪の中心が波面。遅いほど、泡が管のまわりを回るのが見えやすい）")]
+        [SerializeField, Min(MinFanShotSpeed)] private float _fanShotSpeed = DefaultFanShotSpeed;  ///< 扇の 1 発の波面が進む速さ（m/s）
 
         [InspectorLabel("押し続けると連射")]
-        [Tooltip("オンにすると、引き金を引いている間、「扇のクールタイム（秒）」ごとに撃ち続ける（扇のギミック・タレット用）。" +
+        [Tooltip("オンにすると（既定）、引き金を引いている間、「扇のクールタイム（秒）」ごとに撃ち続ける。" +
                  "クールタイムが 0.1 秒より短いときは、0.1 秒ごとに撃つ\n" +
+                 "押している間ずっと泡の輪を出し、輪が連なって円すいを作る（見た目の部品の「1 発の輪の数」が 1（既定）なら、輪がクールタイムごとに一定の間隔で並ぶ）\n" +
+                 "1 発ごとに「扇の 1 発の量（秒分）」を渡すので、受け手にはビームを当て続けるより速く溜まる（「1 発の量 ÷ 撃つ間隔」倍）\n" +
                  "オフなら、引き金を引いた瞬間に 1 発だけ撃つ。次を撃つには引き直す")]
-        [SerializeField] private bool _isFanAutoRepeat;  ///< 引き金を引いている間、扇を撃ち続けるか
+        [SerializeField] private bool _isFanAutoRepeat = true;  ///< 引き金を引いている間、扇を撃ち続けるか
 
         [Header("狙い")]
         [InspectorLabel("ビームが出る位置")]
@@ -609,10 +615,11 @@ namespace Aura.Wave
             bool isPressShot = _isFanShotRequested && sinceLastFanShot >= _fanCooldownSeconds;
             bool isRepeatShot = _isFanAutoRepeat && _isTriggerHeld
                 && sinceLastFanShot >= Mathf.Max(_fanCooldownSeconds, MinFanRepeatInterval);
+            bool isShotRequested = _isFanShotRequested;
             _isFanShotRequested = false;
             if (_fireShape == WaveFireShape.Fan && (isPressShot || isRepeatShot) && CurrentType != null)
             {
-                FireFanShot();
+                FireFanShot(GetFanShotStartTime(isShotRequested));
             }
             UpdateFanShots();
         }
@@ -660,19 +667,38 @@ namespace Aura.Wave
             }
         }
 
+        /// @brief 扇の 1 発の、撃った時刻を決める
+        /// 連射の 2 発目からは「前の 1 発の時刻 ＋ 撃つ間隔」にする（フレームの区切りまで待って遅れた分を含めない）。
+        /// 泡の輪の位置はこの時刻から決まるので、フレームの速さによらず、輪が同じ間隔で並ぶ
+        /// 引いた瞬間の 1 発と、間隔の 1 つ分より大きく遅れたとき（重いフレームの後など）は、今の時刻にする
+        /// @param isShotRequested 引き金を引いた瞬間か
+        /// @return 撃った時刻（Time.time と同じ物差し。今の時刻か、それより少し前）
+        private float GetFanShotStartTime(bool isShotRequested)
+        {
+            float now = Time.time;
+            float interval = Mathf.Max(_fanCooldownSeconds, MinFanRepeatInterval);
+            float scheduled = _lastFanShotTime + interval;
+            if (isShotRequested || now - scheduled >= interval)
+            {
+                return now;
+            }
+            return Mathf.Min(scheduled, now);
+        }
+
         /// @brief 扇を 1 発撃つ。撃った瞬間の狙いで、扇の中で当たる物を集めておく。波を渡すのは、波面が届いたとき（UpdateFanShots）
         /// 見た目の部品には、撃った 1 発の情報を渡す（その後の見た目は、部品が自分で進める）
-        private void FireFanShot()
+        /// @param startTime 撃った時刻（GetFanShotStartTime で決めた物）
+        private void FireFanShot(float startTime)
         {
             BeamSourceInfo source = CurrentSource;
             Transform muzzle = Muzzle;
             Vector3 direction = GetAimDirection(muzzle, _fanRange);
             var info = new FanShotInfo(muzzle.position, direction, muzzle.up, _fanRange, _fanHalfAngle,
-                Mathf.Max(MinFanShotSpeed, _fanShotSpeed), Time.time, source.WaveType);
+                Mathf.Max(MinFanShotSpeed, _fanShotSpeed), startTime, source.WaveType);
             FanWaveShot shot = GetIdleFanShot();
             shot.Begin(info, source.EnergyPerSecond * _fanShotSeconds);
             CollectFanHits(shot);
-            _lastFanShotTime = Time.time;
+            _lastFanShotTime = startTime;
             foreach (IFanWaveView view in _fanViews)
             {
                 if (IsEnabled(view))
@@ -1041,7 +1067,8 @@ namespace Aura.Wave
             _chain?.Stop();
         }
 
-        /// @brief 見た目の部品が 1 つも付いていなければ、今の見た目（BeamLineView、FanRingView）を足す
+        /// @brief 見た目の部品が 1 つも付いていなければ、今の見た目（BeamLineView、泡の輪の ConeRingView）を足す
+        /// 扇をこれまでの線の輪（FanRingView）にしたいときは、その部品を付けておく
         /// 無効にした部品も「付いている」に数える（見た目を出したくないときは、部品を付けて無効にしておく）
         private void AddDefaultViews()
         {
@@ -1051,7 +1078,7 @@ namespace Aura.Wave
             }
             if (!TryGetComponent(out IFanWaveView _))
             {
-                gameObject.AddComponent<FanRingView>();
+                gameObject.AddComponent<ConeRingView>();
             }
         }
 

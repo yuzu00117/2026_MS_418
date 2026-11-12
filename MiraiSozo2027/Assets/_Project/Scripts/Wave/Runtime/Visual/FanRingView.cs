@@ -4,9 +4,9 @@ using UnityEngine;
 
 namespace Aura.Wave
 {
-    /// @brief 扇（近距離）の 1 発の今の見た目。撃った位置から輪を順に出し、広げながら進め、届く距離を越えたら消す（FanWaveLine）
+    /// @brief 扇（近距離）の 1 発の、これまでの見た目（線の輪）。撃った位置から輪を順に出し、広げながら進め、届く距離を越えたら消す（FanWaveLine）
     /// 先頭の輪は波面と同じ位置を進むので、輪の先頭が届いた物に波が渡って見える
-    /// WaveEmitter と同じ GameObject に付ける。付いていなければ、WaveEmitter が再生を始めるときに足す
+    /// WaveEmitter と同じ GameObject に付ける。今の既定の見た目は泡の輪（ConeRingView）なので、この見た目にしたいときは付けておく
     /// 色・太さは、波の種類（WaveType）から読む。前の 1 発の輪が残っている間に次を撃つと、両方の輪が出る
     [DisallowMultipleComponent]
     public sealed class FanRingView : MonoBehaviour, IFanWaveView
