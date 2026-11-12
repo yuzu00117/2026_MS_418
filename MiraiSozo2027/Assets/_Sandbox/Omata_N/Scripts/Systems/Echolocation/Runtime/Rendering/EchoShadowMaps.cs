@@ -66,7 +66,7 @@ namespace Echo.Echolocation
         public Matrix4x4[] Matrices { get; } = new Matrix4x4[EchoPulseTimeline.MaxPulses * FaceCount];
 
         // 静止した発生地点と遮断物の影は変わらないため、描画済みの面を使い回す。
-        // ソナーは波ごとに発生地点が固定なので、毎フレーム全波×6面を描き直すと非常に重い。
+        // 断続方式は波ごとに発生地点が固定なので、毎フレーム全波×6面を描き直すと非常に重い。
         private Dictionary<Renderer, BlockerState> _blockerStates = new Dictionary<Renderer, BlockerState>();
         private Dictionary<Renderer, BlockerState> _nextBlockerStates = new Dictionary<Renderer, BlockerState>();
         private readonly List<Bounds> _changedBounds = new List<Bounds>();

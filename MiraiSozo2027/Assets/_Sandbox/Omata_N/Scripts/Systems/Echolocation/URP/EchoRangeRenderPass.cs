@@ -25,7 +25,7 @@ namespace Echo.Echolocation
         {
             var camera = frameData.Get<UniversalCameraData>();
             var controller = EchoController.GetForCamera(camera.camera);
-            if (!controller || controller.Frames.Count == 0 || controller.Settings.AngleDegrees <= 0)
+            if (!controller || controller.Frames.Count == 0 || controller.Frame.Angle <= 0)
                 return;
             var display = controller.RangeDisplay;
             if (!display.IsEnabled)
@@ -42,7 +42,7 @@ namespace Echo.Echolocation
                 data.Waves.Shadows = _shadowTexture.Import(graph, controller);
                 if (data.Waves.Shadows.IsValid())
                     builder.UseTexture(data.Waves.Shadows, AccessFlags.Read);
-                data.Mesh = display.IsBoundaryVisible ? display.GetBoundaryMesh(controller.Settings.AngleDegrees) : null;
+                data.Mesh = display.IsBoundaryVisible ? display.GetBoundaryMesh(controller.Frame.Angle) : null;
                 data.Fill = GetLinearColor(display.FillColor);
                 data.Wave = GetLinearColor(display.WaveColor);
                 data.Erase = GetLinearColor(display.EraseColor);

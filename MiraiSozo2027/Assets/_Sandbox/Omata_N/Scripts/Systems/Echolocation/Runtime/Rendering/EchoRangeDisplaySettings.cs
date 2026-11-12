@@ -17,6 +17,8 @@ namespace Echo.Echolocation
         private const int MeridianSegments = 48;
         private const int LatitudeCount = 4;
         private const int LatitudeSegments = 96;
+        // 境界線メッシュを作り直す角度の刻み（度）。
+        private const float BoundaryAngleStep = 1;
         // 統合前のControllerは範囲表示を持たないため、既存シーンでは無効のまま読み込む。
         [SerializeField, Tooltip("スキャン範囲の色と境界線を表示します。")]
         private bool _isEnabled;
@@ -36,6 +38,8 @@ namespace Echo.Echolocation
         private float _waveWidth = DefaultWaveWidth;
         [NonSerialized] private Mesh _mesh;
         [NonSerialized] private float _builtAngle = -1;
+        [NonSerialized] private List<Vector3> _boundaryPoints;
+        [NonSerialized] private List<int> _boundaryIndices;
 
         /// <summary>範囲表示全体の有効状態。</summary>
         public bool IsEnabled { get => _isEnabled; set => _isEnabled = value; }
@@ -63,18 +67,23 @@ namespace Echo.Echolocation
         /// <summary>角度が変わった時だけ半径1の線メッシュを再構築する。半径変化は描画行列で処理する。</summary>
         public Mesh GetBoundaryMesh(float angle)
         {
-            angle = Mathf.Clamp(angle, 0, FullCircleDegrees);
+            // ライト方式で角度が毎フレーム少しずつ変わっても作り直しが続かないよう、1度刻みにそろえる。
+            angle = Mathf.Round(Mathf.Clamp(angle, 0, FullCircleDegrees) / BoundaryAngleStep) * BoundaryAngleStep;
             if (_mesh && _builtAngle == angle)
                 return _mesh;
-            ReleaseMesh();
             _builtAngle = angle;
-            _mesh = new Mesh
-            {
-                name = "Echo range boundary",
-                hideFlags = HideFlags.HideAndDontSave
-            };
-            var points = new List<Vector3>();
-            var indices = new List<int>();
+            // 角度が変わるたびにメッシュを作り直すと確保が増えるため、同じメッシュと一覧を使い回す。
+            if (!_mesh)
+                _mesh = new Mesh
+                {
+                    name = "Echo range boundary",
+                    hideFlags = HideFlags.HideAndDontSave
+                };
+            _mesh.Clear();
+            var points = _boundaryPoints ??= new List<Vector3>();
+            var indices = _boundaryIndices ??= new List<int>();
+            points.Clear();
+            indices.Clear();
             float half = angle * .5f * Mathf.Deg2Rad;
             void AddSegment(Vector3 start, Vector3 end)
             {
