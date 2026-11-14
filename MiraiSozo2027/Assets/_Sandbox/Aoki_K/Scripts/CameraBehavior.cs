@@ -61,6 +61,24 @@ public class CameraBehavior : MonoBehaviour
     [Tooltip("プレイヤーが完全に非表示になるカメラ距離")]
     [SerializeField] private float _fadeEndDistance = 1.2f;
 
+    [Header("ADS Settings")]
+    [Tooltip("ADS時のカメラ距離（FadeStartDistanceより小さくするとADS時にプレイヤーが半透明になる)")]
+    [SerializeField] private float _adsDistance = 3.0f;
+    [Tooltip("ADS時のカメラの横方向オフセット")]
+    [SerializeField] private float _adsSideOffset = 0.8f;
+    [Tooltip("ADS時の注視点の高さ")]
+    [SerializeField] private float _adsTargetHeight = 4.2f;
+    [Tooltip("ADS時の視野角(FOV)")]
+    [SerializeField] private float _adsFov = 40.0f;
+    [Tooltip("通常⇔ADSの遷移速度（秒）")]
+    [SerializeField] private float _adsTransitionDuration = 0.3f;
+    private Camera _camera;
+    private float _defaultFov = 60.0f;
+    private bool _isAds = false;
+    private float _adsWeight; // 通常：0.0~1.0：ADS
+    private bool _isWallRestricted;//壁によって距離制限されているかどうか
+
+
     // 内部キャッシュ・状態管理用変数
     private readonly RaycastHit[] _hitBuffer = new RaycastHit[16];
     private readonly List<PlayerRendererData> _playerRenderers = new List<PlayerRendererData>();
@@ -105,8 +123,18 @@ public class CameraBehavior : MonoBehaviour
         _invertY = invertY;
     }
 
+    public void SetAds(bool isAds)
+    {
+        _isAds = isAds;
+    }
+
     private void Awake()
     {
+        _camera = GetComponent<Camera>();
+        if (_camera != null)
+        {
+            _defaultFov = _camera.fieldOfView;
+        }
         _currentOffsetDistance = Mathf.Sqrt(_distance * _distance + _sideOffset * _sideOffset);
     }
 
@@ -176,10 +204,20 @@ public class CameraBehavior : MonoBehaviour
         _pitch = Mathf.Clamp(_pitch, _minPitch, _maxPitch);
         // 4. 回転クォータニオンの生成
         Quaternion cameraRotation = Quaternion.Euler(_pitch, _yaw, 0f);
-        // 5. 注視点（キャラクターの胸〜頭付近）の座標
-        Vector3 targetFocusPosition = _target.position + Vector3.up * _targetHeight;
-
-        // 6. カメラの位置を算出（一人称モード または 三人称壁判定付きオフセット）
+        // 5. ADS遷移率（0.0f ～ 1.0f）の更新と各パラメータの線形補間
+        float targetAdsWeight = _isAds ? 1.0f : 0.0f;
+        float adsStep = _adsTransitionDuration > 0.0f ? (Time.deltaTime / _adsTransitionDuration) : 1.0f;
+        _adsWeight = Mathf.MoveTowards(_adsWeight, targetAdsWeight, adsStep);
+        float currentTargetHeight = Mathf.Lerp(_targetHeight, _adsTargetHeight, _adsWeight);
+        float currentDistance = Mathf.Lerp(_distance, _adsDistance, _adsWeight);
+        float currentSideOffset = Mathf.Lerp(_sideOffset, _adsSideOffset, _adsWeight);
+        if (_camera != null)
+        {
+            _camera.fieldOfView = Mathf.Lerp(_defaultFov, _adsFov, _adsWeight);
+        }
+        // 6. 注視点（通常時は胸付近、ADS時は頭付近へ補間）の座標
+        Vector3 targetFocusPosition = _target.position + Vector3.up * currentTargetHeight;
+        // 7. カメラの位置を算出（一人称モード または 三人称壁判定付きオフセット）
         if (GameSettings.Instance != null && GameSettings.Instance.IsFirstPersonMode)
         {
             transform.position = targetFocusPosition;
@@ -187,29 +225,49 @@ public class CameraBehavior : MonoBehaviour
         }
         else
         {
-            Vector3 idealOffset = (cameraRotation * Vector3.right * _sideOffset)
-                                - (cameraRotation * Vector3.forward * _distance);
+            Vector3 idealOffset = (cameraRotation * Vector3.right * currentSideOffset)
+                                - (cameraRotation * Vector3.forward * currentDistance);
             float idealDistance = idealOffset.magnitude;
-            
             if (idealDistance > MinOffsetDistance)
             {
                 Vector3 castDirection = idealOffset / idealDistance;
                 float collisionDistance = CalculateCollisionDistance(targetFocusPosition, castDirection, idealDistance);
-
-                // 壁に近づく際はめり込みを防ぐため即座に距離を縮め、離れる際は滑らかに戻す
-                if (collisionDistance < _currentOffsetDistance)
+                if (collisionDistance < idealDistance)
                 {
-                    _currentOffsetDistance = collisionDistance;
+                    // 壁に当たっている場合
+                    _isWallRestricted = true;
+                    if (collisionDistance < _currentOffsetDistance)
+                    {
+                        _currentOffsetDistance = collisionDistance;
+                    }
+                    else
+                    {
+                        _currentOffsetDistance = Mathf.MoveTowards(
+                            _currentOffsetDistance,
+                            collisionDistance,
+                            _distanceReturnSpeed * Time.deltaTime
+                        );
+                    }
+                }
+                else if (_isWallRestricted)
+                {
+                    // 壁から離れた直後の復帰中
+                    _currentOffsetDistance = Mathf.MoveTowards(
+                        _currentOffsetDistance,
+                        idealDistance,
+                        _distanceReturnSpeed * Time.deltaTime
+                    );
+                    if (_currentOffsetDistance >= idealDistance)
+                    {
+                        _currentOffsetDistance = idealDistance;
+                        _isWallRestricted = false;
+                    }
                 }
                 else
                 {
-                    _currentOffsetDistance = Mathf.MoveTowards(
-                        _currentOffsetDistance,
-                        collisionDistance,
-                        _distanceReturnSpeed * Time.deltaTime
-                    );
+                    // 壁干渉なし（通常時およびADS遷移時は理想距離をそのまま反映）
+                    _currentOffsetDistance = idealDistance;
                 }
-
                 transform.position = targetFocusPosition + castDirection * _currentOffsetDistance;
                 UpdatePlayerTransparency(_currentOffsetDistance);
             }
@@ -219,8 +277,7 @@ public class CameraBehavior : MonoBehaviour
                 UpdatePlayerTransparency(0f);
             }
         }
-
-        // 7. カメラの向きを適用
+        // 8. カメラの向きを適用
         transform.rotation = cameraRotation;
     }
 
