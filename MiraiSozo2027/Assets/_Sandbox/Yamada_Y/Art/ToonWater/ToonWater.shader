@@ -10,38 +10,39 @@ Shader "MiraiSozo/Sandbox/ToonWater"
         [Header(Depth Color)]
         _ShallowColor ("浅い所の色", Color) = (0.45, 0.92, 0.95, 1)
         _DeepColor ("深い所の色", Color) = (0.04, 0.24, 0.62, 1)
-        _DepthMaxDistance ("一番深い色になる深さ(m)", Float) = 4
-        _DepthGradientPower ("色の変わり方(1 でまっすぐ、大きいほど浅い色が長く続く)", Range(0.2, 5)) = 1
+        _DepthMaxDistance ("深い色になる水深(m)", Float) = 4
+        // 色の変わり方: 1 でまっすぐ、大きいほど浅い色が長く続く
+        _DepthGradientPower ("色の変わり方", Range(0.2, 5)) = 1
 
         [Header(Transparency)]
-        _ShallowClarity ("浅瀬の透明度", Range(0, 1)) = 0.7
+        _ShallowClarity ("浅い所の透明度", Range(0, 1)) = 0.7
         _ClarityDistance ("透けて見える深さ(m)", Float) = 1.5
         _RefractionStrength ("水中のゆがみ", Range(0, 0.1)) = 0.015
 
         [Header(Horizon)]
         _HorizonColor ("遠くの水面の色", Color) = (0.55, 0.85, 1, 1)
-        _FresnelPower ("遠くの色の効き始め", Range(1, 10)) = 5
+        _FresnelPower ("遠くの色の範囲", Range(1, 10)) = 5
         _FresnelStrength ("遠くの色の強さ", Range(0, 1)) = 0.5
 
         [Header(Edge Foam)]
         _FoamColor ("泡の色", Color) = (1, 1, 1, 1)
-        _FoamDistance ("泡が出る範囲", Float) = 0.6
-        _FoamLineWidth ("泡の縁取りの太さ", Float) = 0.08
+        _FoamDistance ("泡の幅(m)", Float) = 0.6
+        _FoamLineWidth ("泡の縁の線の太さ(m)", Float) = 0.08
         _FoamNoiseScale ("泡の模様の細かさ", Float) = 4
         _FoamSpeed ("泡の動く速さ", Float) = 0.3
 
-        [Header(Caustics)]
-        _CausticsColor ("浅瀬の光の模様の色", Color) = (0.85, 1, 1, 1)
-        _CausticsScale ("光の模様の細かさ", Float) = 1.2
-        _CausticsSpeed ("光の模様の動く速さ", Float) = 0.6
-        _CausticsWidth ("光の模様の線の太さ", Range(0, 0.5)) = 0.08
-        _CausticsDistance ("光の模様が見える深さ(m)", Float) = 2
-        _CausticsOpacity ("光の模様の濃さ", Range(0, 1)) = 0.4
-        _CausticsNearDistance ("光の模様が出る範囲(m)", Float) = 1
+        [Header(Voronoi)]
+        _CausticsColor ("ボロノイの色", Color) = (0.85, 1, 1, 1)
+        _CausticsScale ("ボロノイの細かさ", Float) = 1.2
+        _CausticsSpeed ("ボロノイの動く速さ", Float) = 0.6
+        _CausticsWidth ("ボロノイの線の太さ", Range(0, 0.5)) = 0.08
+        _CausticsDistance ("ボロノイが出る水深(m)", Float) = 2
+        _CausticsOpacity ("ボロノイの濃さ", Range(0, 1)) = 0.4
+        _CausticsNearDistance ("ボロノイが出る範囲(m)", Float) = 1
 
         [Header(Waves)]
-        _WaveDirection ("波の進む向き(XとZ)", Vector) = (1, 0.3, 0, 0)
-        _WaveLength ("一番大きな波の間隔(m)", Float) = 8
+        _WaveDirection ("波の向き(XとZ)", Vector) = (1, 0.3, 0, 0)
+        _WaveLength ("波の間隔(m)", Float) = 8
         _WaveSteepness ("波のとがり具合", Range(0, 1)) = 0.5
         _WaveSpread ("波の向きのばらつき", Range(0, 1)) = 0.5
         _WaveSpeed ("波の速さ", Float) = 0.5
