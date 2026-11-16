@@ -6,29 +6,6 @@ using UnityEngine;
 
 namespace Aura.Gimmick
 {
-    /// @brief WaveRider が波の線の終点に着いたときの動き
-    public enum WaveRiderEndMode
-    {
-        [InspectorName("終点で止まる")]
-        Stop = 0,
-
-        [InspectorName("折り返す")]
-        PingPong = 1,
-    }
-
-    /// @brief WaveRider が波に乗れなくなったとき（波が遮られた、止まった、スイッチが止まった）の動き
-    public enum WaveRiderLostWaveMode
-    {
-        [InspectorName("その場で止まる")]
-        StopInPlace = 0,
-
-        [InspectorName("慣性で進んでから止まる")]
-        Inertia = 1,
-
-        [InspectorName("初期位置へ戻る")]
-        ReturnToStart = 2,
-    }
-
     /// @brief タレットが出す波（ビームの線）に運ばれるオブジェクト。上に乗った物（プレイヤーを含む）も一緒に運ぶ
     /// ・反応する波の種類は WaveReaction（電磁波/超音波のチェック）で決める。反応しない波では動かず、波が無いときと同じ扱いになる
     /// ・波が出ている間は常に線の上にいて、線の上の道のり s を一定の速さで進める。波が曲がっても跳ね返っても、s を保ったまま線に沿う
