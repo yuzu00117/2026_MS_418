@@ -177,6 +177,7 @@ Shader "MiraiSozo/Sandbox/ToonWater"
             struct Attributes
             {
                 float4 positionOS : POSITION;
+                float3 normalOS : NORMAL;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -187,6 +188,8 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 float fogFactor : TEXCOORD1;
                 // 波で動かす前の水平位置。波の傾きと高さを画素ごとに計算し直して、陰の境目をくっきりさせるために使う
                 float2 restXZ : TEXCOORD2;
+                // メッシュの面の向き。水面(上向き)と水の箱の側面(横向き)を見分けるために使う
+                float3 normalWS : TEXCOORD3;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -335,6 +338,18 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 return result;
             }
 
+            // 面の上向き具合がこの範囲で「側面」から「水面」へ切り替わる
+            static const float kTopFaceMin = 0.5;
+            static const float kTopFaceMax = 0.8;
+
+            // 模様を貼るための 2D 座標。水面は真上から、側面は横から見た位置を使う。
+            // 側面で真上から見た位置を使うと、上から下まで同じ値になり模様が縦に伸びるため
+            float2 ProjectPatternUV(float3 positionWS, float3 normalWS, float isTop)
+            {
+                float2 sideUV = abs(normalWS.x) > abs(normalWS.z) ? positionWS.zy : positionWS.xy;
+                return isTop > 0.5 ? positionWS.xz : sideUV;
+            }
+
             Varyings Vert(Attributes input)
             {
                 Varyings output = (Varyings)0;
@@ -347,6 +362,7 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 positionWS += SampleWaves(positionWS.xz).offset;
 
                 output.positionWS = positionWS;
+                output.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 output.positionCS = TransformWorldToHClip(positionWS);
                 output.fogFactor = ComputeFogFactor(output.positionCS.z);
                 return output;
@@ -358,7 +374,10 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 float time = _Time.y;
-                float2 worldUV = input.positionWS.xz;
+                float3 faceNormal = normalize(input.normalWS);
+                // 1 で水面、0 で水の箱の側面。白波・きらめき・波の明暗は水面にしか出ないので、側面では消す
+                float topFace = smoothstep(kTopFaceMin, kTopFaceMax, faceNormal.y);
+                float2 worldUV = ProjectPatternUV(input.positionWS, faceNormal, topFace);
                 float2 screenUV = GetNormalizedScreenSpaceUV(input.positionCS);
                 WaveSample wave = SampleWaves(input.restXZ);
 
@@ -395,14 +414,18 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 color = lerp(color, underwater, clarity);
 
                 // ---- 浅瀬の光の模様(水底に貼りつくように描く) ----
-                float caustics = VoronoiEdge(sceneWS.xz * _CausticsScale + distortion * 0.3, time * _CausticsSpeed);
+                float2 causticsUV = ProjectPatternUV(sceneWS, faceNormal, topFace);
+                float caustics = VoronoiEdge(causticsUV * _CausticsScale + distortion * 0.3, time * _CausticsSpeed);
                 float causticsLine = 1.0 - smoothstep(_CausticsWidth, _CausticsWidth + 0.02, caustics);
                 causticsLine *= 1.0 - saturate(waterDepth / max(_CausticsDistance, kEpsilon));
                 color = lerp(color, _CausticsColor.rgb, causticsLine * _CausticsOpacity);
 
                 // ---- 遠くの水面ほど明るい色に寄せる ----
                 float3 viewDirWS = normalize(GetWorldSpaceViewDir(input.positionWS));
-                float fresnel = pow(1.0 - saturate(dot(viewDirWS, wave.normal)), _FresnelPower) * _FresnelStrength;
+                // 側面では波の向きではなく面そのものの向きを使う。波の向き(ほぼ上向き)のままだと、
+                // 横から見た側面が全部遠くの水面の色になってしまうため
+                float3 surfaceNormal = normalize(lerp(faceNormal, wave.normal, topFace));
+                float fresnel = pow(1.0 - saturate(dot(viewDirWS, surfaceNormal)), _FresnelPower) * _FresnelStrength;
                 color = lerp(color, _HorizonColor.rgb, fresnel);
 
                 // ---- 影を受ける ----
@@ -417,8 +440,8 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 float slopeAA = max(fwidth(slopeLight), kEpsilon);
                 float litBand = smoothstep(_WaveLitAmount - slopeAA, _WaveLitAmount + slopeAA, slopeLight);
                 float shadeBand = smoothstep(_WaveShadeAmount - slopeAA, _WaveShadeAmount + slopeAA, -slopeLight);
-                color = lerp(color, _WaveLitColor.rgb, litBand * _WaveLitOpacity * mainLight.shadowAttenuation);
-                color *= 1.0 - shadeBand * _WaveShadeStrength;
+                color = lerp(color, _WaveLitColor.rgb, litBand * _WaveLitOpacity * mainLight.shadowAttenuation * topFace);
+                color *= 1.0 - shadeBand * _WaveShadeStrength * topFace;
 
                 // ---- 波の頂上の白波 ----
                 // 本物の白波は、波が高く盛り上がって、しかも頂上がとがった所にだけ立つ。
@@ -446,7 +469,7 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 // 遠くでは白波の列が詰まって白い縞に見えるので薄くする
                 float cameraDistance = length(viewVec);
                 float crestFade = smoothstep(_CrestFoamFadeStart, max(_CrestFoamFadeEnd, _CrestFoamFadeStart + kEpsilon), cameraDistance);
-                crestFoam *= lerp(1.0, _CrestFoamFarOpacity, crestFade);
+                crestFoam *= lerp(1.0, _CrestFoamFarOpacity, crestFade) * topFace;
                 color = lerp(color, _FoamColor.rgb, crestFoam);
 
                 // ---- 物体の周りの泡 ----
@@ -469,7 +492,7 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 float3 sparkleNormal = normalize(wave.normal + float3(bumpX, 0.0, bumpZ) * _SparkleBumpiness);
                 float3 halfDir = normalize(mainLight.direction + viewDirWS);
                 float sparkle = step(_SparkleThreshold, saturate(dot(sparkleNormal, halfDir)));
-                sparkle *= mainLight.shadowAttenuation * (1.0 - allFoam);
+                sparkle *= mainLight.shadowAttenuation * (1.0 - allFoam) * topFace;
                 color += sparkle * _SparkleColor.rgb;
 
                 color = MixFog(color, input.fogFactor);
