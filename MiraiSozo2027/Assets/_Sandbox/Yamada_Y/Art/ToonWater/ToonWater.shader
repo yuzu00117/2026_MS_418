@@ -37,6 +37,7 @@ Shader "MiraiSozo/Sandbox/ToonWater"
         _CausticsWidth ("光の模様の線の太さ", Range(0, 0.5)) = 0.08
         _CausticsDistance ("光の模様が見える深さ(m)", Float) = 2
         _CausticsOpacity ("光の模様の濃さ", Range(0, 1)) = 0.4
+        _CausticsNearDistance ("光の模様が出る範囲(m)", Float) = 1
 
         [Header(Waves)]
         _WaveDirection ("波の進む向き(XとZ)", Vector) = (1, 0.3, 0, 0)
@@ -115,6 +116,7 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 float _CausticsWidth;
                 float _CausticsDistance;
                 float _CausticsOpacity;
+                float _CausticsNearDistance;
 
                 float4 _WaveDirection;
                 float _WaveLength;
@@ -381,6 +383,9 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                     CausticsLine(sceneWS.xz, distortion, time) * triWeight.y +
                     CausticsLine(sceneWS.xy, distortion, time) * triWeight.z;
                 causticsLine *= 1.0 - saturate(waterDepth / max(_CausticsDistance, kEpsilon));
+                // 水面(上向きの面)のうち、水面の奥に見える物が近いところだけに出す。
+                // 箱の側面や、物から離れた水面にまで模様が広がらないようにするため
+                causticsLine *= topFace * (1.0 - smoothstep(0.0, max(_CausticsNearDistance, kEpsilon), viewDepth));
                 color = lerp(color, _CausticsColor.rgb, causticsLine * _CausticsOpacity);
 
                 // ---- 遠くの水面ほど明るい色に寄せる ----
