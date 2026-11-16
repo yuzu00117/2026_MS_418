@@ -35,13 +35,15 @@ Shader "MiraiSozo/Sandbox/ToonWater"
 
         [Header(Streaks)]
         _StreakColor ("白い筋の色", Color) = (1, 1, 1, 1)
-        _StreakScale ("白い筋の細かさ", Float) = 0.35
-        _StreakStretch ("白い筋の伸び", Range(1, 20)) = 6
+        _StreakScale ("白い筋の細かさ", Float) = 0.12
+        _StreakStretch ("白い筋の伸び", Range(1, 20)) = 10
         _StreakDirection ("白い筋の向き(XとZ)", Vector) = (1, 0.3, 0, 0)
-        _StreakSpeed ("白い筋の流れる速さ", Float) = 0.15
-        _StreakWidth ("白い筋の太さ", Range(0, 0.1)) = 0.015
-        _StreakDensity ("白い筋の量", Range(0, 1)) = 0.45
-        _StreakOpacity ("白い筋の濃さ", Range(0, 1)) = 0.75
+        _StreakSpeed ("白い筋の流れる速さ", Float) = 0.1
+        _StreakWidth ("白い筋の太さ", Range(0, 0.1)) = 0.012
+        _StreakDensity ("白い筋の量", Range(0, 1)) = 0.3
+        _StreakOpacity ("白い筋の濃さ", Range(0, 1)) = 0.6
+        _StreakFadeStart ("白い筋が薄くなり始める距離(m)", Float) = 15
+        _StreakFadeEnd ("白い筋が消える距離(m)", Float) = 50
 
         [Header(Caustics)]
         _CausticsColor ("浅瀬の光の模様の色", Color) = (0.85, 1, 1, 1)
@@ -132,6 +134,8 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 float _StreakWidth;
                 float _StreakDensity;
                 float _StreakOpacity;
+                float _StreakFadeStart;
+                float _StreakFadeEnd;
 
                 half4 _CausticsColor;
                 float _CausticsScale;
@@ -323,10 +327,19 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 float2 streakUV = float2(dot(worldUV, streakDir) / _StreakStretch, dot(worldUV, streakSide)) * _StreakScale;
                 streakUV.x -= time * _StreakSpeed;
                 float streakNoise = GradientNoise(streakUV);
+                // 筋を出す場所。筋と同じ向きに引き伸ばした模様を使い、長い区間ごとに出し入れする。
+                // 0/1 で切らずになめらかに変化させ、その値で線の太さを決めることで、端が筆の払いのように細く消える
+                float2 maskUV = streakUV * float2(0.5, 0.7) + float2(5.7, time * 0.02);
+                float streakMask = smoothstep(1.0 - _StreakDensity, 1.0 - _StreakDensity + 0.15, GradientNoise(maskUV));
+                float streakHalfWidth = _StreakWidth * streakMask;
                 float streakAA = fwidth(streakNoise);
-                float streakLine = 1.0 - smoothstep(_StreakWidth, _StreakWidth + streakAA, abs(streakNoise - 0.5));
-                float streakMask = step(1.0 - _StreakDensity, GradientNoise(worldUV * _StreakScale * 0.35 + time * 0.03 + 5.7));
-                color = lerp(color, _StreakColor.rgb, streakLine * streakMask * _StreakOpacity);
+                float streakLine = 1.0 - smoothstep(streakHalfWidth, streakHalfWidth + streakAA, abs(streakNoise - 0.5));
+                // 線が1画素より細くなる所は、太さの代わりに濃さを落として、ぷつっと切れて見えないようにする
+                streakLine *= saturate(streakHalfWidth / max(streakAA, kEpsilon));
+                // 遠くでは筋が細かく詰まって見えるので、距離に応じて薄くする
+                float cameraDistance = length(viewVec);
+                float streakFade = 1.0 - smoothstep(_StreakFadeStart, max(_StreakFadeEnd, _StreakFadeStart + kEpsilon), cameraDistance);
+                color = lerp(color, _StreakColor.rgb, streakLine * streakFade * _StreakOpacity);
 
                 // ---- 物体の周りの泡 ----
                 float2 foamUV = worldUV * _FoamNoiseScale + float2(1.0, 0.7) * time * _FoamSpeed;
