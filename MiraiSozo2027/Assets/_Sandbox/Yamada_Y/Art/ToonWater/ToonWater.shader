@@ -64,10 +64,9 @@ Shader "MiraiSozo/Sandbox/ToonWater"
         _WaveShadeStrength ("暗い面の暗さ", Range(0, 1)) = 0.2
 
         [Header(Crest Foam)]
-        _CrestFoamThreshold ("白波が出る波のとがり", Range(0, 1)) = 0.55
+        _CrestFoamLineWidth ("白波の線の太さ", Range(0.01, 0.5)) = 0.06
         _CrestFoamOpacity ("白波の中心の濃さ", Range(0, 1)) = 0.95
         _CrestFoamEdgeOpacity ("白波の縁の濃さ", Range(0, 1)) = 0.45
-        _CrestFoamCoreWidth ("白波の中心の広さ", Range(0, 0.5)) = 0.12
         _CrestFoamCoverage ("白波が立つ場所の多さ", Range(0, 1)) = 0.5
         _CrestFoamPatchScale ("白波が立つ場所のまだらの大きさ", Float) = 0.02
         _CrestFoamMinHeight ("白波が立つ高さ(波の高さに対する割合)", Range(0, 1)) = 0.2
@@ -163,10 +162,9 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 float _WaveLitOpacity;
                 float _WaveShadeAmount;
                 float _WaveShadeStrength;
-                float _CrestFoamThreshold;
+                float _CrestFoamLineWidth;
                 float _CrestFoamOpacity;
                 float _CrestFoamEdgeOpacity;
-                float _CrestFoamCoreWidth;
                 float _CrestFoamCoverage;
                 float _CrestFoamPatchScale;
                 float _CrestFoamMinHeight;
@@ -286,16 +284,21 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 float3 largeNormal; // 大きな波だけで求めた面の向き(明暗の塗り分け用)
                 // 波の高さ(-1 一番低い 〜 1 全部の波の山が重なった高さ)
                 float height;
-                // 大きな波だけで求めた、水面が横に押し縮められている度合い(0 平ら 〜 1 大きな波の山が全部重なった所)。
-                // 大きな波の頂上に沿って線状に大きくなるので、白波を出す場所に使う。
+                // 大きな波の頂上への近さ(1 どれかの大きな波のちょうど頂上 〜 -1 谷)。
+                // 白波の線を大きな波の頂上に沿って引くために使う。
                 // 小さな波まで含めると、小さなこぶごとに白波が出て点の集まりになるため
-                float compression;
+                float crest;
             };
 
             // 白波が「立たない高さ」から「立つ高さ」へ切り替わる幅。急に切り替わると白波の端が直線的になる
             static const float kCrestHeightSoftness = 0.2;
             // まだら模様で白波を消す境目のぼかし幅
             static const float kCrestPatchSoftness = 0.15;
+            // 線を途切れさせる模様の値の範囲(おおよそ)。崩れの強さ 0 で全く切らず、1 でほぼ全部切る
+            static const float kCrestBreakNoiseMin = 0.25;
+            static const float kCrestBreakNoiseMax = 0.75;
+            // 線の途切れ目のぼかし幅。広めにして、線の端を先細りにする
+            static const float kCrestBreakSoftness = 0.08;
 
             WaveSample SampleWaves(float2 xz)
             {
@@ -307,7 +310,7 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 float3 largeTangent = tangent;
                 float3 largeBinormal = binormal;
                 float amplitudeSum = 0;
-                float largeSteepnessSum = 0;
+                float crest = -1;
 
                 [unroll]
                 for (int i = 0; i < kWaveCount; i++)
@@ -334,7 +337,8 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                     {
                         largeTangent += tangentStep;
                         largeBinormal += binormalStep;
-                        largeSteepnessSum += steepness;
+                        // ゲルストナー波は sin が 1 の所が頂上
+                        crest = max(crest, s);
                     }
                     amplitudeSum += amplitude;
                 }
@@ -344,9 +348,7 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 result.normal = normalize(cross(binormal, tangent));
                 result.largeNormal = normalize(cross(largeBinormal, largeTangent));
                 result.height = offset.y / max(amplitudeSum, kEpsilon);
-                // 水平方向の動きの伸び縮み(ヤコビアン)。1 より小さい所は押し縮められている
-                float largeJacobian = largeTangent.x * largeBinormal.z - largeTangent.z * largeBinormal.x;
-                result.compression = saturate((1.0 - largeJacobian) / max(largeSteepnessSum, kEpsilon));
+                result.crest = crest;
                 return result;
             }
 
@@ -438,25 +440,27 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 color *= 1.0 - shadeBand * _WaveShadeStrength;
 
                 // ---- 波の頂上の白波 ----
-                // 本物の白波は、波が高く盛り上がって、しかも頂上がとがった所にだけ立つ。
-                // そこで「高さ」と「とがり具合」の両方がそろった所だけを白波の候補にする
+                // 大きな波の頂上に沿って細い線を引き、その線を出す場所・出さない場所を下の 3 つで決める。
+                // 本物の白波は、全体として高く盛り上がった所にだけ立つ
                 float heightMask = smoothstep(_CrestFoamMinHeight, _CrestFoamMinHeight + kCrestHeightSoftness, wave.height);
-                float crestValue = wave.compression * heightMask;
-                // 本物の海でも白波は全部の波には立たないので、大きなまだら模様で白波を消す場所を作る。
-                // 消す方向にだけ使い、低い所に白波を足してしまわないようにする
+                // 本物の海でも白波は全部の波には立たないので、大きなまだら模様で白波を消す場所を作る
                 float patchNoise = GradientNoise(worldUV * _CrestFoamPatchScale + time * 0.01);
-                crestValue -= smoothstep(0.0, kCrestPatchSoftness, (1.0 - _CrestFoamCoverage) - patchNoise);
-                // 大小 2 つのなめらかな模様で白波を削る。模様を波の頂上に沿った向きに引き伸ばし、
-                // 削られ方を粒ではなく「途切れ途切れの線」にする
+                float patchMask = 1.0 - smoothstep(0.0, kCrestPatchSoftness, (1.0 - _CrestFoamCoverage) - patchNoise);
+                // 頂上に沿った向きに引き伸ばした模様で、線をところどころ途切れさせる
                 float2 waveDir = normalize(_WaveDirection.xy + kEpsilon);
                 float2 crestUV = float2(dot(worldUV, float2(-waveDir.y, waveDir.x)) / max(_CrestFoamLineLength, 1.0), dot(worldUV, waveDir));
                 float breakNoise =
                     GradientNoise(crestUV * _CrestFoamBreakScale + time * 0.12) * 0.65 +
                     GradientNoise(crestUV * _CrestFoamBreakScale * 2.3 - time * 0.2) * 0.35;
-                crestValue += (0.5 - breakNoise) * _CrestFoamBreakStrength;
+                float breakCut = lerp(kCrestBreakNoiseMin, kCrestBreakNoiseMax, _CrestFoamBreakStrength);
+                float breakMask = smoothstep(breakCut - kCrestBreakSoftness, breakCut + kCrestBreakSoftness, breakNoise);
+                // 消す場所では線を細らせて消す。ぷつっと切れず、先細りの線の端になる
+                float lineMask = heightMask * patchMask * breakMask;
+                float crestValue = wave.crest - (1.0 - lineMask) * _CrestFoamLineWidth * 2.0;
+                float lineEdge = 1.0 - _CrestFoamLineWidth;
                 float crestAA = max(fwidth(crestValue), kEpsilon);
-                float crestBody = smoothstep(_CrestFoamThreshold - crestAA, _CrestFoamThreshold + crestAA, crestValue);
-                float coreEdge = _CrestFoamThreshold + _CrestFoamCoreWidth;
+                float crestBody = smoothstep(lineEdge - crestAA, lineEdge + crestAA, crestValue);
+                float coreEdge = 1.0 - _CrestFoamLineWidth * 0.5;
                 float crestCore = smoothstep(coreEdge - crestAA, coreEdge + crestAA, crestValue);
                 // 中心は濃く、縁は半透明にして、泡の厚みの違いを出す
                 float crestFoam = crestBody * lerp(_CrestFoamEdgeOpacity, _CrestFoamOpacity, crestCore);
