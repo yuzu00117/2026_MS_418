@@ -12,7 +12,7 @@ namespace MS.Toon
     {
         [Tooltip("現在適用するプロファイル。未設定ならデフォルト(各マテリアル値)で描画する")]
         [SerializeField] private ToonStyleProfile _profile;
-        [Tooltip("CycleProfile / SetProfileByIndex で切り替える候補")]
+        [Tooltip("インスペクタのプルダウンや SetProfileByIndex で切り替える候補")]
         [SerializeField] private ToonStyleProfile[] _profiles;
 
         private ToonStyleProfile _subscribedProfile;
@@ -82,15 +82,6 @@ namespace MS.Toon
             }
             int wrapped = ((index % _profiles.Length) + _profiles.Length) % _profiles.Length;
             SetProfile(_profiles[wrapped]);
-        }
-
-        // 現在のプロファイルの位置から次へ進める(Inspector や SetProfile で直接変えた後でも順番がずれないようにするため)。
-        // 候補に無いプロファイルのときは先頭から始める。
-        [ContextMenu("Cycle Profile")]
-        public void CycleProfile()
-        {
-            int currentIndex = _profiles == null ? -1 : System.Array.IndexOf(_profiles, _profile);
-            SetProfileByIndex(currentIndex + 1);
         }
 
         private void Apply()
