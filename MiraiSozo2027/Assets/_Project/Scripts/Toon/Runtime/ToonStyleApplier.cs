@@ -16,7 +16,6 @@ namespace MS.Toon
         [SerializeField] private ToonStyleProfile[] _profiles;
 
         private ToonStyleProfile _subscribedProfile;
-        private int _currentIndex;
 
         /// <summary>現在有効な1つ。マテリアルのインスペクタが共通値を表示するために参照する。</summary>
         public static ToonStyleApplier Active { get; private set; }
@@ -81,14 +80,17 @@ namespace MS.Toon
             {
                 return;
             }
-            _currentIndex = ((index % _profiles.Length) + _profiles.Length) % _profiles.Length;
-            SetProfile(_profiles[_currentIndex]);
+            int wrapped = ((index % _profiles.Length) + _profiles.Length) % _profiles.Length;
+            SetProfile(_profiles[wrapped]);
         }
 
+        // 現在のプロファイルの位置から次へ進める(Inspector や SetProfile で直接変えた後でも順番がずれないようにするため)。
+        // 候補に無いプロファイルのときは先頭から始める。
         [ContextMenu("Cycle Profile")]
         public void CycleProfile()
         {
-            SetProfileByIndex(_currentIndex + 1);
+            int currentIndex = _profiles == null ? -1 : System.Array.IndexOf(_profiles, _profile);
+            SetProfileByIndex(currentIndex + 1);
         }
 
         private void Apply()

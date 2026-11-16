@@ -9,16 +9,16 @@ public static class ToonShaderConverter
 {
     private const string ToonShaderName = "MS/Toon";
     private const string TargetRoot = "Assets/_Project";
-    private const string OutputFolder = "Assets/_Project/Art/Materials";
+    private const string OutputFolder = "Assets/_Project/Materials";
     private const string MenuRoot = "Tools/MS Toon/";
 
     // これ以外のシェーダー(パーティクル・UI・TMP・独自シェーダー等)は意図が読めないので触らない。
+    // Baked Lit はライトマップで明るさを出すが、MS/Toon はライトマップに未対応で焼き込んだ光が消えるため対象外。
     private static readonly HashSet<string> SupportedShaders = new HashSet<string>
     {
         "Universal Render Pipeline/Lit",
         "Universal Render Pipeline/Simple Lit",
         "Universal Render Pipeline/Unlit",
-        "Universal Render Pipeline/Baked Lit",
         "Standard",
         "Standard (Specular setup)",
         "Unlit/Texture",

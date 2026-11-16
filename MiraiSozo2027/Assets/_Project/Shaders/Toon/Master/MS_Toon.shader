@@ -21,12 +21,13 @@ Shader "MS/Toon"
 
         [Header(Normal)]
         [Toggle(_NORMALMAP)] _UseNormalMap ("Use Normal Map", Float) = 0
-        [Normal] _BumpMap ("Normal Map", 2D) = "bump" {}
+        // 法線マップと発光マップは Base Map と同じ UV で描く(URP 標準 Lit と同じ)ので、タイリング欄は出さない
+        [NoScaleOffset][Normal] _BumpMap ("Normal Map", 2D) = "bump" {}
         _BumpScale ("Normal Scale", Float) = 1
 
         [Header(Emission)]
         [Toggle(_EMISSION)] _UseEmission ("Use Emission", Float) = 0
-        _EmissionMap ("Emission Map", 2D) = "white" {}
+        [NoScaleOffset] _EmissionMap ("Emission Map", 2D) = "white" {}
         [HDR] _EmissionColor ("Emission Color", Color) = (0, 0, 0, 1)
 
         [Header(Toon Ramp)]
@@ -78,7 +79,6 @@ Shader "MS/Toon"
         CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
             float4 _BaseColor;
-            float4 _BumpMap_ST;
             float  _BumpScale;
             float4 _EmissionColor;
             float4 _RampMap_TexelSize;
