@@ -350,6 +350,16 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 return isTop > 0.5 ? positionWS.xz : sideUV;
             }
 
+            // 光のゆらぎを 3 方向から貼るとき、向きの近い方をどれだけ優先するか。大きいほど境目の混ざる幅が狭い
+            static const float kTriplanarSharpness = 4.0;
+
+            // 光のゆらぎの線(1 線の上 〜 0 線の外)
+            float CausticsLine(float2 uv, float2 distortion, float time)
+            {
+                float caustics = VoronoiEdge(uv * _CausticsScale + distortion * 0.3, time * _CausticsSpeed);
+                return 1.0 - smoothstep(_CausticsWidth, _CausticsWidth + 0.02, caustics);
+            }
+
             Varyings Vert(Attributes input)
             {
                 Varyings output = (Varyings)0;
@@ -414,9 +424,17 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 color = lerp(color, underwater, clarity);
 
                 // ---- 浅瀬の光の模様(水底に貼りつくように描く) ----
-                float2 causticsUV = ProjectPatternUV(sceneWS, faceNormal, topFace);
-                float caustics = VoronoiEdge(causticsUV * _CausticsScale + distortion * 0.3, time * _CausticsSpeed);
-                float causticsLine = 1.0 - smoothstep(_CausticsWidth, _CausticsWidth + 0.02, caustics);
+                // 水の下にある物の面の向きを、隣の画素との位置の差から求める。
+                // 地面には真上から、壁には横から模様を貼り、間は混ぜてつなぐ。
+                // 真上からだけ貼ると、壁では上から下まで同じ模様になり縦に伸びるため
+                float3 sceneCross = cross(ddy(sceneWS), ddx(sceneWS));
+                float3 sceneNormal = sceneCross / max(length(sceneCross), kEpsilon);
+                float3 triWeight = pow(abs(sceneNormal), kTriplanarSharpness) + float3(0.0, kEpsilon, 0.0);
+                triWeight /= triWeight.x + triWeight.y + triWeight.z;
+                float causticsLine =
+                    CausticsLine(sceneWS.zy, distortion, time) * triWeight.x +
+                    CausticsLine(sceneWS.xz, distortion, time) * triWeight.y +
+                    CausticsLine(sceneWS.xy, distortion, time) * triWeight.z;
                 causticsLine *= 1.0 - saturate(waterDepth / max(_CausticsDistance, kEpsilon));
                 color = lerp(color, _CausticsColor.rgb, causticsLine * _CausticsOpacity);
 
