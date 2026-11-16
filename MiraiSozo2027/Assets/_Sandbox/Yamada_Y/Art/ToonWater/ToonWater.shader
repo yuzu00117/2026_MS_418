@@ -73,6 +73,7 @@ Shader "MiraiSozo/Sandbox/ToonWater"
         _CrestFoamMinHeight ("白波が立つ高さ(波の高さに対する割合)", Range(0, 1)) = 0.2
         _CrestFoamBreakScale ("白波の縁の崩れの細かさ", Float) = 0.6
         _CrestFoamBreakStrength ("白波の縁の崩れの強さ", Range(0, 1)) = 0.4
+        _CrestFoamLineLength ("白波の線の長さ", Range(1, 10)) = 4
         _CrestFoamFadeStart ("白波が薄くなり始める距離(m)", Float) = 40
         _CrestFoamFadeEnd ("白波が一番薄くなる距離(m)", Float) = 150
         _CrestFoamFarOpacity ("遠くの白波の濃さ", Range(0, 1)) = 0.25
@@ -171,6 +172,7 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 float _CrestFoamMinHeight;
                 float _CrestFoamBreakScale;
                 float _CrestFoamBreakStrength;
+                float _CrestFoamLineLength;
                 float _CrestFoamFadeStart;
                 float _CrestFoamFadeEnd;
                 float _CrestFoamFarOpacity;
@@ -284,8 +286,9 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 float3 largeNormal; // 大きな波だけで求めた面の向き(明暗の塗り分け用)
                 // 波の高さ(-1 一番低い 〜 1 全部の波の山が重なった高さ)
                 float height;
-                // 水面が横に押し縮められている度合い(0 平ら 〜 1 全部の波の山が重なった所)。
-                // いくつかの波の山が重なってとがった所ほど大きくなるので、白波を出す場所に使う
+                // 大きな波だけで求めた、水面が横に押し縮められている度合い(0 平ら 〜 1 大きな波の山が全部重なった所)。
+                // 大きな波の頂上に沿って線状に大きくなるので、白波を出す場所に使う。
+                // 小さな波まで含めると、小さなこぶごとに白波が出て点の集まりになるため
                 float compression;
             };
 
@@ -304,6 +307,7 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 float3 largeTangent = tangent;
                 float3 largeBinormal = binormal;
                 float amplitudeSum = 0;
+                float largeSteepnessSum = 0;
 
                 [unroll]
                 for (int i = 0; i < kWaveCount; i++)
@@ -330,6 +334,7 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                     {
                         largeTangent += tangentStep;
                         largeBinormal += binormalStep;
+                        largeSteepnessSum += steepness;
                     }
                     amplitudeSum += amplitude;
                 }
@@ -340,8 +345,8 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 result.largeNormal = normalize(cross(largeBinormal, largeTangent));
                 result.height = offset.y / max(amplitudeSum, kEpsilon);
                 // 水平方向の動きの伸び縮み(ヤコビアン)。1 より小さい所は押し縮められている
-                float jacobian = tangent.x * binormal.z - tangent.z * binormal.x;
-                result.compression = saturate((1.0 - jacobian) / max(_WaveSteepness, kEpsilon));
+                float largeJacobian = largeTangent.x * largeBinormal.z - largeTangent.z * largeBinormal.x;
+                result.compression = saturate((1.0 - largeJacobian) / max(largeSteepnessSum, kEpsilon));
                 return result;
             }
 
@@ -441,10 +446,13 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 // 消す方向にだけ使い、低い所に白波を足してしまわないようにする
                 float patchNoise = GradientNoise(worldUV * _CrestFoamPatchScale + time * 0.01);
                 crestValue -= smoothstep(0.0, kCrestPatchSoftness, (1.0 - _CrestFoamCoverage) - patchNoise);
-                // 大小 2 つのなめらかな模様で縁を崩し、まっすぐな帯や網目に見えないようにする
+                // 大小 2 つのなめらかな模様で白波を削る。模様を波の頂上に沿った向きに引き伸ばし、
+                // 削られ方を粒ではなく「途切れ途切れの線」にする
+                float2 waveDir = normalize(_WaveDirection.xy + kEpsilon);
+                float2 crestUV = float2(dot(worldUV, float2(-waveDir.y, waveDir.x)) / max(_CrestFoamLineLength, 1.0), dot(worldUV, waveDir));
                 float breakNoise =
-                    GradientNoise(worldUV * _CrestFoamBreakScale + time * 0.12) * 0.65 +
-                    GradientNoise(worldUV * _CrestFoamBreakScale * 2.3 - time * 0.2) * 0.35;
+                    GradientNoise(crestUV * _CrestFoamBreakScale + time * 0.12) * 0.65 +
+                    GradientNoise(crestUV * _CrestFoamBreakScale * 2.3 - time * 0.2) * 0.35;
                 crestValue += (0.5 - breakNoise) * _CrestFoamBreakStrength;
                 float crestAA = max(fwidth(crestValue), kEpsilon);
                 float crestBody = smoothstep(_CrestFoamThreshold - crestAA, _CrestFoamThreshold + crestAA, crestValue);
