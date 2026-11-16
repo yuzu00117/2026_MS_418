@@ -19,7 +19,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties: 
+  m_LockedProperties: _CausticsWidth
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs: []
@@ -27,11 +27,12 @@ Material:
     m_Floats:
     - _BandNoiseScale: 0.4
     - _BandNoiseStrength: 0.12
-    - _CausticsDistance: 2
-    - _CausticsOpacity: 0.4
+    - _CausticsDistance: 0.6
+    - _CausticsNearDistance: 1
+    - _CausticsOpacity: 1
     - _CausticsScale: 1.2
-    - _CausticsSpeed: 0.6
-    - _CausticsWidth: 0.08
+    - _CausticsSpeed: 0.5
+    - _CausticsWidth: 0.1
     - _ClarityDistance: 1.5
     - _ColorSteps: 4
     - _CrestFoamBreakScale: 0.6
@@ -47,6 +48,7 @@ Material:
     - _CrestFoamOpacity: 0.95
     - _CrestFoamPatchScale: 0.02
     - _CrestFoamThreshold: 0.88
+    - _DepthGradientPower: 0.2
     - _DepthMaxDistance: 4
     - _FoamDistance: 0.6
     - _FoamLineWidth: 0.08
@@ -56,11 +58,11 @@ Material:
     - _FresnelStrength: 0.5
     - _RefractionStrength: 0.015
     - _ShadowStrength: 0.35
-    - _ShallowClarity: 0.7
-    - _SparkleBumpiness: 0.8
-    - _SparkleScale: 3
+    - _ShallowClarity: 0.8
+    - _SparkleBumpiness: 0.2
+    - _SparkleScale: 10
     - _SparkleSpeed: 0.5
-    - _SparkleThreshold: 0.985
+    - _SparkleThreshold: 0.995
     - _StepSoftness: 0.15
     - _WaveLength: 20
     - _WaveLitAmount: 0.12
@@ -69,11 +71,11 @@ Material:
     - _WaveShadeStrength: 0.2
     - _WaveSpeed: 0.5
     - _WaveSpread: 0.5
-    - _WaveSteepness: 0.5
+    - _WaveSteepness: 0.2
     m_Colors:
     - _CausticsColor: {r: 0.85, g: 1, b: 1, a: 1}
     - _DeepColor: {r: 0.04, g: 0.23999995, b: 0.62, a: 1}
-    - _FoamColor: {r: 1, g: 1, b: 1, a: 1}
+    - _FoamColor: {r: 0.8254717, g: 0.998291, b: 1, a: 1}
     - _HorizonColor: {r: 0.54999995, g: 0.85, b: 1, a: 1}
     - _MidColor: {r: 0.11999995, g: 0.62, b: 0.92, a: 1}
     - _ShallowColor: {r: 0.45, g: 0.92, b: 0.95, a: 1}
