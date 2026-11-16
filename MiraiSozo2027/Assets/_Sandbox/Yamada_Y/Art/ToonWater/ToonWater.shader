@@ -70,8 +70,9 @@ Shader "MiraiSozo/Sandbox/ToonWater"
         _CrestFoamCoreWidth ("白波の中心の広さ", Range(0, 0.5)) = 0.12
         _CrestFoamCoverage ("白波が立つ場所の多さ", Range(0, 1)) = 0.5
         _CrestFoamPatchScale ("白波が立つ場所のまだらの大きさ", Float) = 0.02
-        _CrestFoamHoleScale ("白波の穴の細かさ", Float) = 1.5
-        _CrestFoamHoleStrength ("白波の穴の多さ", Range(0, 1)) = 0.35
+        _CrestFoamMinHeight ("白波が立つ高さ(波の高さに対する割合)", Range(0, 1)) = 0.2
+        _CrestFoamBreakScale ("白波の縁の崩れの細かさ", Float) = 0.6
+        _CrestFoamBreakStrength ("白波の縁の崩れの強さ", Range(0, 1)) = 0.4
         _CrestFoamFadeStart ("白波が薄くなり始める距離(m)", Float) = 40
         _CrestFoamFadeEnd ("白波が一番薄くなる距離(m)", Float) = 150
         _CrestFoamFarOpacity ("遠くの白波の濃さ", Range(0, 1)) = 0.25
@@ -167,8 +168,9 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 float _CrestFoamCoreWidth;
                 float _CrestFoamCoverage;
                 float _CrestFoamPatchScale;
-                float _CrestFoamHoleScale;
-                float _CrestFoamHoleStrength;
+                float _CrestFoamMinHeight;
+                float _CrestFoamBreakScale;
+                float _CrestFoamBreakStrength;
                 float _CrestFoamFadeStart;
                 float _CrestFoamFadeEnd;
                 float _CrestFoamFarOpacity;
@@ -258,26 +260,39 @@ Shader "MiraiSozo/Sandbox/ToonWater"
             }
 
             // ---- 波(ゲルストナー波: 頂点を上下だけでなく前後にも動かし、頂上がとがった波にする) ----
-            static const int kWaveCount = 4;
+            static const int kWaveCount = 6;
+            // 明暗の塗り分けに使う大きな波の本数。小さな波まで使うと、波の重なりでできた小さなこぶごとに
+            // 明暗の点が出て、水玉模様のように見えるため
+            static const int kLargeWaveCount = 3;
             static const float kGravity = 9.8;
             // 各波の 間隔の倍率 / 向きのずれ(ラジアン、ばらつき 1 のとき) / とがり具合の配分(合計 1)。
-            // 間隔を半端な倍率にして、波どうしの山がそろって同じ形が繰り返し見えるのを防ぐ
+            // 間隔を半端な倍率にし、向きも左右に大きく散らして、波の列が平行に並んで規則的に見えるのを防ぐ
             static const float3 kWaveParams[kWaveCount] =
             {
-                float3(1.00,  0.0,  0.40),
-                float3(0.61,  0.7,  0.27),
-                float3(0.37, -0.6,  0.20),
-                float3(0.23,  1.3,  0.13),
+                float3(1.00,  0.00, 0.30),
+                float3(0.73,  0.90, 0.22),
+                float3(0.53, -0.75, 0.17),
+                float3(0.37,  1.60, 0.13),
+                float3(0.27, -1.40, 0.10),
+                float3(0.19,  2.30, 0.08),
             };
 
             struct WaveSample
             {
                 float3 offset;  // 頂点を動かす量
                 float3 normal;  // 波の面の向き
+                float3 largeNormal; // 大きな波だけで求めた面の向き(明暗の塗り分け用)
+                // 波の高さ(-1 一番低い 〜 1 全部の波の山が重なった高さ)
+                float height;
                 // 水面が横に押し縮められている度合い(0 平ら 〜 1 全部の波の山が重なった所)。
                 // いくつかの波の山が重なってとがった所ほど大きくなるので、白波を出す場所に使う
                 float compression;
             };
+
+            // 白波が「立たない高さ」から「立つ高さ」へ切り替わる幅。急に切り替わると白波の端が直線的になる
+            static const float kCrestHeightSoftness = 0.2;
+            // まだら模様で白波を消す境目のぼかし幅
+            static const float kCrestPatchSoftness = 0.15;
 
             WaveSample SampleWaves(float2 xz)
             {
@@ -286,6 +301,9 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 float3 offset = 0;
                 float3 tangent = float3(1, 0, 0);
                 float3 binormal = float3(0, 0, 1);
+                float3 largeTangent = tangent;
+                float3 largeBinormal = binormal;
+                float amplitudeSum = 0;
 
                 [unroll]
                 for (int i = 0; i < kWaveCount; i++)
@@ -304,13 +322,23 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                     float c = cos(f);
 
                     offset += float3(dir.x * amplitude * c, amplitude * s, dir.y * amplitude * c);
-                    tangent += float3(-dir.x * dir.x * steepness * s, dir.x * steepness * c, -dir.x * dir.y * steepness * s);
-                    binormal += float3(-dir.x * dir.y * steepness * s, dir.y * steepness * c, -dir.y * dir.y * steepness * s);
+                    float3 tangentStep = float3(-dir.x * dir.x * steepness * s, dir.x * steepness * c, -dir.x * dir.y * steepness * s);
+                    float3 binormalStep = float3(-dir.x * dir.y * steepness * s, dir.y * steepness * c, -dir.y * dir.y * steepness * s);
+                    tangent += tangentStep;
+                    binormal += binormalStep;
+                    if (i < kLargeWaveCount)
+                    {
+                        largeTangent += tangentStep;
+                        largeBinormal += binormalStep;
+                    }
+                    amplitudeSum += amplitude;
                 }
 
                 WaveSample result;
                 result.offset = offset;
                 result.normal = normalize(cross(binormal, tangent));
+                result.largeNormal = normalize(cross(largeBinormal, largeTangent));
+                result.height = offset.y / max(amplitudeSum, kEpsilon);
                 // 水平方向の動きの伸び縮み(ヤコビアン)。1 より小さい所は押し縮められている
                 float jacobian = tangent.x * binormal.z - tangent.z * binormal.x;
                 result.compression = saturate((1.0 - jacobian) / max(_WaveSteepness, kEpsilon));
@@ -395,8 +423,9 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 color *= shadow;
 
                 // ---- 波の面の塗り分け(トゥーン調) ----
-                // 平らな水面と比べて、光の方を向いている面は明るく、背を向けている面は暗く、段で塗り分ける
-                float slopeLight = dot(wave.normal, mainLight.direction) - saturate(mainLight.direction.y);
+                // 平らな水面と比べて、光の方を向いている面は明るく、背を向けている面は暗く、段で塗り分ける。
+                // 大きな波の面だけで塗り分け、波の斜面に沿った帯にする
+                float slopeLight = dot(wave.largeNormal, mainLight.direction) - saturate(mainLight.direction.y);
                 float slopeAA = max(fwidth(slopeLight), kEpsilon);
                 float litBand = smoothstep(_WaveLitAmount - slopeAA, _WaveLitAmount + slopeAA, slopeLight);
                 float shadeBand = smoothstep(_WaveShadeAmount - slopeAA, _WaveShadeAmount + slopeAA, -slopeLight);
@@ -404,14 +433,19 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 color *= 1.0 - shadeBand * _WaveShadeStrength;
 
                 // ---- 波の頂上の白波 ----
-                // 本物の海でも白波は全部の波には立たないので、大きなまだら模様で白波が立つ場所と立たない場所を作る
+                // 本物の白波は、波が高く盛り上がって、しかも頂上がとがった所にだけ立つ。
+                // そこで「高さ」と「とがり具合」の両方がそろった所だけを白波の候補にする
+                float heightMask = smoothstep(_CrestFoamMinHeight, _CrestFoamMinHeight + kCrestHeightSoftness, wave.height);
+                float crestValue = wave.compression * heightMask;
+                // 本物の海でも白波は全部の波には立たないので、大きなまだら模様で白波を消す場所を作る。
+                // 消す方向にだけ使い、低い所に白波を足してしまわないようにする
                 float patchNoise = GradientNoise(worldUV * _CrestFoamPatchScale + time * 0.01);
-                float areaBoost = (patchNoise - (1.0 - _CrestFoamCoverage)) * 0.6;
-                // 縁を細かい模様で崩して、まっすぐな帯に見えないようにする
-                float crestNoise = GradientNoise(worldUV * 0.8 + time * 0.1) - 0.5;
-                // 網目模様のセルの内側ほど泡を削り、縁がちぎれた泡に見えるようにする
-                float holeValue = saturate(VoronoiEdge(worldUV * _CrestFoamHoleScale, time * 0.3));
-                float crestValue = wave.compression + areaBoost + crestNoise * 0.2 - holeValue * _CrestFoamHoleStrength;
+                crestValue -= smoothstep(0.0, kCrestPatchSoftness, (1.0 - _CrestFoamCoverage) - patchNoise);
+                // 大小 2 つのなめらかな模様で縁を崩し、まっすぐな帯や網目に見えないようにする
+                float breakNoise =
+                    GradientNoise(worldUV * _CrestFoamBreakScale + time * 0.12) * 0.65 +
+                    GradientNoise(worldUV * _CrestFoamBreakScale * 2.3 - time * 0.2) * 0.35;
+                crestValue += (0.5 - breakNoise) * _CrestFoamBreakStrength;
                 float crestAA = max(fwidth(crestValue), kEpsilon);
                 float crestBody = smoothstep(_CrestFoamThreshold - crestAA, _CrestFoamThreshold + crestAA, crestValue);
                 float coreEdge = _CrestFoamThreshold + _CrestFoamCoreWidth;
