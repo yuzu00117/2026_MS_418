@@ -1743,11 +1743,11 @@ MonoBehaviour:
   _isFiringOnStart: 0
   _fireShape: 0
   _fanRange: 6
-  _fanHalfAngle: 40
-  _fanCooldownSeconds: 0
+  _fanHalfAngle: 20
+  _fanCooldownSeconds: 0.12
   _fanShotSeconds: 1
-  _fanShotSpeed: 20
-  _isFanAutoRepeat: 0
+  _fanShotSpeed: 4
+  _isFanAutoRepeat: 1
   _muzzle: {fileID: 6191001033493183197}
   _aimOrigin: {fileID: 0}
   _ignoreRoot: {fileID: 8114588384119620780}

@@ -7,6 +7,9 @@ namespace Aura.Wave
     /// 見た目も波面に合わせて進めると、当たりと見た目がそろう
     public readonly struct FanShotInfo
     {
+        private const float MinDirectionSqrMagnitude = 0.5f;  ///< 向きの長さの 2 乗がこれ未満なら、向きが入っていないとみなす（向きは長さ 1 のはず）
+        private const float MinUpCrossSqrMagnitude = 0.0001f; ///< 向きと上の外積の長さの 2 乗がこれ未満なら、上が向きと平行とみなす
+
         /// @param origin 撃った位置
         /// @param direction 撃った向き（正規化したもの）
         /// @param up 撃ったときの、出る位置の上の向き
@@ -57,6 +60,20 @@ namespace Aura.Wave
         public float GetFrontDistance(float time)
         {
             return Mathf.Max(0.0f, time - StartTime) * Speed;
+        }
+
+        /// @brief 1 発の向き。+Z = 撃った向き、+Y = 上（Up を撃った向きと直交するよう立て直したもの）、+X = 右
+        /// Up が撃った向きとほぼ平行なときは、右（Vector3.right）を上の代わりにする。泡の輪の見た目（ConeRingView）が、輪の向きに使う
+        /// @return 1 発の向き
+        public Quaternion GetRotation()
+        {
+            Vector3 forward = Direction.sqrMagnitude >= MinDirectionSqrMagnitude ? Direction : Vector3.forward;
+            Vector3 up = Up;
+            if (Vector3.Cross(forward, up).sqrMagnitude <= MinUpCrossSqrMagnitude)
+            {
+                up = Vector3.Cross(forward, Vector3.right).sqrMagnitude > MinUpCrossSqrMagnitude ? Vector3.right : Vector3.up;
+            }
+            return Quaternion.LookRotation(forward, up);
         }
     }
 }
