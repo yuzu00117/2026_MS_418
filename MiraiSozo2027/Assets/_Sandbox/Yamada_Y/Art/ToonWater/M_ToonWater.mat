@@ -24,7 +24,61 @@ Material:
     serializedVersion: 3
     m_TexEnvs: []
     m_Ints: []
-    m_Floats: []
-    m_Colors: []
+    m_Floats:
+    - _BandNoiseScale: 0.4
+    - _BandNoiseStrength: 0.12
+    - _CausticsDistance: 2
+    - _CausticsOpacity: 0.4
+    - _CausticsScale: 1.2
+    - _CausticsSpeed: 0.6
+    - _CausticsWidth: 0.08
+    - _ClarityDistance: 1.5
+    - _ColorSteps: 4
+    - _CrestFoamBreakScale: 0.6
+    - _CrestFoamBreakStrength: 0.4
+    - _CrestFoamCoreWidth: 0.12
+    - _CrestFoamCoverage: 0.5
+    - _CrestFoamEdgeOpacity: 0.45
+    - _CrestFoamFadeEnd: 150
+    - _CrestFoamFadeStart: 40
+    - _CrestFoamFarOpacity: 0.25
+    - _CrestFoamLineLength: 4
+    - _CrestFoamMinHeight: 0.2
+    - _CrestFoamOpacity: 0.95
+    - _CrestFoamPatchScale: 0.02
+    - _CrestFoamThreshold: 0.88
+    - _DepthMaxDistance: 4
+    - _FoamDistance: 0.6
+    - _FoamLineWidth: 0.08
+    - _FoamNoiseScale: 4
+    - _FoamSpeed: 0.3
+    - _FresnelPower: 5
+    - _FresnelStrength: 0.5
+    - _RefractionStrength: 0.015
+    - _ShadowStrength: 0.35
+    - _ShallowClarity: 0.7
+    - _SparkleBumpiness: 0.8
+    - _SparkleScale: 3
+    - _SparkleSpeed: 0.5
+    - _SparkleThreshold: 0.985
+    - _StepSoftness: 0.15
+    - _WaveLength: 20
+    - _WaveLitAmount: 0.12
+    - _WaveLitOpacity: 0.5
+    - _WaveShadeAmount: 0.12
+    - _WaveShadeStrength: 0.2
+    - _WaveSpeed: 0.5
+    - _WaveSpread: 0.5
+    - _WaveSteepness: 0.5
+    m_Colors:
+    - _CausticsColor: {r: 0.85, g: 1, b: 1, a: 1}
+    - _DeepColor: {r: 0.04, g: 0.23999995, b: 0.62, a: 1}
+    - _FoamColor: {r: 1, g: 1, b: 1, a: 1}
+    - _HorizonColor: {r: 0.54999995, g: 0.85, b: 1, a: 1}
+    - _MidColor: {r: 0.11999995, g: 0.62, b: 0.92, a: 1}
+    - _ShallowColor: {r: 0.45, g: 0.92, b: 0.95, a: 1}
+    - _SparkleColor: {r: 1, g: 1, b: 1, a: 1}
+    - _WaveDirection: {r: 1, g: 0.3, b: 0, a: 0}
+    - _WaveLitColor: {r: 0.75, g: 0.96999997, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
