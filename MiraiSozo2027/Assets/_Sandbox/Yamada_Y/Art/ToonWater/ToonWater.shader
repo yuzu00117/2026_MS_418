@@ -9,13 +9,9 @@ Shader "MiraiSozo/Sandbox/ToonWater"
     {
         [Header(Depth Color)]
         _ShallowColor ("浅い所の色", Color) = (0.45, 0.92, 0.95, 1)
-        _MidColor ("中間の色", Color) = (0.12, 0.62, 0.92, 1)
         _DeepColor ("深い所の色", Color) = (0.04, 0.24, 0.62, 1)
         _DepthMaxDistance ("一番深い色になる深さ(m)", Float) = 4
-        _ColorSteps ("色の段数", Range(1, 8)) = 4
-        _StepSoftness ("段の境目のぼかし", Range(0, 1)) = 0.15
-        _BandNoiseScale ("段の境目の揺らぎの細かさ", Float) = 0.4
-        _BandNoiseStrength ("段の境目の揺らぎの強さ", Range(0, 0.5)) = 0.12
+        _DepthGradientPower ("色の変わり方(1 でまっすぐ、大きいほど浅い色が長く続く)", Range(0.2, 5)) = 1
 
         [Header(Transparency)]
         _ShallowClarity ("浅瀬の透明度", Range(0, 1)) = 0.7
@@ -117,13 +113,9 @@ Shader "MiraiSozo/Sandbox/ToonWater"
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _ShallowColor;
-                half4 _MidColor;
                 half4 _DeepColor;
                 float _DepthMaxDistance;
-                float _ColorSteps;
-                float _StepSoftness;
-                float _BandNoiseScale;
-                float _BandNoiseStrength;
+                float _DepthGradientPower;
 
                 float _ShallowClarity;
                 float _ClarityDistance;
@@ -253,13 +245,6 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 return second - nearest;
             }
 
-            // 深さ 0〜1 を 浅い→中間→深い の3色に割り当てる
-            half3 DepthGradient(float t)
-            {
-                half3 shallowToMid = lerp(_ShallowColor.rgb, _MidColor.rgb, saturate(t * 2.0));
-                half3 midToDeep = lerp(_MidColor.rgb, _DeepColor.rgb, saturate(t * 2.0 - 1.0));
-                return t < 0.5 ? shallowToMid : midToDeep;
-            }
 
             // ---- 波(ゲルストナー波: 頂点を上下だけでなく前後にも動かし、頂上がとがった波にする) ----
             static const int kWaveCount = 6;
@@ -390,14 +375,12 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 float3 sceneWS = _WorldSpaceCameraPos + viewVec * (sceneEye / max(surfaceEye, kEpsilon));
                 float waterDepth = max(input.positionWS.y - sceneWS.y, 0.0);
 
-                // ---- 深さで段階的に変わる色 ----
-                float bandNoise = GradientNoise(worldUV * _BandNoiseScale + time * 0.05) - 0.5;
-                float depth01 = saturate(waterDepth / max(_DepthMaxDistance, kEpsilon) + bandNoise * _BandNoiseStrength);
-                float steps = max(_ColorSteps, 1.0);
-                float scaled = depth01 * steps;
-                float stepEdge = smoothstep(1.0 - max(_StepSoftness, kEpsilon), 1.0, frac(scaled));
-                float banded = saturate((floor(scaled) + stepEdge) / steps);
-                half3 color = DepthGradient(banded);
+                // ---- 深さでなめらかに変わる色(浅い色 → 深い色) ----
+                // 2 色の間をまっすぐ変えるだけだと浅瀬の明るい色がすぐ消えて見えることがあるので、
+                // 変わり方を曲げられるようにする
+                float depth01 = saturate(waterDepth / max(_DepthMaxDistance, kEpsilon));
+                float gradientT = pow(depth01, max(_DepthGradientPower, kEpsilon));
+                half3 color = lerp(_ShallowColor.rgb, _DeepColor.rgb, gradientT);
 
                 // ---- 浅瀬は水の下が透けて見える ----
                 float2 distortion = float2(
