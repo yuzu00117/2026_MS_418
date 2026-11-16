@@ -284,9 +284,9 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 float3 largeNormal; // 大きな波だけで求めた面の向き(明暗の塗り分け用)
                 // 波の高さ(-1 一番低い 〜 1 全部の波の山が重なった高さ)
                 float height;
-                // 大きな波の頂上への近さ(1 どれかの大きな波のちょうど頂上 〜 -1 谷)。
-                // 白波の線を大きな波の頂上に沿って引くために使う。
-                // 小さな波まで含めると、小さなこぶごとに白波が出て点の集まりになるため
+                // 一番大きな波の頂上への近さ(1 ちょうど頂上 〜 -1 谷)。白波の線をこの頂上に沿って引く。
+                // 小さな波まで含めると小さなこぶごとに白波が出て点の集まりになり、
+                // 向きの違う大きな波を複数使うと線が X 字に交差するため、一番大きな波 1 本だけを使う
                 float crest;
             };
 
@@ -299,6 +299,10 @@ Shader "MiraiSozo/Sandbox/ToonWater"
             static const float kCrestBreakNoiseMax = 0.75;
             // 線の途切れ目のぼかし幅。広めにして、線の端を先細りにする
             static const float kCrestBreakSoftness = 0.08;
+            // 白波の線の位置を前後に揺らす模様の細かさ(1m あたり)と、揺らす量(ラジアン、約 1 で波の間隔の 1/6)。
+            // 線が定規で引いたような直線に見えないようにするため
+            static const float kCrestWobbleScale = 0.04;
+            static const float kCrestWobbleAmount = 1.0;
 
             WaveSample SampleWaves(float2 xz)
             {
@@ -337,8 +341,12 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                     {
                         largeTangent += tangentStep;
                         largeBinormal += binormalStep;
-                        // ゲルストナー波は sin が 1 の所が頂上
-                        crest = max(crest, s);
+                    }
+                    if (i == 0)
+                    {
+                        // ゲルストナー波は sin が 1 の所が頂上。位置を模様で少しずらして、線をゆるく曲げる
+                        float wobble = (GradientNoise(xz * kCrestWobbleScale + 17.3) - 0.5) * 2.0 * kCrestWobbleAmount;
+                        crest = sin(f + wobble);
                     }
                     amplitudeSum += amplitude;
                 }
@@ -440,7 +448,7 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 color *= 1.0 - shadeBand * _WaveShadeStrength;
 
                 // ---- 波の頂上の白波 ----
-                // 大きな波の頂上に沿って細い線を引き、その線を出す場所・出さない場所を下の 3 つで決める。
+                // 一番大きな波の頂上に沿って細い線を引き、その線を出す場所・出さない場所を下の 3 つで決める。
                 // 本物の白波は、全体として高く盛り上がった所にだけ立つ
                 float heightMask = smoothstep(_CrestFoamMinHeight, _CrestFoamMinHeight + kCrestHeightSoftness, wave.height);
                 // 本物の海でも白波は全部の波には立たないので、大きなまだら模様で白波を消す場所を作る
