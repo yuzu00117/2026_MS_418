@@ -34,8 +34,8 @@ namespace Aura.Gimmick
         private const float TopContactTolerance = 0.1f;      ///< 相手の足元が自分の上面からこの高さ以内に潜っていても、上に乗っているとみなす（m）
 
         [InspectorLabel("乗る波を出すもの")]
-        [Tooltip("乗る波を出す WaveEmitter（タレットなど）。空なら、反応する波を出している中で、今の位置から一番近い線に乗る")]
-        [SerializeField] private WaveEmitter _emitter;        ///< 乗る波を出すもの。空なら近い線を探す
+        [Tooltip("乗る波を出す WaveEmitter（タレットなど）。必ず指定する。空だとエラーを出し、波に乗らない")]
+        [SerializeField] private WaveEmitter _emitter;        ///< 乗る波を出すもの（必須）
 
         [InspectorLabel("運ばれる速さ（m/s）")]
         [Tooltip("波の線に沿って進む速さ（m/s）。曲がった所の角も、道のりにそのまま数える。0 なら乗っても進まない")]
@@ -137,6 +137,10 @@ namespace Aura.Gimmick
 
         private void Awake()
         {
+            if (_emitter == null)
+            {
+                Debug.LogError("WaveRider: 「乗る波を出すもの」（_emitter）が未設定です。波に乗りません", this);
+            }
             _isActive = _isActiveOnStart;
             _reaction = GetComponent<WaveReaction>();
             _body = GetComponent<Rigidbody>();
@@ -275,11 +279,12 @@ namespace Aura.Gimmick
         /// @brief 今のステップで実際に乗る波を決める。乗れなければ null（「波が無くなったとき」の動きになる）
         /// ・波が物に遮られて、線が自分の位置より手前までに縮んだときは、乗れない（遮られた位置へ飛ばされないため）
         /// ・一度乗ったあとに乗り直すときは、線までの距離が「乗り直せる距離」以内のときだけ乗る。乗るときは、今の位置に一番近い線の上の点から始める
+        /// 乗る波は _emitter だけ。近い線を探すと、遠くの線へ引き込まれて壁を抜けるため、必ず指定させる
         /// 計算量: O(N)（N は線の点の数）
         private WaveEmitter ResolveEmitter(Vector3 current)
         {
-            WaveEmitter emitter = FindEmitter();
-            if (emitter == null)
+            WaveEmitter emitter = _emitter;
+            if (emitter == null || !CanRide(emitter))
             {
                 return null;
             }
@@ -309,39 +314,6 @@ namespace Aura.Gimmick
                 return null;
             }
             return emitter;
-        }
-
-        /// @brief 乗る波を出しているものを決める
-        /// 今乗っているものが有効ならそれを使い続ける（近さで乗り換えて、行き来しないため）
-        /// 計算量: O(E × N)（E は波を出しているものの数、N は線の点の数）。_emitter 指定なら O(1)
-        private WaveEmitter FindEmitter()
-        {
-            if (_emitter != null)
-            {
-                return CanRide(_emitter) ? _emitter : null;
-            }
-            if (_currentEmitter != null && CanRide(_currentEmitter))
-            {
-                return _currentEmitter;
-            }
-
-            Vector3 linePosition = GetLinePosition(_body.position);
-            WaveEmitter nearest = null;
-            float nearestSqrDistance = float.MaxValue;
-            foreach (WaveEmitter candidate in WaveEmitter.ActiveEmitters)
-            {
-                if (!CanRide(candidate))
-                {
-                    continue;
-                }
-                WaveLinePath.Project(candidate.BeamCorners, linePosition, out float sqrDistance);
-                if (sqrDistance < nearestSqrDistance)
-                {
-                    nearestSqrDistance = sqrDistance;
-                    nearest = candidate;
-                }
-            }
-            return nearest;
         }
 
         /// @brief その WaveEmitter の波に乗れるか。ビームを出していて、線があり、WaveReaction が有効で、反応する波の種類であること
@@ -428,6 +400,10 @@ namespace Aura.Gimmick
             WaveLinePath.GetPointAt(corners, float.MaxValue, out Vector3 endDirection);
             float length = Mathf.Max(0.0f, WaveLinePath.GetLength(corners) - GetFrontExtent(endDirection));
 
+            // 始まりも終点と同じく、後ろ側の広がり分だけ手前で折り返す（砲台は押し戻しの対象外なので、食い込まないため）
+            WaveLinePath.GetPointAt(corners, 0.0f, out Vector3 startDirection);
+            float startLimit = Mathf.Min(GetFrontExtent(-startDirection), length);
+
             _distance += _carrySpeed * _direction * deltaTime;
             if (_distance >= length)
             {
@@ -437,9 +413,9 @@ namespace Aura.Gimmick
                     _direction = -1.0f;
                 }
             }
-            else if (_distance <= 0.0f)
+            else if (_direction < 0.0f && _distance <= startLimit)
             {
-                _distance = 0.0f;
+                _distance = startLimit;
                 _direction = 1.0f;
             }
 
