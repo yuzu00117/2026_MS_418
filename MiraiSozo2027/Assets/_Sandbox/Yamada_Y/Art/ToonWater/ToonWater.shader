@@ -62,8 +62,19 @@ Shader "MiraiSozo/Sandbox/ToonWater"
         _WaveLitOpacity ("明るい面の濃さ", Range(0, 1)) = 0.5
         _WaveShadeAmount ("暗い面になる傾き", Range(0, 1)) = 0.12
         _WaveShadeStrength ("暗い面の暗さ", Range(0, 1)) = 0.2
-        _CrestFoamHeight ("波の頂上に泡が出る高さ", Range(0, 1)) = 0.65
-        _CrestFoamOpacity ("波の頂上の泡の濃さ", Range(0, 1)) = 0.9
+
+        [Header(Crest Foam)]
+        _CrestFoamThreshold ("白波が出る波のとがり", Range(0, 1)) = 0.55
+        _CrestFoamOpacity ("白波の中心の濃さ", Range(0, 1)) = 0.95
+        _CrestFoamEdgeOpacity ("白波の縁の濃さ", Range(0, 1)) = 0.45
+        _CrestFoamCoreWidth ("白波の中心の広さ", Range(0, 0.5)) = 0.12
+        _CrestFoamCoverage ("白波が立つ場所の多さ", Range(0, 1)) = 0.5
+        _CrestFoamPatchScale ("白波が立つ場所のまだらの大きさ", Float) = 0.02
+        _CrestFoamHoleScale ("白波の穴の細かさ", Float) = 1.5
+        _CrestFoamHoleStrength ("白波の穴の多さ", Range(0, 1)) = 0.35
+        _CrestFoamFadeStart ("白波が薄くなり始める距離(m)", Float) = 40
+        _CrestFoamFadeEnd ("白波が一番薄くなる距離(m)", Float) = 150
+        _CrestFoamFarOpacity ("遠くの白波の濃さ", Range(0, 1)) = 0.25
 
         [Header(Lighting)]
         _ShadowStrength ("影の濃さ", Range(0, 1)) = 0.35
@@ -150,8 +161,17 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 float _WaveLitOpacity;
                 float _WaveShadeAmount;
                 float _WaveShadeStrength;
-                float _CrestFoamHeight;
+                float _CrestFoamThreshold;
                 float _CrestFoamOpacity;
+                float _CrestFoamEdgeOpacity;
+                float _CrestFoamCoreWidth;
+                float _CrestFoamCoverage;
+                float _CrestFoamPatchScale;
+                float _CrestFoamHoleScale;
+                float _CrestFoamHoleStrength;
+                float _CrestFoamFadeStart;
+                float _CrestFoamFadeEnd;
+                float _CrestFoamFarOpacity;
 
                 float _ShadowStrength;
             CBUFFER_END
@@ -254,7 +274,9 @@ Shader "MiraiSozo/Sandbox/ToonWater"
             {
                 float3 offset;  // 頂点を動かす量
                 float3 normal;  // 波の面の向き
-                float height01; // 波の高さ(-1 谷 〜 1 頂上)
+                // 水面が横に押し縮められている度合い(0 平ら 〜 1 全部の波の山が重なった所)。
+                // いくつかの波の山が重なってとがった所ほど大きくなるので、白波を出す場所に使う
+                float compression;
             };
 
             WaveSample SampleWaves(float2 xz)
@@ -264,7 +286,6 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 float3 offset = 0;
                 float3 tangent = float3(1, 0, 0);
                 float3 binormal = float3(0, 0, 1);
-                float amplitudeSum = 0;
 
                 [unroll]
                 for (int i = 0; i < kWaveCount; i++)
@@ -285,13 +306,14 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                     offset += float3(dir.x * amplitude * c, amplitude * s, dir.y * amplitude * c);
                     tangent += float3(-dir.x * dir.x * steepness * s, dir.x * steepness * c, -dir.x * dir.y * steepness * s);
                     binormal += float3(-dir.x * dir.y * steepness * s, dir.y * steepness * c, -dir.y * dir.y * steepness * s);
-                    amplitudeSum += amplitude;
                 }
 
                 WaveSample result;
                 result.offset = offset;
                 result.normal = normalize(cross(binormal, tangent));
-                result.height01 = offset.y / max(amplitudeSum, kEpsilon);
+                // 水平方向の動きの伸び縮み(ヤコビアン)。1 より小さい所は押し縮められている
+                float jacobian = tangent.x * binormal.z - tangent.z * binormal.x;
+                result.compression = saturate((1.0 - jacobian) / max(_WaveSteepness, kEpsilon));
                 return result;
             }
 
@@ -381,13 +403,26 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 color = lerp(color, _WaveLitColor.rgb, litBand * _WaveLitOpacity * mainLight.shadowAttenuation);
                 color *= 1.0 - shadeBand * _WaveShadeStrength;
 
-                // ---- 波の頂上の泡 ----
-                // 高さだけで決めると帯がまっすぐになるので、模様で縁を崩して白波らしくする
+                // ---- 波の頂上の白波 ----
+                // 本物の海でも白波は全部の波には立たないので、大きなまだら模様で白波が立つ場所と立たない場所を作る
+                float patchNoise = GradientNoise(worldUV * _CrestFoamPatchScale + time * 0.01);
+                float areaBoost = (patchNoise - (1.0 - _CrestFoamCoverage)) * 0.6;
+                // 縁を細かい模様で崩して、まっすぐな帯に見えないようにする
                 float crestNoise = GradientNoise(worldUV * 0.8 + time * 0.1) - 0.5;
-                float crestValue = wave.height01 + crestNoise * 0.35;
+                // 網目模様のセルの内側ほど泡を削り、縁がちぎれた泡に見えるようにする
+                float holeValue = saturate(VoronoiEdge(worldUV * _CrestFoamHoleScale, time * 0.3));
+                float crestValue = wave.compression + areaBoost + crestNoise * 0.2 - holeValue * _CrestFoamHoleStrength;
                 float crestAA = max(fwidth(crestValue), kEpsilon);
-                float crestFoam = smoothstep(_CrestFoamHeight - crestAA, _CrestFoamHeight + crestAA, crestValue);
-                color = lerp(color, _FoamColor.rgb, crestFoam * _CrestFoamOpacity);
+                float crestBody = smoothstep(_CrestFoamThreshold - crestAA, _CrestFoamThreshold + crestAA, crestValue);
+                float coreEdge = _CrestFoamThreshold + _CrestFoamCoreWidth;
+                float crestCore = smoothstep(coreEdge - crestAA, coreEdge + crestAA, crestValue);
+                // 中心は濃く、縁は半透明にして、泡の厚みの違いを出す
+                float crestFoam = crestBody * lerp(_CrestFoamEdgeOpacity, _CrestFoamOpacity, crestCore);
+                // 遠くでは白波の列が詰まって白い縞に見えるので薄くする
+                float cameraDistance = length(viewVec);
+                float crestFade = smoothstep(_CrestFoamFadeStart, max(_CrestFoamFadeEnd, _CrestFoamFadeStart + kEpsilon), cameraDistance);
+                crestFoam *= lerp(1.0, _CrestFoamFarOpacity, crestFade);
+                color = lerp(color, _FoamColor.rgb, crestFoam);
 
                 // ---- 物体の周りの泡 ----
                 float2 foamUV = worldUV * _FoamNoiseScale + float2(1.0, 0.7) * time * _FoamSpeed;
@@ -398,7 +433,7 @@ Shader "MiraiSozo/Sandbox/ToonWater"
                 // 物体にぴったり沿った縁取り(少し波打たせる)
                 float foamLine = 1.0 - step(_FoamLineWidth, viewDepth + (foamNoise - 0.5) * _FoamLineWidth);
                 float foam = saturate(max(foamPatch, foamLine)) * _FoamColor.a;
-                float allFoam = max(foam, crestFoam * _CrestFoamOpacity);
+                float allFoam = max(foam, crestFoam);
                 color = lerp(color, _FoamColor.rgb, foam);
 
                 // ---- 日光のきらめき ----
