@@ -34,8 +34,8 @@ Material:
     - _ClarityDistance: 1.5
     - _DepthGradientPower: 0.2
     - _DepthMaxDistance: 1
-    - _FoamDistance: 0.6
-    - _FoamLineWidth: 0.08
+    - _FoamDistance: 0.5
+    - _FoamLineWidth: 0.33
     - _FoamNoiseScale: 4
     - _FoamSpeed: 0.3
     - _FresnelPower: 5
@@ -61,7 +61,7 @@ Material:
     m_Colors:
     - _CausticsColor: {r: 0.85, g: 1, b: 1, a: 1}
     - _DeepColor: {r: 0.04, g: 0.23999995, b: 0.62, a: 1}
-    - _FoamColor: {r: 0.8254717, g: 0.998291, b: 1, a: 1}
+    - _FoamColor: {r: 0.8349056, g: 1, b: 1, a: 1}
     - _HorizonColor: {r: 0.54999995, g: 0.85, b: 1, a: 1}
     - _ShallowColor: {r: 0.4764151, g: 0.84810007, b: 1, a: 1}
     - _WaveLitColor: {r: 0.75, g: 0.96999997, b: 1, a: 1}
