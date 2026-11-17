@@ -31,17 +31,20 @@ Shader "Aura/Water/ToonWater"
         _FoamNoiseScale ("泡の模様の細かさ", Float) = 4
         _FoamSpeed ("泡の動く速さ", Float) = 0.3
 
+        // 浅瀬の光の網目模様。表示名は「ボロノイ」だが、中の名前は Caustics(水底に映る光の模様)のまま。
+        // 名前を変えると、材質に保存した調整済みの値が読み込まれなくなるため
         [Header(Voronoi)]
         _CausticsColor ("ボロノイの色", Color) = (0.85, 1, 1, 1)
         _CausticsScale ("ボロノイの細かさ", Float) = 1.2
         _CausticsSpeed ("ボロノイの動く速さ", Float) = 0.6
         _CausticsWidth ("ボロノイの線の太さ", Range(0, 0.5)) = 0.08
-        _CausticsDistance ("ボロノイが出る水深(m)", Float) = 2
+        _CausticsDistance ("ボロノイが消える水深(m)", Float) = 2
         _CausticsOpacity ("ボロノイの濃さ", Range(0, 1)) = 0.4
-        _CausticsNearDistance ("ボロノイが出る範囲(m)", Float) = 1
+        _CausticsNearDistance ("ボロノイが出る物からの距離(m)", Float) = 1
 
         [Header(Waves)]
-        _WaveDirection ("波の向き(XとZ)", Vector) = (1, 0.3, 0, 0)
+        // 入力欄は X と Y だが、Y 欄はワールドの Z 方向(奥行き)として使う
+        _WaveDirection ("波の向き(X欄=X方向, Y欄=Z方向)", Vector) = (1, 0.3, 0, 0)
         _WaveLength ("波の間隔(m)", Float) = 8
         _WaveSteepness ("波のとがり具合", Range(0, 1)) = 0.5
         _WaveSpread ("波の向きのばらつき", Range(0, 1)) = 0.5
@@ -152,6 +155,19 @@ Shader "Aura/Water/ToonWater"
 
             static const float kEpsilon = 1e-4;
 
+            // 水中のゆがみに使う模様の細かさ(1m あたり)と流れる速さ
+            static const float kDistortionScale = 1.5;
+            static const float kDistortionSpeed = 0.2;
+            // 横と縦のゆがみに別の模様を使うための、模様のずらし量。同じ模様だと斜め一方向にしかゆがまないため
+            static const float kDistortionOffset = 17.3;
+            // ボロノイの線を、水中のゆがみより弱めに揺らす割合
+            static const float kCausticsDistortion = 0.3;
+            // 境目のぼかし幅。0 にすると境目がギザギザに見えるため、わずかにぼかす
+            static const float kCausticsEdgeSoftness = 0.02;
+            static const float kFoamEdgeSoftness = 0.02;
+            // 泡の模様が流れる向き(X と Z)
+            static const float2 kFoamFlowDirection = float2(1.0, 0.7);
+
             struct Attributes
             {
                 float4 positionOS : POSITION;
@@ -250,12 +266,12 @@ Shader "Aura/Water/ToonWater"
                 float3 offset;  // 頂点を動かす量
                 float3 normal;  // 波の面の向き
                 float3 largeNormal; // 大きな波だけで求めた面の向き(明暗の塗り分け用)
-                // 波の高さ(-1 一番低い 〜 1 全部の波の山が重なった高さ)
-                float height;
             };
 
             // 波の列を曲げるムラがゆっくり流れる速さ
             static const float kWarpDrift = 0.02;
+            // 横と縦の曲がりに別の模様を使うための、模様のずらし量
+            static const float2 kWarpOffset = float2(31.7, 11.3);
             // 波ごとにムラの模様をずらす量。全部の波が同じ場所で一緒に強まると、ムラの意味が薄れるため
             static const float2 kVariationOffset = float2(13.7, 7.9);
 
@@ -268,13 +284,13 @@ Shader "Aura/Water/ToonWater"
                 float3 binormal = float3(0, 0, 1);
                 float3 largeTangent = tangent;
                 float3 largeBinormal = binormal;
-                float amplitudeSum = 0;
 
                 // 波を計算する位置を、ゆるやかなムラで少しずらす。まっすぐ平行な波の列をゆるく曲げて、
                 // 同じ模様が一定間隔でくり返して見えるのを防ぐ
                 float2 warp = float2(
                     GradientNoise(xz * _WaveWarpScale + _Time.y * kWarpDrift),
-                    GradientNoise(xz * _WaveWarpScale + float2(31.7, 11.3) - _Time.y * kWarpDrift)) - 0.5;
+                    GradientNoise(xz * _WaveWarpScale + kWarpOffset - _Time.y * kWarpDrift)) - 0.5;
+                // warp は -0.5〜0.5 なので 2 倍して -1〜1 にし、ずれの最大が _WaveWarpStrength(m) になるようにする
                 float2 warpedXZ = xz + warp * 2.0 * _WaveWarpStrength;
 
                 // 遠くの小さな波は画面上でつぶれて格子模様やちらつきになるので、距離に応じて弱める
@@ -312,15 +328,12 @@ Shader "Aura/Water/ToonWater"
                         largeTangent += tangentStep;
                         largeBinormal += binormalStep;
                     }
-                    // 高さの基準は弱める前の波で取る。穏やかな所は高さも低いままにするため
-                    amplitudeSum += steepness / k;
                 }
 
                 WaveSample result;
                 result.offset = offset;
                 result.normal = normalize(cross(binormal, tangent));
                 result.largeNormal = normalize(cross(largeBinormal, largeTangent));
-                result.height = offset.y / max(amplitudeSum, kEpsilon);
                 return result;
             }
 
@@ -339,8 +352,8 @@ Shader "Aura/Water/ToonWater"
             // 光のゆらぎの線(1 線の上 〜 0 線の外)
             float CausticsLine(float2 uv, float2 distortion, float time)
             {
-                float caustics = VoronoiEdge(uv * _CausticsScale + distortion * 0.3, time * _CausticsSpeed);
-                return 1.0 - smoothstep(_CausticsWidth, _CausticsWidth + 0.02, caustics);
+                float caustics = VoronoiEdge(uv * _CausticsScale + distortion * kCausticsDistortion, time * _CausticsSpeed);
+                return 1.0 - smoothstep(_CausticsWidth, _CausticsWidth + kCausticsEdgeSoftness, caustics);
             }
 
             Varyings Vert(Attributes input)
@@ -396,8 +409,8 @@ Shader "Aura/Water/ToonWater"
 
                 // ---- 浅瀬は水の下が透けて見える ----
                 float2 distortion = float2(
-                    GradientNoise(worldUV * 1.5 + time * 0.2),
-                    GradientNoise(worldUV * 1.5 + 17.3 - time * 0.2)) - 0.5;
+                    GradientNoise(worldUV * kDistortionScale + time * kDistortionSpeed),
+                    GradientNoise(worldUV * kDistortionScale + kDistortionOffset - time * kDistortionSpeed)) - 0.5;
                 float2 refractUV = screenUV + distortion * _RefractionStrength;
                 // ゆがませた先が水面より手前の物体なら、ゆがませない(手前の物が水に映り込むのを防ぐ)
                 float refractEye = LinearEyeDepth(SampleSceneDepth(refractUV), _ZBufferParams);
@@ -440,11 +453,11 @@ Shader "Aura/Water/ToonWater"
                 color *= 1.0 - shadeBand * _WaveShadeStrength * topFace;
 
                 // ---- 物体の周りの泡 ----
-                float2 foamUV = worldUV * _FoamNoiseScale + float2(1.0, 0.7) * time * _FoamSpeed;
+                float2 foamUV = worldUV * _FoamNoiseScale + kFoamFlowDirection * time * _FoamSpeed;
                 float foamNoise = GradientNoise(foamUV);
                 float foamT = viewDepth / max(_FoamDistance, kEpsilon);
                 // 物体から離れるほど泡が出にくくなり、まだら模様になる
-                float foamPatch = smoothstep(foamT - 0.02, foamT + 0.02, foamNoise) * step(foamT, 1.0);
+                float foamPatch = smoothstep(foamT - kFoamEdgeSoftness, foamT + kFoamEdgeSoftness, foamNoise) * step(foamT, 1.0);
                 // 物体にぴったり沿った縁取り(少し波打たせる)
                 float foamLine = 1.0 - step(_FoamLineWidth, viewDepth + (foamNoise - 0.5) * _FoamLineWidth);
                 float foam = saturate(max(foamPatch, foamLine)) * _FoamColor.a;
