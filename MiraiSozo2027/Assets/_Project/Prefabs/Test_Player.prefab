@@ -1267,6 +1267,7 @@ GameObject:
   - component: {fileID: 4837906352872215815}
   - component: {fileID: 6655375391944685074}
   - component: {fileID: 1662085989712540730}
+  - component: {fileID: -5704771431086666332}
   m_Layer: 0
   m_Name: Test_Player
   m_TagString: Untagged
@@ -1438,6 +1439,41 @@ MonoBehaviour:
       _outlineHoldDuration: 0
       _isOriginalEnabled: 0
       _isOriginalHiddenOutsideEcho: 1
+      _isNormalRenderingHidden: 0
+      _irradiated:
+        _fill:
+          _isEnabled: 0
+          _isThroughWalls: 0
+          _displayScope: 1
+          _hasPersistence: 0
+          _persistenceSeconds: 1
+          _isSeamlessTransition: 0
+        _outline:
+          _isEnabled: 1
+          _isThroughWalls: 0
+          _displayScope: 0
+          _hasPersistence: 0
+          _persistenceSeconds: 1
+          _isSeamlessTransition: 0
+        _original:
+          _isEnabled: 0
+          _isThroughWalls: 0
+          _displayScope: 1
+          _hasPersistence: 0
+          _persistenceSeconds: 1
+          _isSeamlessTransition: 0
+        _color: {r: 0, g: 1, b: 1, a: 0.65}
+        _outlineColor: {r: 1, g: 1, b: 1, a: 0.5}
+        _outlineWidth: 3
+        _originalOpacity: 0.5
+      _materialization:
+        _requiredSeconds: 1
+        _interruptionMode: 0
+        _decaySpeed: 1
+        _persistenceMode: 0
+        _revertSeconds: 5
+        _isColliderDisabledWhileTransparent: 0
+      _settingsVersion: 1
       _originalHoldDuration: 2
       _originalOpacity: 1
       _contactResolution: 256
@@ -1447,18 +1483,21 @@ MonoBehaviour:
         _displayScope: 1
         _hasPersistence: 0
         _persistenceSeconds: 1
+        _isSeamlessTransition: 0
       _outline:
         _isEnabled: 0
         _isThroughWalls: 0
         _displayScope: 0
         _hasPersistence: 0
         _persistenceSeconds: 1
+        _isSeamlessTransition: 0
       _original:
         _isEnabled: 0
         _isThroughWalls: 0
         _displayScope: 0
         _hasPersistence: 0
         _persistenceSeconds: 1
+        _isSeamlessTransition: 0
       _surfaceMemoryResolution: 32
     - _isEnabled: 1
       _definition: {fileID: 0}
@@ -1475,6 +1514,41 @@ MonoBehaviour:
       _outlineHoldDuration: 0
       _isOriginalEnabled: 0
       _isOriginalHiddenOutsideEcho: 1
+      _isNormalRenderingHidden: 0
+      _irradiated:
+        _fill:
+          _isEnabled: 0
+          _isThroughWalls: 0
+          _displayScope: 1
+          _hasPersistence: 0
+          _persistenceSeconds: 1
+          _isSeamlessTransition: 0
+        _outline:
+          _isEnabled: 1
+          _isThroughWalls: 0
+          _displayScope: 0
+          _hasPersistence: 0
+          _persistenceSeconds: 1
+          _isSeamlessTransition: 0
+        _original:
+          _isEnabled: 0
+          _isThroughWalls: 0
+          _displayScope: 1
+          _hasPersistence: 0
+          _persistenceSeconds: 1
+          _isSeamlessTransition: 0
+        _color: {r: 0, g: 1, b: 1, a: 0.65}
+        _outlineColor: {r: 1, g: 1, b: 1, a: 0.5}
+        _outlineWidth: 3
+        _originalOpacity: 0.5
+      _materialization:
+        _requiredSeconds: 1
+        _interruptionMode: 0
+        _decaySpeed: 1
+        _persistenceMode: 0
+        _revertSeconds: 5
+        _isColliderDisabledWhileTransparent: 0
+      _settingsVersion: 1
       _originalHoldDuration: 2
       _originalOpacity: 1
       _contactResolution: 256
@@ -1484,18 +1558,21 @@ MonoBehaviour:
         _displayScope: 1
         _hasPersistence: 0
         _persistenceSeconds: 1
+        _isSeamlessTransition: 0
       _outline:
         _isEnabled: 0
         _isThroughWalls: 0
         _displayScope: 0
         _hasPersistence: 0
         _persistenceSeconds: 1
+        _isSeamlessTransition: 0
       _original:
         _isEnabled: 0
         _isThroughWalls: 0
         _displayScope: 0
         _hasPersistence: 0
         _persistenceSeconds: 1
+        _isSeamlessTransition: 0
       _surfaceMemoryResolution: 32
     - _isEnabled: 1
       _definition: {fileID: 0}
@@ -1512,6 +1589,41 @@ MonoBehaviour:
       _outlineHoldDuration: 0
       _isOriginalEnabled: 0
       _isOriginalHiddenOutsideEcho: 1
+      _isNormalRenderingHidden: 0
+      _irradiated:
+        _fill:
+          _isEnabled: 0
+          _isThroughWalls: 0
+          _displayScope: 1
+          _hasPersistence: 0
+          _persistenceSeconds: 1
+          _isSeamlessTransition: 0
+        _outline:
+          _isEnabled: 1
+          _isThroughWalls: 0
+          _displayScope: 0
+          _hasPersistence: 0
+          _persistenceSeconds: 1
+          _isSeamlessTransition: 0
+        _original:
+          _isEnabled: 0
+          _isThroughWalls: 0
+          _displayScope: 1
+          _hasPersistence: 0
+          _persistenceSeconds: 1
+          _isSeamlessTransition: 0
+        _color: {r: 0, g: 1, b: 1, a: 0.65}
+        _outlineColor: {r: 1, g: 1, b: 1, a: 0.5}
+        _outlineWidth: 3
+        _originalOpacity: 0.5
+      _materialization:
+        _requiredSeconds: 1
+        _interruptionMode: 0
+        _decaySpeed: 1
+        _persistenceMode: 0
+        _revertSeconds: 5
+        _isColliderDisabledWhileTransparent: 0
+      _settingsVersion: 1
       _originalHoldDuration: 2
       _originalOpacity: 1
       _contactResolution: 256
@@ -1521,18 +1633,21 @@ MonoBehaviour:
         _displayScope: 1
         _hasPersistence: 0
         _persistenceSeconds: 1
+        _isSeamlessTransition: 0
       _outline:
         _isEnabled: 0
         _isThroughWalls: 0
         _displayScope: 0
         _hasPersistence: 0
         _persistenceSeconds: 1
+        _isSeamlessTransition: 0
       _original:
         _isEnabled: 0
         _isThroughWalls: 0
         _displayScope: 0
         _hasPersistence: 0
         _persistenceSeconds: 1
+        _isSeamlessTransition: 0
       _surfaceMemoryResolution: 32
     _shadow:
       _isEnabled: 1
@@ -1785,6 +1900,19 @@ MonoBehaviour:
   _energyPerSecond: 1
   _range: 25
   _isBendable: 1
+--- !u!114 &-5704771431086666332
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8923635859648306710}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0e25dcdffd9b6741b364116d70c7aa0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Player
+  _maxHp: 100
 --- !u!1 &8978512811936796963
 GameObject:
   m_ObjectHideFlags: 0
