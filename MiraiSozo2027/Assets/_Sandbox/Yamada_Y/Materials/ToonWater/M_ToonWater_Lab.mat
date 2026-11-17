@@ -36,7 +36,7 @@ Material:
     - _ClarityDistance: 1.5
     - _ColorSteps: 4
     - _CrestFoamBreakScale: 1.42
-    - _CrestFoamBreakStrength: 0.766
+    - _CrestFoamBreakStrength: 0.8
     - _CrestFoamCoreWidth: 0.02
     - _CrestFoamCoverage: 0.407
     - _CrestFoamEdgeOpacity: 0.093
@@ -44,10 +44,10 @@ Material:
     - _CrestFoamFadeStart: 40
     - _CrestFoamFarOpacity: 0.25
     - _CrestFoamLineLength: 3.26
-    - _CrestFoamMinHeight: 0.2
+    - _CrestFoamMinHeight: 0.66
     - _CrestFoamOpacity: 0.95
     - _CrestFoamPatchScale: 0.02
-    - _CrestFoamThreshold: 0.88
+    - _CrestFoamThreshold: 0.9
     - _DepthGradientPower: 1
     - _DepthMaxDistance: 6
     - _FoamDistance: 1.25
