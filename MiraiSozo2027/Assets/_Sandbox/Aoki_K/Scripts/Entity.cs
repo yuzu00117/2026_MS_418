@@ -7,7 +7,7 @@ public abstract class Entity : MonoBehaviour, IDamageable
     [Header("Status Settings")]
     [Tooltip("最大HP")]
     [SerializeField] protected int _maxHp = 100;
-    protected int _currentHp;
+    [SerializeField] protected int _currentHp;
     public int MaxHp => _maxHp;
     public int CurrentHp => _currentHp;
     public bool IsDead { get; private set; }
@@ -18,9 +18,13 @@ public abstract class Entity : MonoBehaviour, IDamageable
     public event Action<int, int> OnHpChanged;
 
     protected bool _isInvincible = false;
+    public bool IsInvincible => _isInvincible;
     
     [SerializeField] protected float _invincibleTime = 0.5f;
     private float _invincibleTimer = 0f;
+
+    // ダメージ無効化フラグ（アーマー等用）
+    protected virtual bool IsDamageBlocked => false;
 
     protected virtual void Awake()
     {
@@ -48,7 +52,7 @@ public abstract class Entity : MonoBehaviour, IDamageable
     [ShowInEventMenu]
     public void TakeDamage(int damage)
     {
-        if(IsDead || damage <= 0 || _isInvincible) return;
+        if(IsDead || damage <= 0 || _isInvincible || IsDamageBlocked) return;
         _currentHp = Mathf.Max(0, _currentHp - damage);
         OnHpChanged?.Invoke(_currentHp, _maxHp);
         OnDamaged(damage);
@@ -68,11 +72,17 @@ public abstract class Entity : MonoBehaviour, IDamageable
     /// 即死する（IDamageable実装・ギミックのUnityEventからも呼び出し可能）
     /// </summary>
     [ShowInEventMenu]
-    public void Kill()
+    public virtual void Kill()
     {
         if(IsDead) return;
+        
         _isInvincible = false;
-        TakeDamage(_currentHp);
+        int fatalDamage = _currentHp;
+        _currentHp = 0;
+        OnHpChanged?.Invoke(_currentHp, _maxHp);
+        OnDamaged(fatalDamage);
+        IsDead = true;
+        OnDeath();
     }
 
     /// <summary>
