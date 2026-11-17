@@ -23,6 +23,13 @@ namespace Aura.Water
         private const int MaxVertexCountFor16BitIndex = 65535;
         // 波で頂点が動いても板が画面外と誤判定されて消えないよう、描画範囲の高さに足す余裕(m)
         private const float BoundsHeightMargin = 5f;
+#if UNITY_EDITOR
+        // シーン画面に出す、波が進む向きの矢印の長さ(m)と、水面から浮かせる高さ(m)。
+        // 波の山に埋もれて見えなくならないよう、少し上に描く
+        private const float WaveArrowLength = 10f;
+        private const float WaveArrowHeight = 2f;
+        private static readonly int WaveAngleId = Shader.PropertyToID("_WaveAngle");
+#endif
 
         [SerializeField, Min(1f), Tooltip("板全体の一辺の長さ(m)")]
         private float _size = 1000f;
@@ -63,6 +70,32 @@ namespace Aura.Water
                 return;
             }
             BuildMesh();
+        }
+
+        /// <summary>
+        /// 材質の「波が進む向き(度)」を、シーン画面に矢印で表示する。
+        /// 角度の数字だけでは、シーンのどちらを向くのかがすぐ分からないため。ゲーム画面には出ない。
+        /// </summary>
+        private void OnDrawGizmos()
+        {
+            if (!TryGetComponent(out MeshRenderer meshRenderer))
+            {
+                return;
+            }
+            Material material = meshRenderer.sharedMaterial;
+            if (material == null || !material.HasProperty(WaveAngleId))
+            {
+                return;
+            }
+
+            // シェーダーと同じく、0 度が X+ 方向、90 度が Z+ 方向(ワールド座標)
+            float radians = material.GetFloat(WaveAngleId) * Mathf.Deg2Rad;
+            var direction = new Vector3(Mathf.Cos(radians), 0f, Mathf.Sin(radians));
+            Vector3 start = transform.position + Vector3.up * WaveArrowHeight;
+
+            UnityEditor.Handles.color = Color.yellow;
+            UnityEditor.Handles.ArrowHandleCap(
+                0, start, Quaternion.LookRotation(direction), WaveArrowLength, EventType.Repaint);
         }
 #endif
 

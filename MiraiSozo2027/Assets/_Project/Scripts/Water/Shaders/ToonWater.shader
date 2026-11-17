@@ -43,8 +43,11 @@ Shader "Aura/Water/ToonWater"
         _CausticsNearDistance ("ボロノイが出る物からの距離(m)", Float) = 1
 
         [Header(Waves)]
-        // 入力欄は X と Y だが、Y 欄はワールドの Z 方向(奥行き)として使う
-        _WaveDirection ("波の向き(X欄=X方向, Y欄=Z方向)", Vector) = (1, 0.3, 0, 0)
+        // Header の文字にかっこやカンマを入れると表示が崩れるため、空白で区切る
+        [Header(向き  0度 X方向  90度 Z方向)]
+        // 2 つの数字で向きを入れると、どちらを向くのか分かりにくいため角度 1 つで入れる。
+        // シーン画面では、水面の板(WaterGridMesh)の上に矢印で表示される
+        _WaveAngle ("波が進む向き(度)", Range(0, 360)) = 16.7
         _WaveLength ("波の間隔(m)", Float) = 8
         _WaveSteepness ("波のとがり具合", Range(0, 1)) = 0.5
         _WaveSpread ("波の向きのばらつき", Range(0, 1)) = 0.5
@@ -131,7 +134,7 @@ Shader "Aura/Water/ToonWater"
                 float _CausticsOpacity;
                 float _CausticsNearDistance;
 
-                float4 _WaveDirection;
+                float _WaveAngle;
                 float _WaveLength;
                 float _WaveSteepness;
                 float _WaveSpread;
@@ -277,8 +280,7 @@ Shader "Aura/Water/ToonWater"
 
             WaveSample SampleWaves(float2 xz)
             {
-                float2 baseDir = normalize(_WaveDirection.xy + kEpsilon);
-                float baseAngle = atan2(baseDir.y, baseDir.x);
+                float baseAngle = radians(_WaveAngle);
                 float3 offset = 0;
                 float3 tangent = float3(1, 0, 0);
                 float3 binormal = float3(0, 0, 1);

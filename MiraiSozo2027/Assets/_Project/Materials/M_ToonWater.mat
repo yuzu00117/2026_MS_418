@@ -43,6 +43,7 @@ Material:
     - _RefractionStrength: 0.015
     - _ShadowStrength: 0.35
     - _ShallowClarity: 0.8
+    - _WaveAngle: 16.7
     - _WaveDetailFadeEnd: 120
     - _WaveDetailFadeStart: 30
     - _WaveLength: 20
@@ -63,7 +64,6 @@ Material:
     - _FoamColor: {r: 0.8254717, g: 0.998291, b: 1, a: 1}
     - _HorizonColor: {r: 0.54999995, g: 0.85, b: 1, a: 1}
     - _ShallowColor: {r: 0.4764151, g: 0.84810007, b: 1, a: 1}
-    - _WaveDirection: {r: 1, g: 0.3, b: 0, a: 0}
     - _WaveLitColor: {r: 0.75, g: 0.96999997, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
