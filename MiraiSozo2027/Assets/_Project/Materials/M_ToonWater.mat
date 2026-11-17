@@ -43,7 +43,7 @@ Material:
     - _RefractionStrength: 0.015
     - _ShadowStrength: 0.35
     - _ShallowClarity: 0.8
-    - _WaveAngle: 16.7
+    - _WaveAngle: 0
     - _WaveDetailFadeEnd: 120
     - _WaveDetailFadeStart: 30
     - _WaveLength: 20
