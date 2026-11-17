@@ -42,8 +42,10 @@ namespace Aura.Water
 
         private void OnValidate()
         {
-            // OnValidate 中は MeshFilter の書き換えが警告になるので、次の更新で作り直す
+            // OnValidate 中は MeshFilter の書き換えが警告になるので、次の更新で作り直す。
+            // 値を続けて変えると予約が重なり何度も作り直すため、先に外してから 1 つだけ登録する
 #if UNITY_EDITOR
+            UnityEditor.EditorApplication.delayCall -= HandleDelayedRebuild;
             UnityEditor.EditorApplication.delayCall += HandleDelayedRebuild;
 #endif
         }
@@ -87,20 +89,16 @@ namespace Aura.Water
             int cellCount = lineCount - 1;
             int vertexCount = lineCount * lineCount;
             var vertices = new Vector3[vertexCount];
-            var uvs = new Vector2[vertexCount];
             var normals = new Vector3[vertexCount];
             var indices = new int[cellCount * cellCount * 6];
 
-            float half = _size * 0.5f;
+            // UV は作らない。シェーダーは模様をワールド座標で決めるため、使われないので
             for (int z = 0; z < lineCount; z++)
             {
                 for (int x = 0; x < lineCount; x++)
                 {
                     int i = z * lineCount + x;
-                    float px = lines[x];
-                    float pz = lines[z];
-                    vertices[i] = new Vector3(px, 0f, pz);
-                    uvs[i] = new Vector2((px + half) / _size, (pz + half) / _size);
+                    vertices[i] = new Vector3(lines[x], 0f, lines[z]);
                     normals[i] = Vector3.up;
                 }
             }
@@ -130,7 +128,6 @@ namespace Aura.Water
                 indexFormat = vertexCount > MaxVertexCountFor16BitIndex ? IndexFormat.UInt32 : IndexFormat.UInt16,
             };
             _mesh.vertices = vertices;
-            _mesh.uv = uvs;
             _mesh.normals = normals;
             _mesh.triangles = indices;
             _mesh.bounds = new Bounds(Vector3.zero, new Vector3(_size, BoundsHeightMargin * 2f, _size));
