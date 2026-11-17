@@ -113,7 +113,7 @@ public class WaveDamageReceiver : MonoBehaviour
     /// </summary>
     public void ReceiveWaveHit(in InfoBeamHit hit, int baseDamage)
     {
-        if (_entity == null || _entity.IsDead) return;
+        if (!isActiveAndEnabled || _entity == null || _entity.IsDead) return;
         if (!WaveTypeInfo.TryGetKind(hit.Type, out WaveKind waveKind)) return;
 
         // フェーズ1：アーマー中

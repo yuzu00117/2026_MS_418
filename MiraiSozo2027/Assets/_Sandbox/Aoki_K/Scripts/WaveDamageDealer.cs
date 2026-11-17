@@ -30,7 +30,7 @@ public class WaveDamageDealer : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (_waveEmitter == null) return;
+        if (_waveEmitter == null || !_waveEmitter.isActiveAndEnabled) return;
 
         IReadOnlyList<InfoBeamHit> hits = _waveEmitter.LastHits;
         if (hits == null || hits.Count == 0) return;
@@ -63,7 +63,7 @@ public class WaveDamageDealer : MonoBehaviour
             {
                 if (_processedDamageables.Add(damageable))
                 {
-                    int finalDamage = Mathf.Max(1, Mathf.RoundToInt(_baseDamage * hit.Multiplier));
+                    int finalDamage = Mathf.Max(0, Mathf.RoundToInt(_baseDamage * hit.Multiplier));
                     damageable.TakeDamage(finalDamage);
                 }
             }
