@@ -3,6 +3,10 @@
 // 波は頂点を動かして作るので、細かく分割した板(WaterGridMesh)に貼ること。
 // テクスチャは使わず、すべて計算で模様を作る。
 // 必要な設定: URP Asset の Depth Texture と Opaque Texture をオンにすること。
+// 泡とボロノイの「物からの距離」について:
+//   水面の GameObject に WaterFoamDistanceMap を付けると、真上から見た距離の地図を読むので、
+//   物体の周り全方向(柱の左右や裏側も)に同じ幅で泡が出る。
+//   付けない場合は、従来どおり視線方向の奥行き(柱に重なって見える所だけ)で決める。
 Shader "Aura/Water/ToonWater"
 {
     Properties
@@ -154,6 +158,12 @@ Shader "Aura/Water/ToonWater"
 
                 float _ShadowStrength;
             CBUFFER_END
+
+            // 物体までの水平距離の地図。WaterFoamDistanceMap が全体で共有する値として渡すので、
+            // 材質ごとの CBUFFER には入れない。x, y: 範囲の最小 XZ、z: 1 / 範囲の一辺、w: 1 なら地図あり
+            TEXTURE2D(_WaterFoamDistanceMap);
+            SAMPLER(sampler_WaterFoamDistanceMap);
+            float4 _WaterFoamMapArea;
 
             static const float kEpsilon = 1e-4;
 
@@ -357,6 +367,18 @@ Shader "Aura/Water/ToonWater"
                 return 1.0 - smoothstep(_CausticsWidth, _CausticsWidth + kCausticsEdgeSoftness, caustics);
             }
 
+            // 水面の位置から一番近い物体までの水平距離(m)。地図が無い・範囲の外のときは fallbackDistance を返す
+            float GetObjectDistance(float3 positionWS, float fallbackDistance)
+            {
+                float2 uv = (positionWS.xz - _WaterFoamMapArea.xy) * _WaterFoamMapArea.z;
+                bool isInside = all(uv >= 0.0) && all(uv <= 1.0);
+                if (_WaterFoamMapArea.w > 0.5 && isInside)
+                {
+                    return SAMPLE_TEXTURE2D_LOD(_WaterFoamDistanceMap, sampler_WaterFoamDistanceMap, uv, 0).r;
+                }
+                return fallbackDistance;
+            }
+
             Varyings Vert(Attributes input)
             {
                 Varyings output = (Varyings)0;
@@ -396,6 +418,11 @@ Shader "Aura/Water/ToonWater"
                 // 視線方向の差(泡に使う)
                 float viewDepth = max(sceneEye - surfaceEye, 0.0);
 
+                // 物体までの距離(泡とボロノイに使う)。水面は地図から読んだ水平距離を使う。
+                // 水の箱の側面には地図の意味がない(上から見た位置が同じ)ので、今までの viewDepth のままにする
+                float mapDistance = GetObjectDistance(input.positionWS, viewDepth);
+                float objectDistance = lerp(viewDepth, mapDistance, topFace);
+
                 // 水底の位置を復元し、真下方向の深さを出す(色・透け・光の模様に使う)
                 float3 viewVec = input.positionWS - _WorldSpaceCameraPos;
                 float3 sceneWS = _WorldSpaceCameraPos + viewVec * (sceneEye / max(surfaceEye, kEpsilon));
@@ -427,7 +454,7 @@ Shader "Aura/Water/ToonWater"
                 causticsLine *= 1.0 - saturate(waterDepth / max(_CausticsDistance, kEpsilon));
                 // 水面(上向きの面)のうち、水面の奥に見える物が近いところだけに出す。
                 // 箱の側面や、物から離れた水面にまで模様が広がらないようにするため
-                causticsLine *= topFace * (1.0 - smoothstep(0.0, max(_CausticsNearDistance, kEpsilon), viewDepth));
+                causticsLine *= topFace * (1.0 - smoothstep(0.0, max(_CausticsNearDistance, kEpsilon), objectDistance));
                 color = lerp(color, _CausticsColor.rgb, causticsLine * _CausticsOpacity);
 
                 // ---- 遠くの水面ほど明るい色に寄せる ----
@@ -456,11 +483,11 @@ Shader "Aura/Water/ToonWater"
                 // ---- 物体の周りの泡 ----
                 float2 foamUV = worldUV * _FoamNoiseScale + kFoamFlowDirection * time * _FoamSpeed;
                 float foamNoise = GradientNoise(foamUV);
-                float foamT = viewDepth / max(_FoamDistance, kEpsilon);
+                float foamT = objectDistance / max(_FoamDistance, kEpsilon);
                 // 物体から離れるほど泡が出にくくなり、まだら模様になる
                 float foamPatch = smoothstep(foamT - kFoamEdgeSoftness, foamT + kFoamEdgeSoftness, foamNoise) * step(foamT, 1.0);
                 // 物体にぴったり沿った縁取り(少し波打たせる)
-                float foamLine = 1.0 - step(_FoamLineWidth, viewDepth + (foamNoise - 0.5) * _FoamLineWidth);
+                float foamLine = 1.0 - step(_FoamLineWidth, objectDistance + (foamNoise - 0.5) * _FoamLineWidth);
                 float foam = saturate(max(foamPatch, foamLine)) * _FoamColor.a;
                 color = lerp(color, _FoamColor.rgb, foam);
 
