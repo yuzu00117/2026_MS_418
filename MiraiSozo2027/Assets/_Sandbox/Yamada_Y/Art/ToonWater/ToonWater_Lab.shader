@@ -354,9 +354,6 @@ Shader "MiraiSozo/Sandbox/ToonWater_Lab"
                 return isTop > 0.5 ? positionWS.xz : sideUV;
             }
 
-            // 光のゆらぎを 3 方向から貼るとき、向きの近い方をどれだけ優先するか。大きいほど境目の混ざる幅が狭い
-            static const float kTriplanarSharpness = 4.0;
-
             // 光のゆらぎの線(1 線の上 〜 0 線の外)
             float CausticsLine(float2 uv, float2 distortion, float time)
             {
@@ -427,18 +424,10 @@ Shader "MiraiSozo/Sandbox/ToonWater_Lab"
                 float clarity = _ShallowClarity * (1.0 - saturate(waterDepth / max(_ClarityDistance, kEpsilon)));
                 color = lerp(color, underwater, clarity);
 
-                // ---- 浅瀬の光の模様(水底に貼りつくように描く) ----
-                // 水の下にある物の面の向きを、隣の画素との位置の差から求める。
-                // 地面には真上から、壁には横から模様を貼り、間は混ぜてつなぐ。
-                // 真上からだけ貼ると、壁では上から下まで同じ模様になり縦に伸びるため
-                float3 sceneCross = cross(ddy(sceneWS), ddx(sceneWS));
-                float3 sceneNormal = sceneCross / max(length(sceneCross), kEpsilon);
-                float3 triWeight = pow(abs(sceneNormal), kTriplanarSharpness) + float3(0.0, kEpsilon, 0.0);
-                triWeight /= triWeight.x + triWeight.y + triWeight.z;
-                float causticsLine =
-                    CausticsLine(sceneWS.zy, distortion, time) * triWeight.x +
-                    CausticsLine(sceneWS.xz, distortion, time) * triWeight.y +
-                    CausticsLine(sceneWS.xy, distortion, time) * triWeight.z;
+                // ---- 浅瀬の光の模様(水面に描く) ----
+                // 水面の位置を真上から見た座標で貼る。水の奥に見える物の位置で貼ると、
+                // 奥に壁があるとき模様が壁の面に沿って描かれ、水面ではなく壁に張り付いて見えるため
+                float causticsLine = CausticsLine(input.positionWS.xz, distortion, time);
                 causticsLine *= 1.0 - saturate(waterDepth / max(_CausticsDistance, kEpsilon));
                 // 水面(上向きの面)のうち、水面の奥に見える物が近いところだけに出す。
                 // 箱の側面や、物から離れた水面にまで模様が広がらないようにするため
