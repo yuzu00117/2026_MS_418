@@ -1,24 +1,35 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace Aura.Water
 {
     /// <summary>
-    /// 水面シェーダー(ToonWater)用に、細かく分割した平らな板を作って MeshFilter に入れる。
-    /// Unity 標準の Plane は縦横 10 マスしかなく、頂点を動かす波がカクカクになるため、分割数を指定できる板を自分で作る。
+    /// 水面シェーダー(ToonWater)用に、マス目に分割した平らな板を作って MeshFilter に入れる。
+    /// Unity 標準の Plane は縦横 10 マスしかなく、頂点を動かす波がカクカクになるため、板を自分で作る。
+    /// カメラはステージの上しか動かないので、板の中心(ステージ)付近だけマス目を細かくし、外側ほど粗くする。
+    /// 全体を同じ細かさにすると、見分けられない遠くの細かさに処理を使ってしまうため。
     /// </summary>
     [ExecuteAlways]
     [RequireComponent(typeof(MeshFilter))]
     public sealed class WaterGridMesh : MonoBehaviour
     {
-        private const int MinResolution = 1;
-        private const int MaxResolution = 500;
+        private const float MinDetailCellSize = 0.1f;
+        // 細かい範囲の外で、1マス進むごとにマス目を広げる倍率。
+        // 大きくするほど軽くなるが、細かさの変わり目で波の形が急に変わって見えやすくなる
+        private const float OuterCellGrowth = 1.1f;
+        // 1辺の線の数の上限。これを超えると頂点が 100 万個を超え、作り直しのたびにエディターが固まるため
+        private const int MaxLineCountPerAxis = 1001;
         private const int MaxVertexCountFor16BitIndex = 65535;
         // 波で頂点が動いても板が画面外と誤判定されて消えないよう、描画範囲の高さに足す余裕(m)
         private const float BoundsHeightMargin = 5f;
 
-        [SerializeField] private float _size = 40f;
-        [SerializeField, Range(MinResolution, MaxResolution)] private int _resolution = 200;
+        [SerializeField, Min(1f), Tooltip("板全体の一辺の長さ(m)")]
+        private float _size = 1000f;
+        [SerializeField, Min(0f), Tooltip("マス目を細かくする範囲の一辺の長さ(m)。ステージが収まる広さにする")]
+        private float _detailAreaSize = 100f;
+        [SerializeField, Min(MinDetailCellSize), Tooltip("細かくする範囲のマス目の幅(m)。小さいほど細かい波まで出るが重くなる")]
+        private float _detailCellSize = 0.5f;
 
         private Mesh _mesh;
         private MeshFilter _meshFilter;
@@ -32,9 +43,9 @@ namespace Aura.Water
         private void OnValidate()
         {
             // OnValidate 中は MeshFilter の書き換えが警告になるので、次の更新で作り直す
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
             UnityEditor.EditorApplication.delayCall += HandleDelayedRebuild;
-    #endif
+#endif
         }
 
         private void OnDisable()
@@ -42,7 +53,7 @@ namespace Aura.Water
             DestroyMesh();
         }
 
-    #if UNITY_EDITOR
+#if UNITY_EDITOR
         private void HandleDelayedRebuild()
         {
             if (this == null || !isActiveAndEnabled)
@@ -51,7 +62,7 @@ namespace Aura.Water
             }
             BuildMesh();
         }
-    #endif
+#endif
 
         private void BuildMesh()
         {
@@ -60,13 +71,25 @@ namespace Aura.Water
                 _meshFilter = GetComponent<MeshFilter>();
             }
 
-            int resolution = Mathf.Clamp(_resolution, MinResolution, MaxResolution);
-            int lineCount = resolution + 1;
+            // 縦と横で同じ並びの線を使う。こうするとマス目は必ず四角の格子になり、
+            // 細かさの違う所の境目に隙間(頂点のずれで開く穴)ができない
+            List<float> lines = BuildLinePositions();
+            int lineCount = lines.Count;
+            if (lineCount > MaxLineCountPerAxis)
+            {
+                Debug.LogWarning(
+                    $"{nameof(WaterGridMesh)}: マス目が多すぎるため水面を作りませんでした(1辺 {lineCount} 本、上限 {MaxLineCountPerAxis} 本)。" +
+                    "細かくする範囲を狭くするか、マス目の幅を大きくしてください。", this);
+                DestroyMesh();
+                return;
+            }
+
+            int cellCount = lineCount - 1;
             int vertexCount = lineCount * lineCount;
             var vertices = new Vector3[vertexCount];
             var uvs = new Vector2[vertexCount];
             var normals = new Vector3[vertexCount];
-            var indices = new int[resolution * resolution * 6];
+            var indices = new int[cellCount * cellCount * 6];
 
             float half = _size * 0.5f;
             for (int z = 0; z < lineCount; z++)
@@ -74,18 +97,18 @@ namespace Aura.Water
                 for (int x = 0; x < lineCount; x++)
                 {
                     int i = z * lineCount + x;
-                    float u = (float)x / resolution;
-                    float v = (float)z / resolution;
-                    vertices[i] = new Vector3(u * _size - half, 0f, v * _size - half);
-                    uvs[i] = new Vector2(u, v);
+                    float px = lines[x];
+                    float pz = lines[z];
+                    vertices[i] = new Vector3(px, 0f, pz);
+                    uvs[i] = new Vector2((px + half) / _size, (pz + half) / _size);
                     normals[i] = Vector3.up;
                 }
             }
 
             int t = 0;
-            for (int z = 0; z < resolution; z++)
+            for (int z = 0; z < cellCount; z++)
             {
-                for (int x = 0; x < resolution; x++)
+                for (int x = 0; x < cellCount; x++)
                 {
                     int i = z * lineCount + x;
                     // 上から見て時計回りにして、表面が上を向くようにする
@@ -112,6 +135,47 @@ namespace Aura.Water
             _mesh.triangles = indices;
             _mesh.bounds = new Bounds(Vector3.zero, new Vector3(_size, BoundsHeightMargin * 2f, _size));
             _meshFilter.sharedMesh = _mesh;
+        }
+
+        /// <summary>
+        /// 板の中心から端までの線の位置を決め、左右対称に並べて返す(小さい順)。
+        /// 中心から細かくする範囲の端までは同じ幅、その先は 1 マスごとに幅を広げる。
+        /// </summary>
+        private List<float> BuildLinePositions()
+        {
+            float half = _size * 0.5f;
+            float detailHalf = Mathf.Min(_detailAreaSize * 0.5f, half);
+            float cellSize = Mathf.Max(_detailCellSize, MinDetailCellSize);
+
+            var positive = new List<float>();
+            float position = 0f;
+            float step = cellSize;
+            // 上限を超えた時点で打ち切る。呼び出し側で上限超えとして扱うので、正確な本数は要らない
+            while (position < half && positive.Count < MaxLineCountPerAxis)
+            {
+                if (position >= detailHalf)
+                {
+                    step *= OuterCellGrowth;
+                }
+                position += step;
+                positive.Add(Mathf.Min(position, half));
+            }
+
+            // 端の手前に極端に細いマスが残ると、そこだけ三角形がつぶれるので、1つ手前の線とまとめる
+            int count = positive.Count;
+            if (count >= 2 && half - positive[count - 2] < step * 0.5f)
+            {
+                positive.RemoveAt(count - 2);
+            }
+
+            var lines = new List<float>(positive.Count * 2 + 1);
+            for (int i = positive.Count - 1; i >= 0; i--)
+            {
+                lines.Add(-positive[i]);
+            }
+            lines.Add(0f);
+            lines.AddRange(positive);
+            return lines;
         }
 
         private void DestroyMesh()
