@@ -1,5 +1,18 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-5787074338788301439
+MonoBehaviour:
+  m_ObjectHideFlags: 11
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Editor::UnityEditor.Rendering.Universal.AssetVersion
+  version: 10
 --- !u!21 &2100000
 Material:
   serializedVersion: 8
@@ -7,7 +20,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_vfx_echo05
+  m_Name: M_vfx_echo01
   m_Shader: {fileID: 4800000, guid: 1bc5c6a70411243779ce486a98012125, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -35,7 +48,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _AlphaTransitionMap:
-        m_Texture: {fileID: 2800000, guid: 4b08442c03ef5174dbf0dfa96113a946, type: 3}
+        m_Texture: {fileID: 2800000, guid: 8d9ca6a1c8d79254f93ba67f51e01e20, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _AlphaTransitionMap2DArray:
@@ -174,7 +187,7 @@ Material:
     - _AlphaTransitionMapChannelsX: 0
     - _AlphaTransitionMapMode: 0
     - _AlphaTransitionMapOffsetXCoord: 0
-    - _AlphaTransitionMapOffsetYCoord: 0
+    - _AlphaTransitionMapOffsetYCoord: 1
     - _AlphaTransitionMapProgress: 0
     - _AlphaTransitionMapProgressCoord: 0
     - _AlphaTransitionMapRandomRowCoord: 0
@@ -196,8 +209,8 @@ Material:
     - _AlphaTransitionMapSecondTextureSliceCount: 4
     - _AlphaTransitionMapSliceCount: 4
     - _AlphaTransitionMode: 2
-    - _AlphaTransitionProgress: 0.5
-    - _AlphaTransitionProgressCoord: 0
+    - _AlphaTransitionProgress: 0.93
+    - _AlphaTransitionProgressCoord: 11
     - _AlphaTransitionProgressCoordSecondTexture: 0
     - _AlphaTransitionProgressSecondTexture: 0
     - _AlphaTransitionSecondTextureBlendMode: 0
@@ -205,7 +218,7 @@ Material:
     - _BaseMapMirrorSampling: 0
     - _BaseMapMode: 0
     - _BaseMapOffsetXCoord: 0
-    - _BaseMapOffsetYCoord: 0
+    - _BaseMapOffsetYCoord: 1
     - _BaseMapProgress: 0
     - _BaseMapProgressCoord: 0
     - _BaseMapRandomRowCoord: 0
@@ -216,15 +229,15 @@ Material:
     - _BaseMapSliceCount: 4
     - _BaseMapToneBrights: 0.5
     - _BaseMapToneBrightsCoord: 0
-    - _BaseMapToneChannel: 3
+    - _BaseMapToneChannel: 0
     - _BaseMapToneDarktones: 0.5
     - _BaseMapToneDarktonesCoord: 0
-    - _BaseMapToneHighlights: 0.75
+    - _BaseMapToneHighlights: 1
     - _BaseMapToneHighlightsCoord: 0
-    - _BaseMapToneMidtones: 0.5
+    - _BaseMapToneMidtones: 0.66
     - _BaseMapToneMidtonesCoord: 0
     - _BaseMapToneMode: 0
-    - _BaseMapToneShadows: 0.25
+    - _BaseMapToneShadows: 0.39
     - _BaseMapToneShadowsCoord: 0
     - _Blend: 0
     - _BlendDst: 10
@@ -235,20 +248,20 @@ Material:
     - _ClearCoatSmoothness: 0
     - _ColorCorrectionMode: 0
     - _Cull: 0
-    - _Cutoff: 0.5
+    - _Cutoff: 0.508
     - _DepthFadeEnabled: 0
     - _DepthFadeFar: 10
     - _DepthFadeNear: 1
     - _DepthFadeWidth: 1
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
-    - _DissolveSharpness: 0
+    - _DissolveSharpness: 0.953
     - _DissolveSharpnessSecondTexture: 0.5
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EmissionAreaType: 1
     - _EmissionColorType: 0
-    - _EmissionIntensity: 2.1
+    - _EmissionIntensity: 2.72
     - _EmissionIntensityCoord: 0
     - _EmissionMapChannelsX: 0
     - _EmissionMapMode: 0
@@ -280,9 +293,9 @@ Material:
     - _InverseTintRim: 0
     - _KeepEdgeTransparency: 1
     - _LuminanceTransparencyEnabled: 0
-    - _LuminanceTransparencyProgress: 0.5
+    - _LuminanceTransparencyProgress: 0.54
     - _LuminanceTransparencyProgressCoord: 0
-    - _LuminanceTransparencySharpness: 0.5
+    - _LuminanceTransparencySharpness: 0
     - _LuminanceTransparencySharpnessCoord: 0
     - _Metallic: 0
     - _OcclusionStrength: 1
@@ -367,10 +380,10 @@ Material:
     - _BaseMapToneBrightsColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
     - _BaseMapToneDarktonesColor: {r: 0.24999997, g: 0.24999997, b: 0.24999997, a: 1}
     - _BaseMapToneHighlightsColor: {r: 1, g: 1, b: 1, a: 1}
-    - _BaseMapToneMidtonesColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+    - _BaseMapToneMidtonesColor: {r: 1, g: 1, b: 1, a: 1}
     - _BaseMapToneShadowsColor: {r: 0, g: 0, b: 0, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 5.715024, g: 22.363522, b: 0, a: 1}
+    - _EmissionColor: {r: 0, g: 10.680627, b: 3.3813887, a: 1}
     - _EmissionMapRotationOffsets: {r: 0, g: 0, b: 0, a: 0}
     - _FlowMapRotationOffsets: {r: 0, g: 0, b: 0, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
@@ -378,16 +391,3 @@ Material:
     - _TintMapRotationOffsets: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &7469164861712126954
-MonoBehaviour:
-  m_ObjectHideFlags: 11
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d0353a89b1f911e48b9e16bdc9f2e058, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Editor::UnityEditor.Rendering.Universal.AssetVersion
-  version: 10
