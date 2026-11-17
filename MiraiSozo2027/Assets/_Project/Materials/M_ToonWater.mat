@@ -34,7 +34,7 @@ Material:
     - _ClarityDistance: 1.5
     - _DepthGradientPower: 0.2
     - _DepthMaxDistance: 1
-    - _FoamDistance: 0.5
+    - _FoamDistance: 0.66
     - _FoamLineWidth: 0.33
     - _FoamNoiseScale: 4
     - _FoamSpeed: 0.3
