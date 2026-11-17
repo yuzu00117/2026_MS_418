@@ -1,9 +1,9 @@
-// トゥーン調の水面シェーダー(URP用・試作)。
+// トゥーン調の水面シェーダー(URP用)。
 // 深さに応じた段階的な色、浅瀬の透け、物体の周りの泡、形のある波、浅瀬の光の模様を描く。
 // 波は頂点を動かして作るので、細かく分割した板(WaterGridMesh)に貼ること。
 // テクスチャは使わず、すべて計算で模様を作る。
 // 必要な設定: URP Asset の Depth Texture と Opaque Texture をオンにすること。
-Shader "MiraiSozo/Sandbox/ToonWater"
+Shader "Aura/Water/ToonWater"
 {
     Properties
     {
