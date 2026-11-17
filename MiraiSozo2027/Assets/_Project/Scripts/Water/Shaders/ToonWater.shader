@@ -6,6 +6,7 @@
 // 泡とボロノイの「物からの距離」について:
 //   水面の GameObject に WaterFoamDistanceMap を付けると、真上から見た距離の地図を読むので、
 //   物体の周り全方向(柱の左右や裏側も)に同じ幅で泡が出る。
+//   地図は、ステージ全体の「遠い地図」と、カメラの周りだけ細かい「近い地図」の 2 枚。
 //   付けない場合は、従来どおり視線方向の奥行き(柱に重なって見える所だけ)で決める。
 Shader "Aura/Water/ToonWater"
 {
@@ -159,11 +160,16 @@ Shader "Aura/Water/ToonWater"
                 float _ShadowStrength;
             CBUFFER_END
 
-            // 物体までの水平距離の地図。WaterFoamDistanceMap が全体で共有する値として渡すので、
-            // 材質ごとの CBUFFER には入れない。x, y: 範囲の最小 XZ、z: 1 / 範囲の一辺、w: 1 なら地図あり
-            TEXTURE2D(_WaterFoamDistanceMap);
-            SAMPLER(sampler_WaterFoamDistanceMap);
-            float4 _WaterFoamMapArea;
+            // 物体までの水平距離の地図(ステージ全体の遠い地図と、カメラ周りの近い地図)。
+            // WaterFoamDistanceMap が全体で共有する値として渡すので、材質ごとの CBUFFER には入れない。
+            // Area の x, y: 範囲の最小 XZ、z: 1 / 範囲の一辺、w: 1 なら地図あり。
+            // サンプラーは 2 枚で 1 つを共有する(サンプラーの枠を使い切らないため)。
+            // 名前に linear と clamp を含めると、Unity が「線形補間・端は引き伸ばし」の設定で作る
+            TEXTURE2D(_WaterFoamFarMap);
+            TEXTURE2D(_WaterFoamNearMap);
+            SAMPLER(sampler_linear_clamp_WaterFoam);
+            float4 _WaterFoamFarArea;
+            float4 _WaterFoamNearArea;
 
             static const float kEpsilon = 1e-4;
 
@@ -367,16 +373,37 @@ Shader "Aura/Water/ToonWater"
                 return 1.0 - smoothstep(_CausticsWidth, _CausticsWidth + kCausticsEdgeSoftness, caustics);
             }
 
-            // 水面の位置から一番近い物体までの水平距離(m)。地図が無い・範囲の外のときは fallbackDistance を返す
+            // 近い地図の端から、遠い地図へ切り替えていく幅(近い地図の一辺に対する割合)。
+            // 境目で泡の細かさが急に変わって線が見えるのを防ぐ
+            static const float kNearMapBlendWidth = 0.1;
+
+            // 地図の範囲(area)の中にいるか。いれば uv(0〜1)を返す。area.w が 1 でなければ地図なし
+            bool TryGetMapUV(float4 area, float3 positionWS, out float2 uv)
+            {
+                uv = (positionWS.xz - area.xy) * area.z;
+                return area.w > 0.5 && all(uv >= 0.0) && all(uv <= 1.0);
+            }
+
+            // 水面の位置から一番近い物体までの水平距離(m)。
+            // 近い地図の中ではそれを読み、端に向かって遠い地図へ切り替える。
+            // どちらの地図も無い・範囲の外のときは fallbackDistance を返す
             float GetObjectDistance(float3 positionWS, float fallbackDistance)
             {
-                float2 uv = (positionWS.xz - _WaterFoamMapArea.xy) * _WaterFoamMapArea.z;
-                bool isInside = all(uv >= 0.0) && all(uv <= 1.0);
-                if (_WaterFoamMapArea.w > 0.5 && isInside)
+                float2 farUV;
+                float2 nearUV;
+                float distanceValue = fallbackDistance;
+                if (TryGetMapUV(_WaterFoamFarArea, positionWS, farUV))
                 {
-                    return SAMPLE_TEXTURE2D_LOD(_WaterFoamDistanceMap, sampler_WaterFoamDistanceMap, uv, 0).r;
+                    distanceValue = SAMPLE_TEXTURE2D_LOD(_WaterFoamFarMap, sampler_linear_clamp_WaterFoam, farUV, 0).r;
                 }
-                return fallbackDistance;
+                if (TryGetMapUV(_WaterFoamNearArea, positionWS, nearUV))
+                {
+                    float nearDistance = SAMPLE_TEXTURE2D_LOD(_WaterFoamNearMap, sampler_linear_clamp_WaterFoam, nearUV, 0).r;
+                    float edgeDistance = min(min(nearUV.x, nearUV.y), min(1.0 - nearUV.x, 1.0 - nearUV.y));
+                    float weight = saturate(edgeDistance / kNearMapBlendWidth);
+                    distanceValue = lerp(distanceValue, nearDistance, weight);
+                }
+                return distanceValue;
             }
 
             Varyings Vert(Attributes input)
