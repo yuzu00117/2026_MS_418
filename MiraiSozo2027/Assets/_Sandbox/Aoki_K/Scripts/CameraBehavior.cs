@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
+using MiraiSozo.Options;
 
 public class CameraBehavior : MonoBehaviour
 {
@@ -70,7 +71,7 @@ public class CameraBehavior : MonoBehaviour
     [SerializeField] private float _adsTargetHeight = 4.2f;
     [Tooltip("ADS時の視野角(FOV)")]
     [SerializeField] private float _adsFov = 40.0f;
-    [Tooltip("通常⇔ADSの遷移速度（秒）")]
+    [Tooltip("通常⇔ADSの遷移時間（秒）")]
     [SerializeField] private float _adsTransitionDuration = 0.3f;
     private Camera _camera;
     private float _defaultFov = 60.0f;
@@ -213,7 +214,7 @@ public class CameraBehavior : MonoBehaviour
         float currentSideOffset = Mathf.Lerp(_sideOffset, _adsSideOffset, _adsWeight);
         if (_camera != null)
         {
-            _camera.fieldOfView = Mathf.Lerp(_defaultFov, _adsFov, _adsWeight);
+            _camera.fieldOfView = Mathf.Lerp(GameOptions.Instance.Values.fieldOfView, _adsFov, _adsWeight);
         }
         // 6. 注視点（通常時は胸付近、ADS時は頭付近へ補間）の座標
         Vector3 targetFocusPosition = _target.position + Vector3.up * currentTargetHeight;
