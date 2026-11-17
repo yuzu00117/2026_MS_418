@@ -241,9 +241,14 @@ MonoBehaviour:
   _targetLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  _areaSize: 1000
-  _resolution: 4096
   _maxHeightAboveWater: 500
+  _maxFoamRange: 8
+  _farAreaSize: 1000
+  _farResolution: 2048
+  _nearAreaSize: 128
+  _nearResolution: 1024
+  _nearSnapDistance: 16
+  _targetCamera: {fileID: 0}
   _maskShader: {fileID: 4800000, guid: 74fad54f227538844b52b810a0240778, type: 3}
   _jumpFloodShader: {fileID: 7200000, guid: 0d0029f3e134bd040870ea04f62aba55, type: 3}
 --- !u!1001 &8110759
@@ -26328,9 +26333,14 @@ MonoBehaviour:
   _targetLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  _areaSize: 100
-  _resolution: 1024
   _maxHeightAboveWater: 500
+  _maxFoamRange: 8
+  _farAreaSize: 100
+  _farResolution: 1024
+  _nearAreaSize: 128
+  _nearResolution: 1024
+  _nearSnapDistance: 16
+  _targetCamera: {fileID: 0}
   _maskShader: {fileID: 4800000, guid: 74fad54f227538844b52b810a0240778, type: 3}
   _jumpFloodShader: {fileID: 7200000, guid: 0d0029f3e134bd040870ea04f62aba55, type: 3}
 --- !u!1001 &1088763883
