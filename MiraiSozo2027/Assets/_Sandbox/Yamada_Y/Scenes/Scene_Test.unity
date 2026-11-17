@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 5331002}
   - component: {fileID: 5331001}
   - component: {fileID: 5331000}
+  - component: {fileID: 5331003}
   m_Layer: 0
   m_Name: Sea
   m_TagString: Untagged
@@ -225,6 +226,26 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5330998}
   m_Mesh: {fileID: 0}
+--- !u!114 &5331003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5330998}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8cf9cdf47728fde489ad14e0df5fd87b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Aura.Water::Aura.Water.WaterFoamDistanceMap
+  _targetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  _areaSize: 1000
+  _resolution: 4096
+  _maxHeightAboveWater: 500
+  _maskShader: {fileID: 4800000, guid: 74fad54f227538844b52b810a0240778, type: 3}
+  _jumpFloodShader: {fileID: 7200000, guid: 0d0029f3e134bd040870ea04f62aba55, type: 3}
 --- !u!1001 &8110759
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -26197,6 +26218,7 @@ GameObject:
   - component: {fileID: 1087020161}
   - component: {fileID: 1087020160}
   - component: {fileID: 1087020159}
+  - component: {fileID: 1087020162}
   m_Layer: 0
   m_Name: SeaTest
   m_TagString: Untagged
@@ -26291,6 +26313,26 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1087020157}
   m_Mesh: {fileID: 0}
+--- !u!114 &1087020162
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1087020157}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8cf9cdf47728fde489ad14e0df5fd87b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Aura.Water::Aura.Water.WaterFoamDistanceMap
+  _targetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  _areaSize: 100
+  _resolution: 1024
+  _maxHeightAboveWater: 500
+  _maskShader: {fileID: 4800000, guid: 74fad54f227538844b52b810a0240778, type: 3}
+  _jumpFloodShader: {fileID: 7200000, guid: 0d0029f3e134bd040870ea04f62aba55, type: 3}
 --- !u!1001 &1088763883
 PrefabInstance:
   m_ObjectHideFlags: 0
