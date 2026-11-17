@@ -19,6 +19,7 @@ namespace Aura.Water
         private const int MaxResolution = 4096;
         private const int ThreadGroupSize = 8;
         private const int MaskDepthBits = 24;
+        private const int NoDepthBits = 0;
         // 範囲を 0 や負にすると 1 / 範囲 が壊れるため、この値で下限を決める
         private const float MinAreaSize = 1f;
         private const float MinHeightAboveWater = 1f;
@@ -27,7 +28,11 @@ namespace Aura.Water
         private const string JumpFloodShaderPath = "Assets/_Project/Scripts/Water/Shaders/WaterFoamJumpFlood.compute";
 #endif
 
-        private static readonly string[] JumpFloodKernelNames = { "Init", "Flood", "Resolve" };
+        // 計算シェーダー(WaterFoamJumpFlood.compute)の処理名。シェーダー側の #pragma kernel と合わせる
+        private const string InitKernelName = "Init";
+        private const string FloodKernelName = "Flood";
+        private const string ResolveKernelName = "Resolve";
+        private static readonly string[] JumpFloodKernelNames = { InitKernelName, FloodKernelName, ResolveKernelName };
 
         private static readonly int FoamDistanceMapId = Shader.PropertyToID("_WaterFoamDistanceMap");
         private static readonly int FoamMapAreaId = Shader.PropertyToID("_WaterFoamMapArea");
@@ -54,8 +59,8 @@ namespace Aura.Water
         [SerializeField, Tooltip("距離を求める ComputeShader。エディターでは空のとき自動で入る(ビルドに含めるため参照を残す)")]
         private ComputeShader _jumpFloodShader;
 
+        // 水面シェーダーが毎フレーム読むので、作り直すか無効になるまで持ち続ける
         private RenderTexture _distanceTexture;
-        private Material _maskMaterial;
 
         private void Reset()
         {
@@ -124,28 +129,8 @@ namespace Aura.Water
         public void Bake()
         {
             ReleaseResources();
-
-            if (!SystemInfo.supportsComputeShaders)
+            if (!CanBake())
             {
-                Debug.LogWarning(
-                    $"{nameof(WaterFoamDistanceMap)}: この環境は ComputeShader に対応していないため、泡の距離の地図を作りませんでした。" +
-                    "泡は従来の方式(視線方向の奥行き)になります。", this);
-                return;
-            }
-            if (_maskShader == null || _jumpFloodShader == null)
-            {
-                Debug.LogWarning(
-                    $"{nameof(WaterFoamDistanceMap)}: シェーダーの参照が空のため、泡の距離の地図を作りませんでした。" +
-                    "Mask Shader と Jump Flood Shader を設定してください。", this);
-                return;
-            }
-            // 計算シェーダーが読み込みに失敗していると計算が実行されず、地図が 0m のまま残って
-            // 範囲全体が泡になる。それを防ぐため、使えないときは地図を作らず従来の方式に任せる
-            if (!CanUseJumpFloodShader())
-            {
-                Debug.LogWarning(
-                    $"{nameof(WaterFoamDistanceMap)}: {_jumpFloodShader.name} がこの環境で使えないため、泡の距離の地図を作りませんでした。" +
-                    "シェーダーのエラーを確認してください。泡は従来の方式(視線方向の奥行き)になります。", this);
                 return;
             }
 
@@ -159,60 +144,69 @@ namespace Aura.Water
             RenderTexture mask = null;
             RenderTexture seedA = null;
             RenderTexture seedB = null;
-            var cmd = new CommandBuffer { name = "WaterFoamDistanceMap" };
+            RenderTexture distance = null;
+            Material maskMaterial = null;
+            var cmd = new CommandBuffer { name = nameof(WaterFoamDistanceMap) };
             try
             {
-                _maskMaterial = new Material(_maskShader) { hideFlags = HideFlags.HideAndDontSave };
-                _maskMaterial.SetVector(MaskAreaId, new Vector4(areaMin.x, areaMin.y, 1f / areaSize, 0f));
-                _maskMaterial.SetVector(MaskHeightId, new Vector4(waterY, 1f / maxHeight, 0f, 0f));
-
-                mask = new RenderTexture(resolution, resolution, MaskDepthBits, RenderTextureFormat.R8, RenderTextureReadWrite.Linear)
-                {
-                    name = "WaterFoamMask",
-                    hideFlags = HideFlags.HideAndDontSave,
-                    filterMode = FilterMode.Point,
-                    wrapMode = TextureWrapMode.Clamp,
-                };
-                seedA = CreateSeedTexture(resolution, "WaterFoamSeedA");
-                seedB = CreateSeedTexture(resolution, "WaterFoamSeedB");
-                _distanceTexture = new RenderTexture(resolution, resolution, 0, RenderTextureFormat.RHalf, RenderTextureReadWrite.Linear)
-                {
-                    name = "WaterFoamDistance",
-                    hideFlags = HideFlags.HideAndDontSave,
-                    enableRandomWrite = true,
-                    filterMode = FilterMode.Bilinear,
-                    wrapMode = TextureWrapMode.Clamp,
-                };
+                mask = CreateRenderTexture("WaterFoamMask", resolution, RenderTextureFormat.R8, MaskDepthBits, false, FilterMode.Point);
+                // 種には画素の座標を入れるので、小数の誤差が出ない 32bit 浮動小数にする
+                seedA = CreateRenderTexture("WaterFoamSeedA", resolution, RenderTextureFormat.RGFloat, NoDepthBits, true, FilterMode.Point);
+                seedB = CreateRenderTexture("WaterFoamSeedB", resolution, RenderTextureFormat.RGFloat, NoDepthBits, true, FilterMode.Point);
+                // 水面からは画素の間も読むので、なめらかにつなぐ
+                distance = CreateRenderTexture("WaterFoamDistance", resolution, RenderTextureFormat.RHalf, NoDepthBits, true, FilterMode.Bilinear);
 
                 // 計算シェーダーに書き込ませる画像は、使う前に GPU 側に作っておく必要がある。
                 // 作らずに渡すと、エラーも出ずに書き込みが飛ばされ、地図が 0m のまま(範囲全体が泡)になる
-                if (!mask.Create() || !seedA.Create() || !seedB.Create() || !_distanceTexture.Create())
+                if (!mask.Create() || !seedA.Create() || !seedB.Create() || !distance.Create())
                 {
-                    Debug.LogWarning(
-                        $"{nameof(WaterFoamDistanceMap)}: 計算用の画像を作れなかったため、泡の距離の地図を作りませんでした。" +
-                        "解像度(Resolution)を下げてください。泡は従来の方式(視線方向の奥行き)になります。", this);
-                    ReleaseResources();
+                    LogSkipped("計算用の画像を作れなかった", "解像度(Resolution)を下げてください。");
                     return;
                 }
 
-                RecordMaskPass(cmd, mask, waterY, areaMin, areaSize);
-                RecordJumpFloodPass(cmd, mask, seedA, seedB, _distanceTexture, resolution, areaSize);
+                maskMaterial = CreateMaskMaterial(areaMin, areaSize, waterY, maxHeight);
+                RecordMaskPass(cmd, maskMaterial, mask, waterY, areaMin, areaSize);
+                RecordJumpFloodPass(cmd, mask, seedA, seedB, distance, resolution, areaSize);
                 Graphics.ExecuteCommandBuffer(cmd);
 
-                Shader.SetGlobalTexture(FoamDistanceMapId, _distanceTexture);
-                // w = 1 が「地図あり」。水面シェーダーはこれを見て従来方式との切り替えを決める
-                Shader.SetGlobalVector(FoamMapAreaId, new Vector4(areaMin.x, areaMin.y, 1f / areaSize, 1f));
+                // 地図は持ち続けるので、下の後片付けで消されないよう手元から外す
+                _distanceTexture = distance;
+                distance = null;
+                PublishDistanceMap(areaMin, areaSize);
             }
             finally
             {
-                // マスクとピンポン用は、距離を作り終えたら使わないのですぐ解放する
+                // マスクと計算途中の画像は、距離を作り終えたら使わないのですぐ解放する
                 cmd.Release();
                 DestroyResource(mask);
                 DestroyResource(seedA);
                 DestroyResource(seedB);
-                DestroyResource(_maskMaterial);
-                _maskMaterial = null;
+                DestroyResource(distance);
+                DestroyResource(maskMaterial);
             }
+        }
+
+        /// <summary>この環境と設定で地図を作れるかを調べる。作れないときは理由を警告に出す。</summary>
+        private bool CanBake()
+        {
+            if (!SystemInfo.supportsComputeShaders)
+            {
+                LogSkipped("この環境は ComputeShader に対応していない", string.Empty);
+                return false;
+            }
+            if (_maskShader == null || _jumpFloodShader == null)
+            {
+                LogSkipped("シェーダーの参照が空だった", "Mask Shader と Jump Flood Shader を設定してください。");
+                return false;
+            }
+            // 計算シェーダーが読み込みに失敗していると計算が実行されず、地図が 0m のまま残って
+            // 範囲全体が泡になる。それを防ぐため、使えないときは地図を作らず従来の方式に任せる
+            if (!CanUseJumpFloodShader())
+            {
+                LogSkipped($"{_jumpFloodShader.name} がこの環境で使えない", "シェーダーのエラーを確認してください。");
+                return false;
+            }
+            return true;
         }
 
         /// <summary>計算シェーダーの 3 つの処理が、すべてこの環境で動くかを調べる。</summary>
@@ -233,22 +227,39 @@ namespace Aura.Water
             return true;
         }
 
-        private static RenderTexture CreateSeedTexture(int resolution, string textureName)
+        /// <summary>地図を作らなかったことを、理由と対処とともに警告する。泡は従来の方式になることも伝える。</summary>
+        private void LogSkipped(string reason, string remedy)
         {
-            // 座標を入れるので、小数の誤差が出ない 32bit 浮動小数にする
-            var texture = new RenderTexture(resolution, resolution, 0, RenderTextureFormat.RGFloat, RenderTextureReadWrite.Linear)
+            Debug.LogWarning(
+                $"{nameof(WaterFoamDistanceMap)}: {reason}ため、泡の距離の地図を作りませんでした。" +
+                $"{remedy}泡は従来の方式(視線方向の奥行き)になります。", this);
+        }
+
+        private static RenderTexture CreateRenderTexture(
+            string textureName, int resolution, RenderTextureFormat format, int depthBits, bool enableRandomWrite, FilterMode filterMode)
+        {
+            return new RenderTexture(resolution, resolution, depthBits, format, RenderTextureReadWrite.Linear)
             {
                 name = textureName,
                 hideFlags = HideFlags.HideAndDontSave,
-                enableRandomWrite = true,
-                filterMode = FilterMode.Point,
+                // 計算シェーダーから書き込む画像だけ有効にする。GPU 側に作る前に決める必要がある
+                enableRandomWrite = enableRandomWrite,
+                filterMode = filterMode,
                 wrapMode = TextureWrapMode.Clamp,
             };
-            return texture;
+        }
+
+        private Material CreateMaskMaterial(Vector2 areaMin, float areaSize, float waterY, float maxHeight)
+        {
+            var material = new Material(_maskShader) { hideFlags = HideFlags.HideAndDontSave };
+            material.SetVector(MaskAreaId, new Vector4(areaMin.x, areaMin.y, 1f / areaSize, 0f));
+            material.SetVector(MaskHeightId, new Vector4(waterY, 1f / maxHeight, 0f, 0f));
+            return material;
         }
 
         /// <summary>対象の物体を水面の高さで輪切りにして、「物体の中」の絵を描く命令を並べる。</summary>
-        private void RecordMaskPass(CommandBuffer cmd, RenderTexture mask, float waterY, Vector2 areaMin, float areaSize)
+        private void RecordMaskPass(
+            CommandBuffer cmd, Material maskMaterial, RenderTexture mask, float waterY, Vector2 areaMin, float areaSize)
         {
             cmd.SetRenderTarget(mask);
             cmd.ClearRenderTarget(true, true, Color.clear);
@@ -260,7 +271,7 @@ namespace Aura.Water
                 Matrix4x4 matrix = meshRenderer.localToWorldMatrix;
                 for (int submesh = 0; submesh < mesh.subMeshCount; submesh++)
                 {
-                    cmd.DrawMesh(mesh, matrix, _maskMaterial, submesh);
+                    cmd.DrawMesh(mesh, matrix, maskMaterial, submesh);
                 }
             }
         }
@@ -317,9 +328,9 @@ namespace Aura.Water
             float areaSize)
         {
             ComputeShader shader = _jumpFloodShader;
-            int initKernel = shader.FindKernel("Init");
-            int floodKernel = shader.FindKernel("Flood");
-            int resolveKernel = shader.FindKernel("Resolve");
+            int initKernel = shader.FindKernel(InitKernelName);
+            int floodKernel = shader.FindKernel(FloodKernelName);
+            int resolveKernel = shader.FindKernel(ResolveKernelName);
             int groupCount = Mathf.CeilToInt(resolution / (float)ThreadGroupSize);
 
             cmd.SetComputeIntParam(shader, ResolutionId, resolution);
@@ -353,14 +364,20 @@ namespace Aura.Water
             cmd.DispatchCompute(shader, kernel, groupCount, groupCount, 1);
         }
 
+        /// <summary>出来上がった地図を、水面シェーダーが読める共有の値として渡す。</summary>
+        private void PublishDistanceMap(Vector2 areaMin, float areaSize)
+        {
+            Shader.SetGlobalTexture(FoamDistanceMapId, _distanceTexture);
+            // w = 1 が「地図あり」。水面シェーダーはこれを見て従来方式との切り替えを決める
+            Shader.SetGlobalVector(FoamMapAreaId, new Vector4(areaMin.x, areaMin.y, 1f / areaSize, 1f));
+        }
+
         private void ReleaseResources()
         {
             // 地図なしに戻す。w = 0 だと水面シェーダーは従来の方式を使う
             Shader.SetGlobalVector(FoamMapAreaId, Vector4.zero);
             DestroyResource(_distanceTexture);
             _distanceTexture = null;
-            DestroyResource(_maskMaterial);
-            _maskMaterial = null;
         }
 
         private static void DestroyResource(Object target)
