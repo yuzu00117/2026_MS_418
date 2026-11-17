@@ -47,6 +47,15 @@ Shader "Aura/Water/ToonWater"
         _WaveSpread ("波の向きのばらつき", Range(0, 1)) = 0.5
         _WaveSpeed ("波の速さ", Float) = 0.5
 
+        [Header(Wave Variation)]
+        // 同じ波の模様がくり返して格子のように見えるのを防ぐ設定。0 にすると効果が消える
+        _WaveVariation ("場所ごとの波の強さのムラ", Range(0, 1)) = 0.6
+        _WaveVariationScale ("ムラの細かさ", Float) = 0.03
+        _WaveWarpStrength ("波の列の曲がり具合(m)", Float) = 3
+        _WaveWarpScale ("曲がりの細かさ", Float) = 0.02
+        _WaveDetailFadeStart ("小さな波が弱まり始める距離(m)", Float) = 30
+        _WaveDetailFadeEnd ("小さな波が消える距離(m)", Float) = 120
+
         [Header(Wave Shading)]
         _WaveLitColor ("波の明るい面の色", Color) = (0.75, 0.97, 1, 1)
         _WaveLitAmount ("明るい面になる傾き", Range(0, 1)) = 0.12
@@ -124,6 +133,13 @@ Shader "Aura/Water/ToonWater"
                 float _WaveSteepness;
                 float _WaveSpread;
                 float _WaveSpeed;
+
+                float _WaveVariation;
+                float _WaveVariationScale;
+                float _WaveWarpStrength;
+                float _WaveWarpScale;
+                float _WaveDetailFadeStart;
+                float _WaveDetailFadeEnd;
 
                 half4 _WaveLitColor;
                 float _WaveLitAmount;
@@ -238,6 +254,11 @@ Shader "Aura/Water/ToonWater"
                 float height;
             };
 
+            // 波の列を曲げるムラがゆっくり流れる速さ
+            static const float kWarpDrift = 0.02;
+            // 波ごとにムラの模様をずらす量。全部の波が同じ場所で一緒に強まると、ムラの意味が薄れるため
+            static const float2 kVariationOffset = float2(13.7, 7.9);
+
             WaveSample SampleWaves(float2 xz)
             {
                 float2 baseDir = normalize(_WaveDirection.xy + kEpsilon);
@@ -248,6 +269,17 @@ Shader "Aura/Water/ToonWater"
                 float3 largeTangent = tangent;
                 float3 largeBinormal = binormal;
                 float amplitudeSum = 0;
+
+                // 波を計算する位置を、ゆるやかなムラで少しずらす。まっすぐ平行な波の列をゆるく曲げて、
+                // 同じ模様が一定間隔でくり返して見えるのを防ぐ
+                float2 warp = float2(
+                    GradientNoise(xz * _WaveWarpScale + _Time.y * kWarpDrift),
+                    GradientNoise(xz * _WaveWarpScale + float2(31.7, 11.3) - _Time.y * kWarpDrift)) - 0.5;
+                float2 warpedXZ = xz + warp * 2.0 * _WaveWarpStrength;
+
+                // 遠くの小さな波は画面上でつぶれて格子模様やちらつきになるので、距離に応じて弱める
+                float cameraDistance = distance(xz, _WorldSpaceCameraPos.xz);
+                float detailFade = 1.0 - smoothstep(_WaveDetailFadeStart, max(_WaveDetailFadeEnd, _WaveDetailFadeStart + kEpsilon), cameraDistance);
 
                 [unroll]
                 for (int i = 0; i < kWaveCount; i++)
@@ -260,14 +292,19 @@ Shader "Aura/Water/ToonWater"
                     float speed = sqrt(kGravity / k) * _WaveSpeed;
                     // とがり具合の合計を 1 以下にして、頂上で面が折り返す(ねじれる)のを防ぐ
                     float steepness = _WaveSteepness * param.z;
-                    float amplitude = steepness / k;
-                    float f = k * (dot(dir, xz) - speed * _Time.y);
+                    // 場所ごとに波の強さを変え、荒い所と穏やかな所を作る。波ごとに別のムラを使うので、
+                    // 波の重なり方も場所ごとに変わる
+                    float variation = 1.0 - _WaveVariation * saturate(GradientNoise(xz * _WaveVariationScale + kVariationOffset * (i + 1)));
+                    float fade = i < kLargeWaveCount ? 1.0 : detailFade;
+                    float localSteepness = steepness * variation * fade;
+                    float amplitude = localSteepness / k;
+                    float f = k * (dot(dir, warpedXZ) - speed * _Time.y);
                     float s = sin(f);
                     float c = cos(f);
 
                     offset += float3(dir.x * amplitude * c, amplitude * s, dir.y * amplitude * c);
-                    float3 tangentStep = float3(-dir.x * dir.x * steepness * s, dir.x * steepness * c, -dir.x * dir.y * steepness * s);
-                    float3 binormalStep = float3(-dir.x * dir.y * steepness * s, dir.y * steepness * c, -dir.y * dir.y * steepness * s);
+                    float3 tangentStep = float3(-dir.x * dir.x * localSteepness * s, dir.x * localSteepness * c, -dir.x * dir.y * localSteepness * s);
+                    float3 binormalStep = float3(-dir.x * dir.y * localSteepness * s, dir.y * localSteepness * c, -dir.y * dir.y * localSteepness * s);
                     tangent += tangentStep;
                     binormal += binormalStep;
                     if (i < kLargeWaveCount)
@@ -275,7 +312,8 @@ Shader "Aura/Water/ToonWater"
                         largeTangent += tangentStep;
                         largeBinormal += binormalStep;
                     }
-                    amplitudeSum += amplitude;
+                    // 高さの基準は弱める前の波で取る。穏やかな所は高さも低いままにするため
+                    amplitudeSum += steepness / k;
                 }
 
                 WaveSample result;

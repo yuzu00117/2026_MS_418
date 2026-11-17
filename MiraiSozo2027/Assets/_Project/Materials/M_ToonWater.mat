@@ -28,7 +28,7 @@ Material:
     - _BandNoiseScale: 0.4
     - _BandNoiseStrength: 0.12
     - _CausticsDistance: 1
-    - _CausticsNearDistance: 1.5
+    - _CausticsNearDistance: 1.2
     - _CausticsOpacity: 1
     - _CausticsScale: 1.2
     - _CausticsSpeed: 0.5
@@ -64,14 +64,20 @@ Material:
     - _SparkleSpeed: 0.5
     - _SparkleThreshold: 0.995
     - _StepSoftness: 0.15
+    - _WaveDetailFadeEnd: 120
+    - _WaveDetailFadeStart: 30
     - _WaveLength: 20
     - _WaveLitAmount: 0.15
     - _WaveLitOpacity: 0.5
     - _WaveShadeAmount: 0.12
     - _WaveShadeStrength: 0.2
-    - _WaveSpeed: 0.5
+    - _WaveSpeed: 0.3
     - _WaveSpread: 0.5
-    - _WaveSteepness: 0.3
+    - _WaveSteepness: 0.375
+    - _WaveVariation: 1
+    - _WaveVariationScale: 0.03
+    - _WaveWarpScale: 0.02
+    - _WaveWarpStrength: 8
     m_Colors:
     - _CausticsColor: {r: 0.85, g: 1, b: 1, a: 1}
     - _DeepColor: {r: 0.04, g: 0.23999995, b: 0.62, a: 1}
