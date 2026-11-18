@@ -308,6 +308,10 @@ namespace Aura.DebugTools
                 // 消している間の古い値が、出し直したときの平均に混ざらないようにする
                 _isVisible = !_isVisible;
                 ResetTimingAverages();
+                if (_isVisible)
+                {
+                    ResetFrameSamples();
+                }
             }
 
             // 切り替えたら、すぐに文字を作り直す
@@ -321,6 +325,20 @@ namespace Aura.DebugTools
             _cpuCount = 0;
             _gpuSum = 0.0f;
             _gpuCount = 0;
+        }
+
+        /// グラフと FPS の記録を空にする。
+        /// 消している間は記録しないので、残っているのは消す前の古い値だけ。出し直したときに今の値と混ざらないようにする
+        private void ResetFrameSamples()
+        {
+            if (_frameMsSamples != null)
+            {
+                System.Array.Clear(_frameMsSamples, 0, _frameMsSamples.Length);
+            }
+            _frameHead = 0;
+            _fpsFrames = 0;
+            _fpsTime = 0.0f;
+            _fps = 0.0f;
         }
 
         /// FPS を、約 0.5 秒ぶんの平均で出す
