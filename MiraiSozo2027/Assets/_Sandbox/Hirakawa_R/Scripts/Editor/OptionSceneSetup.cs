@@ -13,6 +13,7 @@ namespace MiraiSozo.Options.Editor
         public const string Root = "Assets/_Sandbox/Hirakawa_R";
         public const string ScenePath = Root + "/Scenes/Scene_OptionTestScene.unity";
         public const string PrefabPath = "Assets/_Project/Prefabs/PF_InGameOptions.prefab";
+        public const string CanvasPrefabPath = "Assets/_Project/Prefabs/PF_OptionsCanvas.prefab";
         private const float MaterialSmoothness = 0.25f;
         private const int ExpectedCanvasCount = 1;
 
@@ -96,12 +97,23 @@ namespace MiraiSozo.Options.Editor
             var prefabRoot = new GameObject("PF_InGameOptions");
             prefabRoot.AddComponent<GameOptions>();
             var menuComponent = prefabRoot.AddComponent<InGameOptionMenu>();
-            menuComponent.BuildView();
+            menuComponent.ConfigureCanvas(InstantiateOptionsCanvas(prefabRoot.transform));
             var prefab = PrefabUtility.SaveAsPrefabAsset(prefabRoot, PrefabPath);
             UnityEngine.Object.DestroyImmediate(prefabRoot);
             var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
-            instance.GetComponent<InGameOptionMenu>().BuildView(true);
-            PrefabUtility.RecordPrefabInstancePropertyModifications(instance.GetComponent<InGameOptionMenu>());
+            var menuInstance = instance.GetComponent<InGameOptionMenu>();
+            menuInstance.ConfigureCanvas(instance.GetComponentInChildren<Canvas>(true), isTestHudVisible: true);
+            PrefabUtility.RecordPrefabInstancePropertyModifications(menuInstance);
+        }
+
+        private static Canvas InstantiateOptionsCanvas(Transform parent)
+        {
+            var canvasPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(CanvasPrefabPath);
+            if (canvasPrefab == null) throw new InvalidOperationException("配置済みCanvasのPrefabが見つかりません: " + CanvasPrefabPath);
+            var canvasInstance = (GameObject)PrefabUtility.InstantiatePrefab(canvasPrefab, parent);
+            canvasInstance.transform.localScale = Vector3.one;
+            PrefabUtility.RecordPrefabInstancePropertyModifications(canvasInstance.transform);
+            return canvasInstance.GetComponent<Canvas>();
         }
 
         private static GameObject CreateTestEnvironment()
