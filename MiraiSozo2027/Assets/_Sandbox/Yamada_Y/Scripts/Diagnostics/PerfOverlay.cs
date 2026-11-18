@@ -80,7 +80,7 @@ namespace Aura.Diagnostics
 
         [InspectorLabel("文字の大きさ（1080p のとき）")]
         [Tooltip("画面の高さが 1080 のときの文字の大きさ（px）。画面の高さに合わせて自動で拡大・縮小される")]
-        [SerializeField, Min(6)] private int _baseFontSize = 22;  ///< 画面の高さが 1080 のときの文字の大きさ
+        [SerializeField, Min(6)] private int _baseFontSize = 20;  ///< 画面の高さが 1080 のときの文字の大きさ
 
         [InspectorLabel("全体を出す・消すキー")]
         [Tooltip("押すたびに、全体を出す・消すを切り替えるキー。Shift と一緒に押すと、グラフだけを切り替える")]
