@@ -32,6 +32,7 @@ public class PlayerController : MonoBehaviour
     private WaveEmitter _waveEmitter;
     private EchoController _echoController;
     private Phononkinesis _phononkinesis;
+    private CameraBehavior _cameraBehavior;
 
     private InputSystem_Actions _actions => GameManager.Actions;
 
@@ -74,6 +75,10 @@ public class PlayerController : MonoBehaviour
 
     private void OnDisable()
     {
+        if(_cameraBehavior != null)
+        {
+            _cameraBehavior.SetAds(false);   
+        }
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -169,6 +174,12 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+        // ADS
+        if(_cameraBehavior != null)
+        {
+            _cameraBehavior.SetAds(_actions.Player.FocusAim.IsPressed());
+        }
+
         // フォノンキネシス
         if (_phononkinesis != null)
         {
@@ -238,6 +249,9 @@ public class PlayerController : MonoBehaviour
 
     private void InjectCameraReference(Camera cam)
     {
+        // CameraBehavior コンポーネントを取得
+        _cameraBehavior = cam.GetComponent<CameraBehavior>();
+
         // WaveEmitter へ照準カメラを渡す
         if (_waveEmitter != null)
         {
