@@ -42,6 +42,10 @@ namespace Aura.DebugTools
         private const float BytesPerKilo = 1024.0f;         ///< 1KB のバイト数
         private const float BytesPerMega = 1048576.0f;      ///< 1MB のバイト数
         private const float OverBudgetPercent = 100.0f;     ///< これを超えると % を橙色にする
+        private const float MillisecondsPerSecond = 1000.0f;  ///< 1 秒の ms 数
+        private const float PercentScale = 100.0f;          ///< 割合を % にする倍率
+        private const float MinDeltaTime = 0.0001f;         ///< FPS を計算するときの、1 フレームの時間の下限（0 で割らないため）
+        private const float NoValue = -1.0f;                ///< 記録で「取れなかった」を表す値（時間は 0 以上なので区別できる）
 
         private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;  ///< 数字を文字にする書式（国によって小数点の記号が変わらないようにする）
 
@@ -133,8 +137,8 @@ namespace Aura.DebugTools
 
             for (int i = 0; i < HistoryLength; i++)
             {
-                _cpuHistory[i] = -1.0f;
-                _gpuHistory[i] = -1.0f;
+                _cpuHistory[i] = NoValue;
+                _gpuHistory[i] = NoValue;
                 _historyTimes[i] = float.NegativeInfinity;
             }
         }
@@ -350,7 +354,7 @@ namespace Aura.DebugTools
                 _isUnlimited = true;
             }
 
-            _budgetMs = (float)(1000.0 / _capFps);
+            _budgetMs = (float)(MillisecondsPerSecond / _capFps);
         }
 
         /// @brief グラフ用に、このフレームの時間（ms）を覚える
@@ -363,14 +367,14 @@ namespace Aura.DebugTools
                 _frameHead = 0;
             }
 
-            _frameMsSamples[_frameHead] = deltaTime * 1000.0f;
+            _frameMsSamples[_frameHead] = deltaTime * MillisecondsPerSecond;
             _frameHead = (_frameHead + 1) % length;
         }
 
         /// @brief CPU と GPU の時間を取って、平均と max を出すために覚える
         private void SampleCpuAndGpu(float now)
         {
-            float cpuMs = -1.0f;
+            float cpuMs = NoValue;
             if (TryGetValue(_cpuRecorder, out long cpuNanoseconds))
             {
                 cpuMs = cpuNanoseconds * NanosecondsToMilliseconds;
@@ -379,7 +383,7 @@ namespace Aura.DebugTools
             }
 
             // GPU の時間は、取れない環境（0 が返る）では覚えない
-            float gpuMs = -1.0f;
+            float gpuMs = NoValue;
             FrameTimingManager.CaptureFrameTimings();
             uint timingCount = FrameTimingManager.GetLatestTimings(1, _frameTimings);
             if (timingCount > 0 && _frameTimings[0].gpuFrameTime > 0.0)
@@ -399,7 +403,7 @@ namespace Aura.DebugTools
         private float GetRecentMax(float[] history)
         {
             float threshold = Time.unscaledTime - MaxWindowSeconds;
-            float max = -1.0f;
+            float max = NoValue;
             for (int i = 0; i < HistoryLength; i++)
             {
                 if (_historyTimes[i] >= threshold && history[i] > max)
@@ -472,7 +476,7 @@ namespace Aura.DebugTools
             _leftCount = 0;
 
             // FPS
-            float fps = _fps > 0.0f ? _fps : 1.0f / Mathf.Max(Time.unscaledDeltaTime, 0.0001f);
+            float fps = _fps > 0.0f ? _fps : 1.0f / Mathf.Max(Time.unscaledDeltaTime, MinDeltaTime);
             _builder.Clear();
             _builder.Append(Mathf.RoundToInt(fps)).Append(" / ");
             if (_isUnlimited)
@@ -598,7 +602,7 @@ namespace Aura.DebugTools
             line.Add(_builder.ToString(), TextColor);
             line.Add("(", SecondaryColor, 1);
 
-            float percent = averageMs / _budgetMs * 100.0f;
+            float percent = averageMs / _budgetMs * PercentScale;
             _builder.Clear();
             _builder.Append(Mathf.RoundToInt(percent)).Append('%');
             line.Add(_builder.ToString(), percent > OverBudgetPercent ? WarnColor : TextColor);
@@ -677,7 +681,7 @@ namespace Aura.DebugTools
             for (int i = 0; i < _rightCount; i++)
             {
                 TextLine line = _rightLines[i];
-                float x = Screen.width - margin - (line.TotalWidth + _drawer.Padding * 2.0f);
+                float x = Screen.width - margin - _drawer.GetLineWidth(line);
                 y = _drawer.DrawLine(line, x, y);
             }
 

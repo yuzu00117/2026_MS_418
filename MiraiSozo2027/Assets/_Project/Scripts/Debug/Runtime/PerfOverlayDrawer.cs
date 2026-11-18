@@ -20,6 +20,8 @@ namespace Aura.DebugTools
         private const float LineSpacingDivisor = 14.0f;     ///< 文字の大きさをこれで割った値を、行と行の間（px）にする
         private const float FallbackSpaceRate = 0.3f;       ///< 半角スペースの幅が測れないときの、文字の大きさに対する倍率
         private const float LabelExtraWidth = 2.0f;         ///< 文字の欄に足す余白（px）。測った幅ちょうどだと端が欠けることがあるため
+        private const float MinDashLength = 2.0f;           ///< 点線の 1 つぶんの長さの下限（px）。文字が小さいと点線に見えなくなるため
+        private const float TargetLineThickness = 1.0f;     ///< 目標の点線の太さ（px）
 
         private static readonly Color BackgroundColor = new Color(0.31f, 0.31f, 0.31f, BackgroundAlpha);  ///< 行の背景色
         private static readonly Color BarGoodColor = new Color32(0x63, 0x99, 0x22, 0xFF);  ///< 棒の色（間に合っている）
@@ -39,7 +41,6 @@ namespace Aura.DebugTools
         private int _barWidth;                  ///< グラフの棒 1 本の幅
 
         public float LineHeight => _lineHeight;         ///< 1 行の高さ
-        public float Padding => _padding;               ///< 行の左右の余白
         public float Margin => _margin;                 ///< 画面の端からの余白
         public float LineSpacing => _lineSpacing;       ///< 行と行の間
         public float GraphHeight => _appliedFontSize * GraphHeightRate;  ///< グラフの高さ（今の文字の大きさに合わせる）
@@ -104,6 +105,12 @@ namespace Aura.DebugTools
             return true;
         }
 
+        /// @brief 背景を含めた 1 行の幅。右寄せの位置を決めるのにも使うので、計算をここ 1 か所にまとめる
+        public float GetLineWidth(TextLine line)
+        {
+            return line.TotalWidth + _padding * 2.0f;
+        }
+
         /// @brief 1 行の幅を測る。幅を測る処理は重いので、文字を作り直したときと文字の大きさが変わったときだけ呼ぶ
         public void MeasureLine(TextLine line)
         {
@@ -126,7 +133,7 @@ namespace Aura.DebugTools
             }
 
             GUI.color = BackgroundColor;
-            GUI.DrawTexture(new Rect(x, y, line.TotalWidth + _padding * 2.0f, _lineHeight), _whiteTexture);
+            GUI.DrawTexture(new Rect(x, y, GetLineWidth(line), _lineHeight), _whiteTexture);
 
             float cursorX = x + _padding;
             for (int i = 0; i < line.Count; i++)
@@ -185,12 +192,12 @@ namespace Aura.DebugTools
 
             // 目標の時間の点線
             float targetY = bottom - height / GraphMaxBudgetMultiple;
-            float dashLength = Mathf.Max(2.0f, _appliedFontSize * DashRate);
+            float dashLength = Mathf.Max(MinDashLength, _appliedFontSize * DashRate);
             GUI.color = TargetLineColor;
             for (float dashX = 0.0f; dashX < width; dashX += dashLength * 2.0f)
             {
                 float dashWidth = Mathf.Min(dashLength, width - dashX);
-                GUI.DrawTexture(new Rect(left + dashX, targetY, dashWidth, 1.0f), _whiteTexture);
+                GUI.DrawTexture(new Rect(left + dashX, targetY, dashWidth, TargetLineThickness), _whiteTexture);
             }
         }
     }
