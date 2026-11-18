@@ -6,7 +6,7 @@ using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace Aura.Diagnostics
+namespace Aura.DebugTools
 {
     /// @brief 画面に、動きの重さ（性能）を文字とグラフで出す。開発用（Editor と Development Build だけ。自動で作られる）
     /// F2 で全体を出す・消す。Shift+F2 でグラフだけを出す・消す（グラフは始めは出ている）

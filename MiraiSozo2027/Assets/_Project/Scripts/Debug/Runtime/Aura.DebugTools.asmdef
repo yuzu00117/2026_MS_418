@@ -1,6 +1,6 @@
 {
-    "name": "Aura.Diagnostics",
-    "rootNamespace": "Aura.Diagnostics",
+    "name": "Aura.DebugTools",
+    "rootNamespace": "Aura.DebugTools",
     "references": [
         "Aura.Inspector",
         "Unity.InputSystem"

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Aura.Diagnostics
+namespace Aura.DebugTools
 {
     /// @brief 性能表示（PerfOverlay）に、機能ごとの 1 行を足すための窓口。他の機能のスクリプトから呼ぶ
     /// 足した行は、PerfOverlay の左上に「[名前] 文字」の形で、薄い紫色で出る
@@ -13,7 +13,7 @@ namespace Aura.Diagnostics
     ///   private int _perfLineHandle = -1;
     ///   private void OnEnable()  { _perfLineHandle = PerfOverlayLines.Add("Wave", () => "Active " + _activeCount); }
     ///   private void OnDisable() { PerfOverlayLines.Remove(_perfLineHandle); }
-    /// 使うには、使う側の asmdef の references に「Aura.Diagnostics」を足す
+    /// 使うには、使う側の asmdef の references に「Aura.DebugTools」を足す
     public static class PerfOverlayLines
     {
         private const int InvalidHandle = -1;  ///< 足せなかったときに返す番号
