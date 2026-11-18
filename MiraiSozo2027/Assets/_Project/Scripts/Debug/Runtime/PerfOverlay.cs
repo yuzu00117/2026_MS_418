@@ -34,41 +34,21 @@ namespace Aura.DebugTools
     [DisallowMultipleComponent]
     public sealed class PerfOverlay : MonoBehaviour
     {
-        private const int MaxSegments = 4;                  ///< 1 行を作る、色分けした文字の部品の最大数
         private const int HistoryLength = 1024;             ///< CPU・GPU の最大値を調べるために覚えておく、フレームの数
         private const float MaxWindowSeconds = 1.0f;        ///< max を調べる期間（秒）
         private const float FpsWindowSeconds = 0.5f;        ///< FPS を平均する期間（秒）
-        private const float BaseScreenHeight = 1080.0f;     ///< 文字の大きさの基準にする画面の高さ
         private const double DefaultRefreshRate = 60.0;     ///< 画面の書き換える速さが取れないときに使う値（Hz）
         private const float NanosecondsToMilliseconds = 0.000001f;  ///< ns を ms にする倍率
         private const float BytesPerKilo = 1024.0f;         ///< 1KB のバイト数
         private const float BytesPerMega = 1048576.0f;      ///< 1MB のバイト数
-        private const float LineHeightRate = 1.4f;          ///< 文字の大きさに対する、1 行の高さの倍率
-        private const float PaddingRate = 0.35f;            ///< 文字の大きさに対する、行の左右の余白の倍率
-        private const float GapRate = 0.6f;                 ///< 行と行の間の「あき」の高さの、1 行の高さに対する倍率
-        private const float BarWidthRate = 0.2f;            ///< 文字の大きさに対する、グラフの棒 1 本の幅の倍率
-        private const float GraphHeightRate = 5.0f;         ///< 文字の大きさに対する、グラフの高さの倍率
-        private const float GraphMaxBudgetMultiple = 3.0f;  ///< グラフの一番上が、目標の時間の何倍か
-        private const float WarnBudgetMultiple = 2.0f;      ///< 棒が橙色までで済む、目標の時間の倍率
-        private const float DashRate = 0.4f;                ///< 文字の大きさに対する、点線の 1 つぶんの長さの倍率
         private const float OverBudgetPercent = 100.0f;     ///< これを超えると % を橙色にする
-        private const int MinFontSize = 8;                  ///< 文字の大きさの下限
-        private const float BackgroundAlpha = 0.6f;         ///< 背景の不透明度
-        private const float LineSpacingDivisor = 14.0f;     ///< 文字の大きさをこれで割った値を、行と行の間（px）にする
-        private const float FallbackSpaceRate = 0.3f;       ///< 半角スペースの幅が測れないときの、文字の大きさに対する倍率
-        private const float LabelExtraWidth = 2.0f;         ///< 文字の欄に足す余白（px）。測った幅ちょうどだと端が欠けることがあるため
 
         private static readonly CultureInfo Culture = CultureInfo.InvariantCulture;  ///< 数字を文字にする書式（国によって小数点の記号が変わらないようにする）
 
-        private static readonly Color BackgroundColor = new Color(0.31f, 0.31f, 0.31f, BackgroundAlpha);  ///< 行の背景色
         private static readonly Color TextColor = Color.white;                    ///< ふつうの文字の色
         private static readonly Color SecondaryColor = new Color(0.7f, 0.7f, 0.7f, 1.0f);  ///< 補足の文字の色（灰色）
         private static readonly Color WarnColor = new Color32(0xEF, 0x9F, 0x27, 0xFF);     ///< 注意の色（橙）
         private static readonly Color PluginColor = new Color32(0xAF, 0xA9, 0xEC, 0xFF);   ///< 他の機能が足した行の色（薄い紫）
-        private static readonly Color BarGoodColor = new Color32(0x63, 0x99, 0x22, 0xFF);  ///< 棒の色（間に合っている）
-        private static readonly Color BarWarnColor = WarnColor;                            ///< 棒の色（目標の 2 倍まで）。注意の色と同じ
-        private static readonly Color BarBadColor = new Color32(0xE2, 0x4B, 0x4A, 0xFF);   ///< 棒の色（それ以上）
-        private static readonly Color TargetLineColor = new Color32(0xF0, 0x95, 0x95, 0xFF);  ///< 目標の点線の色（ピンク）
 
         [InspectorLabel("文字の更新間隔（秒）")]
         [Tooltip("文字を作り直す間隔（秒）。0.25 なら 1 秒に 4 回。小さいほど細かく変わるが、少し重くなる")]
@@ -86,40 +66,6 @@ namespace Aura.DebugTools
         [Tooltip("押すたびに、全体を出す・消すを切り替えるキー。Shift と一緒に押すと、グラフだけを切り替える")]
         [SerializeField] private Key _toggleKey = Key.F2;  ///< 出す・消すを切り替えるキー
 
-        /// @brief 色分けした文字の部品を並べた、1 行ぶんの文字
-        private sealed class TextLine
-        {
-            public string[] Texts { get; } = new string[MaxSegments];   ///< 部品の文字
-            public Color[] Colors { get; } = new Color[MaxSegments];    ///< 部品の色
-            public int[] SpacesBefore { get; } = new int[MaxSegments];  ///< 部品の前に空ける、半角スペースの数
-            public float[] Widths { get; } = new float[MaxSegments];    ///< 部品の幅（描く前に測る）
-            public int Count { get; private set; }  ///< 部品の数
-            public bool IsGap { get; set; }         ///< 文字がなく、あきだけの行か
-            public float TotalWidth { get; set; }   ///< 部品を並べた全体の幅（背景の余白は含まない）
-
-            /// @brief 中身を空にする。行は毎回 new せず、空にして使い回す（毎フレームのメモリ確保を避けるため）
-            public void Reset()
-            {
-                Count = 0;
-                IsGap = false;
-                TotalWidth = 0.0f;
-            }
-
-            /// @brief 部品を 1 つ足す。上限（MaxSegments）を超えた分は捨てる。配列を作り直さずに済むよう、数を固定している
-            public void Add(string text, Color color, int spaces = 0)
-            {
-                if (Count >= MaxSegments)
-                {
-                    return;
-                }
-
-                Texts[Count] = text;
-                Colors[Count] = color;
-                SpacesBefore[Count] = spaces;
-                Count++;
-            }
-        }
-
         private readonly List<TextLine> _leftLines = new List<TextLine>();    ///< 左上の行（使い回す）
         private readonly List<TextLine> _rightLines = new List<TextLine>();   ///< 右上の行（使い回す）
         private readonly TextLine _graphHintLine = new TextLine();            ///< グラフの上の「Shift+F2: Hide Graph」
@@ -127,7 +73,6 @@ namespace Aura.DebugTools
         private readonly TextLine _showGraphLine = new TextLine();            ///< グラフが消えているときの「Shift+F2: Show Graph」
         private readonly List<string> _pluginTexts = new List<string>();      ///< 他の機能が足した行の文字（使い回す）
         private readonly StringBuilder _builder = new StringBuilder(128);     ///< 文字を作る入れ物（使い回す）
-        private readonly GUIContent _content = new GUIContent();              ///< 文字の幅を測る・描くための入れ物（使い回す）
         private readonly FrameTiming[] _frameTimings = new FrameTiming[1];    ///< GPU の時間を受け取る入れ物（使い回す）
         private int _leftCount;    ///< 左上の行のうち、今使っている数
         private int _rightCount;   ///< 右上の行のうち、今使っている数
@@ -162,16 +107,8 @@ namespace Aura.DebugTools
         private float _gpuSum;                  ///< 前に文字を作り直してからの、GPU の時間の合計
         private int _gpuCount;                  ///< その回数
 
-        private Texture2D _whiteTexture;        ///< 背景・棒に使う 1x1 の白い画像
-        private GUIStyle _style;                ///< 文字の見た目
-        private int _appliedFontSize;           ///< 今の見た目に使っている文字の大きさ
+        private PerfOverlayDrawer _drawer;      ///< 画面への描画を受け持つ（Awake で作る）
         private bool _needsMeasure = true;      ///< 文字の幅を測り直す必要があるか
-        private float _spaceWidth;              ///< 半角スペース 1 つの幅
-        private float _lineHeight;              ///< 1 行の高さ
-        private float _padding;                 ///< 行の左右の余白
-        private float _margin;                  ///< 画面の端からの余白
-        private float _lineSpacing;             ///< 行と行の間（1px 程度）
-        private int _barWidth;                  ///< グラフの棒 1 本の幅
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         /// @brief シーンを読み込んだあとに、性能表示を 1 つ自動で作る。シーンが変わっても残す
@@ -191,11 +128,8 @@ namespace Aura.DebugTools
 
         private void Awake()
         {
-            // 白い 1x1 の画像を 1 枚だけ作り、背景と棒の色は GUI.color で変えて使い回す
-            _whiteTexture = new Texture2D(1, 1, TextureFormat.RGBA32, false);
-            _whiteTexture.SetPixel(0, 0, Color.white);
-            _whiteTexture.Apply();
-            _whiteTexture.hideFlags = HideFlags.HideAndDontSave;
+            // 描画を受け持つものは、中で Texture2D を作るので Awake で作る
+            _drawer = new PerfOverlayDrawer();
 
             for (int i = 0; i < HistoryLength; i++)
             {
@@ -223,10 +157,10 @@ namespace Aura.DebugTools
         private void OnDestroy()
         {
             StopRecorders();
-            if (_whiteTexture != null)
+            if (_drawer != null)
             {
-                Destroy(_whiteTexture);
-                _whiteTexture = null;
+                _drawer.Release();
+                _drawer = null;
             }
         }
 
@@ -718,7 +652,10 @@ namespace Aura.DebugTools
                 return;
             }
 
-            EnsureStyle();
+            if (_drawer.EnsureStyle(_baseFontSize))
+            {
+                _needsMeasure = true;
+            }
             if (_needsMeasure)
             {
                 MeasureAll();
@@ -728,78 +665,39 @@ namespace Aura.DebugTools
             Color previousColor = GUI.color;
 
             // 左上
-            float y = _margin;
+            float margin = _drawer.Margin;
+            float y = margin;
             for (int i = 0; i < _leftCount; i++)
             {
-                y = DrawLine(_leftLines[i], _margin, y);
+                y = _drawer.DrawLine(_leftLines[i], margin, y);
             }
 
             // 右上
-            y = _margin;
+            y = margin;
             for (int i = 0; i < _rightCount; i++)
             {
                 TextLine line = _rightLines[i];
-                float x = Screen.width - _margin - (line.TotalWidth + _padding * 2.0f);
-                y = DrawLine(line, x, y);
+                float x = Screen.width - margin - (line.TotalWidth + _drawer.Padding * 2.0f);
+                y = _drawer.DrawLine(line, x, y);
             }
 
             // 左下
-            float bottomY = Screen.height - _margin - _lineHeight;
+            float bottomY = Screen.height - margin - _drawer.LineHeight;
             if (_isGraphVisible)
             {
-                DrawLine(_graphCaptionLine, _margin, bottomY);
-                float graphHeight = _appliedFontSize * GraphHeightRate;
-                float graphBottom = bottomY - _lineSpacing;
+                _drawer.DrawLine(_graphCaptionLine, margin, bottomY);
+                float graphHeight = _drawer.GraphHeight;
+                float graphBottom = bottomY - _drawer.LineSpacing;
                 float graphTop = graphBottom - graphHeight;
-                DrawLine(_graphHintLine, _margin, graphTop - _lineSpacing - _lineHeight);
-                DrawGraph(_margin, graphTop, graphHeight);
+                _drawer.DrawLine(_graphHintLine, margin, graphTop - _drawer.LineSpacing - _drawer.LineHeight);
+                _drawer.DrawGraph(margin, graphTop, graphHeight, _frameMsSamples, _frameHead, _budgetMs);
             }
             else
             {
-                DrawLine(_showGraphLine, _margin, bottomY);
+                _drawer.DrawLine(_showGraphLine, margin, bottomY);
             }
 
             GUI.color = previousColor;
-        }
-
-        /// @brief 文字の大きさが変わった（画面の高さが変わった）ら、見た目と寸法を作り直す
-        private void EnsureStyle()
-        {
-            int fontSize = Mathf.Max(MinFontSize, Mathf.RoundToInt(_baseFontSize * Screen.height / BaseScreenHeight));
-            if (_style != null && fontSize == _appliedFontSize)
-            {
-                return;
-            }
-
-            _appliedFontSize = fontSize;
-            _style = new GUIStyle(GUI.skin.label);
-            _style.fontSize = fontSize;
-            _style.alignment = TextAnchor.MiddleLeft;
-            _style.wordWrap = false;
-            _style.richText = false;
-            _style.clipping = TextClipping.Overflow;
-            _style.padding = new RectOffset(0, 0, 0, 0);
-            _style.margin = new RectOffset(0, 0, 0, 0);
-            _style.normal.textColor = Color.white;
-
-            _lineHeight = Mathf.Ceil(fontSize * LineHeightRate);
-            _padding = Mathf.Round(fontSize * PaddingRate);
-            _margin = _padding;
-            _lineSpacing = Mathf.Max(1.0f, Mathf.Round(fontSize / LineSpacingDivisor));
-            _barWidth = Mathf.Max(1, Mathf.RoundToInt(fontSize * BarWidthRate));
-
-            // 半角スペースの幅は、「a a」と「aa」の幅の差から求める
-            _content.text = "a a";
-            float withSpace = _style.CalcSize(_content).x;
-            _content.text = "aa";
-            float withoutSpace = _style.CalcSize(_content).x;
-            _spaceWidth = withSpace - withoutSpace;
-            if (_spaceWidth <= 0.0f)
-            {
-                _spaceWidth = fontSize * FallbackSpaceRate;
-            }
-
-            _needsMeasure = true;
         }
 
         /// @brief 全部の行の幅を測る。幅を測る処理は重いので、文字を作り直したときと文字の大きさが変わったときだけ呼ぶ
@@ -807,103 +705,15 @@ namespace Aura.DebugTools
         {
             for (int i = 0; i < _leftCount; i++)
             {
-                MeasureLine(_leftLines[i]);
+                _drawer.MeasureLine(_leftLines[i]);
             }
             for (int i = 0; i < _rightCount; i++)
             {
-                MeasureLine(_rightLines[i]);
+                _drawer.MeasureLine(_rightLines[i]);
             }
-            MeasureLine(_graphHintLine);
-            MeasureLine(_graphCaptionLine);
-            MeasureLine(_showGraphLine);
-        }
-
-        private void MeasureLine(TextLine line)
-        {
-            float total = 0.0f;
-            for (int i = 0; i < line.Count; i++)
-            {
-                _content.text = line.Texts[i];
-                line.Widths[i] = _style.CalcSize(_content).x;
-                total += line.SpacesBefore[i] * _spaceWidth + line.Widths[i];
-            }
-            line.TotalWidth = total;
-        }
-
-        /// @brief 1 行を描き、次の行の y を返す
-        private float DrawLine(TextLine line, float x, float y)
-        {
-            if (line.IsGap)
-            {
-                return y + _lineHeight * GapRate;
-            }
-
-            GUI.color = BackgroundColor;
-            GUI.DrawTexture(new Rect(x, y, line.TotalWidth + _padding * 2.0f, _lineHeight), _whiteTexture);
-
-            float cursorX = x + _padding;
-            for (int i = 0; i < line.Count; i++)
-            {
-                cursorX += line.SpacesBefore[i] * _spaceWidth;
-                _content.text = line.Texts[i];
-                GUI.color = line.Colors[i];
-                GUI.Label(new Rect(cursorX, y, line.Widths[i] + LabelExtraWidth, _lineHeight), _content, _style);
-                cursorX += line.Widths[i];
-            }
-
-            return y + _lineHeight + _lineSpacing;
-        }
-
-        /// @brief フレームごとの棒グラフと、目標の点線を描く
-        private void DrawGraph(float left, float top, float height)
-        {
-            if (_frameMsSamples == null)
-            {
-                return;
-            }
-
-            int length = _frameMsSamples.Length;
-            float width = length * _barWidth;
-            float maxMs = _budgetMs * GraphMaxBudgetMultiple;
-            float bottom = top + height;
-
-            GUI.color = BackgroundColor;
-            GUI.DrawTexture(new Rect(left, top, width, height), _whiteTexture);
-
-            for (int i = 0; i < length; i++)
-            {
-                // 古い順に左から並べる
-                float ms = _frameMsSamples[(_frameHead + i) % length];
-                if (ms <= 0.0f)
-                {
-                    continue;
-                }
-
-                float barHeight = Mathf.Min(ms / maxMs, 1.0f) * height;
-                if (ms <= _budgetMs)
-                {
-                    GUI.color = BarGoodColor;
-                }
-                else if (ms <= _budgetMs * WarnBudgetMultiple)
-                {
-                    GUI.color = BarWarnColor;
-                }
-                else
-                {
-                    GUI.color = BarBadColor;
-                }
-                GUI.DrawTexture(new Rect(left + i * _barWidth, bottom - barHeight, _barWidth, barHeight), _whiteTexture);
-            }
-
-            // 目標の時間の点線
-            float targetY = bottom - height / GraphMaxBudgetMultiple;
-            float dashLength = Mathf.Max(2.0f, _appliedFontSize * DashRate);
-            GUI.color = TargetLineColor;
-            for (float dashX = 0.0f; dashX < width; dashX += dashLength * 2.0f)
-            {
-                float dashWidth = Mathf.Min(dashLength, width - dashX);
-                GUI.DrawTexture(new Rect(left + dashX, targetY, dashWidth, 1.0f), _whiteTexture);
-            }
+            _drawer.MeasureLine(_graphHintLine);
+            _drawer.MeasureLine(_graphCaptionLine);
+            _drawer.MeasureLine(_showGraphLine);
         }
     }
 }
