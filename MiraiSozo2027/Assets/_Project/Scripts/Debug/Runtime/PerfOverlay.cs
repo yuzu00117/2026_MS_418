@@ -207,11 +207,11 @@ namespace Aura.DebugTools
 
         private void OnEnable()
         {
-            StopRecorders();
-            _cpuRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread");
-            _drawCallRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Draw Calls Count");
-            _gcAllocRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame");
-            _memoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
+            // 消したまま無効→有効にしたときは、出すまで計測を始めない
+            if (_isVisible)
+            {
+                StartRecorders();
+            }
             _textTimer = float.MaxValue;
         }
 
@@ -305,21 +305,52 @@ namespace Aura.DebugTools
                 if (_isVisible)
                 {
                     _isGraphVisible = !_isGraphVisible;
+                    // 切り替えたら、すぐに文字を作り直す
+                    _textTimer = float.MaxValue;
                 }
+            }
+            else if (_isVisible)
+            {
+                Hide();
             }
             else
             {
-                // 消している間の古い値が、出し直したときの平均に混ざらないようにする
-                _isVisible = !_isVisible;
-                ResetTimingAverages();
-                if (_isVisible)
-                {
-                    ResetFrameSamples();
-                }
+                Show();
             }
+        }
 
-            // 切り替えたら、すぐに文字を作り直す
-            _textTimer = float.MaxValue;
+        /// 全体を消す。見ていない間に測っても使い道がないので、計測も止める
+        private void Hide()
+        {
+            _isVisible = false;
+            StopRecorders();
+        }
+
+        /// 全体を出し、計測をやり直す
+        private void Show()
+        {
+            _isVisible = true;
+
+            // 消している間の古い値が、出し直したときの平均やグラフに混ざらないようにする
+            ResetTimingAverages();
+            ResetFrameSamples();
+            StartRecorders();
+
+            // 始めたばかりの計測は、このフレームが終わるまで値がなく「N/A」と出てしまう。
+            // そのため、消す前の古い文字は出さずに空にしておき、値がたまる次の作り直しの時刻まで待つ
+            _leftCount = 0;
+            _rightCount = 0;
+            _textTimer = 0.0f;
+        }
+
+        /// 計測を始める。前の計測が残っていれば先に止める
+        private void StartRecorders()
+        {
+            StopRecorders();
+            _cpuRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "Main Thread");
+            _drawCallRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Draw Calls Count");
+            _gcAllocRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame");
+            _memoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
         }
 
         /// CPU・GPU の平均を出すための合計と回数を 0 に戻す
