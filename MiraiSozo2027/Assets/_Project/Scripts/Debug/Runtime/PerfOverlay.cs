@@ -301,7 +301,11 @@ namespace Aura.DebugTools
             bool isShiftHeld = keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed;
             if (isShiftHeld)
             {
-                _isGraphVisible = !_isGraphVisible;
+                // 全体を消している間は、切り替えても画面に何も出ず気づけないので受け付けない
+                if (_isVisible)
+                {
+                    _isGraphVisible = !_isGraphVisible;
+                }
             }
             else
             {
