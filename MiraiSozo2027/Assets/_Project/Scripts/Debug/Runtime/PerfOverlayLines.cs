@@ -31,7 +31,7 @@ namespace Aura.DebugTools
         private static readonly List<Entry> Entries = new List<Entry>();  ///< 足された行の一覧
         private static int _nextHandle = 1;                               ///< 次に渡す番号
 
-        /// Editor で「Domain Reload を切った状態」で再生しても、前回の登録が残らないようにする
+        /// @brief Editor で「Domain Reload を切った状態」で再生しても、前回の登録が残らないようにする
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetState()
         {

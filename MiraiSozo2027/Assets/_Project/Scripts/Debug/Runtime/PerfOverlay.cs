@@ -97,7 +97,7 @@ namespace Aura.DebugTools
             public bool IsGap { get; set; }         ///< 文字がなく、あきだけの行か
             public float TotalWidth { get; set; }   ///< 部品を並べた全体の幅（背景の余白は含まない）
 
-            /// 中身を空にして、使い回せる状態にする
+            /// @brief 中身を空にする。行は毎回 new せず、空にして使い回す（毎フレームのメモリ確保を避けるため）
             public void Reset()
             {
                 Count = 0;
@@ -105,7 +105,7 @@ namespace Aura.DebugTools
                 TotalWidth = 0.0f;
             }
 
-            /// 部品を 1 つ足す
+            /// @brief 部品を 1 つ足す。上限（MaxSegments）を超えた分は捨てる。配列を作り直さずに済むよう、数を固定している
             public void Add(string text, Color color, int spaces = 0)
             {
                 if (Count >= MaxSegments)
@@ -174,7 +174,7 @@ namespace Aura.DebugTools
         private int _barWidth;                  ///< グラフの棒 1 本の幅
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-        /// シーンを読み込んだあとに、性能表示を 1 つ自動で作る。シーンが変わっても残す
+        /// @brief シーンを読み込んだあとに、性能表示を 1 つ自動で作る。シーンが変わっても残す
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void CreateOnLoad()
         {
@@ -252,7 +252,7 @@ namespace Aura.DebugTools
             }
         }
 
-        /// 計測を止めて、持っているものを手放す
+        /// @brief 計測を止めて、持っているものを手放す
         private void StopRecorders()
         {
             DisposeRecorder(ref _cpuRecorder);
@@ -270,7 +270,7 @@ namespace Aura.DebugTools
             recorder = default;
         }
 
-        /// 計測した値を取る。まだ値がない・計測できないときは false
+        /// @brief 計測した値を取る。まだ値がない・計測できないときは false
         private static bool TryGetValue(ProfilerRecorder recorder, out long value)
         {
             if (recorder.Valid && recorder.Count > 0)
@@ -283,7 +283,7 @@ namespace Aura.DebugTools
             return false;
         }
 
-        /// キーを見て、全体・グラフの出す・消すを切り替える
+        /// @brief キーを見て、全体・グラフの出す・消すを切り替える
         private void HandleInput()
         {
             Keyboard keyboard = Keyboard.current;
@@ -319,14 +319,14 @@ namespace Aura.DebugTools
             }
         }
 
-        /// 全体を消す。見ていない間に測っても使い道がないので、計測も止める
+        /// @brief 全体を消す。見ていない間に測っても使い道がないので、計測も止める
         private void Hide()
         {
             _isVisible = false;
             StopRecorders();
         }
 
-        /// 全体を出し、計測をやり直す
+        /// @brief 全体を出し、計測をやり直す
         private void Show()
         {
             _isVisible = true;
@@ -343,7 +343,7 @@ namespace Aura.DebugTools
             _textTimer = 0.0f;
         }
 
-        /// 計測を始める。前の計測が残っていれば先に止める
+        /// @brief 計測を始める。前の計測が残っていれば先に止める
         private void StartRecorders()
         {
             StopRecorders();
@@ -353,7 +353,7 @@ namespace Aura.DebugTools
             _memoryRecorder = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "Total Used Memory");
         }
 
-        /// CPU・GPU の平均を出すための合計と回数を 0 に戻す
+        /// @brief CPU・GPU の平均を出すための合計と回数を 0 に戻す
         private void ResetTimingAverages()
         {
             _cpuSum = 0.0f;
@@ -362,7 +362,7 @@ namespace Aura.DebugTools
             _gpuCount = 0;
         }
 
-        /// グラフと FPS の記録を空にする。
+        /// @brief グラフと FPS の記録を空にする。
         /// 消している間は記録しないので、残っているのは消す前の古い値だけ。出し直したときに今の値と混ざらないようにする
         private void ResetFrameSamples()
         {
@@ -376,7 +376,7 @@ namespace Aura.DebugTools
             _fps = 0.0f;
         }
 
-        /// FPS を、約 0.5 秒ぶんの平均で出す
+        /// @brief FPS を、約 0.5 秒ぶんの平均で出す
         private void UpdateFps(float deltaTime)
         {
             _fpsFrames++;
@@ -389,7 +389,7 @@ namespace Aura.DebugTools
             }
         }
 
-        /// FPS の上限と、1 フレームに使ってよい時間を決める。他のコードが実行中に変えるので、毎フレーム調べ直す
+        /// @brief FPS の上限と、1 フレームに使ってよい時間を決める。他のコードが実行中に変えるので、毎フレーム調べ直す
         private void UpdateCap()
         {
             double refreshRate = Screen.currentResolution.refreshRateRatio.value;
@@ -419,7 +419,7 @@ namespace Aura.DebugTools
             _budgetMs = (float)(1000.0 / _capFps);
         }
 
-        /// グラフ用に、このフレームの時間（ms）を覚える
+        /// @brief グラフ用に、このフレームの時間（ms）を覚える
         private void PushFrameSample(float deltaTime)
         {
             int length = Mathf.Max(2, _graphFrameCount);
@@ -433,7 +433,7 @@ namespace Aura.DebugTools
             _frameHead = (_frameHead + 1) % length;
         }
 
-        /// CPU と GPU の時間を取って、平均と max を出すために覚える
+        /// @brief CPU と GPU の時間を取って、平均と max を出すために覚える
         private void SampleCpuAndGpu(float now)
         {
             float cpuMs = -1.0f;
@@ -461,7 +461,7 @@ namespace Aura.DebugTools
             _historyHead = (_historyHead + 1) % HistoryLength;
         }
 
-        /// 直近 約 1 秒の最大値を返す。1 つも値がなければ -1
+        /// @brief 直近 約 1 秒の最大値を返す。1 つも値がなければ -1
         private float GetRecentMax(float[] history)
         {
             float threshold = Time.unscaledTime - MaxWindowSeconds;
@@ -486,6 +486,7 @@ namespace Aura.DebugTools
             return Acquire(_rightLines, _rightCount++);
         }
 
+        /// @brief index 番目の行を空にして返す。足りなければ作り足す。一度作った行は捨てずに使い回し、毎回の new を避ける
         private static TextLine Acquire(List<TextLine> lines, int index)
         {
             while (lines.Count <= index)
@@ -498,7 +499,7 @@ namespace Aura.DebugTools
             return line;
         }
 
-        /// 表示する文字を全部作り直す（1 秒に数回だけ呼ぶ）
+        /// @brief 表示する文字を全部作り直す。文字を作るとメモリを確保するので、毎フレームではなく 1 秒に数回だけ呼ぶ
         private void RebuildText()
         {
             UpdateKeyHints();
@@ -514,7 +515,7 @@ namespace Aura.DebugTools
             _needsMeasure = true;
         }
 
-        /// キーの案内の文字を作る。中身はキーで決まるので、キーが変わったときだけ作り直す
+        /// @brief キーの案内の文字を作る。中身はキーで決まるので、キーが変わったときだけ作り直す
         private void UpdateKeyHints()
         {
             if (_hintKey == _toggleKey && _hideText != null)
@@ -531,7 +532,7 @@ namespace Aura.DebugTools
             _showGraphLine.Add("Shift+" + keyName + ": Show Graph", SecondaryColor);
         }
 
-        /// 左上の行を作る
+        /// @brief 左上の行（FPS・CPU・GPU など、毎回変わる計測値）を作る
         private void BuildLeftLines()
         {
             _leftCount = 0;
@@ -603,7 +604,7 @@ namespace Aura.DebugTools
             BeginLeft().Add(_hideText, SecondaryColor);
         }
 
-        /// 右上の行を作る
+        /// @brief 右上の行（メモリ・PC の情報・画面の設定）を作る
         private void BuildRightLines()
         {
             _rightCount = 0;
@@ -646,7 +647,7 @@ namespace Aura.DebugTools
             AddRightLine("Unity", Application.unityVersion);
         }
 
-        /// 「CPU 12.4ms/frame (74% of 16.7ms)  max 31.8ms」の形の行を 1 つ足す
+        /// @brief 「CPU 12.4ms/frame (74% of 16.7ms)  max 31.8ms」の形の行を 1 つ足す
         private void AddTimingLine(string label, bool hasValue, float averageMs, float maxMs)
         {
             TextLine line = BeginLeft();
@@ -679,7 +680,7 @@ namespace Aura.DebugTools
             line.Add(_builder.ToString(), SecondaryColor, 1);
         }
 
-        /// 「名前 値」の形の行を、右上に 1 つ足す
+        /// @brief 「名前 値」の形の行を、右上に 1 つ足す
         private void AddRightLine(string label, string value)
         {
             TextLine line = BeginRight();
@@ -687,7 +688,7 @@ namespace Aura.DebugTools
             line.Add(value, TextColor, 1);
         }
 
-        /// バイト数を B / KB / MB で読みやすくして足す
+        /// @brief バイト数を B / KB / MB で読みやすくして足す
         private static void AppendBytes(StringBuilder builder, long bytes)
         {
             if (bytes < BytesPerKilo)
@@ -761,7 +762,7 @@ namespace Aura.DebugTools
             GUI.color = previousColor;
         }
 
-        /// 文字の大きさが変わった（画面の高さが変わった）ら、見た目と寸法を作り直す
+        /// @brief 文字の大きさが変わった（画面の高さが変わった）ら、見た目と寸法を作り直す
         private void EnsureStyle()
         {
             int fontSize = Mathf.Max(MinFontSize, Mathf.RoundToInt(_baseFontSize * Screen.height / BaseScreenHeight));
@@ -801,7 +802,7 @@ namespace Aura.DebugTools
             _needsMeasure = true;
         }
 
-        /// 全部の行の幅を測る
+        /// @brief 全部の行の幅を測る。幅を測る処理は重いので、文字を作り直したときと文字の大きさが変わったときだけ呼ぶ
         private void MeasureAll()
         {
             for (int i = 0; i < _leftCount; i++)
@@ -829,7 +830,7 @@ namespace Aura.DebugTools
             line.TotalWidth = total;
         }
 
-        /// 1 行を描き、次の行の y を返す
+        /// @brief 1 行を描き、次の行の y を返す
         private float DrawLine(TextLine line, float x, float y)
         {
             if (line.IsGap)
@@ -853,7 +854,7 @@ namespace Aura.DebugTools
             return y + _lineHeight + _lineSpacing;
         }
 
-        /// フレームごとの棒グラフと、目標の点線を描く
+        /// @brief フレームごとの棒グラフと、目標の点線を描く
         private void DrawGraph(float left, float top, float height)
         {
             if (_frameMsSamples == null)
