@@ -1,0 +1,17 @@
+{
+    "name": "Aura.Diagnostics",
+    "rootNamespace": "Aura.Diagnostics",
+    "references": [
+        "Aura.Inspector",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
