@@ -4,15 +4,6 @@ using Aura.Wave;
 using UnityEngine;
 using UnityEngine.Events;
 
-public enum WaveDamageMode
-{
-    [InspectorName("多段ヒット方式（無敵時間ごとに連続ヒット）")]
-    MultiHit,
-
-    [InspectorName("継続照射チャージ方式（一定時間当て続けるごとにヒット）")]
-    ChargeHit
-}
-
 /// <summary>
 /// Entity（Enemy / Player）にアタッチし、波動ビームによるアーマー破壊とダメージ方式（多段 / チャージ）を管理する（受け手側）
 /// </summary>
@@ -27,10 +18,10 @@ public class WaveDamageReceiver : MonoBehaviour
     [SerializeField] private bool _hasInitialArmor = false;
 
     [Tooltip("電磁波の継続照射でアーマーを剥がせるか")]
-    [SerializeField, ShowWaveTypeAsset(WaveKind.Electromagnetic)] private bool _armorReactElectromagnetic = false;
+    [SerializeField, ShowWaveTypeAsset(WaveKind.Electromagnetic)] private bool _canArmorReactToElectromagnetic = false;
 
     [Tooltip("超音波の継続照射でアーマーを剥がせるか")]
-    [SerializeField, ShowWaveTypeAsset(WaveKind.Ultrasound)] private bool _armorReactUltrasound = true;
+    [SerializeField, ShowWaveTypeAsset(WaveKind.Ultrasound)] private bool _canArmorReactToUltrasound = true;
 
     [Tooltip("アーマーを剥がすのに必要な継続照射秒数（強さ1のビーム基準）")]
     [SerializeField, Min(0.1f)] private float _armorRequiredSeconds = 2.0f;
@@ -46,10 +37,10 @@ public class WaveDamageReceiver : MonoBehaviour
     [SerializeField] private WaveDamageMode _damageMode = WaveDamageMode.MultiHit;
 
     [Tooltip("電磁波でHPにダメージを与えられるか")]
-    [SerializeField, ShowWaveTypeAsset(WaveKind.Electromagnetic)] private bool _hpReactElectromagnetic = true;
+    [SerializeField, ShowWaveTypeAsset(WaveKind.Electromagnetic)] private bool _canHpReactToElectromagnetic = true;
 
     [Tooltip("超音波でHPにダメージを与えられるか")]
-    [SerializeField, ShowWaveTypeAsset(WaveKind.Ultrasound)] private bool _hpReactUltrasound = true;
+    [SerializeField, ShowWaveTypeAsset(WaveKind.Ultrasound)] private bool _canHpReactToUltrasound = true;
 
     [Tooltip("【継続照射チャージ方式のみ】1回ダメージが入るまでに必要な照射秒数")]
     [SerializeField, Min(0.1f)] private float _damageRequiredSeconds = 1.0f;
@@ -170,12 +161,12 @@ public class WaveDamageReceiver : MonoBehaviour
 
     private bool CanArmorReactTo(WaveKind kind)
     {
-        return kind == WaveKind.Ultrasound ? _armorReactUltrasound : _armorReactElectromagnetic;
+        return kind == WaveKind.Ultrasound ? _canArmorReactToUltrasound : _canArmorReactToElectromagnetic;
     }
 
     private bool CanHpReactTo(WaveKind kind)
     {
-        return kind == WaveKind.Ultrasound ? _hpReactUltrasound : _hpReactElectromagnetic;
+        return kind == WaveKind.Ultrasound ? _canHpReactToUltrasound : _canHpReactToElectromagnetic;
     }
 
     /// <summary>
@@ -187,13 +178,13 @@ public class WaveDamageReceiver : MonoBehaviour
 
         if (HasArmor)
         {
-            _waveReaction.CanReactToElectromagnetic = _armorReactElectromagnetic;
-            _waveReaction.CanReactToUltrasound = _armorReactUltrasound;
+            _waveReaction.CanReactToElectromagnetic = _canArmorReactToElectromagnetic;
+            _waveReaction.CanReactToUltrasound = _canArmorReactToUltrasound;
         }
         else
         {
-            _waveReaction.CanReactToElectromagnetic = _hpReactElectromagnetic;
-            _waveReaction.CanReactToUltrasound = _hpReactUltrasound;
+            _waveReaction.CanReactToElectromagnetic = _canHpReactToElectromagnetic;
+            _waveReaction.CanReactToUltrasound = _canHpReactToUltrasound;
         }
     }
 }

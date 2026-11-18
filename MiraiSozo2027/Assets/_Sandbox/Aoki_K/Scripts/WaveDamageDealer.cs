@@ -4,19 +4,11 @@ using UnityEngine;
 
 /// <summary>
 /// WaveEmitter と同じオブジェクトにアタッチし、ビームが当たった対象へダメージを与える（撃ち手側）
-/// WaveEmitter.LateUpdate の直後に実行されるよう DefaultExecutionOrder を設定
 /// </summary>
 [RequireComponent(typeof(WaveEmitter))]
 [DefaultExecutionOrder(100)]
-public class WaveDamageDealer : MonoBehaviour
+public class WaveDamageDealer : DamageDealerBase<CachedWaveTarget>
 {
-    [Header("Wave Damage Settings")]
-    [Tooltip("ビーム1ヒットあたりの基礎ダメージ量（弱点に当たった場合は WeakPoint の倍率が掛かります）")]
-    [SerializeField, Min(1)] private int _baseDamage = 10;
-
-    [Tooltip("ダメージが反映される対象のレイヤー")]
-    [SerializeField] private LayerMask _targetLayers = ~0;
-
     private WaveEmitter _waveEmitter;
 
     // 1フレーム内で同じ対象（複数コライダーや反射ビーム）に重複して処理しないためのセット
@@ -26,6 +18,23 @@ public class WaveDamageDealer : MonoBehaviour
     private void Awake()
     {
         _waveEmitter = GetComponent<WaveEmitter>();
+    }
+
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+        _processedReceivers.Clear();
+        _processedDamageables.Clear();
+    }
+
+    protected override CachedWaveTarget CreateCachedTarget(Collider hitCollider)
+    {
+        WaveDamageReceiver receiver = hitCollider.GetComponentInParent<WaveDamageReceiver>();
+        IDamageable damageable = receiver == null
+            ? hitCollider.GetComponentInParent<IDamageable>()
+            : null;
+
+        return new CachedWaveTarget(receiver, damageable);
     }
 
     private void LateUpdate()
@@ -41,30 +50,28 @@ public class WaveDamageDealer : MonoBehaviour
         for (int i = 0; i < hits.Count; i++)
         {
             InfoBeamHit hit = hits[i];
-            if (hit.Collider == null) continue;
+            Collider hitCollider = hit.Collider;
+            if (!IsTargetLayer(hitCollider)) continue;
 
-            // 対象レイヤーに含まれていなければスキップ
-            if ((_targetLayers.value & (1 << hit.Collider.gameObject.layer)) == 0) continue;
+            CachedWaveTarget target = GetOrFindTarget(hitCollider);
 
-            // 1. 受け手側に WaveDamageReceiver（アーマー管理・多段/チャージ方式管理）がある場合
-            WaveDamageReceiver receiver = hit.Collider.GetComponentInParent<WaveDamageReceiver>();
-            if (receiver != null)
+            // 1. 受け手側に WaveDamageReceiver がある場合
+            if (target.HasValidReceiver)
             {
-                if (_processedReceivers.Add(receiver))
+                if (_processedReceivers.Add(target.Receiver))
                 {
-                    receiver.ReceiveWaveHit(in hit, _baseDamage);
+                    target.Receiver.ReceiveWaveHit(in hit, _damage);
                 }
                 continue;
             }
 
-            // 2. WaveDamageReceiver が無く、IDamageable（Playerや通常オブジェクト）のみの場合
-            IDamageable damageable = hit.Collider.GetComponentInParent<IDamageable>();
-            if (damageable != null && !damageable.IsDead)
+            // 2. WaveDamageReceiver が無く、IDamageable のみの場合
+            if (target.HasValidDamageable)
             {
-                if (_processedDamageables.Add(damageable))
+                if (_processedDamageables.Add(target.Damageable))
                 {
-                    int finalDamage = Mathf.Max(0, Mathf.RoundToInt(_baseDamage * hit.Multiplier));
-                    damageable.TakeDamage(finalDamage);
+                    int finalDamage = Mathf.Max(0, Mathf.RoundToInt(_damage * hit.Multiplier));
+                    target.Damageable.TakeDamage(finalDamage);
                 }
             }
         }
