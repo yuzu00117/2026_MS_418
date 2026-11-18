@@ -214,7 +214,8 @@ public class CameraBehavior : MonoBehaviour
         float currentSideOffset = Mathf.Lerp(_sideOffset, _adsSideOffset, _adsWeight);
         if (_camera != null)
         {
-            _camera.fieldOfView = Mathf.Lerp(GameOptions.Instance.Values.fieldOfView, _adsFov, _adsWeight);
+            float baseFov = GameOptions.Instance != null ? GameOptions.Instance.Values.fieldOfView : _defaultFov;
+            _camera.fieldOfView = Mathf.Lerp(baseFov, _adsFov, _adsWeight);
         }
         // 6. 注視点（通常時は胸付近、ADS時は頭付近へ補間）の座標
         Vector3 targetFocusPosition = _target.position + Vector3.up * currentTargetHeight;
