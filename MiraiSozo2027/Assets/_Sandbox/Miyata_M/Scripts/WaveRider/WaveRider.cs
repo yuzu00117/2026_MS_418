@@ -3,6 +3,7 @@ using Aura.Inspector;
 using Aura.ObjectInfo;
 using Aura.Wave;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Aura.Gimmick
 {
@@ -33,6 +34,8 @@ namespace Aura.Gimmick
         private const float ContactDistance = 0.001f;       ///< 当たった距離がこれ以下なら、すでに面に接しているとみなす（m）
         private const float MinSlideSqrMagnitude = 1.0e-8f;   ///< 面に沿って滑らせる量の長さの 2 乗がこれ以下なら、滑らせない
         private const float NavReplanInterval = 0.5f;         ///< 経路探索で戻るとき、経路を引き直す間隔の最短（秒）
+        private const float ReturnedDistance = 0.01f;        ///< 初期位置にこの距離以内に着いたら、戻り終えたとみなす（m）
+        private const float ReturnedAngle = 0.5f;            ///< 初期の向きにこの角度以内に着いたら、向きも戻ったとみなす（度）
         private const int OverlapBufferSize = 32;            ///< 上面で同時に調べる Collider の最大数。超えた分は乗っている物として数えない
         private const float TopContactTolerance = 0.1f;      ///< 相手の足元が自分の上面からこの高さ以内に潜っていても、上に乗っているとみなす（m）
 
@@ -104,6 +107,11 @@ namespace Aura.Gimmick
         [Tooltip("「スイッチで起動する」がオンのとき、ゲーム開始時から起動しているか（Activate を呼ばなくても波に乗る）")]
         [SerializeField] private bool _isActiveOnStart;        ///< ゲーム開始時から起動しているか
 
+        [InspectorLabel("初期位置へ戻り終えたとき")]
+        [Tooltip("波に乗ったあと、「初期位置へ戻る」系の動きで初期位置（向きを合わせる設定なら初期の向きも）に着いたときに 1 回呼ぶ\n" +
+                 "壁などに阻まれて着けなかったときは呼ばない。次に波に乗ったあと、また戻り終えたときに呼ぶ")]
+        [SerializeField] private UnityEvent _onReturned = new UnityEvent();  ///< 初期位置へ戻り終えたときに呼ぶ
+
         private bool _isActive;               ///< スイッチで起動しているか（「スイッチで起動する」がオンのときだけ使う）
         private WaveReaction _reaction;       ///< 反応する波の種類
         private Rigidbody _body;              ///< 自分の Rigidbody（Kinematic）
@@ -120,6 +128,7 @@ namespace Aura.Gimmick
         private float _nextNavPlanTime;     ///< 次に経路を引いてよい時刻（Time.time）
         private bool _isNavPlanFailed;       ///< 直前の経路探索が失敗したか（失敗の間は、まっすぐ戻る）
         private bool _hasWarnedNavMesh;      ///< NavMesh の経路が引けない警告を出したか（毎ステップ出さないため）
+        private bool _isReturnPending;       ///< 波に乗ったあと、まだ初期位置へ戻り終えていないか（戻り終えた通知を 1 回だけ出すため）
         private bool _hasWarnedOverlapOverflow;  ///< 上面の Collider が入れ物の数を超えた警告を出したか（毎ステップ出さないため）
 
         private Collider[] _ownColliders;     ///< 自分と子の Collider（上面の位置を求める）
@@ -229,10 +238,12 @@ namespace Aura.Gimmick
             {
                 _currentEmitter = null;   // 進む向き（_direction）は残す。乗り直したとき、続きの向きで進むため
                 next = LoseWave(current, deltaTime);
+                NotifyIfReturned(next);
             }
             else
             {
                 next = Ride(emitter, deltaTime);
+                _isReturnPending = true;
                 _navReturn.Reset();   // 乗っている間に動いた分、戻る経路は引き直す
                 _nextNavPlanTime = 0.0f;
                 _velocity = (next - current) / deltaTime;
@@ -444,8 +455,79 @@ namespace Aura.Gimmick
                 return;
             }
             Quaternion rotated = Quaternion.RotateTowards(_body.rotation, _initialRotation, TurnDegreesPerSecond * deltaTime);
-            _turnDelta = rotated * Quaternion.Inverse(_body.rotation);
+            Quaternion delta = rotated * Quaternion.Inverse(_body.rotation);
+            if (IsRotationBlocked(delta))
+            {
+                return;   // 回ると壁に食い込むなら、このステップは回さない（位置が動いて空いたら、また回る）
+            }
+            _turnDelta = delta;
             _body.MoveRotation(rotated);
+        }
+
+        /// @brief 自分の中心まわりに delta だけ回ると、壁などに横から食い込むか
+        /// 位置の移動は壁の手前で止めるが、回転は別なので、壁際で回って角が食い込まないよう調べる
+        /// 乗っている物と動く Rigidbody と自分の子は相手にしない。縦に重ならない物（床）も相手にしない
+        /// 計算量: O(C × K)（C は自分の Collider の数、K は重なった Collider の数）
+        private bool IsRotationBlocked(Quaternion delta)
+        {
+            Vector3 bodyPosition = _body.position;
+            foreach (Collider own in _ownColliders)
+            {
+                if (own == null || !own.enabled || own.isTrigger)
+                {
+                    continue;
+                }
+
+                Vector3 ownPosition = bodyPosition + delta * (own.transform.position - bodyPosition);
+                Quaternion ownRotation = delta * own.transform.rotation;
+                Vector3 ownCenter = bodyPosition + delta * (own.bounds.center - bodyPosition);
+                float reach = own.bounds.extents.magnitude;
+                int count = Physics.OverlapBoxNonAlloc(ownCenter, Vector3.one * reach, _overlapBuffer, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+                for (int i = 0; i < count; i++)
+                {
+                    Collider other = _overlapBuffer[i];
+                    Rigidbody otherBody = other.attachedRigidbody;
+                    if (other.transform.IsChildOf(transform) || (otherBody != null && (!otherBody.isKinematic || _passengers.Contains(otherBody))))
+                    {
+                        continue;
+                    }
+
+                    // 縦に重ならない物（床など）は相手にしない。背の高い壁は、高さを相手の中心に揃えて横向きの押し出しを出させる
+                    float overlapY = Mathf.Min(ownCenter.y + own.bounds.extents.y, other.bounds.max.y) - Mathf.Max(ownCenter.y - own.bounds.extents.y, other.bounds.min.y);
+                    if (overlapY <= MinPushDistance)
+                    {
+                        continue;
+                    }
+                    Vector3 levelPosition = ownPosition + Vector3.up * (other.bounds.center.y - ownCenter.y);
+                    if (Physics.ComputePenetration(own, levelPosition, ownRotation, other, other.transform.position, other.transform.rotation, out Vector3 direction, out float distance)
+                        && distance > MinPushDistance)
+                    {
+                        direction.y = 0.0f;
+                        if (direction.sqrMagnitude > MinPushHorizontalSqrMagnitude)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        /// @brief 波に乗ったあとの戻る動きで、初期位置（と初期の向き）に着いたら、戻り終えた通知を 1 回出す
+        private void NotifyIfReturned(Vector3 position)
+        {
+            bool isReturnMode = _lostWaveMode == WaveRiderLostWaveMode.ReturnToStart || _lostWaveMode == WaveRiderLostWaveMode.ReturnByNavMesh;
+            if (!_isReturnPending || !isReturnMode)
+            {
+                return;
+            }
+            bool isAtPosition = (position - _initialPosition).sqrMagnitude <= ReturnedDistance * ReturnedDistance;
+            bool isAtRotation = !_isFacingTravelDirection || Quaternion.Angle(_body.rotation, _initialRotation) <= ReturnedAngle;
+            if (isAtPosition && isAtRotation)
+            {
+                _isReturnPending = false;
+                _onReturned.Invoke();
+            }
         }
 
         /// @brief 初期位置へまっすぐ 1 ステップ分戻る。途中の壁は通り抜けず、その手前で止まる（慣性と同じ）
