@@ -34,6 +34,13 @@ PascalCase で記述し、動詞から始めることを基本とする。接頭
 - `SE_` 効果音 / `BGM_` BGM (`SE_Jump`, `BGM_Title`)
 - `Scene_` Scene (`Scene_Title`, `Scene_Stage01`)
 
+### 名前空間 [coding-rules 1.5]
+- スクリプトには必ず名前空間を付け、`Aura.<機能名>` の形式にする (各部分は PascalCase。`aura.player` は不可)
+- 機能名は機能別フォルダの名前と原則同じ (`Scripts/Player/` なら `Aura.Player`)
+- 例外: `Runtime/` は名前空間に入れない (`Scripts/Gimmick/Runtime/` → `Aura.Gimmick`)
+- 例外: エディタ専用の `Editor/` は末尾に `.Editor` を付ける (`Scripts/Gimmick/Editor/` → `Aura.Gimmick.Editor`)
+- 例外: フォルダ名が Unity / C# の型名と同じ場合は別名にする (`Scripts/Debug/` → `Aura.DebugTools`。`UnityEngine.Debug` との衝突を避けるため)
+
 ## 2. フォルダ構成
 
 ### 個人作業フォルダ [coding-rules 2.1]
@@ -58,6 +65,7 @@ PascalCase で記述し、動詞から始めることを基本とする。接頭
 ### スクリプトの配置 [coding-rules 2.4]
 - 機能別のサブフォルダに置く (例: `Scripts/Player/`)
 - 1ファイル1クラス、ファイル名＝クラス名
+- 名前空間はフォルダに合わせる [coding-rules 1.5]
 
 ## 3. スクリプト設計
 
