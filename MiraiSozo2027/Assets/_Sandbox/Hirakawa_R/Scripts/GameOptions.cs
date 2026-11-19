@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Aura.Cameras;
+using Aura.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering;

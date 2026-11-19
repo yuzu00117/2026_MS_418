@@ -1,39 +1,42 @@
 using UnityEngine;
 
-public class GameSettings : MonoBehaviour
+namespace Aura.Core
 {
-    public static GameSettings Instance { get; private set; }
-
-    private void Awake()
+    public class GameSettings : MonoBehaviour
     {
-        if (Instance == null)
+        public static GameSettings Instance { get; private set; }
+
+        private void Awake()
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
+            if (Instance == null)
+            {
+                Instance = this;
+                DontDestroyOnLoad(gameObject);
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
         }
-        else
+
+        [SerializeField] private bool _isFirstPersonMode = false;
+        public bool IsFirstPersonMode => _isFirstPersonMode;
+
+        public void ToggleFirstPersonMode()
         {
-            Destroy(gameObject);
+            _isFirstPersonMode = !_isFirstPersonMode;
+        }   
+
+        // Start is called once before the first execution of Update after the MonoBehaviour is created
+        void Start()
+        {
+
         }
-    }
 
-    [SerializeField] private bool _isFirstPersonMode = false;
-    public bool IsFirstPersonMode => _isFirstPersonMode;
+        // Update is called once per frame
+        void Update()
+        {
 
-    public void ToggleFirstPersonMode()
-    {
-        _isFirstPersonMode = !_isFirstPersonMode;
-    }   
-    
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        }
     }
 }

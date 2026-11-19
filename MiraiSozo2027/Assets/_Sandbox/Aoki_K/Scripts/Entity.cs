@@ -1,97 +1,101 @@
 using System;
 using Aura.Inspector;
 using UnityEngine;
+using Aura.Combat;
 
-public abstract class Entity : MonoBehaviour, IDamageable
+namespace Aura.Entities
 {
-    [Header("Status Settings")]
-    [Tooltip("最大HP")]
-    [SerializeField] protected int _maxHp = 100;
-    [SerializeField] protected int _currentHp;
-    public int MaxHp => _maxHp;
-    public int CurrentHp => _currentHp;
-    public bool IsDead { get; private set; }
-
-    /// <summary>
-    /// イベント：HPが変化したときに呼び出される＜現在HP、最大HP＞
-    /// </summary>
-    public event Action<int, int> OnHpChanged;
-
-    protected bool _isInvincible = false;
-    public bool IsInvincible => _isInvincible;
-    
-    [SerializeField] protected float _invincibleTime = 0.5f;
-    private float _invincibleTimer = 0f;
-
-    // ダメージ無効化フラグ（アーマー等用）
-    protected virtual bool IsDamageBlocked => false;
-
-    protected virtual void Awake()
+    public abstract class Entity : MonoBehaviour, IDamageable
     {
-        _currentHp = _maxHp;
-        IsDead = false;
-    }
+        [Header("Status Settings")]
+        [Tooltip("最大HP")]
+        [SerializeField] protected int _maxHp = 100;
+        [SerializeField] protected int _currentHp;
+        public int MaxHp => _maxHp;
+        public int CurrentHp => _currentHp;
+        public bool IsDead { get; private set; }
 
-    protected virtual void Update()
-    {
-        if (_isInvincible)
+        /// <summary>
+        /// イベント：HPが変化したときに呼び出される＜現在HP、最大HP＞
+        /// </summary>
+        public event Action<int, int> OnHpChanged;
+
+        protected bool _isInvincible = false;
+        public bool IsInvincible => _isInvincible;
+
+        [SerializeField] protected float _invincibleTime = 0.5f;
+        private float _invincibleTimer = 0f;
+
+        // ダメージ無効化フラグ（アーマー等用）
+        protected virtual bool IsDamageBlocked => false;
+
+        protected virtual void Awake()
         {
-            _invincibleTimer += Time.deltaTime;
-            if (_invincibleTimer >= _invincibleTime)
+            _currentHp = _maxHp;
+            IsDead = false;
+        }
+
+        protected virtual void Update()
+        {
+            if (_isInvincible)
             {
-                _isInvincible = false;
+                _invincibleTimer += Time.deltaTime;
+                if (_invincibleTimer >= _invincibleTime)
+                {
+                    _isInvincible = false;
+                    _invincibleTimer = 0f;
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// ダメージを与える（IDamageable実装・ギミックのUnityEventからも呼び出し可能）
+        /// </summary>
+        [ShowInEventMenu]
+        public void TakeDamage(int damage)
+        {
+            if(IsDead || damage <= 0 || _isInvincible || IsDamageBlocked) return;
+            _currentHp = Mathf.Max(0, _currentHp - damage);
+            OnHpChanged?.Invoke(_currentHp, _maxHp);
+            OnDamaged(damage);
+            if (_currentHp <= 0)
+            {
+                IsDead = true;
+                OnDeath();
+            }
+            else if(_invincibleTime > 0f)
+            {
+                _isInvincible = true;
                 _invincibleTimer = 0f;
             }
         }
-    }
 
-
-    /// <summary>
-    /// ダメージを与える（IDamageable実装・ギミックのUnityEventからも呼び出し可能）
-    /// </summary>
-    [ShowInEventMenu]
-    public void TakeDamage(int damage)
-    {
-        if(IsDead || damage <= 0 || _isInvincible || IsDamageBlocked) return;
-        _currentHp = Mathf.Max(0, _currentHp - damage);
-        OnHpChanged?.Invoke(_currentHp, _maxHp);
-        OnDamaged(damage);
-        if (_currentHp <= 0)
+        /// <summary>
+        /// 即死する（IDamageable実装・ギミックのUnityEventからも呼び出し可能）
+        /// </summary>
+        [ShowInEventMenu]
+        public virtual void Kill()
         {
+            if(IsDead) return;
+
+            _isInvincible = false;
+            int fatalDamage = _currentHp;
+            _currentHp = 0;
+            OnHpChanged?.Invoke(_currentHp, _maxHp);
+            OnDamaged(fatalDamage);
             IsDead = true;
             OnDeath();
         }
-        else if(_invincibleTime > 0f)
-        {
-            _isInvincible = true;
-            _invincibleTimer = 0f;
-        }
+
+        /// <summary>
+        /// イベント：ダメージを受けた際の演出等用
+        /// </summary>
+        protected virtual void OnDamaged(int damage = 0) { }
+
+        /// <summary>
+        /// HPが0になった際の処理（死亡演出等用）
+        /// </summary>
+        protected abstract void OnDeath();
     }
-
-    /// <summary>
-    /// 即死する（IDamageable実装・ギミックのUnityEventからも呼び出し可能）
-    /// </summary>
-    [ShowInEventMenu]
-    public virtual void Kill()
-    {
-        if(IsDead) return;
-        
-        _isInvincible = false;
-        int fatalDamage = _currentHp;
-        _currentHp = 0;
-        OnHpChanged?.Invoke(_currentHp, _maxHp);
-        OnDamaged(fatalDamage);
-        IsDead = true;
-        OnDeath();
-    }
-
-    /// <summary>
-    /// イベント：ダメージを受けた際の演出等用
-    /// </summary>
-    protected virtual void OnDamaged(int damage = 0) { }
-
-    /// <summary>
-    /// HPが0になった際の処理（死亡演出等用）
-    /// </summary>
-    protected abstract void OnDeath();
 }
