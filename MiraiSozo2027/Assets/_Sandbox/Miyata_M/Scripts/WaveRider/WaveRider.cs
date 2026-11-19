@@ -45,7 +45,7 @@ namespace Aura.Gimmick
         [Tooltip("波が遮られた、止まった、スイッチが止まったときの動き\n" +
                  "・その場で止まる: 今の位置で止まる\n" +
                  "・慣性で進んでから止まる: 直前の速さと向きのまま進み、「慣性の減速（m/s²）」で減速して止まる\n" +
-                 "・初期位置へ戻る: ゲーム開始時の位置へ「戻る速さ」で戻る")]
+                 "・初期位置へ戻る: ゲーム開始時の位置へ「戻る速さ」で戻る。途中に壁などがあれば、その手前で止まる")]
         [SerializeField] private WaveRiderLostWaveMode _lostWaveMode = WaveRiderLostWaveMode.StopInPlace;  ///< 波が無くなったときの動き
 
         [InspectorLabel("慣性の減速（m/s²）")]
@@ -362,7 +362,9 @@ namespace Aura.Gimmick
 
                 case WaveRiderLostWaveMode.ReturnToStart:
                     _velocity = Vector3.zero;
-                    return Vector3.MoveTowards(current, _initialPosition, _returnSpeed * deltaTime);
+                    // 戻る途中の壁は通り抜けず、その手前で止まる（慣性と同じ）
+                    Vector3 target = Vector3.MoveTowards(current, _initialPosition, _returnSpeed * deltaTime);
+                    return SweepMove(current, target - current, out bool _);
 
                 default:
                     _velocity = Vector3.zero;
@@ -371,11 +373,22 @@ namespace Aura.Gimmick
         }
 
         /// @brief 慣性で 1 ステップ分進める。壁などに当たる手前で止まる（当たったら速さは 0 になる）
-        /// 上に乗っている物は当たり判定から外す。SweepTestAll は配列を作るが、慣性で進んでいる間だけなので許容する
-        /// 計算量: O(H)（H は進む先の当たり判定の数）
         private Vector3 MoveByInertia(Vector3 current, float deltaTime)
         {
-            Vector3 step = _velocity * deltaTime;
+            Vector3 next = SweepMove(current, _velocity * deltaTime, out bool isBlocked);
+            if (isBlocked)
+            {
+                _velocity = Vector3.zero;
+            }
+            return next;
+        }
+
+        /// @brief step だけ進めた位置を返す。壁などに当たるなら、その手前までにする
+        /// 上に乗っている物は当たり判定から外す。SweepTestAll は配列を作るが、波に乗っていない間だけなので許容する
+        /// 計算量: O(H)（H は進む先の当たり判定の数）
+        private Vector3 SweepMove(Vector3 current, Vector3 step, out bool isBlocked)
+        {
+            isBlocked = false;
             float stepLength = step.magnitude;
             if (stepLength <= 0.0f)
             {
@@ -384,7 +397,6 @@ namespace Aura.Gimmick
 
             Vector3 direction = step / stepLength;
             float nearestDistance = stepLength;
-            bool isBlocked = false;
             foreach (RaycastHit hit in _body.SweepTestAll(direction, stepLength, QueryTriggerInteraction.Ignore))
             {
                 Rigidbody hitBody = hit.rigidbody;
@@ -397,11 +409,6 @@ namespace Aura.Gimmick
                     nearestDistance = hit.distance;
                     isBlocked = true;
                 }
-            }
-
-            if (isBlocked)
-            {
-                _velocity = Vector3.zero;
             }
             return current + direction * nearestDistance;
         }
