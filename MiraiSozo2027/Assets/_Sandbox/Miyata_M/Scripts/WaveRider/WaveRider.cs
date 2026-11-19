@@ -9,7 +9,7 @@ namespace Aura.Gimmick
     /// @brief タレットが出す波（ビームの線）に運ばれるオブジェクト。上に乗った物（プレイヤーを含む）も一緒に運ぶ
     /// ・反応する波の種類は WaveReaction（電磁波/超音波のチェック）で決める。反応しない波では動かず、波が無いときと同じ扱いになる
     /// ・波が出ている間は常に線の上にいて、線の上の道のり s を一定の速さで進める。波が曲がっても跳ね返っても、s を保ったまま線に沿う
-    /// ・波が無くなったら（遮られた、止まった）、「波が無くなったとき」の設定に従う（その場で止まる / 慣性で進んでから止まる / 初期位置へ戻る）
+    /// ・波が無くなったら（遮られた、止まった）、「波が無くなったとき」の設定に従う（その場で止まる / 慣性で進んでから止まる / 初期位置へ戻る / 経路探索（NavMesh）で初期位置へ戻る）
     ///   止まったあとや戻る途中で波が来たら、今の位置に一番近い線の上の点から乗り直す
     /// ・Kinematic な Rigidbody として物理ステップ（FixedUpdate）で動く。上に乗った Rigidbody には、同じ移動量を足して運ぶ
     ///   （プレイヤーは毎ステップ水平の速度を入力で上書きするため、摩擦では運ばれない）
@@ -120,6 +120,7 @@ namespace Aura.Gimmick
         private float _nextNavPlanTime;     ///< 次に経路を引いてよい時刻（Time.time）
         private bool _isNavPlanFailed;       ///< 直前の経路探索が失敗したか（失敗の間は、まっすぐ戻る）
         private bool _hasWarnedNavMesh;      ///< NavMesh の経路が引けない警告を出したか（毎ステップ出さないため）
+        private bool _hasWarnedOverlapOverflow;  ///< 上面の Collider が入れ物の数を超えた警告を出したか（毎ステップ出さないため）
 
         private Collider[] _ownColliders;     ///< 自分と子の Collider（上面の位置を求める）
         private readonly Collider[] _overlapBuffer = new Collider[OverlapBufferSize];  ///< 上面の重なりを受ける入れ物（確保を避ける）
@@ -192,6 +193,16 @@ namespace Aura.Gimmick
         private void OnTransformChildrenChanged()
         {
             _ownColliders = GetComponentsInChildren<Collider>();
+        }
+
+        // 再び有効になったとき、無効の前の慣性や、乗っていた波、引いてあった経路を持ち越さない
+        private void OnEnable()
+        {
+            _velocity = Vector3.zero;
+            _currentEmitter = null;
+            _attachOffset = Vector3.zero;
+            _navReturn.Reset();
+            _nextNavPlanTime = 0.0f;
         }
 
         private void OnDisable()
@@ -315,6 +326,11 @@ namespace Aura.Gimmick
             Vector3 center = new Vector3(bounds.center.x, bounds.max.y + PassengerSlabHeight * 0.5f - TopContactTolerance, bounds.center.z);
             Vector3 halfExtents = new Vector3(bounds.extents.x, PassengerSlabHeight * 0.5f, bounds.extents.z);
             int count = Physics.OverlapBoxNonAlloc(center, halfExtents, _overlapBuffer, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+            if (count >= OverlapBufferSize && !_hasWarnedOverlapOverflow)
+            {
+                _hasWarnedOverlapOverflow = true;
+                Debug.LogWarning("WaveRider: 上面の Collider が多すぎて、乗っている物を取りこぼす恐れがあります（最大 " + OverlapBufferSize + " 個）", this);
+            }
             for (int i = 0; i < count; i++)
             {
                 Rigidbody other = _overlapBuffer[i].attachedRigidbody;
@@ -415,7 +431,8 @@ namespace Aura.Gimmick
         /// 上に乗った物も、乗っている間と同じく、この分だけ自分の中心まわりに回す
         private void RestoreRotation(float deltaTime)
         {
-            if (!_isFacingTravelDirection)
+            // 戻る速さが 0 のときは「戻らずその場で止まる」ので、向きも戻さない
+            if (!_isFacingTravelDirection || _returnSpeed <= 0.0f)
             {
                 return;
             }
