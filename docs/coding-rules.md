@@ -87,6 +87,26 @@ public void speed(float s) { }      // 動詞から始まっていない、引�
 | `SE_` / `BGM_` | Audio（効果音 / BGM） | `SE_Jump`, `BGM_Title` |
 | `Scene_` | Scene | `Scene_Title`, `Scene_Stage01` |
 
+### 1.5 名前空間
+
+スクリプトには必ず名前空間を付け、**`Aura.<機能名>`** の形式にしてください。
+
+- 各部分は PascalCase で書く（`Aura.Player`、`Aura.Enemy`、`Aura.UI`）
+- 機能名は、スクリプトを置く**機能別フォルダの名前と同じ**にする（`Scripts/Player/` に置くなら `Aura.Player`）
+
+```csharp
+// ✅ 良い例（Scripts/Player/PlayerController.cs）
+namespace Aura.Player
+{
+    public class PlayerController : MonoBehaviour { }
+}
+
+// ❌ 悪い例
+public class PlayerController : MonoBehaviour { }   // 名前空間が無い
+
+namespace aura.player { }                            // PascalCase でない
+```
+
 ---
 
 ## 2. フォルダ構成
@@ -169,6 +189,7 @@ MiraiSozo2027/Assets/
 
 - スクリプトは**機能別のサブフォルダ**に置く（例: `Scripts/Player/`）
 - **1ファイル1クラス**、**ファイル名＝クラス名**とする
+- 名前空間はフォルダに合わせる（→ [1.5 名前空間](#15-名前空間)）
 
 ---
 
