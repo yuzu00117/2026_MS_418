@@ -87,6 +87,34 @@ public void speed(float s) { }      // 動詞から始まっていない、引�
 | `SE_` / `BGM_` | Audio（効果音 / BGM） | `SE_Jump`, `BGM_Title` |
 | `Scene_` | Scene | `Scene_Title`, `Scene_Stage01` |
 
+### 1.5 名前空間
+
+スクリプトには必ず名前空間を付け、**`Aura.<機能名>`** の形式にしてください。
+
+- 各部分は PascalCase で書く（`Aura.Player`、`Aura.Enemy`、`Aura.UI`）
+- 機能名は、スクリプトを置く**機能別フォルダの名前と原則同じ**にする（`Scripts/Player/` に置くなら `Aura.Player`）
+
+ただし、次の場合は例外とします。
+
+| 場合 | 置き場所 | 名前空間 | 決まり |
+|---|---|---|---|
+| ゲーム中に動くスクリプト | `Scripts/Gimmick/Runtime/` | `Aura.Gimmick` | `Runtime` は名前空間に入れない |
+| Unity エディタ専用のスクリプト | `Scripts/Gimmick/Editor/` | `Aura.Gimmick.Editor` | 末尾に `.Editor` を付ける |
+| フォルダ名が Unity / C# の型名と同じ | `Scripts/Debug/` | `Aura.DebugTools` | 別の名前にする（`UnityEngine.Debug` と衝突し、`Debug.Log` がエラーになるため） |
+
+```csharp
+// ✅ 良い例（Scripts/Player/PlayerController.cs）
+namespace Aura.Player
+{
+    public class PlayerController : MonoBehaviour { }
+}
+
+// ❌ 悪い例
+public class PlayerController : MonoBehaviour { }   // 名前空間が無い
+
+namespace aura.player { }                            // PascalCase でない
+```
+
 ---
 
 ## 2. フォルダ構成
@@ -169,6 +197,7 @@ MiraiSozo2027/Assets/
 
 - スクリプトは**機能別のサブフォルダ**に置く（例: `Scripts/Player/`）
 - **1ファイル1クラス**、**ファイル名＝クラス名**とする
+- 名前空間はフォルダに合わせる（→ [1.5 名前空間](#15-名前空間)）
 
 ---
 
