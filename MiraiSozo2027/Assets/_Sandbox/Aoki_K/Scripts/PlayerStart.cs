@@ -1,13 +1,16 @@
 using UnityEngine;
 
-public class PlayerStart : MonoBehaviour
+namespace Aura.PlayerControl
 {
-    private void OnDrawGizmos()
+    public class PlayerStart : MonoBehaviour
     {
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireCube(transform.position + Vector3.up * 1f,
-                            new Vector3(0.6f, 2f, 0.6f));
-        Gizmos.color = Color.blue;
-        Gizmos.DrawRay(transform.position + Vector3.up * 1f, transform.forward * 1.5f);
+        private void OnDrawGizmos()
+        {
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireCube(transform.position + Vector3.up * 1f,
+                                new Vector3(0.6f, 2f, 0.6f));
+            Gizmos.color = Color.blue;
+            Gizmos.DrawRay(transform.position + Vector3.up * 1f, transform.forward * 1.5f);
+        }
     }
 }

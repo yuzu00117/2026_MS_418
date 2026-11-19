@@ -1,24 +1,28 @@
 using UnityEngine;
+using Aura.Combat;
 
-public class Enemy : Entity, IArmored
+namespace Aura.Entities
 {
-    public bool IsArmored { get; private set; }
-
-    public void SetArmored(bool isArmored)
+    public class Enemy : Entity, IArmored
     {
-        IsArmored = isArmored;
-    }
+        public bool IsArmored { get; private set; }
 
-    protected override bool IsDamageBlocked => IsArmored;
+        public void SetArmored(bool isArmored)
+        {
+            IsArmored = isArmored;
+        }
 
-    public override void Kill()
-    {
-        IsArmored = false;
-        base.Kill();
-    }
+        protected override bool IsDamageBlocked => IsArmored;
 
-    protected override void OnDeath()
-    {
-        Destroy(gameObject);
+        public override void Kill()
+        {
+            IsArmored = false;
+            base.Kill();
+        }
+
+        protected override void OnDeath()
+        {
+            Destroy(gameObject);
+        }
     }
 }

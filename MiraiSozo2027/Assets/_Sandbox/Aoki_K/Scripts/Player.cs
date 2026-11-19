@@ -1,9 +1,12 @@
 using UnityEngine;
 
-public class Player : Entity
+namespace Aura.Entities
 {
-    protected override void OnDeath()
+    public class Player : Entity
     {
-        
+        protected override void OnDeath()
+        {
+
+        }
     }
 }

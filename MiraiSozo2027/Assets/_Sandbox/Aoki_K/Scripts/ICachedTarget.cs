@@ -1,7 +1,10 @@
-/// <summary>
-/// キャッシュ構造体が実装する共通インターフェース
-/// </summary>
-public interface ICachedTarget
+namespace Aura.Combat
 {
-    bool IsTargetLost { get; }
+    /// <summary>
+    /// キャッシュ構造体が実装する共通インターフェース
+    /// </summary>
+    public interface ICachedTarget
+    {
+        bool IsTargetLost { get; }
+    }
 }

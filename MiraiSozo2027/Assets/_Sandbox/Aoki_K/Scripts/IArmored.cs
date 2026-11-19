@@ -1,5 +1,8 @@
-public interface IArmored
+namespace Aura.Combat
 {
-    bool IsArmored { get; }
-    void SetArmored(bool isArmored);
+    public interface IArmored
+    {
+        bool IsArmored { get; }
+        void SetArmored(bool isArmored);
+    }
 }

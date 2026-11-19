@@ -17,7 +17,7 @@ namespace Echo.Echolocation.Tests
         public static void StopTeamInput()
         {
             // 共有コードには依存を追加せず、シーンテスト終了時だけInputActionを停止する。
-            var manager = Type.GetType("GameManager, Assembly-CSharp");
+            var manager = Type.GetType("Aura.Core.GameManager, Assembly-CSharp") ?? Type.GetType("GameManager, Assembly-CSharp");
             var actions = manager?.GetProperty("Actions")?.GetValue(null);
             actions?.GetType().GetMethod("Disable")?.Invoke(actions, null);
             Time.timeScale = 1;

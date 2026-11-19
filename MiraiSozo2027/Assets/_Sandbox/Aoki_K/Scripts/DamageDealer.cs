@@ -1,35 +1,38 @@
 using UnityEngine;
 
-public class DamageDealer : DamageDealerBase<CachedTarget>
+namespace Aura.Combat
 {
-    [Tooltip("trueの場合、ダメージを与えた相手を即死させる")]
-    [SerializeField] private bool _isInstantKill = false;
-
-    private void OnTriggerEnter(Collider other) => TryDealDamage(other);
-    private void OnTriggerStay(Collider other) => TryDealDamage(other);
-    private void OnCollisionEnter(Collision collision) => TryDealDamage(collision.collider);
-    private void OnCollisionStay(Collision collision) => TryDealDamage(collision.collider);
-
-    protected override CachedTarget CreateCachedTarget(Collider hitCollider)
+    public class DamageDealer : DamageDealerBase<CachedTarget>
     {
-        IDamageable damageable = hitCollider.GetComponentInParent<IDamageable>();
-        return new CachedTarget(damageable);
-    }
+        [Tooltip("trueの場合、ダメージを与えた相手を即死させる")]
+        [SerializeField] private bool _isInstantKill = false;
 
-    private void TryDealDamage(Collider other)
-    {
-        if (!IsTargetLayer(other)) return;
+        private void OnTriggerEnter(Collider other) => TryDealDamage(other);
+        private void OnTriggerStay(Collider other) => TryDealDamage(other);
+        private void OnCollisionEnter(Collision collision) => TryDealDamage(collision.collider);
+        private void OnCollisionStay(Collision collision) => TryDealDamage(collision.collider);
 
-        CachedTarget target = GetOrFindTarget(other);
-        if (!target.HasValidDamageable) return;
-
-        if (_isInstantKill)
+        protected override CachedTarget CreateCachedTarget(Collider hitCollider)
         {
-            target.Damageable.Kill();
+            IDamageable damageable = hitCollider.GetComponentInParent<IDamageable>();
+            return new CachedTarget(damageable);
         }
-        else
+
+        private void TryDealDamage(Collider other)
         {
-            target.Damageable.TakeDamage(_damage);
+            if (!IsTargetLayer(other)) return;
+
+            CachedTarget target = GetOrFindTarget(other);
+            if (!target.HasValidDamageable) return;
+
+            if (_isInstantKill)
+            {
+                target.Damageable.Kill();
+            }
+            else
+            {
+                target.Damageable.TakeDamage(_damage);
+            }
         }
     }
 }

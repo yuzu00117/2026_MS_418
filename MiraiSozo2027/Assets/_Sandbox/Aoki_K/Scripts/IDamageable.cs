@@ -1,7 +1,9 @@
-
-public interface IDamageable
+namespace Aura.Combat
 {
-    bool IsDead { get; }
-    void TakeDamage(int damage);
-    void Kill();
+    public interface IDamageable
+    {
+        bool IsDead { get; }
+        void TakeDamage(int damage);
+        void Kill();
+    }
 }
