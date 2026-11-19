@@ -27,7 +27,7 @@ namespace Aura.Kinesis
         public bool CanBeGrabbed => _canBeGrabbed;
 
         [Tooltip("掴んでいる間も回転できるか。OFF（通常）なら掴んだ物は回らない。\n" +
-                 "念力レバーのように、軸を中心に回って動く物だけ ON にする")]
+                 "軸を中心に回って動く物だけ ON にする")]
         [SerializeField] private bool _canRotateWhileHeld = false;
         public bool CanRotateWhileHeld => _canRotateWhileHeld;
 
