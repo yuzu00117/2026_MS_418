@@ -76,7 +76,15 @@
 - 押し戻しの重なり検出バッファは 32 個まで
 - 押し戻しは自分の Collider ごとに求め、一番大きいものだけを使う(子に Collider を付けても二重に押さない)
 - 上に乗った物は、壁の手前で止める処理をしない(毎ステップの確保を避けるため)。壁際で壁に食い込んだ分は、物理の押し出しに任せる
+- 初期位置はワールド座標で覚える。動く親(動く床など)の子にすると、戻る先がずれる
+- 経路探索で戻るとき、最寄りの NavMesh の点が別の階の床になることがある(10m 以内で一番近い点を使うため)
+- 同じ線に乗った WaveRider どうしは、互いにぶつからない(すり抜ける)
+- 上の物は位置を直接書き換えて運ぶので、Rigidbody の補間(Interpolate)を使う物は、見た目が少し揺れることがある
 - 検証したのは 3×1×3 と 1×1×1(プレハブ)のライダー。実際の Phononkinesis の曲がる波、電磁スイッチと実際の波の組み合わせは未確認
+
+## テスト
+- `Assets/Tests/EditMode/WaveRider/` に、線の計算(`WaveLinePath`)の EditMode テストがある。Test Runner から実行する
+- WaveRider のフォルダに asmdef(`Aura.Sandbox.WaveRider`)を置いて、テストから参照している
 
 ## 動作確認用シーン
 `Assets/_Sandbox/Miyata_M/Scenes/WaveRiderTest/WaveRiderTest.unity`
