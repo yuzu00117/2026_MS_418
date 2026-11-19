@@ -145,6 +145,19 @@ namespace Aura.Gimmick
             _isActive = !_isActive;
         }
 
+        /// @brief 乗る波を出すものを差し替える。コードで生成したライダーに、生成後に割り当てるときに使う
+        /// 乗っていた波とは別のものになるので、降りて「波が無くなったとき」の動きから始める。null は割り当てない（エラーを出す）
+        public void SetEmitter(WaveEmitter emitter)
+        {
+            if (emitter == null)
+            {
+                Debug.LogError("WaveRider.SetEmitter: null は割り当てられません", this);
+                return;
+            }
+            _emitter = emitter;
+            _currentEmitter = null;
+        }
+
         private void Awake()
         {
             if (_emitter == null)
@@ -476,10 +489,10 @@ namespace Aura.Gimmick
             return position - Vector3.up * _heightOffset;
         }
 
-        /// @brief 1 ステップ分、線に沿って進めて、次の位置を返す（回転も合わせる）
-        private Vector3 Ride(WaveEmitter emitter, float deltaTime)
+        /// @brief 線の上の道のりを 1 ステップ分進める。終点では止まる（折り返すなら向きを変える）
+        /// 始まりでも終点と同じく、広がり分だけ手前で折り返す
+        private void AdvanceDistance(IReadOnlyList<Vector3> corners, float deltaTime)
         {
-            var corners = emitter.BeamCorners;
             // 波は中心を通るので、終点（壁など）に中心まで行くと半分食い込む。先端が終点に着く所で止める
             WaveLinePath.GetPointAt(corners, float.MaxValue, out Vector3 endDirection);
             float length = Mathf.Max(0.0f, WaveLinePath.GetLength(corners) - GetFrontExtent(endDirection));
@@ -502,6 +515,13 @@ namespace Aura.Gimmick
                 _distance = startLimit;
                 _direction = 1.0f;
             }
+        }
+
+        /// @brief 1 ステップ分、線に沿って進めて、次の位置を返す（回転も合わせる）
+        private Vector3 Ride(WaveEmitter emitter, float deltaTime)
+        {
+            var corners = emitter.BeamCorners;
+            AdvanceDistance(corners, deltaTime);
 
             Vector3 point = WaveLinePath.GetPointAt(corners, _distance, out Vector3 travelDirection);
             FaceTravelDirection(travelDirection * _direction, deltaTime);
