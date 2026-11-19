@@ -90,7 +90,7 @@
 
 ## テスト
 - `Assets/Tests/EditMode/WaveRider/` に、線の計算(`WaveLinePath`)の EditMode テストがある。Test Runner から実行する
-- `Assets/Tests/PlayMode/WaveRider/` に、初期位置へ戻る動き(戻り終えた通知、戻る速さ 0、向きの復元、壁際で回らない)の PlayMode テストがある。波を出すものは置かず、波が無い状態で動かす
+- `Assets/Tests/PlayMode/WaveRider/` に、初期位置へ戻る動き(戻り終えた通知、戻る速さ 0、向きの復元、壁際で回らない、NavMesh で戻る)の PlayMode テストがある。波を出すものは置かず、波が無い状態で動かす。NavMesh のテストは、テスト内で床を焼く
 - 波に乗っている間の動き(乗る、折り返す、押し戻す)の自動テストは無い。動作確認用シーンで確かめる
 - WaveRider のフォルダに asmdef(`Aura.Sandbox.WaveRider`)を置いて、テストから参照している
 

@@ -4,6 +4,7 @@
     "references": [
         "Aura.Sandbox.WaveRider",
         "Aura.ObjectInfo",
+        "Unity.AI.Navigation",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

@@ -13,6 +13,7 @@ namespace Aura.Gimmick.Tests
         private const float PositionTolerance = 0.02f;
         private const float AngleTolerance = 1.0f;
         private const int SettleSteps = 60;   ///< 戻り終えるまで待つ物理ステップ数
+        private const int NavSettleSteps = 150; ///< 経路探索で戻り終えるまで待つ物理ステップ数（約 14m を 10m/s で）
         private const float MaxAngleBeforeWall = 16.0f; ///< 壁際で回れる最大の角度（度）。約 14.4° で壁に当たる
         private const float RiderSize = 3.0f; ///< 壁際で回る検証に使う、ライダーの 1 辺（m）
 
@@ -55,9 +56,19 @@ namespace Aura.Gimmick.Tests
             SetField(_rider, "_isFacingTravelDirection", isFacing);
         }
 
-        private IEnumerator Settle()
+        /// 戻り終えた通知を数える。フィールドが無いときは、名前を示して落とす
+        private int[] CountReturned()
         {
-            for (int i = 0; i < SettleSteps; i++)
+            FieldInfo field = typeof(WaveRider).GetField("_onReturned", BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(field, "_onReturned");
+            var calls = new int[1];
+            ((UnityEngine.Events.UnityEvent)field.GetValue(_rider)).AddListener(() => calls[0]++);
+            return calls;
+        }
+
+        private IEnumerator Settle(int steps = SettleSteps)
+        {
+            for (int i = 0; i < steps; i++)
             {
                 yield return new WaitForFixedUpdate();
             }
@@ -67,30 +78,53 @@ namespace Aura.Gimmick.Tests
         public IEnumerator 初期位置へ戻り終えたら通知を1回だけ出す()
         {
             CreateRider(10.0f, false);
-            int calls = 0;
-            var onReturned = (UnityEngine.Events.UnityEvent)typeof(WaveRider).GetField("_onReturned", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(_rider);
-            onReturned.AddListener(() => calls++);
+            int[] calls = CountReturned();
             SetField(_rider, "_isReturnPending", true);   // 波に乗ったあと、という状態にする
             _rider.SetInitialPosition(new Vector3(0, 0, 3));
 
             yield return Settle();
 
             Assert.That((_body.position - new Vector3(0, 0, 3)).magnitude, Is.LessThan(PositionTolerance));
-            Assert.AreEqual(1, calls);
+            Assert.AreEqual(1, calls[0]);
+        }
+
+        [UnityTest]
+        public IEnumerator 経路探索で戻るときも初期位置と初期の向きへ着いて通知を1回だけ出す()
+        {
+            // 床だけで NavMesh を焼く（ライダーは焼いたあとに置くので、NavMesh に含まれない）
+            _wallObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _wallObject.transform.position = new Vector3(0, -0.5f, 0);
+            _wallObject.transform.localScale = new Vector3(30, 1, 30);
+            Physics.SyncTransforms();
+            var surface = _wallObject.AddComponent<Unity.AI.Navigation.NavMeshSurface>();
+            surface.BuildNavMesh();
+
+            CreateRider(10.0f, true);
+            SetField(_rider, "_lostWaveMode", WaveRiderLostWaveMode.ReturnByNavMesh);
+            _rider.SetInitialPosition(new Vector3(5, 0.5f, 5));
+            _rider.SetInitialRotation(Quaternion.Euler(0, 45, 0));
+            _body.position = new Vector3(-5, 0.5f, -5);
+            _riderObject.transform.position = _body.position;
+            int[] calls = CountReturned();
+            SetField(_rider, "_isReturnPending", true);
+
+            yield return Settle(NavSettleSteps);
+
+            Assert.That((_body.position - new Vector3(5, 0.5f, 5)).magnitude, Is.LessThan(PositionTolerance));
+            Assert.That(Quaternion.Angle(_body.rotation, Quaternion.Euler(0, 45, 0)), Is.LessThan(AngleTolerance));
+            Assert.AreEqual(1, calls[0]);
         }
 
         [UnityTest]
         public IEnumerator 波に乗っていなければ戻っても通知を出さない()
         {
             CreateRider(10.0f, false);
-            int calls = 0;
-            var onReturned = (UnityEngine.Events.UnityEvent)typeof(WaveRider).GetField("_onReturned", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(_rider);
-            onReturned.AddListener(() => calls++);
+            int[] calls = CountReturned();
             _rider.SetInitialPosition(new Vector3(0, 0, 3));
 
             yield return Settle();
 
-            Assert.AreEqual(0, calls);
+            Assert.AreEqual(0, calls[0]);
         }
 
         [UnityTest]
