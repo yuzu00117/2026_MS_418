@@ -77,11 +77,14 @@ namespace Aura.Gimmick
             System.Array.Copy(corners, _corners, corners.Length);
         }
 
-        /// @brief 経路に沿って distance だけ進めた、ライダーの目標の位置を返す。経路の終点では、目標の位置に着く
+        /// @brief distance だけ進めた、ライダーの目標の位置を返す。まず NavMesh からのずれを縮め、余った分で経路に沿って進む。経路の終点では、目標の位置に着く
         /// 計算量: O(進む間に通る角の数)
         public Vector3 Step(float distance)
         {
-            float remaining = distance;
+            // 総移動量が distance を超えないよう、先にずれを縮め、余った分で経路を進む（二重に進んで速くならない）
+            Vector3 shrunkOffset = Vector3.MoveTowards(_offset, _goalOffset, distance);
+            float remaining = distance - Vector3.Distance(_offset, shrunkOffset);
+            _offset = shrunkOffset;
             while (remaining > 0.0f && _nextIndex < _cornerCount)
             {
                 Vector3 corner = _corners[_nextIndex];
@@ -99,7 +102,6 @@ namespace Aura.Gimmick
                 }
             }
 
-            _offset = Vector3.MoveTowards(_offset, _goalOffset, distance);
             return _navPoint + _offset;
         }
     }

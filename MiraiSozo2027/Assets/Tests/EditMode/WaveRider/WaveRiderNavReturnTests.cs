@@ -45,12 +45,23 @@ namespace Aura.Gimmick.Tests
         }
 
         [Test]
-        public void Step_ずれは進んだ分だけ目標のずれへ縮む()
+        public void Step_ずれを先に縮めてから経路を進む()
         {
-            // 高さ 2 浮いて出発し、終点では高さ 0 の目標。進んだ距離 1 につきずれが 1 縮む
+            // 高さ 2 浮いて出発し、終点では高さ 0 の目標。先に降りてから経路を進む
             WaveRiderNavReturn nav = Begin(new Vector3(0, 2, 0), Vector3.zero);
-            Assert.That((nav.Step(1.0f) - new Vector3(1, 1, 0)).magnitude, Is.LessThan(Tolerance));
-            Assert.That((nav.Step(1.0f) - new Vector3(2, 0, 0)).magnitude, Is.LessThan(Tolerance));
+            Assert.That((nav.Step(1.0f) - new Vector3(0, 1, 0)).magnitude, Is.LessThan(Tolerance));
+            Assert.That((nav.Step(1.0f) - new Vector3(0, 0, 0)).magnitude, Is.LessThan(Tolerance));
+            Assert.That((nav.Step(1.0f) - new Vector3(1, 0, 0)).magnitude, Is.LessThan(Tolerance));
+        }
+
+        [Test]
+        public void Step_ずれの縮みと経路を合わせた移動量が与えた距離を超えない()
+        {
+            WaveRiderNavReturn nav = Begin(new Vector3(0, 0.5f, 0), Vector3.zero);
+            Vector3 previous = new Vector3(0, 0.5f, 0);
+            Vector3 position = nav.Step(2.0f);   // 0.5 降りて、残り 1.5 を経路へ
+            Assert.That(Vector3.Distance(previous, position), Is.LessThanOrEqualTo(2.0f + Tolerance));
+            Assert.That((position - new Vector3(1.5f, 0, 0)).magnitude, Is.LessThan(Tolerance));
         }
 
         [Test]
