@@ -57,6 +57,11 @@ namespace Aura.Gimmick
         [Tooltip("「初期位置へ戻る」のとき、ゲーム開始時の位置へ戻る速さ（m/s）。0 なら戻らず、その場で止まる")]
         [SerializeField, Min(0.0f)] private float _returnSpeed = 2.0f;  ///< 初期位置へ戻る速さ（m/s）
 
+        [InspectorLabel("最初に乗れる距離（m）")]
+        [Tooltip("最初に波に乗るとき、自分から波の線までの距離がこれ以内のときだけ乗る（m）。離れすぎていると、波が出ていても乗らない\n" +
+                 "遠くにあるライダーが、壁越しに線へ引き込まれないための上限")]
+        [SerializeField, Min(0.0f)] private float _boardDistance = 3.0f;  ///< 最初に乗れる線までの距離（m）
+
         [InspectorLabel("乗り直せる距離（m）")]
         [Tooltip("一度波に乗ったあと、乗り直すとき、自分から波の線までの距離がこれ以内のときだけ乗る（m）。乗るときは線の上へ移る\n" +
                  "波が物に遮られて止まったあと、遮りが無くなれば、そのまま乗り直す。線から遠いと乗らないので、飛ばされない")]
@@ -307,8 +312,9 @@ namespace Aura.Gimmick
             if (emitter != _currentEmitter)
             {
                 float distance = WaveLinePath.Project(corners, GetLinePosition(current), out float sqrDistance);
-                // 最初に乗るときは、どれだけ離れていても線の上へ移る。一度乗ったあとは、近いときだけ乗り直す
-                if (_hasBoarded && sqrDistance > _rejoinDistance * _rejoinDistance)
+                // 最初に乗るときも、乗り直すときも、線までの距離が上限以内のときだけ乗る（遠くから壁越しに引き込まれないため）
+                float limit = _hasBoarded ? _rejoinDistance : _boardDistance;
+                if (sqrDistance > limit * limit)
                 {
                     return null;
                 }
