@@ -192,6 +192,7 @@ namespace Aura.Gimmick
         /// @brief 次の位置で壁などに食い込んでいたら、横方向だけ押し戻した位置を返す（波を出しているものは除く）
         /// 波の線は壁の面（反射する所）を通るため、中心が線の上だと壁に半分食い込む。その分を壁から離す
         /// 動く物（Kinematic でない Rigidbody）と、床のような縦方向の重なりは相手にしない
+        /// 自分の Collider が複数あっても同じ壁を二重に押さないよう、Collider ごとの押し戻しのうち一番大きいものだけを使う
         /// 計算量: O(C × K)（C は自分の Collider の数、K は重なった Collider の数）
         private Vector3 PushOutOfWalls(Vector3 next, WaveEmitter emitter)
         {
@@ -203,43 +204,56 @@ namespace Aura.Gimmick
                     continue;
                 }
 
-                // 反射の曲がり角では回りながら進むので、回ったあとの向きで調べる（回る途中の角が壁に食い込むため）
-                Vector3 ownPosition = next + _turnDelta * (own.transform.position - _body.position);
-                Quaternion ownRotation = _turnDelta * own.transform.rotation;
-                float reach = own.bounds.extents.magnitude;   // 回っても収まるよう、どの向きにも同じ広さで探す
-                int count = Physics.OverlapBoxNonAlloc(ownPosition + _turnDelta * (own.bounds.center - own.transform.position), Vector3.one * reach, _overlapBuffer, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
-                for (int i = 0; i < count; i++)
+                Vector3 ownPush = GetPushOfCollider(own, next, emitter);
+                if (ownPush.sqrMagnitude > push.sqrMagnitude)
                 {
-                    Collider other = _overlapBuffer[i];
-                    Rigidbody otherBody = other.attachedRigidbody;
-                    // 波を出しているもの（砲台など）は、線の始まりで必ず重なるので押し戻さない
-                    if (other.transform.IsChildOf(transform) || other.transform.IsChildOf(emitter.transform) || (otherBody != null && !otherBody.isKinematic))
-                    {
-                        continue;
-                    }
-
-                    // 縦に重なっていない物（床など）は相手にしない
-                    float ownCenterY = ownPosition.y + (own.bounds.center.y - own.transform.position.y);
-                    float overlapY = Mathf.Min(ownCenterY + own.bounds.extents.y, other.bounds.max.y) - Mathf.Max(ownCenterY - own.bounds.extents.y, other.bounds.min.y);
-                    if (overlapY <= MinPushDistance)
-                    {
-                        continue;
-                    }
-
-                    // 背の高い壁だと、一番浅い押し出しは「真上」になってしまう。高さを相手の中心に揃えて、横向きの押し出しを出させる
-                    Vector3 levelPosition = ownPosition + Vector3.up * (other.bounds.center.y - ownCenterY);
-                    if (Physics.ComputePenetration(own, levelPosition, ownRotation,
-                            other, other.transform.position, other.transform.rotation, out Vector3 direction, out float distance))
-                    {
-                        direction.y = 0.0f;
-                        if (distance > MinPushDistance && direction.sqrMagnitude > MinPushHorizontalSqrMagnitude)
-                        {
-                            push += direction / direction.sqrMagnitude * distance;   // 横向きの分だけで、押し出す長さを割り戻す
-                        }
-                    }
+                    push = ownPush;
                 }
             }
             return next + push;
+        }
+
+        /// @brief 自分の Collider 1 つが、次の位置で壁などから受ける押し戻し（横方向）を返す
+        /// 計算量: O(K)（K は重なった Collider の数）
+        private Vector3 GetPushOfCollider(Collider own, Vector3 next, WaveEmitter emitter)
+        {
+            Vector3 push = Vector3.zero;
+            // 反射の曲がり角では回りながら進むので、回ったあとの向きで調べる（回る途中の角が壁に食い込むため）
+            Vector3 ownPosition = next + _turnDelta * (own.transform.position - _body.position);
+            Quaternion ownRotation = _turnDelta * own.transform.rotation;
+            float reach = own.bounds.extents.magnitude;   // 回っても収まるよう、どの向きにも同じ広さで探す
+            int count = Physics.OverlapBoxNonAlloc(ownPosition + _turnDelta * (own.bounds.center - own.transform.position), Vector3.one * reach, _overlapBuffer, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < count; i++)
+            {
+                Collider other = _overlapBuffer[i];
+                Rigidbody otherBody = other.attachedRigidbody;
+                // 波を出しているもの（砲台など）は、線の始まりで必ず重なるので押し戻さない
+                if (other.transform.IsChildOf(transform) || other.transform.IsChildOf(emitter.transform) || (otherBody != null && !otherBody.isKinematic))
+                {
+                    continue;
+                }
+
+                // 縦に重なっていない物（床など）は相手にしない
+                float ownCenterY = ownPosition.y + (own.bounds.center.y - own.transform.position.y);
+                float overlapY = Mathf.Min(ownCenterY + own.bounds.extents.y, other.bounds.max.y) - Mathf.Max(ownCenterY - own.bounds.extents.y, other.bounds.min.y);
+                if (overlapY <= MinPushDistance)
+                {
+                    continue;
+                }
+
+                // 背の高い壁だと、一番浅い押し出しは「真上」になってしまう。高さを相手の中心に揃えて、横向きの押し出しを出させる
+                Vector3 levelPosition = ownPosition + Vector3.up * (other.bounds.center.y - ownCenterY);
+                if (Physics.ComputePenetration(own, levelPosition, ownRotation,
+                        other, other.transform.position, other.transform.rotation, out Vector3 direction, out float distance))
+                {
+                    direction.y = 0.0f;
+                    if (distance > MinPushDistance && direction.sqrMagnitude > MinPushHorizontalSqrMagnitude)
+                    {
+                        push += direction / direction.sqrMagnitude * distance;   // 横向きの分だけで、押し出す長さを割り戻す
+                    }
+                }
+            }
+            return push;
         }
 
         /// @brief 自分の上面のすぐ上にある Rigidbody を、乗っている物として集める
