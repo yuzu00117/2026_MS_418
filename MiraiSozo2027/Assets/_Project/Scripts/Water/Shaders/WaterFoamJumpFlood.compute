@@ -1,0 +1,96 @@
+// 「物体の中」の地図から、各画素に一番近い物体までの水平距離(m)を求める(ジャンプフラッディング法)。
+// 全画素を総当たりで調べると重すぎるので、「一番近い物体の位置」を、遠い画素から順に近くへ
+// 受け渡していく。これなら 解像度の対数回(1024 なら 11 回ほど)の処理で済む。
+// 泡や光の模様に必要なのは数 m 先までなので、飛ばす幅の最初は「その範囲が収まる幅」からにして、回数をさらに減らす。
+// WaterFoamDistanceMapLayer から呼ばれる。
+
+#pragma kernel Init
+#pragma kernel Flood
+#pragma kernel Resolve
+
+// 種(物体の中の画素)の座標。座標は 0〜4095 の整数なので、全成分が最大値の組を「まだ種が見つかっていない」とする
+static const uint2 kNoSeed = uint2(0xFFFF, 0xFFFF);
+// 物体が見つからない画素に入れる距離(m)。泡が出ない十分大きな値
+static const float kFarDistance = 1000.0;
+
+Texture2D<float> _Mask;
+// 前の段の結果は読むだけなので、読み取り専用で受け取る。
+// 書き込み用(RW)の画像から2つ組の値を読むことは DirectX 11 では許されず、読み込みエラーになるため
+Texture2D<uint2> _SeedRead;
+RWTexture2D<uint2> _SeedWrite;
+RWTexture2D<float> _Distance;
+
+int _Resolution;
+int _Step;
+float _MetersPerPixel;
+
+// 画素の座標が地図の外かどうか。
+// 呼び出し数は 8 の倍数に切り上げるので、端では地図の外の画素の分も呼ばれるため、それを除く
+bool IsOutside(int2 p)
+{
+    return p.x < 0 || p.y < 0 || p.x >= _Resolution || p.y >= _Resolution;
+}
+
+[numthreads(8, 8, 1)]
+void Init(uint3 id : SV_DispatchThreadID)
+{
+    if (IsOutside(int2(id.xy)))
+    {
+        return;
+    }
+    // 物体の中の画素は、自分の座標を種にする
+    _SeedWrite[id.xy] = _Mask[id.xy] > 0.5 ? id.xy : kNoSeed;
+}
+
+[numthreads(8, 8, 1)]
+void Flood(uint3 id : SV_DispatchThreadID)
+{
+    if (IsOutside(int2(id.xy)))
+    {
+        return;
+    }
+
+    float2 self = float2(id.xy);
+    uint2 best = kNoSeed;
+    float bestDistanceSq = 3.4e38;
+
+    // 自分と、_Step 離れた周り 8 方向の種を見て、一番近いものを採る
+    for (int dy = -1; dy <= 1; dy++)
+    {
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            int2 p = int2(id.xy) + int2(dx, dy) * _Step;
+            // 範囲の外は無視する
+            if (IsOutside(p))
+            {
+                continue;
+            }
+            uint2 seed = _SeedRead[uint2(p)];
+            if (seed.x == kNoSeed.x)
+            {
+                continue;
+            }
+            float2 delta = float2(seed) - self;
+            float distanceSq = dot(delta, delta);
+            if (distanceSq < bestDistanceSq)
+            {
+                bestDistanceSq = distanceSq;
+                best = seed;
+            }
+        }
+    }
+    _SeedWrite[id.xy] = best;
+}
+
+[numthreads(8, 8, 1)]
+void Resolve(uint3 id : SV_DispatchThreadID)
+{
+    if (IsOutside(int2(id.xy)))
+    {
+        return;
+    }
+
+    uint2 seed = _SeedRead[id.xy];
+    // 種が自分自身(物体の中)なら距離は 0 になる。範囲内に種が無い画素は遠い扱いにする
+    _Distance[id.xy] = seed.x == kNoSeed.x ? kFarDistance : length(float2(seed) - float2(id.xy)) * _MetersPerPixel;
+}

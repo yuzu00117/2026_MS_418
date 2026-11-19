@@ -694,7 +694,7 @@ namespace Echo.Echolocation.Tests
         }
 
         [UnityTest]
-        public IEnumerator OlderSonarOriginCanIlluminateCurrentOriginsShadow()
+        public IEnumerator OlderIntermittentOriginCanIlluminateCurrentOriginsShadow()
         {
             CreateShadowWall(new Vector3(0, 0, 2.5f), new Vector3(.8f, 3, .2f));
             _target.transform.localScale = new Vector3(.5f, .5f, .2f);
@@ -702,7 +702,7 @@ namespace Echo.Echolocation.Tests
             origin.SetParent(_cameraObject.transform, false);
             origin.position = Vector3.right * 2;
             _controller.OriginTransform = origin;
-            _controller.Settings.ScanMode = EchoScanMode.Sonar;
+            _controller.Settings.ScanMode = EchoScanMode.Intermittent;
             _controller.Settings.PulseInterval = .15f;
             _controller.Settings.PulseHoldDuration = .8f;
             _controller.SetScanEnabled(true);
@@ -966,12 +966,12 @@ namespace Echo.Echolocation.Tests
         }
 
         [UnityTest]
-        public IEnumerator SonarKeepsOldAndNewPositionsUntilEachLifetimeEnds()
+        public IEnumerator IntermittentKeepsOldAndNewPositionsUntilEachLifetimeEnds()
         {
             _wall = new GameObject("PulseOrigin");
             _wall.transform.position = new Vector3(-1.5f, 0, 5);
             _controller.OriginTransform = _wall.transform;
-            _controller.Settings.ScanMode = EchoScanMode.Sonar;
+            _controller.Settings.ScanMode = EchoScanMode.Intermittent;
             _controller.Settings.Radius = 1;
             _controller.Settings.Duration = 0;
             _controller.Settings.PulseInterval = .2f;
@@ -996,7 +996,7 @@ namespace Echo.Echolocation.Tests
             Assert.That(At(both, 1.5f).g, Is.GreaterThan(.9f));
             string folder = Path.GetFullPath(Path.Combine(Application.dataPath, "_Sandbox/Omata_N/Verification~/Images"));
             Directory.CreateDirectory(folder);
-            File.WriteAllBytes(Path.Combine(folder, "sonar-two-origins.png"), both.EncodeToPNG());
+            File.WriteAllBytes(Path.Combine(folder, "intermittent-two-origins.png"), both.EncodeToPNG());
             Object.Destroy(both);
             yield return new WaitForSeconds(.6f);
             yield return null;
@@ -1011,9 +1011,9 @@ namespace Echo.Echolocation.Tests
         }
 
         [UnityTest]
-        public IEnumerator OverlappingSonarWavesDoNotAccumulateHighlightOpacity()
+        public IEnumerator OverlappingIntermittentWavesDoNotAccumulateHighlightOpacity()
         {
-            _controller.Settings.ScanMode = EchoScanMode.Sonar;
+            _controller.Settings.ScanMode = EchoScanMode.Intermittent;
             _controller.Settings.PulseInterval = .1f;
             _controller.Settings.PulseHoldDuration = 1;
             _controller.Settings.TagColorRules[0].Color = new Color(0, 1, 0, .5f);

@@ -10,7 +10,7 @@ namespace Echo.Echolocation
     public sealed class EchoSettings
     {
         private const float DefaultRadius = 10;
-        private const float FullCircleDegrees = 360;
+        internal const float FullCircleDegrees = 360;
         private const float DefaultDuration = 1;
         private const float DefaultPulseInterval = 2;
         private const float MinimumPulseInterval = .05f;
@@ -34,13 +34,13 @@ namespace Echo.Echolocation
         private float _duration = DefaultDuration;
         public float Duration { get => _duration; set => _duration = value; }
 
-        [Tooltip("追従は従来の動作。ソナーは発生位置・向きを固定した波を繰り返し出します。")]
+        [Tooltip("ライト方式はプレイヤーに追従して照らし続けます。断続方式は発生位置・向きを固定した波を繰り返し出し、単発方式は帯状の波を1回だけ出します。")]
         [UnityEngine.SerializeField]
         [UnityEngine.Serialization.FormerlySerializedAs("ScanMode")]
         private EchoScanMode _scanMode;
         public EchoScanMode ScanMode { get => _scanMode; set => _scanMode = value; }
 
-        [Min(MinimumPulseInterval), Tooltip("ソナーを再展開する間隔n（秒）。同時波数64を超える設定では、残存時間を守るため間隔を自動補正します。")]
+        [Min(MinimumPulseInterval), Tooltip("断続方式で波を出し直す間隔n（秒）。同時波数64を超える設定では、残存時間を守るため間隔を自動補正します。")]
         [UnityEngine.SerializeField]
         [UnityEngine.Serialization.FormerlySerializedAs("PulseInterval")]
         private float _pulseInterval = DefaultPulseInterval;
@@ -52,12 +52,17 @@ namespace Echo.Echolocation
         private float _pulseHoldDuration = DefaultPulseHoldDuration;
         public float PulseHoldDuration { get => _pulseHoldDuration; set => _pulseHoldDuration = value; }
 
-        [Min(0), Tooltip("追従モードで展開しきった後、拡張波の表示を繰り返す間隔（秒）。0で無効。伝播時間と同じ速さで広がり、表示だけで検出範囲は変わりません。")]
+        [Min(0), Tooltip("ライト方式で展開しきった後、拡張波の表示を繰り返す間隔（秒）。0で無効。伝播時間と同じ速さで広がり、表示だけで検出範囲は変わりません。")]
         [UnityEngine.SerializeField]
         private float _followWaveInterval;
         public float FollowWaveInterval { get => _followWaveInterval; set => _followWaveInterval = value; }
 
-        [Min(1), Tooltip("一回だけのスキャンを連続で打てる回数（ストックの最大数）。")]
+        [UnityEngine.SerializeField]
+        private EchoLightSustainSettings _lightSustain = new EchoLightSustainSettings();
+        /// <summary>ライト方式の持続可能な時間と、残り時間に応じて範囲を狭める設定。</summary>
+        public EchoLightSustainSettings LightSustain { get => _lightSustain ??= new EchoLightSustainSettings(); set => _lightSustain = value; }
+
+        [Min(1), Tooltip("単発方式で連続で打てる回数（ストックの最大数）。")]
         [UnityEngine.SerializeField]
         private int _onceStockCapacity = 1;
         public int OnceStockCapacity { get => _onceStockCapacity; set => _onceStockCapacity = value; }
@@ -120,13 +125,14 @@ namespace Echo.Echolocation
             PulseInterval = Mathf.Max(MinimumPulseInterval, GetFiniteNonNegative(PulseInterval, DefaultPulseInterval), (Duration + PulseHoldDuration) / EchoPulseTimeline.MaxPulses);
             AngleDegrees = Mathf.Clamp(GetFiniteNonNegative(AngleDegrees, FullCircleDegrees), 0, FullCircleDegrees);
             FollowWaveInterval = GetFiniteNonNegative(FollowWaveInterval, 0);
+            LightSustain.Validate();
             OnceStockCapacity = Mathf.Clamp(OnceStockCapacity, 1, EchoPulseTimeline.MaxPulses);
             OnceRechargeSeconds = GetFiniteNonNegative(OnceRechargeSeconds, DefaultOnceRechargeSeconds);
             TagColorRules ??= new List<EchoTagColorRule>();
             foreach (var rule in TagColorRules) rule?.Validate();
         }
 
-        static float GetFiniteNonNegative(float value, float fallback) => float.IsNaN(value) || float.IsInfinity(value) ? fallback : Mathf.Max(0, value);
+        internal static float GetFiniteNonNegative(float value, float fallback) => float.IsNaN(value) || float.IsInfinity(value) ? fallback : Mathf.Max(0, value);
         [UnityEngine.SerializeField]
         [UnityEngine.Serialization.FormerlySerializedAs("Shadow")]
         private EchoShadowSettings _shadow = new EchoShadowSettings();
@@ -137,6 +143,7 @@ namespace Echo.Echolocation
         {
             var copy = (EchoSettings)MemberwiseClone();
             copy.Shadow = Shadow?.Copy() ?? new EchoShadowSettings();
+            copy.LightSustain = LightSustain.Copy();
             copy.TagColorRules = new List<EchoTagColorRule>();
             if (TagColorRules != null)
                 foreach (var rule in TagColorRules)

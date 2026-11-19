@@ -24,7 +24,7 @@ namespace Echo.Echolocation.Tests
         [Test]
         public void BandWaveContainsOnlyItsWidth()
         {
-            // 一回だけのスキャンは展開中でも、帯が通り過ぎた内側を含まない。
+            // 単発方式は展開中でも、帯が通り過ぎた内側を含まない。
             var frame = new EchoFrameData(Vector3.zero, Vector3.forward, 360, 6, 5.7f, EchoState.Revealing, EchoOcclusionMode.ThroughWalls, 0, true);
             Assert.False(EchoVolumeMath.Contains(frame, Vector3.forward * 2));
             Assert.False(EchoVolumeMath.Contains(frame, Vector3.forward * 5.7f));

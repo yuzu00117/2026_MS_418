@@ -15,13 +15,6 @@
       "source": "builtin",
       "dependencies": {}
     },
-    "com.unity.collab-proxy": {
-      "version": "2.13.6",
-      "depth": 0,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://packages.unity.com"
-    },
     "com.unity.collections": {
       "version": "6.6.0",
       "depth": 2,
@@ -183,6 +176,13 @@
         "com.unity.modules.jsonserialize": "1.0.0"
       },
       "url": "https://packages.unity.com"
+    },
+    "jp.co.cyberagent.nova": {
+      "version": "https://github.com/CyberAgentGameEntertainment/NovaShader.git?path=/Assets/Nova#3.6.0",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "3988c45389b0d317dd225e4e6d796818c3e53828"
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",

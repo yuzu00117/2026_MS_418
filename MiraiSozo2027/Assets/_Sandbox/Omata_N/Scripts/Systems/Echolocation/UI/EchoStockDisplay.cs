@@ -1,11 +1,11 @@
-// 「一回だけ」のストック数と回復の進み具合を画面の隅に表示する。表示用のCanvasは自前で作る。
+// 「単発方式」のストック数と回復の進み具合を画面の隅に表示する。表示用のCanvasは自前で作る。
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Echo.Echolocation
 {
-    /// <summary>一回だけのスキャンのストックを画面右下などに表示する。シーン内のどのGameObjectにも付けられる。</summary>
+    /// <summary>単発方式のストックを画面右下などに表示する。シーン内のどのGameObjectにも付けられる。</summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("Echo/Echo Stock Display")]
     public sealed class EchoStockDisplay : MonoBehaviour
@@ -45,7 +45,7 @@ namespace Echo.Echolocation
         private Color _barColor = new Color(.05f, .8f, 1, .9f);
         [SerializeField]
         private Color _barBackgroundColor = new Color(0, 0, 0, .45f);
-        [SerializeField, Tooltip("スキャン方式が「一回だけ」以外の時は表示しません。")]
+        [SerializeField, Tooltip("スキャン方式が「単発方式」以外の時は表示しません。")]
         private bool _isHiddenOutsideOnceMode = true;
         [SerializeField, Tooltip("TextMeshProのフォント。未設定なら標準フォントを使います。")]
         private TMP_FontAsset _font;
@@ -109,7 +109,7 @@ namespace Echo.Echolocation
         private void LateUpdate()
         {
             bool isVisible = _controller && _controller.isActiveAndEnabled &&
-                (!_isHiddenOutsideOnceMode || _controller.Settings.ScanMode == EchoScanMode.Once);
+                (!_isHiddenOutsideOnceMode || _controller.Settings.ScanMode == EchoScanMode.Single);
             _canvas.enabled = isVisible;
             if (!isVisible) return;
 

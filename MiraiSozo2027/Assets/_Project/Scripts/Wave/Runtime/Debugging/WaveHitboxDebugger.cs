@@ -71,6 +71,7 @@ namespace Aura.Wave
         private Mesh _coneMesh;       ///< 扇の当たる範囲（半径 1 の円すいと、球の一部のふた）
         private Mesh _capMesh;        ///< 扇の波面（半径 1 の球の一部）
         private float _meshHalfAngle = float.NaN;  ///< _coneMesh と _capMesh を作ったときの半角（度）
+        private readonly List<Mesh> _retiredMeshes = new List<Mesh>();  ///< 半角が変わって作り直した前のメッシュ。同じフレームの描画に渡してあるので、次のフレームで消す
         private Material _beamMaterial;
         private Material _fanRangeMaterial;
         private Material _fanFrontMaterial;
@@ -102,6 +103,7 @@ namespace Aura.Wave
             DestroyCreated(_cylinderMesh);
             DestroyCreated(_coneMesh);
             DestroyCreated(_capMesh);
+            DestroyRetiredMeshes();
             DestroyCreated(_beamMaterial);
             DestroyCreated(_fanRangeMaterial);
             DestroyCreated(_fanFrontMaterial);
@@ -119,6 +121,8 @@ namespace Aura.Wave
 
         private void LateUpdate()
         {
+            // 前のフレームで作り直した古いメッシュは、そのフレームの描画が終わっているので、ここで消す
+            DestroyRetiredMeshes();
             if (!IsVisible)
             {
                 _hitMarks.Clear();
@@ -280,8 +284,9 @@ namespace Aura.Wave
             {
                 return;
             }
-            DestroyCreated(_coneMesh);
-            DestroyCreated(_capMesh);
+            // 同じフレームで、前の半角のメッシュを描画に渡していることがある（半角の違う撃ち手の扇が同時に飛ぶとき）ので、すぐには消さない
+            RetireMesh(_coneMesh);
+            RetireMesh(_capMesh);
             _coneMesh = BuildSectorMesh(halfAngle, true);
             _capMesh = BuildSectorMesh(halfAngle, false);
             _meshHalfAngle = halfAngle;
@@ -365,6 +370,26 @@ namespace Aura.Wave
                 colors[i] = new Color32(255, 255, 255, 255);
             }
             return colors;
+        }
+
+        /// @brief 作り直して要らなくなったメッシュを、次のフレームで消すように取っておく
+        /// @param mesh 要らなくなったメッシュ（null なら何もしない）
+        private void RetireMesh(Mesh mesh)
+        {
+            if (mesh != null)
+            {
+                _retiredMeshes.Add(mesh);
+            }
+        }
+
+        /// @brief 取っておいた古いメッシュを消す
+        private void DestroyRetiredMeshes()
+        {
+            foreach (Mesh mesh in _retiredMeshes)
+            {
+                DestroyCreated(mesh);
+            }
+            _retiredMeshes.Clear();
         }
 
         private static void DestroyCreated(Object created)

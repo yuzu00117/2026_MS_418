@@ -9926,6 +9926,10 @@ PrefabInstance:
       value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _settings._offMode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _directionTransform
       value: 
       objectReference: {fileID: 2926934273044610931}
@@ -9980,6 +9984,22 @@ PrefabInstance:
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _settings._tagColorRules.Array.size
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _settings._lightSustain._recoverySpeed
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _settings._lightSustain._hasSustainLimit
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _settings._lightSustain._isAngleShrinking
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
+      propertyPath: _settings._lightSustain._minimumAngleDegrees
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5258649318949734146, guid: d7d8d8b396241e841aba8699bdcf4c58, type: 3}
       propertyPath: _settings._tagColorRules.Array.data[0]._color.a

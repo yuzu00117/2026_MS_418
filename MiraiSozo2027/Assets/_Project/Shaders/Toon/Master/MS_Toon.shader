@@ -1,0 +1,565 @@
+// プロジェクト共通トゥーンシェーダー(URP / HLSL 手書き)
+//
+// - ライティング処理は Includes/ProjectLighting.hlsl に集約。絵作りを変える場合は基本そちらを触る。
+// - 全体の見た目は _Global* (ToonStyleProfile -> ToonStyleApplier) で一括変更できる。
+//   マテリアルの "Use Global Style" をオフにすると、そのマテリアルだけ個別値で動く。
+//   共通値の対応: リム(色・絞り・強さ)は Use Global Style、輪郭線(色・太さ)は Use Global Outline で切り替わる。
+// - Mobile 向け: "Lite" をオンにすると 法線マップ / リム / スペキュラ / 追加ライト を無効化する。
+// - 輪郭線・ポスト用に DepthOnly / DepthNormals パスを持つ。
+// - 裏面押し出し法の Outline パスを持つ(処理は Includes/ToonOutline.hlsl)。
+//   ワールド空間で法線方向に押し出すだけの単純な方式。太さはワールド上の長さで、遠いほど細く見える(拡大率には影響されない)。
+//   押し出し方向は自動で選ぶ: 焼き込みスムース法線(UV3, ToonSmoothNormalBaker)があればそれ、無ければモデル中心からの向き。
+// - オブジェクト下側ほど暗くする高さグラデーション(Gradient 項目)を持つ。
+// - 未対応(意図的): ライトマップ(焼き込みGI)、透過、アルファテスト。必要になったら追加する。
+Shader "MS/Toon"
+{
+    Properties
+    {
+        [Header(Base)]
+        [MainTexture] _BaseMap ("Base Map", 2D) = "white" {}
+        [MainColor] _BaseColor ("Base Color", Color) = (1, 1, 1, 1)
+
+        [Header(Normal)]
+        [Toggle(_NORMALMAP)] _UseNormalMap ("Use Normal Map", Float) = 0
+        // 法線マップと発光マップは Base Map と同じ UV で描く(URP 標準 Lit と同じ)ので、タイリング欄は出さない
+        [NoScaleOffset][Normal] _BumpMap ("Normal Map", 2D) = "bump" {}
+        _BumpScale ("Normal Scale", Float) = 1
+
+        [Header(Emission)]
+        [Toggle(_EMISSION)] _UseEmission ("Use Emission", Float) = 0
+        [NoScaleOffset] _EmissionMap ("Emission Map", 2D) = "white" {}
+        [HDR] _EmissionColor ("Emission Color", Color) = (0, 0, 0, 1)
+
+        [Header(Toon Ramp)]
+        [NoScaleOffset] _RampMap ("Ramp", 2D) = "white" {}
+        _Smoothness ("Smoothness", Range(0, 1)) = 0.05
+        _ShadowColor ("Shadow Color", Color) = (0.55, 0.55, 0.72, 1)
+        _ShadowStrength ("Shadow Color Strength", Range(0, 1)) = 1
+
+        [Header(Rim)]
+        [Toggle(_TOON_RIM)] _UseRim ("Use Rim", Float) = 0
+        _RimColor ("Rim Color", Color) = (1, 1, 1, 1)
+        _RimPower ("Rim Power", Range(0.5, 8)) = 3
+        _RimIntensity ("Rim Intensity", Range(0, 2)) = 0.5
+
+        [Header(Specular)]
+        [Toggle(_TOON_SPECULAR)] _UseSpecular ("Use Specular", Float) = 0
+        _SpecularSize ("Specular Size", Range(0, 1)) = 0.5
+        _SpecularIntensity ("Specular Intensity", Range(0, 2)) = 0.5
+
+        [Header(Outline)]
+        [Toggle] _UseGlobalOutline ("Use Global Outline", Float) = 1
+        _OutlineColor ("Outline Color", Color) = (0.1, 0.1, 0.1, 1)
+        _OutlineWidth ("Outline Width", Range(0, 0.1)) = 0.02
+
+        [Header(Gradient)]
+        _GradientStrength ("Gradient Strength", Range(0, 1)) = 0.3
+        _GradientHeight ("Gradient Height", Float) = 1
+        _GradientOffset ("Gradient Offset", Range(0, 1)) = 0.5
+
+        [Header(Style and Quality)]
+        [Toggle] _UseGlobalStyle ("Use Global Style", Float) = 1
+        [Toggle(_TOON_LITE)] _Lite ("Lite", Float) = 0
+        [Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull", Float) = 2
+    }
+
+    SubShader
+    {
+        Tags
+        {
+            "RenderType" = "Opaque"
+            "RenderPipeline" = "UniversalPipeline"
+            "Queue" = "Geometry"
+        }
+
+        // 全パス共通のマテリアル定数。SRP Batcher 互換のため全パスで同一の CBUFFER を宣言する。
+        HLSLINCLUDE
+        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+        CBUFFER_START(UnityPerMaterial)
+            float4 _BaseMap_ST;
+            float4 _BaseColor;
+            float  _BumpScale;
+            float4 _EmissionColor;
+            float4 _RampMap_TexelSize;
+            float  _Smoothness;
+            float4 _ShadowColor;
+            float  _ShadowStrength;
+            float4 _RimColor;
+            float  _RimPower;
+            float  _RimIntensity;
+            float  _SpecularSize;
+            float  _SpecularIntensity;
+            float  _UseGlobalStyle;
+            float  _UseGlobalOutline;
+            float4 _OutlineColor;
+            float  _OutlineWidth;
+            float  _GradientStrength;
+            float  _GradientHeight;
+            float  _GradientOffset;
+        CBUFFER_END
+        ENDHLSL
+
+        Pass
+        {
+            Name "ForwardLit"
+            Tags { "LightMode" = "UniversalForward" }
+
+            ZWrite On
+            Cull [_Cull]
+
+            HLSLPROGRAM
+            #pragma target 3.5
+
+            #pragma vertex ToonVertex
+            #pragma fragment ToonFragment
+
+            // Material keywords (必要最小限)
+            #pragma shader_feature_local _NORMALMAP
+            #pragma shader_feature_local_fragment _EMISSION
+            #pragma shader_feature_local_fragment _TOON_RIM
+            #pragma shader_feature_local_fragment _TOON_SPECULAR
+            #pragma shader_feature_local _TOON_LITE
+
+            // Universal Pipeline keywords
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
+            #pragma multi_compile_instancing
+
+            #include "../Includes/ProjectLighting.hlsl"
+
+            TEXTURE2D(_BaseMap);     SAMPLER(sampler_BaseMap);
+            TEXTURE2D(_BumpMap);     SAMPLER(sampler_BumpMap);
+            TEXTURE2D(_EmissionMap); SAMPLER(sampler_EmissionMap);
+            TEXTURE2D(_RampMap);     SAMPLER(sampler_RampMap);
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS   : NORMAL;
+                float4 tangentOS  : TANGENT;
+                float2 uv         : TEXCOORD0;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float2 uv         : TEXCOORD0;
+                float3 positionWS : TEXCOORD1;
+                float3 normalWS   : TEXCOORD2;
+                #if defined(_NORMALMAP) && !defined(_TOON_LITE)
+                    float4 tangentWS : TEXCOORD3; // w: bitangent sign
+                #endif
+                #if defined(_MAIN_LIGHT_SHADOWS_SCREEN)
+                    float4 shadowCoord : TEXCOORD4;
+                #endif
+                float fogFactor   : TEXCOORD5;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            Varyings ToonVertex(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+                VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
+                VertexNormalInputs normalInput = GetVertexNormalInputs(input.normalOS, input.tangentOS);
+
+                output.positionCS = vertexInput.positionCS;
+                output.positionWS = vertexInput.positionWS;
+                output.normalWS = normalInput.normalWS;
+                output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+                #if defined(_NORMALMAP) && !defined(_TOON_LITE)
+                    real sign = input.tangentOS.w * GetOddNegativeScale();
+                    output.tangentWS = float4(normalInput.tangentWS, sign);
+                #endif
+                #if defined(_MAIN_LIGHT_SHADOWS_SCREEN)
+                    output.shadowCoord = ComputeScreenPos(vertexInput.positionCS);
+                #endif
+                output.fogFactor = ComputeFogFactor(vertexInput.positionCS.z);
+                return output;
+            }
+
+            // ランプ参照。グローバルランプが有効ならそちら、無ければマテリアルのランプ。
+            float3 SampleRamp(ToonStyle style, float u, float aa)
+            {
+                float3 ramp;
+                if (style.useGlobalRamp)
+                {
+                    float cg = ToonRampCoord(u, style.globalRampWidth, style.smoothness, aa);
+                    ramp = SAMPLE_TEXTURE2D_LOD(_GlobalRampMap, sampler_GlobalRampMap, float2(cg, 0.5), 0).rgb;
+                }
+                else
+                {
+                    float cl = ToonRampCoord(u, _RampMap_TexelSize.z, style.smoothness, aa);
+                    ramp = SAMPLE_TEXTURE2D_LOD(_RampMap, sampler_RampMap, float2(cl, 0.5), 0).rgb;
+                }
+                return ramp;
+            }
+
+            half4 ToonFragment(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
+                // --- Surface ---
+                float4 baseSample = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv);
+                float3 albedo = baseSample.rgb * _BaseColor.rgb;
+
+                float3 normalWS = normalize(input.normalWS);
+                #if defined(_NORMALMAP) && !defined(_TOON_LITE)
+                    float3 tangentWS = normalize(input.tangentWS.xyz);
+                    float3 bitangentWS = input.tangentWS.w * cross(normalWS, tangentWS);
+                    float3 normalTS = UnpackNormalScale(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, input.uv), _BumpScale);
+                    normalWS = normalize(TransformTangentToWorld(normalTS, float3x3(tangentWS, bitangentWS, normalWS)));
+                #endif
+
+                float3 viewDirWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
+
+                ToonStyle style = ToonResolveStyle(_UseGlobalStyle, _Smoothness, _ShadowColor.rgb, _ShadowStrength,
+                                                   _RimColor.rgb, _RimPower, _RimIntensity);
+                float aa = ToonRampAA(normalWS); // 一様な制御フローで計算しておく
+
+                // --- Main light ---
+                #if defined(_MAIN_LIGHT_SHADOWS_SCREEN)
+                    float4 shadowCoord = input.shadowCoord;
+                #else
+                    float4 shadowCoord = TransformWorldToShadowCoord(input.positionWS);
+                #endif
+                Light mainLight = GetMainLight(shadowCoord, input.positionWS, half4(1, 1, 1, 1));
+
+                float mainNdotL = dot(normalWS, mainLight.direction);
+                float mainRampInput = ToonRampInput(mainNdotL, mainLight.shadowAttenuation);
+                float3 mainRamp = SampleRamp(style, mainRampInput, aa);
+                mainRamp = ToonShadowTint(mainRamp, style.shadowColor, style.shadowStrength);
+
+                float3 lighting = ToonLightRadiance(mainLight, mainRamp);
+                lighting += ToonAmbient(normalWS, style.ambientTint, style.ambientStrength);
+
+                // --- Additional lights ---
+                #if defined(_ADDITIONAL_LIGHTS) && !defined(_TOON_LITE)
+                    InputData inputData = (InputData)0;
+                    inputData.positionWS = input.positionWS;
+                    inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
+                    uint pixelLightCount = GetAdditionalLightsCount();
+
+                    #if USE_CLUSTER_LIGHT_LOOP
+                    [loop] for (uint dirIndex = 0; dirIndex < min(URP_FP_DIRECTIONAL_LIGHTS_COUNT, MAX_VISIBLE_LIGHTS); dirIndex++)
+                    {
+                        Light dirLight = GetAdditionalLight(dirIndex, input.positionWS, half4(1, 1, 1, 1));
+                        float3 r = SampleRamp(style, ToonRampInput(dot(normalWS, dirLight.direction), dirLight.shadowAttenuation), aa);
+                        lighting += ToonLightRadiance(dirLight, r);
+                    }
+                    #endif
+
+                    LIGHT_LOOP_BEGIN(pixelLightCount)
+                        Light addLight = GetAdditionalLight(lightIndex, input.positionWS, half4(1, 1, 1, 1));
+                        float3 r = SampleRamp(style, ToonRampInput(dot(normalWS, addLight.direction), addLight.shadowAttenuation), aa);
+                        lighting += ToonLightRadiance(addLight, r);
+                    LIGHT_LOOP_END
+                #endif
+
+                // 高さグラデーション。ピボット基準で下ほど暗くする(スペキュラ・リム・エミッションには掛けない)
+                lighting *= ToonHeightGradient(input.positionWS.y, UNITY_MATRIX_M._m13, _GradientStrength, _GradientHeight, _GradientOffset);
+
+                float3 color = albedo * lighting;
+
+                // --- Optional: specular / rim (呼ばなければコストゼロ) ---
+                #if defined(_TOON_SPECULAR) && !defined(_TOON_LITE)
+                    float specMask = ToonSpecular(normalWS, viewDirWS, mainLight.direction, _SpecularSize, style.smoothness);
+                    color += mainLight.color * specMask * mainLight.shadowAttenuation * _SpecularIntensity;
+                #endif
+
+                #if defined(_TOON_RIM) && !defined(_TOON_LITE)
+                    color += ToonRim(normalWS, viewDirWS, style.rimColor, style.rimPower, style.smoothness,
+                                     saturate(mainNdotL * 0.5 + 0.5)) * style.rimIntensity;
+                #endif
+
+                #if defined(_EMISSION)
+                    color += SAMPLE_TEXTURE2D(_EmissionMap, sampler_EmissionMap, input.uv).rgb * _EmissionColor.rgb;
+                #endif
+
+                color = MixFog(color, input.fogFactor);
+                return half4(color, 1.0);
+            }
+            ENDHLSL
+        }
+
+        // 裏面押し出し法の輪郭線。Cull Front で裏面だけを描き、ワールド空間で法線方向に押し出す。
+        Pass
+        {
+            Name "Outline"
+            Tags { "LightMode" = "SRPDefaultUnlit" }
+
+            Cull Front
+            ZWrite On
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex OutlineVertex
+            #pragma fragment OutlineFragment
+
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
+            #pragma multi_compile_instancing
+
+            #include "../Includes/ProjectLighting.hlsl"
+            #include "../Includes/ToonOutline.hlsl"
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS   : NORMAL;
+                float4 tangentOS  : TANGENT; // 焼き込みスムース法線をタンジェント空間から戻すのに使う
+                float4 bakedNormal : TEXCOORD3; // xyz: ToonSmoothNormalBaker が焼いたスムース法線, w: 座標の種類の目印
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float fogFactor   : TEXCOORD0;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            // 共通値(プロファイル)かマテリアル値かを解決した輪郭線の設定を返す。
+            ToonOutlineStyle ResolveMaterialOutline()
+            {
+                return ToonResolveOutline(_UseGlobalOutline, _OutlineColor.rgb, _OutlineWidth);
+            }
+
+            Varyings OutlineVertex(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+                ToonOutlineStyle outline = ResolveMaterialOutline();
+
+                // 太さ 0 のときは画面外に飛ばして描画しない(解決後の太さで判定)
+                if (outline.width <= 0.0)
+                {
+                    output.positionCS = float4(2, 2, 2, 1);
+                    return output;
+                }
+
+                float3 directionWS = GetOutlineDirectionWS(input.normalOS, input.tangentOS, input.bakedNormal,
+                                                           input.positionOS.xyz);
+                // ワールド空間で押し出すので、太さは拡大率に関係なくワールド上の長さになる
+                float3 positionWS = TransformObjectToWorld(input.positionOS.xyz) + directionWS * outline.width;
+
+                output.positionCS = TransformWorldToHClip(positionWS);
+                output.fogFactor = ComputeFogFactor(output.positionCS.z);
+                return output;
+            }
+
+            half4 OutlineFragment(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
+                // 色は全ピクセル共通の値なので Fragment で解決する(Varyings を増やさない)
+                float3 color = MixFog(ResolveMaterialOutline().color, input.fogFactor);
+                return half4(color, 1.0);
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "ShadowCaster"
+            Tags { "LightMode" = "ShadowCaster" }
+
+            ZWrite On
+            ZTest LEqual
+            ColorMask 0
+            Cull [_Cull]
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex ShadowVertex
+            #pragma fragment ShadowFragment
+
+            #pragma multi_compile_instancing
+            #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+
+            // URP がシャドウマップ生成時に設定する(法線バイアス用)
+            float3 _LightDirection;
+            float3 _LightPosition;
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS   : NORMAL;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            Varyings ShadowVertex(Attributes input)
+            {
+                Varyings output;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+
+                float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+                float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
+
+                #if _CASTING_PUNCTUAL_LIGHT_SHADOW
+                    float3 lightDirectionWS = normalize(_LightPosition - positionWS);
+                #else
+                    float3 lightDirectionWS = _LightDirection;
+                #endif
+
+                float4 positionCS = TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, lightDirectionWS));
+                output.positionCS = ApplyShadowClamping(positionCS);
+                return output;
+            }
+
+            half4 ShadowFragment(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                return 0;
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "DepthOnly"
+            Tags { "LightMode" = "DepthOnly" }
+
+            ZWrite On
+            ColorMask R
+            Cull [_Cull]
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex DepthVertex
+            #pragma fragment DepthFragment
+            #pragma multi_compile_instancing
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            Varyings DepthVertex(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                return output;
+            }
+
+            half DepthFragment(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                return input.positionCS.z;
+            }
+            ENDHLSL
+        }
+
+        // _CameraNormalsTexture 用。後から輪郭線(法線ベース)やSSAOを足すときに使われる。
+        Pass
+        {
+            Name "DepthNormals"
+            Tags { "LightMode" = "DepthNormals" }
+
+            ZWrite On
+            Cull [_Cull]
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex DepthNormalsVertex
+            #pragma fragment DepthNormalsFragment
+
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/RenderingLayers.hlsl"
+            #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
+            #pragma multi_compile_instancing
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS   : NORMAL;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float3 normalWS   : TEXCOORD1;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            Varyings DepthNormalsVertex(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.normalWS = TransformObjectToWorldNormal(input.normalOS);
+                return output;
+            }
+
+            void DepthNormalsFragment(
+                Varyings input
+                , out half4 outNormalWS : SV_Target0
+                #ifdef _WRITE_RENDERING_LAYERS
+                , out uint outRenderingLayers : SV_Target1
+                #endif
+            )
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
+                #if defined(_GBUFFER_NORMALS_OCT)
+                    float3 normalWS = normalize(input.normalWS);
+                    float2 octNormalWS = PackNormalOctQuadEncode(normalWS);
+                    float2 remappedOctNormalWS = saturate(octNormalWS * 0.5 + 0.5);
+                    half3 packedNormalWS = PackFloat2To888(remappedOctNormalWS);
+                    outNormalWS = half4(packedNormalWS, 0.0);
+                #else
+                    float3 normalWS = NormalizeNormalPerPixel(input.normalWS);
+                    outNormalWS = half4(normalWS, 0.0);
+                #endif
+
+                #ifdef _WRITE_RENDERING_LAYERS
+                    outRenderingLayers = EncodeMeshRenderingLayer();
+                #endif
+            }
+            ENDHLSL
+        }
+    }
+
+    Fallback Off
+    CustomEditor "MS.Toon.Editor.MSToonShaderGUI"
+}

@@ -167,6 +167,11 @@ MonoBehaviour:
   _collisionMargin: 0.1
   _minCollisionDistance: 0.3
   _distanceReturnSpeed: 12
-  _ignoreHeldObject: 1
+  _isIgnoreHeldObject: 1
   _fadeStartDistance: 3.5
   _fadeEndDistance: 1.2
+  _adsDistance: 3
+  _adsSideOffset: 0.8
+  _adsTargetHeight: 4.2
+  _adsFov: 40
+  _adsTransitionDuration: 0.3

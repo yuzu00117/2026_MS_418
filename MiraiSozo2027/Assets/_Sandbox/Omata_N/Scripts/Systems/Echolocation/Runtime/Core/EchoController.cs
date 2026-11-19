@@ -72,9 +72,19 @@ namespace Echo.Echolocation
         public float CurrentOuterRadius { get; private set; }
         /// <summary>内側消去半径（ワールド単位）。</summary>
         public float CurrentEraseRadius { get; private set; }
-        /// <summary>追従モードで繰り返す拡張波の先端半径（ワールド単位）。表示していなければ負。</summary>
+        /// <summary>ライト方式で繰り返す拡張波の先端半径（ワールド単位）。表示していなければ負。</summary>
         public float FollowWaveRadius { get; private set; } = -1;
         private float _followWaveElapsed;
+        private readonly EchoLightSustain _lightSustain = new EchoLightSustain();
+        private float _lightAngleDegrees;
+        /// <summary>ライト方式の残りの持続可能な時間（秒）。時間制限がない設定では0。</summary>
+        public float LightSustainRemainingSeconds => _lightSustain.GetRemainingSeconds(_settings.LightSustain);
+        /// <summary>ライト方式の残りの持続可能な時間の割合（0～1）。時間制限がない設定では1。ゲージの表示に使う。</summary>
+        public float LightSustainRatio => _lightSustain.GetRatio(_settings.LightSustain);
+        /// <summary>ライト方式の持続可能な時間を指定した秒数だけ回復する。アイテムなどで回復させる場合に使う。</summary>
+        public void RecoverLightSustain(float seconds) => _lightSustain.Recover(seconds, _settings.LightSustain);
+        /// <summary>ライト方式の持続可能な時間を満タンに戻す。</summary>
+        public void RefillLightSustain() => _lightSustain.Refill(_settings.LightSustain);
         private struct OnceWave
         {
             public Vector3 Origin;
@@ -87,7 +97,7 @@ namespace Echo.Echolocation
         private int _onceStock = -1;
         private int _onceStockCapacityApplied = -1;
         private float _onceRechargeElapsed;
-        /// <summary>一回だけのスキャンで今打てる回数。</summary>
+        /// <summary>単発方式で今打てる回数。</summary>
         public int OnceStock => Mathf.Max(0, _onceStock);
         /// <summary>次のストックが回復するまでの進み具合（0～1）。満タンなら1。</summary>
         public float OnceRechargeProgress => OnceStock >= _settings.OnceStockCapacity ? 1 :
@@ -96,7 +106,7 @@ namespace Echo.Echolocation
         public event Action<int> OnceStockChanged;
         /// <summary>当フレームの描画条件。</summary>
         public EchoFrameData Frame { get; private set; }
-        /// <summary>生存中の全領域。ソナーは古い波から順。追従は最大1件。</summary>
+        /// <summary>生存中の全領域。断続方式・単発方式は古い波から順。ライト方式は最大1件。</summary>
         public IReadOnlyList<EchoFrameData> Frames => _frames;
         /// <summary>候補Renderer一覧。変更禁止。</summary>
         public IReadOnlyList<EchoRenderItem> RenderItems => _items;
@@ -118,7 +128,7 @@ namespace Echo.Echolocation
         /// <summary>状態が実際に変わったときだけ旧状態・新状態を通知。</summary>
         public event Action<EchoState, EchoState> StateChanged;
         /// <summary>
-        /// エコーロケーションを使用中か。ON中（ソナーの波と波の間も含む）と、OFF後に波が消えきるまでがtrue。
+        /// エコーロケーションを使用中か。ON中（断続方式の波と波の間も含む）と、OFF後に波が消えきるまでがtrue。
         /// ON/OFFの操作だけを知りたい場合は<see cref="IsScanRequested"/>を使う。
         /// </summary>
         public bool IsEchoInUse => isActiveAndEnabled && (IsScanRequested || _frames.Count > 0);
@@ -267,7 +277,7 @@ namespace Echo.Echolocation
             _hasPendingClockReset = true;
             _frames.Clear();
             _pulseTimeline.Clear();
-            if (_settings.ScanMode == EchoScanMode.Sonar)
+            if (_settings.ScanMode == EchoScanMode.Intermittent)
             {
                 var preview = GetPreview();
                 _pulseTimeline.Start(preview.Origin, preview.Forward, _settings);
@@ -280,10 +290,13 @@ namespace Echo.Echolocation
         {
             if (IsScanRequested == isOn)
                 return;
+            // 使い切ってOFFになる設定では、回復するまでONの操作を受け付けない。
+            if (isOn && _settings.ScanMode == EchoScanMode.Light && !_lightSustain.CanTurnOn(_settings.LightSustain))
+                return;
             IsScanRequested = isOn;
             if (isOn)
                 BeginReveal();
-            else if (_settings.ScanMode == EchoScanMode.Sonar)
+            else if (_settings.ScanMode == EchoScanMode.Intermittent)
             {
                 _pulseTimeline.Stop(_settings);
                 _hasPendingClockReset = true;
@@ -317,8 +330,8 @@ namespace Echo.Echolocation
                     _shadowMaps.Clear();
                 if (isChanged)
                 {
-                    // 一回だけの波は打ち直さず、伝播中の波だけを消す。ストックは返さない。
-                    if (_settings.ScanMode == EchoScanMode.Once || _oldMode == EchoScanMode.Once)
+                    // 単発方式の波は打ち直さず、伝播中の波だけを消す。ストックは返さない。
+                    if (_settings.ScanMode == EchoScanMode.Single || _oldMode == EchoScanMode.Single)
                     {
                         _onceWaves.Clear();
                         _pulseTimeline.Clear();
@@ -340,8 +353,8 @@ namespace Echo.Echolocation
                 for (int i = 0; i < count; i++)
                 {
                     int cmd = _commands.Dequeue();
-                    // 一回だけのスキャンはON・切り替えのどちらでも1発打つ。連打で連続発信できるようにするため。
-                    if (_settings.ScanMode == EchoScanMode.Once)
+                    // 単発方式はON・切り替えのどちらでも1発打つ。連打で連続発信できるようにするため。
+                    if (_settings.ScanMode == EchoScanMode.Single)
                     {
                         if (cmd == CommandOff) StopOnce();
                         else FireOnce();
@@ -351,9 +364,9 @@ namespace Echo.Echolocation
                 }
 
                 float delta = _hasPendingClockReset ? 0 : _settings.TimeMode == EchoTimeMode.Scaled ? Time.deltaTime : Time.unscaledDeltaTime;
-                if (_settings.ScanMode == EchoScanMode.Sonar)
+                if (_settings.ScanMode == EchoScanMode.Intermittent)
                 {
-                    // ソナーは波そのものを繰り返すため、追従用の拡張波は出さない。
+                    // 断続方式は波そのものを繰り返すため、ライト方式用の拡張波は出さない。
                     FollowWaveRadius = -1;
                     var preview = GetPreview();
                     _pulseTimeline.Advance(delta, _settings, preview.Origin, preview.Forward, _frames);
@@ -362,37 +375,13 @@ namespace Echo.Echolocation
                     CurrentEraseRadius = Frame.EraseRadius;
                     ChangeState(_frames.Count > 0 ? Frame.State : IsScanRequested && _settings.Radius > 0 ? EchoState.Active : EchoState.Hidden);
                 }
-                else if (_settings.ScanMode == EchoScanMode.Once)
+                else if (_settings.ScanMode == EchoScanMode.Single)
                 {
                     FollowWaveRadius = -1;
                     AdvanceOnce(delta);
                 }
                 else
-                {
-                    _elapsed += delta;
-                    if (CurrentState == EchoState.Revealing)
-                    {
-                        CurrentOuterRadius = EchoPropagation.GetDistance(_settings.Radius, _settings.Duration, _elapsed);
-                        if (_settings.Duration == 0 || _elapsed >= _settings.Duration)
-                            ChangeState(EchoState.Active);
-                    }
-                    else if (CurrentState == EchoState.Hiding)
-                    {
-                        CurrentEraseRadius = EchoPropagation.GetDistance(_settings.Radius, _settings.Duration, _elapsed);
-                        if (CurrentEraseRadius >= CurrentOuterRadius)
-                        {
-                            CurrentOuterRadius = CurrentEraseRadius = 0;
-                            ChangeState(EchoState.Hidden);
-                        }
-                    }
-
-                    UpdateFollowWave(delta);
-                    Transform origin = _originTransform ? _originTransform : transform, direction = _directionTransform ? _directionTransform : origin;
-                    Frame = new EchoFrameData(origin.position, direction.forward, _settings.AngleDegrees, CurrentOuterRadius, CurrentEraseRadius, CurrentState, _settings.OcclusionMode);
-                    _frames.Clear();
-                    if (CurrentState != EchoState.Hidden)
-                        _frames.Add(Frame);
-                }
+                    AdvanceLight(delta);
 
                 _shadowMaps.Update(_frames, _settings, _excludedRoot ? _excludedRoot : transform);
                 _tags.Update(_settings.TagColorRules);
@@ -402,6 +391,47 @@ namespace Echo.Echolocation
                     _registry.Collect(_frames, _settings.TargetLayers, _excludedRoot ? _excludedRoot : transform, _targetCamera, _tags, _items);
                 NotifyUsage();
             }
+        }
+
+        // ライト方式は現在位置に追従する1つの領域を照らす。持続可能な時間を設定した場合は、残り時間に応じて範囲を狭める。
+        void AdvanceLight(float delta)
+        {
+            var sustain = _settings.LightSustain;
+            if (_lightSustain.Advance(IsScanRequested, delta, sustain) && sustain.DepletionMode == EchoLightDepletionMode.TurnOff)
+                Request(false);
+            float ratio = _lightSustain.GetRatio(sustain);
+            float radius = sustain.GetRadius(_settings.Radius, ratio);
+            float angle = sustain.GetAngleDegrees(_settings.AngleDegrees, ratio);
+
+            _elapsed += delta;
+            if (CurrentState == EchoState.Revealing)
+            {
+                // 広がる速さは最大半径を基準に保ち、狭めた半径で止める。
+                CurrentOuterRadius = Mathf.Min(EchoPropagation.GetDistance(_settings.Radius, _settings.Duration, _elapsed), radius);
+                if (_settings.Duration == 0 || _elapsed >= _settings.Duration)
+                    ChangeState(EchoState.Active);
+            }
+            else if (CurrentState == EchoState.Active)
+                CurrentOuterRadius = radius;
+            else if (CurrentState == EchoState.Hiding)
+            {
+                CurrentEraseRadius = EchoPropagation.GetDistance(_settings.Radius, _settings.Duration, _elapsed);
+                if (CurrentEraseRadius >= CurrentOuterRadius)
+                {
+                    CurrentOuterRadius = CurrentEraseRadius = 0;
+                    ChangeState(EchoState.Hidden);
+                }
+            }
+
+            // 消している間に持続可能な時間が回復しても消去波の形が急に広がらないよう、照らしていた最後の角度を使い続ける。
+            if (CurrentState == EchoState.Hiding) angle = _lightAngleDegrees;
+            else _lightAngleDegrees = angle;
+            UpdateFollowWave(delta, radius);
+            Transform origin = _originTransform ? _originTransform : transform, direction = _directionTransform ? _directionTransform : origin;
+            Frame = new EchoFrameData(origin.position, direction.forward, angle, CurrentOuterRadius, CurrentEraseRadius, CurrentState, _settings.OcclusionMode);
+            _frames.Clear();
+            if (CurrentState != EchoState.Hidden)
+                _frames.Add(Frame);
         }
 
         /// <summary>ストックがあれば、今の位置・向きから帯状の波を1つ発信する。</summary>
@@ -516,7 +546,8 @@ namespace Echo.Echolocation
         }
 
         // 最初の展開自体が1回目の拡張波なので、展開しきってから間隔ごとに2回目以降を出す。
-        void UpdateFollowWave(float delta)
+        // 速さは最大半径を基準に保ち、持続可能な時間で狭めた半径の端で抜けきらせる。
+        void UpdateFollowWave(float delta, float radius)
         {
             float interval = _settings.FollowWaveInterval;
             if (CurrentState != EchoState.Active || interval <= 0)
@@ -537,7 +568,7 @@ namespace Echo.Echolocation
 
             // 先端が端に届いても、内側の帯が端を抜けきるまでは先端を進めて描き続ける。
             float front = _settings.Radius / _settings.Duration * phase;
-            FollowWaveRadius = front < _settings.Radius + RangeDisplay.WaveWidth ? front : -1;
+            FollowWaveRadius = front < radius + RangeDisplay.WaveWidth ? front : -1;
         }
 
         void NotifyUsage()

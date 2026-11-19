@@ -7,6 +7,7 @@ namespace Echo.Echolocation.Editor
     [CustomEditor(typeof(EchoController)), CanEditMultipleObjects]
     public sealed class EchoControllerEditor : UnityEditor.Editor
     {
+        private const string LightSustainPath = "_settings._lightSustain";
         void DrawField(string path, string label) => EditorGUILayout.PropertyField(serializedObject.FindProperty(path), new GUIContent(label), true);
         void DrawEnum(string path, string label, string[] choices)
         {
@@ -32,11 +33,11 @@ namespace Echo.Echolocation.Editor
             DrawField("_settings._radius", "最大半径（m）");
             DrawField("_settings._angleDegrees", "全開き角（度）");
             DrawField("_settings._duration", "伝播時間（秒）");
-            DrawEnum("_settings._scanMode", "スキャン方式", new[] { "プレイヤーに追従", "ソナー（定期再展開）", "一回だけ" });
+            DrawField("_settings._scanMode", "スキャン方式");
             DrawRangeDisplay();
             bool isRangeVisible = serializedObject.FindProperty("_rangeDisplay._isEnabled").boolValue;
             int scanMode = serializedObject.FindProperty("_settings._scanMode").enumValueIndex;
-            if (scanMode == (int)EchoScanMode.Once)
+            if (scanMode == (int)EchoScanMode.Single)
             {
                 DrawField("_settings._onceStockCapacity", "連続で打てる回数（ストック）");
                 DrawField("_settings._onceRechargeSeconds", "ストック1回復までの時間（秒）");
@@ -44,7 +45,7 @@ namespace Echo.Echolocation.Editor
                 if (serializedObject.FindProperty("_settings._duration").floatValue <= 0)
                     EditorGUILayout.HelpBox("伝播時間が0（即時）のため、波は一瞬で通り過ぎ、何にも当たりません。", MessageType.Warning);
             }
-            else if (scanMode == (int)EchoScanMode.Sonar)
+            else if (scanMode == (int)EchoScanMode.Intermittent)
             {
                 DrawField("_settings._pulseInterval", "再展開間隔 n（秒）");
                 DrawField("_settings._pulseHoldDuration", "展開後の残存時間 m（秒）");
@@ -61,6 +62,7 @@ namespace Echo.Echolocation.Editor
                     if (serializedObject.FindProperty("_settings._duration").floatValue <= 0)
                         EditorGUILayout.HelpBox("伝播時間が0（即時）のため、拡張波は一瞬で端へ届き、見えません。", MessageType.Warning);
                 }
+                DrawLightSustain();
             }
 
             DrawEnum("_settings._offMode", "停止時の消し方", new[] { "即時", "手前から順番" });
@@ -91,6 +93,38 @@ namespace Echo.Echolocation.Editor
                 foreach (var selected in targets)
                     EchoSetupValidator.Validate((EchoController)selected);
             DrawRuntimeStatus();
+        }
+
+        void DrawLightSustain()
+        {
+            DrawField(LightSustainPath + "._hasSustainLimit", "持続可能な時間を設定する");
+            if (!serializedObject.FindProperty(LightSustainPath + "._hasSustainLimit").boolValue)
+                return;
+            EditorGUI.indentLevel++;
+            DrawField(LightSustainPath + "._sustainSeconds", "持続可能な時間（秒）");
+            DrawField(LightSustainPath + "._depletionMode", "使い切ったとき");
+            DrawField(LightSustainPath + "._recoveryMode", "回復のしかた");
+            var recovery = (EchoLightRecoveryMode)serializedObject.FindProperty(LightSustainPath + "._recoveryMode").enumValueIndex;
+            if (recovery == EchoLightRecoveryMode.WhileOff)
+                DrawField(LightSustainPath + "._recoverySpeed", "回復する速さ（秒/秒）");
+            else if (recovery == EchoLightRecoveryMode.None)
+                EditorGUILayout.HelpBox("自動では回復しません。スクリプトから RecoverLightSustain（指定秒数の回復）または RefillLightSustain（満タン）を呼んで回復させます。", MessageType.Info);
+            DrawField(LightSustainPath + "._isRadiusShrinking", "残り時間に応じて最大半径を狭める");
+            if (serializedObject.FindProperty(LightSustainPath + "._isRadiusShrinking").boolValue)
+            {
+                EditorGUI.indentLevel++;
+                DrawField(LightSustainPath + "._minimumRadius", "0になった時の最小の距離（m）");
+                EditorGUI.indentLevel--;
+            }
+            DrawField(LightSustainPath + "._isAngleShrinking", "残り時間に応じて全開き角を狭める");
+            if (serializedObject.FindProperty(LightSustainPath + "._isAngleShrinking").boolValue)
+            {
+                EditorGUI.indentLevel++;
+                DrawField(LightSustainPath + "._minimumAngleDegrees", "0になった時の最小の角度（度）");
+                EditorGUI.indentLevel--;
+            }
+            EditorGUILayout.HelpBox("ONの間は持続可能な時間を消費します。チェックした項目は、残り時間に合わせて最大値から最小値へ少しずつ狭まります。", MessageType.Info);
+            EditorGUI.indentLevel--;
         }
 
         // スキャン方式と見た目を続けて調整できるよう、方式の直下に置く。
@@ -136,7 +170,9 @@ namespace Echo.Echolocation.Editor
                 EditorGUILayout.HelpBox($"影の発生地点：{shadow.OriginCount} ／ 遮断描画対象：{shadow.BlockerCount}\n影の描画回数：{shadow.DrawCalls} ／ 今回描き直した面：{shadow.UpdatedFaceCount} ／ CPU準備：{shadow.CpuMilliseconds:F2} ms", MessageType.Info);
             }
 
-            if (controller.Settings.ScanMode == EchoScanMode.Once)
+            if (controller.Settings.ScanMode == EchoScanMode.Light && controller.Settings.LightSustain.IsLimited)
+                EditorGUILayout.HelpBox($"持続可能な時間：残り {controller.LightSustainRemainingSeconds:F1} / {controller.Settings.LightSustain.SustainSeconds:F1} 秒", MessageType.Info);
+            if (controller.Settings.ScanMode == EchoScanMode.Single)
                 EditorGUILayout.HelpBox($"ストック：{controller.OnceStock} / {controller.Settings.OnceStockCapacity} ／ 次の回復：{controller.OnceRechargeProgress * 100:F0}%", MessageType.Info);
             EditorGUILayout.HelpBox($"状態：{GetStateLabel(controller.CurrentState)} ／ スキャン要求：{(controller.IsScanRequested ? "有効" : "無効")}\n最新波の外側：{controller.CurrentOuterRadius:F2} m ／ 消去：{controller.CurrentEraseRadius:F2} m\n生存領域：{controller.Frames.Count} ／ 登録：{controller.RegisteredCount} ／ 候補：{controller.RenderItems.Count}", MessageType.Info);
             using (new EditorGUI.DisabledScope(!Application.isPlaying))

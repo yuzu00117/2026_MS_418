@@ -14,7 +14,7 @@ namespace Aura.Wave.Editor
     /// ・離した後に戻るまでの時間（Bend Hold Seconds、Bend Return Seconds）は、Bend Release Mode が Hold Then Return のときだけ出す
     /// ・点のレイヤー（Point Layer）は、レイヤーを選ぶ欄で出す
     /// ・見た目の部品（IBeamWaveView、IFanWaveView）が付いていなければ、再生を始めるときに今の見た目を足すことを知らせ、
-    ///   今の見た目の部品（BeamLineView、FanRingView）を付けるボタンを出す（付けておくと、見た目の欄を Inspector で変えられる）
+    ///   今の見た目の部品（BeamLineView、ConeRingView）を付けるボタンを出す（付けておくと、見た目の欄を Inspector で変えられる）
     [CustomEditor(typeof(WaveEmitter))]
     [CanEditMultipleObjects]
     public sealed class WaveEmitterEditor : UnityEditor.Editor
@@ -145,7 +145,7 @@ namespace Aura.Wave.Editor
             }
             if (isFanViewMissing)
             {
-                missingNames.Add(nameof(FanRingView));
+                missingNames.Add(nameof(ConeRingView));
             }
             EditorGUILayout.Space();
             EditorGUILayout.HelpBox(string.Format(MissingViewMessage, string.Join("、", missingNames)), MessageType.Info);
@@ -162,7 +162,7 @@ namespace Aura.Wave.Editor
                 }
                 if (!emitterObject.TryGetComponent(out IFanWaveView _))
                 {
-                    Undo.AddComponent<FanRingView>(emitterObject);
+                    Undo.AddComponent<ConeRingView>(emitterObject);
                 }
             }
         }

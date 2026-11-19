@@ -1,0 +1,69 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: M_ToonWater
+  m_Shader: {fileID: 4800000, guid: e01832af9a534571b28286b3808248e9, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: _CausticsWidth
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _CausticsDistance: 1
+    - _CausticsNearDistance: 1.2
+    - _CausticsOpacity: 1
+    - _CausticsScale: 1.2
+    - _CausticsSpeed: 0.5
+    - _CausticsWidth: 0.1
+    - _ClarityDistance: 1.5
+    - _DepthGradientPower: 0.2
+    - _DepthMaxDistance: 1
+    - _FoamDistance: 0.4
+    - _FoamLineWidth: 0.08
+    - _FoamNoiseScale: 3
+    - _FoamSpeed: 0.3
+    - _FresnelPower: 5
+    - _FresnelStrength: 0.5
+    - _RefractionStrength: 0.015
+    - _ShadowStrength: 0.35
+    - _ShallowClarity: 0.8
+    - _WaveAngle: 0
+    - _WaveDetailFadeEnd: 120
+    - _WaveDetailFadeStart: 30
+    - _WaveLength: 20
+    - _WaveLitAmount: 0.15
+    - _WaveLitOpacity: 0.5
+    - _WaveShadeAmount: 0.12
+    - _WaveShadeStrength: 0.2
+    - _WaveSpeed: 0.3
+    - _WaveSpread: 0.5
+    - _WaveSteepness: 0.375
+    - _WaveVariation: 1
+    - _WaveVariationScale: 0.03
+    - _WaveWarpScale: 0.02
+    - _WaveWarpStrength: 8
+    m_Colors:
+    - _CausticsColor: {r: 0.85, g: 1, b: 1, a: 1}
+    - _DeepColor: {r: 0.04, g: 0.23999995, b: 0.62, a: 1}
+    - _FoamColor: {r: 0.8349056, g: 1, b: 1, a: 1}
+    - _HorizonColor: {r: 0.54999995, g: 0.85, b: 1, a: 1}
+    - _ShallowColor: {r: 0.4764151, g: 0.84810007, b: 1, a: 1}
+    - _WaveLitColor: {r: 0.75, g: 0.96999997, b: 1, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

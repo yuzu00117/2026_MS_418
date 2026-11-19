@@ -33,7 +33,7 @@ namespace Echo.Echolocation.Tests
         }
 
         [Test]
-        public void ShadowResolutionDoesNotReduceSonarPulseCount()
+        public void ShadowResolutionDoesNotReduceIntermittentPulseCount()
         {
             var settings = new EchoSettings
             {
