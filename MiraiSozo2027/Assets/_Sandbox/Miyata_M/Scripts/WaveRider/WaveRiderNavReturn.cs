@@ -53,12 +53,28 @@ namespace Aura.Gimmick
             {
                 return false;   // 角が多すぎて途中で切れた。終点まで届かないので使わない
             }
-            _nextIndex = 1;
-            _navPoint = start.position;
-            _offset = from - start.position;
-            _goalOffset = goal - end.position;
-            HasPlan = true;
+            BeginPlan(start.position, from - start.position, goal - end.position);
             return true;
+        }
+
+        /// @brief _corners（_cornerCount 個）の経路で、進み始める状態にする。Plan から呼ぶ。テストからは、経路を直接入れて呼ぶ
+        /// @param navStart 経路の出発点（NavMesh 上）
+        /// @param offset 出発点から見た、ライダーの位置のずれ
+        /// @param goalOffset 経路の終点から見た、目標の位置のずれ
+        internal void BeginPlan(Vector3 navStart, Vector3 offset, Vector3 goalOffset)
+        {
+            _nextIndex = 1;
+            _navPoint = navStart;
+            _offset = offset;
+            _goalOffset = goalOffset;
+            HasPlan = true;
+        }
+
+        /// @brief テスト用。NavMesh を使わず、角の並びを経路として入れる
+        internal void SetCornersForTest(Vector3[] corners)
+        {
+            _cornerCount = corners.Length;
+            System.Array.Copy(corners, _corners, corners.Length);
         }
 
         /// @brief 経路に沿って distance だけ進めた、ライダーの目標の位置を返す。経路の終点では、目標の位置に着く
