@@ -26,6 +26,11 @@ namespace Aura.Kinesis
         [SerializeField] private bool _canBeGrabbed = true;
         public bool CanBeGrabbed => _canBeGrabbed;
 
+        [Tooltip("掴んでいる間も回転できるか。OFF（通常）なら掴んだ物は回らない。\n" +
+                 "念力レバーのように、軸を中心に回って動く物だけ ON にする")]
+        [SerializeField] private bool _canRotateWhileHeld = false;
+        public bool CanRotateWhileHeld => _canRotateWhileHeld;
+
         public Rigidbody Rb { get; private set; }
 
         private bool _initialUseGravity;
@@ -83,7 +88,10 @@ namespace Aura.Kinesis
             Rb.isKinematic = false;
             Rb.useGravity = false;
             Rb.linearDamping = 1.0f; // ブレ防止
-            Rb.constraints = _initialConstraints | RigidbodyConstraints.FreezeRotation;
+            // 回って動く物（レバーなど）は、回転を止めると動けなくなるので止めない
+            Rb.constraints = _canRotateWhileHeld
+                ? _initialConstraints
+                : _initialConstraints | RigidbodyConstraints.FreezeRotation;
             IsTouchingPlayer = false;
             IsPlayerRiding = false;
         }

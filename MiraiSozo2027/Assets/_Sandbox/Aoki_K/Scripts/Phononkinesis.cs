@@ -287,8 +287,12 @@ namespace Aura.Kinesis
             }
 
             rb.linearVelocity = desiredVelocity;
-            rb.MoveRotation(_targetRotation);
-            rb.angularVelocity = Vector3.zero;
+            // 回って動く物（レバーなど）は、向きを戻すと動けなくなるので戻さない
+            if (!_heldTarget.CanRotateWhileHeld)
+            {
+                rb.MoveRotation(_targetRotation);
+                rb.angularVelocity = Vector3.zero;
+            }
         }
 
         /// <summary>
