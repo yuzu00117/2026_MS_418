@@ -108,6 +108,7 @@ namespace Aura.Gimmick
         private WaveReaction _reaction;       ///< 反応する波の種類
         private Rigidbody _body;              ///< 自分の Rigidbody（Kinematic）
         private Vector3 _initialPosition;     ///< ゲーム開始時の位置（ワールド座標）
+        private Quaternion _initialRotation;  ///< ゲーム開始時の向き。初期位置へ戻るとき、この向きにも戻す
         private WaveEmitter _currentEmitter;  ///< 今乗っている波を出しているもの。乗っていなければ null
         private float _distance;              ///< 今の線の上の道のり s（m）
         private float _direction = 1.0f;      ///< 線の上を進む向き（1: 終点へ、-1: 先頭へ。折り返しで使う）
@@ -183,6 +184,7 @@ namespace Aura.Gimmick
             _body.isKinematic = true;
             _body.interpolation = RigidbodyInterpolation.Interpolate;
             _initialPosition = _body.position;
+            _initialRotation = _body.rotation;
             _ownColliders = GetComponentsInChildren<Collider>();
         }
 
@@ -395,16 +397,31 @@ namespace Aura.Gimmick
 
                 case WaveRiderLostWaveMode.ReturnToStart:
                     _velocity = Vector3.zero;
+                    RestoreRotation(deltaTime);
                     return ReturnStraight(current, deltaTime);
 
                 case WaveRiderLostWaveMode.ReturnByNavMesh:
                     _velocity = Vector3.zero;
+                    RestoreRotation(deltaTime);
                     return ReturnAlongNavMesh(current, deltaTime);
 
                 default:
                     _velocity = Vector3.zero;
                     return current;
             }
+        }
+
+        /// @brief 初期位置へ戻る間に、向きも初期の向きへ少しずつ戻す。進む向きに回転を合わせていたときだけ
+        /// 上に乗った物も、乗っている間と同じく、この分だけ自分の中心まわりに回す
+        private void RestoreRotation(float deltaTime)
+        {
+            if (!_isFacingTravelDirection)
+            {
+                return;
+            }
+            Quaternion rotated = Quaternion.RotateTowards(_body.rotation, _initialRotation, TurnDegreesPerSecond * deltaTime);
+            _turnDelta = rotated * Quaternion.Inverse(_body.rotation);
+            _body.MoveRotation(rotated);
         }
 
         /// @brief 初期位置へまっすぐ 1 ステップ分戻る。途中の壁は通り抜けず、その手前で止まる（慣性と同じ）
@@ -436,6 +453,7 @@ namespace Aura.Gimmick
                     }
                     return ReturnStraight(current, deltaTime);
                 }
+                _hasWarnedNavMesh = false;   // 引けたので、あとでまた引けなくなったら、もう一度警告を出す
             }
 
             Vector3 target = _navReturn.Step(_returnSpeed * deltaTime);
