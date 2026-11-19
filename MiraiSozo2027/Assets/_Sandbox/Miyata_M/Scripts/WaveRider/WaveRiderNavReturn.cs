@@ -11,7 +11,11 @@ namespace Aura.Gimmick
     {
         private const float SampleRadius = 10.0f;  ///< NavMesh 上の最寄りの点を探す範囲（m）。空中を運ばれた高さからも床を探せるよう広めにする
 
-        private Vector3[] _corners = System.Array.Empty<Vector3>();  ///< 経路の角（最初は出発点）
+        private const int MaxCorners = 128;       ///< 受け取る経路の角の最大数。これを超える経路は引けなかったことにする
+
+        private NavMeshPath _path;                                               ///< 経路の入れ物（確保を避けて使い回す。コンストラクタでは作れないので、最初の Plan で作る）
+        private readonly Vector3[] _corners = new Vector3[MaxCorners];           ///< 経路の角（最初は出発点）
+        private int _cornerCount;         ///< 経路の角の数
         private int _nextIndex;           ///< 次に向かう角の番号
         private Vector3 _navPoint;        ///< 経路の上の今の点
         private Vector3 _offset;          ///< 経路の上の点から見た、ライダーの位置のずれ
@@ -31,20 +35,24 @@ namespace Aura.Gimmick
         public bool Plan(Vector3 from, Vector3 goal)
         {
             HasPlan = false;
+            _path ??= new NavMeshPath();
             if (!NavMesh.SamplePosition(from, out NavMeshHit start, SampleRadius, NavMesh.AllAreas)
                 || !NavMesh.SamplePosition(goal, out NavMeshHit end, SampleRadius, NavMesh.AllAreas))
             {
                 return false;
             }
 
-            var path = new NavMeshPath();
-            if (!NavMesh.CalculatePath(start.position, end.position, NavMesh.AllAreas, path)
-                || path.status != NavMeshPathStatus.PathComplete)
+            if (!NavMesh.CalculatePath(start.position, end.position, NavMesh.AllAreas, _path)
+                || _path.status != NavMeshPathStatus.PathComplete)
             {
                 return false;
             }
 
-            _corners = path.corners;
+            _cornerCount = _path.GetCornersNonAlloc(_corners);
+            if (_cornerCount >= MaxCorners)
+            {
+                return false;   // 角が多すぎて途中で切れた。終点まで届かないので使わない
+            }
             _nextIndex = 1;
             _navPoint = start.position;
             _offset = from - start.position;
@@ -58,7 +66,7 @@ namespace Aura.Gimmick
         public Vector3 Step(float distance)
         {
             float remaining = distance;
-            while (remaining > 0.0f && _nextIndex < _corners.Length)
+            while (remaining > 0.0f && _nextIndex < _cornerCount)
             {
                 Vector3 corner = _corners[_nextIndex];
                 float toCorner = Vector3.Distance(_navPoint, corner);

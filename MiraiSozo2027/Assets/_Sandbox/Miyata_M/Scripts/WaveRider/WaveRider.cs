@@ -32,6 +32,7 @@ namespace Aura.Gimmick
         private const float PassengerSlabHeight = 0.3f;      ///< 上面の上で乗っている物を探す、薄い箱の高さ（m）
         private const float ContactDistance = 0.001f;       ///< 当たった距離がこれ以下なら、すでに面に接しているとみなす（m）
         private const float MinSlideSqrMagnitude = 1.0e-8f;   ///< 面に沿って滑らせる量の長さの 2 乗がこれ以下なら、滑らせない
+        private const float NavReplanInterval = 0.5f;         ///< 経路探索で戻るとき、経路を引き直す間隔の最短（秒）
         private const int OverlapBufferSize = 32;            ///< 上面で同時に調べる Collider の最大数。超えた分は乗っている物として数えない
         private const float TopContactTolerance = 0.1f;      ///< 相手の足元が自分の上面からこの高さ以内に潜っていても、上に乗っているとみなす（m）
 
@@ -115,6 +116,8 @@ namespace Aura.Gimmick
         private Quaternion _turnDelta = Quaternion.identity;  ///< 今のステップで自分が回った分。上に乗った物を回すのに使う
         private Vector3 _velocity;           ///< 直前のステップの速度（m/s）。慣性で進むときの初速になる
         private readonly WaveRiderNavReturn _navReturn = new WaveRiderNavReturn();  ///< 経路探索で戻るときの経路
+        private float _nextNavPlanTime;     ///< 次に経路を引いてよい時刻（Time.time）
+        private bool _isNavPlanFailed;       ///< 直前の経路探索が失敗したか（失敗の間は、まっすぐ戻る）
         private bool _hasWarnedNavMesh;      ///< NavMesh の経路が引けない警告を出したか（毎ステップ出さないため）
 
         private Collider[] _ownColliders;     ///< 自分と子の Collider（上面の位置を求める）
@@ -156,6 +159,7 @@ namespace Aura.Gimmick
             }
             _emitter = emitter;
             _currentEmitter = null;
+            _hasBoarded = false;   // 別の波なので、最初に乗る距離の上限（遠くから引き込まない）で判定し直す
         }
 
         private void Awake()
@@ -201,6 +205,7 @@ namespace Aura.Gimmick
             {
                 next = Ride(emitter, deltaTime);
                 _navReturn.Reset();   // 乗っている間に動いた分、戻る経路は引き直す
+                _nextNavPlanTime = 0.0f;
                 _velocity = (next - current) / deltaTime;
             }
 
@@ -404,14 +409,24 @@ namespace Aura.Gimmick
         /// 壁に当たって止まったら経路を捨て、次のステップで今の位置から引き直す
         private Vector3 ReturnAlongNavMesh(Vector3 current, float deltaTime)
         {
-            if (!_navReturn.HasPlan && !_navReturn.Plan(current, _initialPosition))
+            if (!_navReturn.HasPlan)
             {
-                if (!_hasWarnedNavMesh)
+                // 経路探索は重いので、引けなかったときと壁で止まったときは、間隔をあけて引き直す
+                if (Time.time < _nextNavPlanTime)
                 {
-                    _hasWarnedNavMesh = true;
-                    Debug.LogWarning("WaveRider: NavMesh の経路が引けないので、まっすぐ戻ります。NavMesh をベイクしてあるか確認してください", this);
+                    return _isNavPlanFailed ? ReturnStraight(current, deltaTime) : current;
                 }
-                return ReturnStraight(current, deltaTime);
+                _nextNavPlanTime = Time.time + NavReplanInterval;
+                _isNavPlanFailed = !_navReturn.Plan(current, _initialPosition);
+                if (_isNavPlanFailed)
+                {
+                    if (!_hasWarnedNavMesh)
+                    {
+                        _hasWarnedNavMesh = true;
+                        Debug.LogWarning("WaveRider: NavMesh の経路が引けないので、まっすぐ戻ります。NavMesh をベイクしてあるか確認してください", this);
+                    }
+                    return ReturnStraight(current, deltaTime);
+                }
             }
 
             Vector3 target = _navReturn.Step(_returnSpeed * deltaTime);
