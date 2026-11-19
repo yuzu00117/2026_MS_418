@@ -30,6 +30,8 @@ namespace Aura.Gimmick
         private const float MinPushDistance = 0.001f;        ///< 壁から押し戻す重なりの最小（m）。これ以下は接しているだけとみなす
         private const float MinPushHorizontalSqrMagnitude = 0.25f; ///< 押し出しの向きの横成分の長さの 2 乗がこれ以下なら、ほぼ縦向きなので押し戻さない
         private const float PassengerSlabHeight = 0.3f;      ///< 上面の上で乗っている物を探す、薄い箱の高さ（m）
+        private const float ContactDistance = 0.001f;       ///< 当たった距離がこれ以下なら、すでに面に接しているとみなす（m）
+        private const float MinSlideSqrMagnitude = 1.0e-8f;   ///< 面に沿って滑らせる量の長さの 2 乗がこれ以下なら、滑らせない
         private const int OverlapBufferSize = 32;            ///< 上面で同時に調べる Collider の最大数。超えた分は乗っている物として数えない
         private const float TopContactTolerance = 0.1f;      ///< 相手の足元が自分の上面からこの高さ以内に潜っていても、上に乗っているとみなす（m）
 
@@ -45,7 +47,8 @@ namespace Aura.Gimmick
         [Tooltip("波が遮られた、止まった、スイッチが止まったときの動き\n" +
                  "・その場で止まる: 今の位置で止まる\n" +
                  "・慣性で進んでから止まる: 直前の速さと向きのまま進み、「慣性の減速（m/s²）」で減速して止まる\n" +
-                 "・初期位置へ戻る: ゲーム開始時の位置へ「戻る速さ」で戻る。途中に壁などがあれば、その手前で止まる")]
+                 "・初期位置へ戻る: ゲーム開始時の位置へ「戻る速さ」でまっすぐ戻る。途中に壁などがあれば、その手前で止まる\n" +
+                 "・経路探索で初期位置へ戻る: NavMesh の経路で壁を避けて戻る。NavMesh のベイクが必要（無ければまっすぐ戻る）")]
         [SerializeField] private WaveRiderLostWaveMode _lostWaveMode = WaveRiderLostWaveMode.StopInPlace;  ///< 波が無くなったときの動き
 
         [InspectorLabel("慣性の減速（m/s²）")]
@@ -111,6 +114,8 @@ namespace Aura.Gimmick
         private Vector3 _attachOffset;       ///< 線の上の点（高さのずれを含む）から見た、自分の位置のずれ。乗った時点で求め、少しずつ 0 へ縮める
         private Quaternion _turnDelta = Quaternion.identity;  ///< 今のステップで自分が回った分。上に乗った物を回すのに使う
         private Vector3 _velocity;           ///< 直前のステップの速度（m/s）。慣性で進むときの初速になる
+        private readonly WaveRiderNavReturn _navReturn = new WaveRiderNavReturn();  ///< 経路探索で戻るときの経路
+        private bool _hasWarnedNavMesh;      ///< NavMesh の経路が引けない警告を出したか（毎ステップ出さないため）
 
         private Collider[] _ownColliders;     ///< 自分と子の Collider（上面の位置を求める）
         private readonly Collider[] _overlapBuffer = new Collider[OverlapBufferSize];  ///< 上面の重なりを受ける入れ物（確保を避ける）
@@ -182,6 +187,7 @@ namespace Aura.Gimmick
             else
             {
                 next = Ride(emitter, deltaTime);
+                _navReturn.Reset();   // 乗っている間に動いた分、戻る経路は引き直す
                 _velocity = (next - current) / deltaTime;
             }
 
@@ -362,14 +368,46 @@ namespace Aura.Gimmick
 
                 case WaveRiderLostWaveMode.ReturnToStart:
                     _velocity = Vector3.zero;
-                    // 戻る途中の壁は通り抜けず、その手前で止まる（慣性と同じ）
-                    Vector3 target = Vector3.MoveTowards(current, _initialPosition, _returnSpeed * deltaTime);
-                    return SweepMove(current, target - current, out bool _);
+                    return ReturnStraight(current, deltaTime);
+
+                case WaveRiderLostWaveMode.ReturnByNavMesh:
+                    _velocity = Vector3.zero;
+                    return ReturnAlongNavMesh(current, deltaTime);
 
                 default:
                     _velocity = Vector3.zero;
                     return current;
             }
+        }
+
+        /// @brief 初期位置へまっすぐ 1 ステップ分戻る。途中の壁は通り抜けず、その手前で止まる（慣性と同じ）
+        private Vector3 ReturnStraight(Vector3 current, float deltaTime)
+        {
+            Vector3 target = Vector3.MoveTowards(current, _initialPosition, _returnSpeed * deltaTime);
+            return SweepMove(current, target - current, out bool _);
+        }
+
+        /// @brief NavMesh の経路で初期位置へ 1 ステップ分戻る。経路が引けないときは、まっすぐ戻る
+        /// 壁に当たって止まったら経路を捨て、次のステップで今の位置から引き直す
+        private Vector3 ReturnAlongNavMesh(Vector3 current, float deltaTime)
+        {
+            if (!_navReturn.HasPlan && !_navReturn.Plan(current, _initialPosition))
+            {
+                if (!_hasWarnedNavMesh)
+                {
+                    _hasWarnedNavMesh = true;
+                    Debug.LogWarning("WaveRider: NavMesh の経路が引けないので、まっすぐ戻ります。NavMesh をベイクしてあるか確認してください", this);
+                }
+                return ReturnStraight(current, deltaTime);
+            }
+
+            Vector3 target = _navReturn.Step(_returnSpeed * deltaTime);
+            Vector3 next = SweepMove(current, target - current, out bool isBlocked);
+            if (isBlocked)
+            {
+                _navReturn.Reset();
+            }
+            return next;
         }
 
         /// @brief 慣性で 1 ステップ分進める。壁などに当たる手前で止まる（当たったら速さは 0 になる）
@@ -384,19 +422,37 @@ namespace Aura.Gimmick
         }
 
         /// @brief step だけ進めた位置を返す。壁などに当たるなら、その手前までにする
-        /// 上に乗っている物は当たり判定から外す。SweepTestAll は配列を作るが、波に乗っていない間だけなので許容する
+        /// すでに面に接している所（床の上など）で止まってしまわないよう、接している面に沿って 1 回だけ滑らせる
         /// 計算量: O(H)（H は進む先の当たり判定の数）
         private Vector3 SweepMove(Vector3 current, Vector3 step, out bool isBlocked)
         {
+            Vector3 next = SweepOnce(current, step, out isBlocked, out Vector3 contactNormal, out float hitDistance);
+            if (isBlocked && hitDistance < ContactDistance)
+            {
+                Vector3 slide = Vector3.ProjectOnPlane(step, contactNormal);
+                if (slide.sqrMagnitude > MinSlideSqrMagnitude)
+                {
+                    next = SweepOnce(current, slide, out isBlocked, out _, out _);
+                }
+            }
+            return next;
+        }
+
+        /// @brief step だけ進めた位置を返す。壁などに当たるなら、その手前までにして、当たった面の向きと距離も返す
+        /// 上に乗っている物は当たり判定から外す。SweepTestAll は配列を作るが、波に乗っていない間だけなので許容する
+        /// 計算量: O(H)（H は進む先の当たり判定の数）
+        private Vector3 SweepOnce(Vector3 current, Vector3 step, out bool isBlocked, out Vector3 contactNormal, out float hitDistance)
+        {
             isBlocked = false;
+            contactNormal = Vector3.zero;
             float stepLength = step.magnitude;
+            hitDistance = stepLength;
             if (stepLength <= 0.0f)
             {
                 return current;
             }
 
             Vector3 direction = step / stepLength;
-            float nearestDistance = stepLength;
             foreach (RaycastHit hit in _body.SweepTestAll(direction, stepLength, QueryTriggerInteraction.Ignore))
             {
                 Rigidbody hitBody = hit.rigidbody;
@@ -404,13 +460,14 @@ namespace Aura.Gimmick
                 {
                     continue;
                 }
-                if (hit.distance < nearestDistance)
+                if (hit.distance < hitDistance)
                 {
-                    nearestDistance = hit.distance;
+                    hitDistance = hit.distance;
+                    contactNormal = hit.normal;
                     isBlocked = true;
                 }
             }
-            return current + direction * nearestDistance;
+            return current + direction * hitDistance;
         }
 
         /// @brief 位置から高さのずれを引いた、線と比べる位置を返す（乗り直しの最寄りの点を、ずれに引きずられずに探すため）
