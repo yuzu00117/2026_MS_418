@@ -454,6 +454,10 @@ namespace Aura.Gimmick
             {
                 return;
             }
+            if (Quaternion.Angle(_body.rotation, _initialRotation) <= 0.0f)
+            {
+                return;   // すでに初期の向きなら、壁との重なりを調べるまでもない（置いてあるだけの間の毎ステップの負荷を避ける）
+            }
             Quaternion rotated = Quaternion.RotateTowards(_body.rotation, _initialRotation, TurnDegreesPerSecond * deltaTime);
             Quaternion delta = rotated * Quaternion.Inverse(_body.rotation);
             if (IsRotationBlocked(delta))
