@@ -1,0 +1,23 @@
+{
+    "name": "Aura.Sandbox.WaveRider.PlayModeTests",
+    "rootNamespace": "Aura.Gimmick.Tests",
+    "references": [
+        "Aura.Sandbox.WaveRider",
+        "Aura.ObjectInfo",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
