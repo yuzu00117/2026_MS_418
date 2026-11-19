@@ -162,6 +162,15 @@ namespace Aura.Gimmick
             _hasBoarded = false;   // 別の波なので、最初に乗る距離の上限（遠くから引き込まない）で判定し直す
         }
 
+        /// @brief 「初期位置へ戻る」で戻る先を変える。コードで生成したあとに位置を動かしたときや、置き直したときに使う
+        /// 初期位置は Awake の位置で決まるため、Instantiate のあとに transform を動かすと、戻る先が生成時の位置のままになる
+        public void SetInitialPosition(Vector3 position)
+        {
+            _initialPosition = position;
+            _navReturn.Reset();   // 引いてあった経路は古い目標向きなので捨てる
+            _nextNavPlanTime = 0.0f;
+        }
+
         private void Awake()
         {
             if (_emitter == null)
