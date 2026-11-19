@@ -126,7 +126,7 @@ public class WaveDamageReceiver : MonoBehaviour
         if (!CanHpReactTo(waveKind)) return;
 
         _lastReceiveTime = Time.time;
-        int finalDamage = Mathf.Max(1, Mathf.RoundToInt(baseDamage * hit.Multiplier));
+        int finalDamage = Mathf.Max(0, Mathf.RoundToInt(baseDamage * hit.Multiplier));
 
         if (_damageMode == WaveDamageMode.MultiHit)
         {
