@@ -173,6 +173,13 @@ namespace Aura.Gimmick
             _nextNavPlanTime = 0.0f;
         }
 
+        /// @brief 「初期位置へ戻る」で戻る先の向きを変える。生成したあとに向きを変えたときに使う
+        /// 初期の向きは Awake の向きで決まるため、Instantiate のあとに回すと、戻る向きが生成時のままになる
+        public void SetInitialRotation(Quaternion rotation)
+        {
+            _initialRotation = rotation;
+        }
+
         private void Awake()
         {
             if (_emitter == null)
