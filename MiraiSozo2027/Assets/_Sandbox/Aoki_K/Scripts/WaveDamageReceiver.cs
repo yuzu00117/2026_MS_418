@@ -164,6 +164,7 @@ namespace Aura.Combat
 
             // WaveEmitter側で hit.Energy に hit.Multiplier が掛けられているため、純粋な照射秒数（エネルギー）に戻す
             float rawEnergy = hit.Energy / hit.Multiplier;
+            if (rawEnergy <= 0f) return;
 
             // フェーズ1：アーマー中
             if (HasArmor)
