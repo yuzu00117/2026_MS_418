@@ -1,7 +1,7 @@
 // 描画へ渡す1つのRenderer。サブメッシュ数は現在のメッシュから取得する。
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>元のマテリアルを変更せず追加描画するための情報。</summary>
     public readonly struct EchoRenderItem

@@ -1,6 +1,6 @@
 using UnityEditor;
 using UnityEngine;
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     [CustomPropertyDrawer(typeof(EchoSurfaceBinding))]
     public sealed class EchoSurfaceBindingDrawer : PropertyDrawer

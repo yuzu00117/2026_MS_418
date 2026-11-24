@@ -1,7 +1,7 @@
 // 1フレームの描画用スナップショット。描画側では時間を進めない。
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>CPUとGPUに同じスキャン条件を渡す不変データ。</summary>
     public readonly struct EchoFrameData

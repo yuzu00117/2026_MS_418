@@ -4,7 +4,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>強調対象の有無に関係なく範囲を描く。タグ色の強調より前に合成する。</summary>
     public sealed class EchoRangeRenderPass : ScriptableRenderPass

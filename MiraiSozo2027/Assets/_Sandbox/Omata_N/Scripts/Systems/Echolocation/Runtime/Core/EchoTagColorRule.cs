@@ -2,7 +2,7 @@
 using System;
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>タグ完全一致による表示色。アルファは不透明度。</summary>
     [Serializable]

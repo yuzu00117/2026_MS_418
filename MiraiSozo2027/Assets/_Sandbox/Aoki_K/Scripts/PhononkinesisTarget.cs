@@ -1,125 +1,129 @@
 using UnityEngine;
+using Aura.PlayerControl;
 
-[RequireComponent(typeof(Rigidbody))]
-public class PhononkinesisTarget : MonoBehaviour
+namespace Aura.Kinesis
 {
-    public enum ReleaseBehavior
+    [RequireComponent(typeof(Rigidbody))]
+    public class PhononkinesisTarget : MonoBehaviour
     {
-        Auto,               // 初期設定を維持（元々浮いていれば浮いたまま、重力なら落下）
-        AlwaysStayFloating, // 手放したら必ず空中で静止固定する（Kinematic化）
-        AlwaysGravity       // 手放したら必ず重力で落下する
-    }
-
-    [Header("Settings")]
-    [Tooltip("手放した（配置確定した）ときの挙動")]
-    [SerializeField] private ReleaseBehavior _releaseBehavior = ReleaseBehavior.Auto;
-    [Tooltip("手放したときの慣性減衰率（0～1、0で慣性なし）")]
-    [SerializeField] private float _inertiaDamping = 0.5f; // 手放したときの慣性保持率（0～1、0で慣性なし）
-    [Tooltip("接触時の法線Y成分がこの値の負値以下なら上に乗っていると判定（0～1）")]
-    //上方向にいるかどうかの判定用の変数
-    [SerializeField] private float _diagonalUpwardThreshold = 0.7f;
-
-    [Tooltip("念力で掴めるかどうかのフラグ")]
-    [SerializeField] private bool _canBeGrabbed = true;
-    public bool CanBeGrabbed => _canBeGrabbed;
-
-    public Rigidbody Rb { get; private set; }
-
-    private bool _initialUseGravity;
-    private bool _initialIsKinematic;
-    private float _initialLinearDamping;
-    private RigidbodyConstraints _initialConstraints;
-
-    public bool IsTouchingPlayer { get; private set; }
-    public bool IsPlayerRiding { get; private set; }
-
-    private void Awake()
-    {
-        Rb = GetComponent<Rigidbody>();
-        _initialUseGravity = Rb.useGravity;
-        _initialIsKinematic = Rb.isKinematic;
-        _initialLinearDamping = Rb.linearDamping;
-        _initialConstraints = Rb.constraints;
-    }
-
-    private void OnCollisionStay(Collision collision)
-    {
-        if(collision.gameObject.CompareTag("Player") || 
-        collision.gameObject.GetComponent<PlayerController>() != null)
+        public enum ReleaseBehavior
         {
-            IsTouchingPlayer = true;
+            Auto,               // 初期設定を維持（元々浮いていれば浮いたまま、重力なら落下）
+            AlwaysStayFloating, // 手放したら必ず空中で静止固定する（Kinematic化）
+            AlwaysGravity       // 手放したら必ず重力で落下する
+        }
 
-            // 接触面の法線をチェック
-            IsPlayerRiding = false;
-            for(int i = 0; i < collision.contactCount; i++)
+        [Header("Settings")]
+        [Tooltip("手放した（配置確定した）ときの挙動")]
+        [SerializeField] private ReleaseBehavior _releaseBehavior = ReleaseBehavior.Auto;
+        [Tooltip("手放したときの慣性減衰率（0～1、0で慣性なし）")]
+        [SerializeField] private float _inertiaDamping = 0.5f; // 手放したときの慣性保持率（0～1、0で慣性なし）
+        [Tooltip("接触時の法線Y成分がこの値の負値以下なら上に乗っていると判定（0～1）")]
+        //上方向にいるかどうかの判定用の変数
+        [SerializeField] private float _diagonalUpwardThreshold = 0.7f;
+
+        [Tooltip("念力で掴めるかどうかのフラグ")]
+        [SerializeField] private bool _canBeGrabbed = true;
+        public bool CanBeGrabbed => _canBeGrabbed;
+
+        public Rigidbody Rb { get; private set; }
+
+        private bool _initialUseGravity;
+        private bool _initialIsKinematic;
+        private float _initialLinearDamping;
+        private RigidbodyConstraints _initialConstraints;
+
+        public bool IsTouchingPlayer { get; private set; }
+        public bool IsPlayerRiding { get; private set; }
+
+        private void Awake()
+        {
+            Rb = GetComponent<Rigidbody>();
+            _initialUseGravity = Rb.useGravity;
+            _initialIsKinematic = Rb.isKinematic;
+            _initialLinearDamping = Rb.linearDamping;
+            _initialConstraints = Rb.constraints;
+        }
+
+        private void OnCollisionStay(Collision collision)
+        {
+            if(collision.gameObject.CompareTag("Player") || 
+            collision.gameObject.GetComponent<PlayerController>() != null)
             {
-                if(collision.GetContact(i).normal.y < -_diagonalUpwardThreshold)
+                IsTouchingPlayer = true;
+
+                // 接触面の法線をチェック
+                IsPlayerRiding = false;
+                for(int i = 0; i < collision.contactCount; i++)
                 {
-                    IsPlayerRiding = true;
-                    break;
+                    if(collision.GetContact(i).normal.y < -_diagonalUpwardThreshold)
+                    {
+                        IsPlayerRiding = true;
+                        break;
+                    }
                 }
             }
         }
-    }
 
-    private void OnCollisionExit(Collision collision)
-    {
-        if(collision.gameObject.CompareTag("Player") || 
-        collision.gameObject.GetComponent<PlayerController>() != null)
+        private void OnCollisionExit(Collision collision)
         {
+            if(collision.gameObject.CompareTag("Player") || 
+            collision.gameObject.GetComponent<PlayerController>() != null)
+            {
+                IsTouchingPlayer = false;
+                IsPlayerRiding = false;
+            }
+        }
+
+        /// <summary>
+        /// 掴まれた瞬間の処理（物理で運べるように一時調整）
+        /// </summary>
+        public void OnGrabbed()
+        {
+            Rb.isKinematic = false;
+            Rb.useGravity = false;
+            Rb.linearDamping = 1.0f; // ブレ防止
+            Rb.constraints = _initialConstraints | RigidbodyConstraints.FreezeRotation;
             IsTouchingPlayer = false;
             IsPlayerRiding = false;
         }
-    }
 
-    /// <summary>
-    /// 掴まれた瞬間の処理（物理で運べるように一時調整）
-    /// </summary>
-    public void OnGrabbed()
-    {
-        Rb.isKinematic = false;
-        Rb.useGravity = false;
-        Rb.linearDamping = 1.0f; // ブレ防止
-        Rb.constraints = _initialConstraints | RigidbodyConstraints.FreezeRotation;
-        IsTouchingPlayer = false;
-        IsPlayerRiding = false;
-    }
-
-    /// <summary>
-    /// 手放された（配置確定）瞬間の処理
-    /// </summary>
-    public void OnReleased()
-    {
-        switch (_releaseBehavior)
+        /// <summary>
+        /// 手放された（配置確定）瞬間の処理
+        /// </summary>
+        public void OnReleased()
         {
-            case ReleaseBehavior.Auto:
-                // 元々の設定に忠実に復帰
-                Rb.linearVelocity *= _inertiaDamping; // 少し減速して落下
-                Rb.angularVelocity = Vector3.zero;
-                Rb.isKinematic = _initialIsKinematic;
-                Rb.useGravity = _initialUseGravity;
-                break;
+            switch (_releaseBehavior)
+            {
+                case ReleaseBehavior.Auto:
+                    // 元々の設定に忠実に復帰
+                    Rb.linearVelocity *= _inertiaDamping; // 少し減速して落下
+                    Rb.angularVelocity = Vector3.zero;
+                    Rb.isKinematic = _initialIsKinematic;
+                    Rb.useGravity = _initialUseGravity;
+                    break;
 
-            case ReleaseBehavior.AlwaysStayFloating:
-                // 空中でピタッと静止固定
-                Rb.linearVelocity = Vector3.zero;
-                Rb.angularVelocity = Vector3.zero;
-                Rb.isKinematic = true;
-                Rb.useGravity = false;
-                break;
+                case ReleaseBehavior.AlwaysStayFloating:
+                    // 空中でピタッと静止固定
+                    Rb.linearVelocity = Vector3.zero;
+                    Rb.angularVelocity = Vector3.zero;
+                    Rb.isKinematic = true;
+                    Rb.useGravity = false;
+                    break;
 
-            case ReleaseBehavior.AlwaysGravity:
-                // 通常の物理落下
-                Rb.linearVelocity *= _inertiaDamping; // 少し減速して落下
-                Rb.isKinematic = false;
-                Rb.useGravity = true;
-                break;
+                case ReleaseBehavior.AlwaysGravity:
+                    // 通常の物理落下
+                    Rb.linearVelocity *= _inertiaDamping; // 少し減速して落下
+                    Rb.isKinematic = false;
+                    Rb.useGravity = true;
+                    break;
+            }
+
+            Rb.linearDamping = _initialLinearDamping;
+            Rb.constraints = _initialConstraints;
+            IsTouchingPlayer = false;
+            IsPlayerRiding = false;
         }
 
-        Rb.linearDamping = _initialLinearDamping;
-        Rb.constraints = _initialConstraints;
-        IsTouchingPlayer = false;
-        IsPlayerRiding = false;
     }
-
 }

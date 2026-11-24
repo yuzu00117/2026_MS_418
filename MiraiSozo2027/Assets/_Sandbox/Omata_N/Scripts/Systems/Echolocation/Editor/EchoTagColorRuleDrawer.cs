@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     [CustomPropertyDrawer(typeof(EchoTagColorRule))]
     public sealed class EchoTagColorRuleDrawer : PropertyDrawer

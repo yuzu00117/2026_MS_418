@@ -1,5 +1,5 @@
 using UnityEditor;
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     [CustomEditor(typeof(EchoOccluder)), CanEditMultipleObjects]
     public sealed class EchoOccluderEditor : UnityEditor.Editor

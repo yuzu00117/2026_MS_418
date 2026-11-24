@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Aura.Inspector;
-using Echo.Echolocation;
+using Aura.Echolocation;
 using UnityEngine;
 
 namespace Aura.Wave.Echo

@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     [CustomPropertyDrawer(typeof(EchoBlockingRule))]
     public sealed class EchoBlockingRuleDrawer : PropertyDrawer

@@ -1,5 +1,5 @@
 // 旧APIの互換入口。描画設定の選択画面へ案内する。
-namespace Echo.Echolocation.Samples.Editor
+namespace Aura.Echolocation.Editor
 {
     public static class EchoDemoSetup
     {

@@ -1,7 +1,7 @@
 // ライト方式の残り時間だけを持つ。Unityの時間やControllerの状態に依存させず、EditModeで検証できるようにする。
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>ライト方式の持続可能な時間の消費と回復。</summary>
     public sealed class EchoLightSustain

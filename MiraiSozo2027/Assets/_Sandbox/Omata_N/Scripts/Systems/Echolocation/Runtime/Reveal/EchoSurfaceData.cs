@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>Editorで分割した三角形。表示と物理が同じMeshを共有する。</summary>
     public sealed class EchoSurfaceData : ScriptableObject

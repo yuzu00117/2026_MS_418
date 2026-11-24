@@ -1,7 +1,7 @@
 using System;
 using UnityEditor;
 using UnityEngine;
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     [CustomEditor(typeof(EchoTagDefinition)), CanEditMultipleObjects]
     public sealed class EchoTagDefinitionEditor : UnityEditor.Editor

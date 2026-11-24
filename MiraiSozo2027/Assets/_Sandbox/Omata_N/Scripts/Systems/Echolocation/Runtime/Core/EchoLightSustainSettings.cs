@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>ライト方式で照らし続けられる時間と、残り時間に応じて範囲を狭める設定。</summary>
     [Serializable]

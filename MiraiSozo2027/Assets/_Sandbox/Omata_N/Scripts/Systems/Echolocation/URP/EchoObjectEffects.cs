@@ -6,7 +6,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     // 波との接触をGPUで1画素へ集約する。CPU readbackを使わず同じフレームで全体を表示。
     internal sealed class EchoObjectEffects : IDisposable

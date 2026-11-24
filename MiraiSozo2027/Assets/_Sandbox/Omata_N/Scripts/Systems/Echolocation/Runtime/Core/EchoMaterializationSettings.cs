@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>通常の描画を隠す対象が、照射によって実体化するまでの条件。</summary>
     [Serializable]

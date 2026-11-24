@@ -1,4 +1,4 @@
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>ライト方式の持続可能な時間を使い切ったときの扱い。</summary>
     public enum EchoLightDepletionMode

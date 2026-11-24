@@ -1,4 +1,4 @@
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>機能ごとのカメラ遮蔽。既存データは共通設定を継承する。</summary>
     public enum EchoEffectOcclusionMode

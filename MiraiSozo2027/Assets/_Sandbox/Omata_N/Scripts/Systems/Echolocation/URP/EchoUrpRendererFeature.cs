@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>Universal Renderer Dataに追加するエコー描画Feature。</summary>
     public sealed class EchoUrpRendererFeature : ScriptableRendererFeature

@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>スキャン設定。距離はワールド単位、角度は全開き角、時間は秒。</summary>
     [Serializable]

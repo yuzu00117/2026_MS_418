@@ -6,7 +6,7 @@ using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Experimental.Rendering;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>壁裏の対象もRegistryから明示的に描くRender Graphパス。</summary>
     public sealed class EchoUrpRenderPass : ScriptableRenderPass

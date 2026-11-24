@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.Rendering;
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>共有設定を保存変更せず、デモ専用Pipelineを再生中だけ使う。</summary>
     [DefaultExecutionOrder(-2000)]
