@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: M_vfx_enemyAtkBall00
+  m_Name: M_vfx_enemyAtkFire01
   m_Shader: {fileID: 4800000, guid: 1bc5c6a70411243779ce486a98012125, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -16,11 +16,16 @@ Material:
   - _ALPHA_TRANSITION_MAP_MODE_2D
   - _ALPHA_TRANSITION_MAP_SECOND_TEXTURE_MODE_2D
   - _BASE_MAP_MODE_2D
+  - _BASE_MAP_TONE_MODE_TRITONE
   - _DISSOLVE_TRANSITION_ENABLED
   - _EMISSION_COLOR_COLOR
   - _EMISSION_MAP_MODE_2D
+  - _FLOW_MAP_TARGET_BASE
   - _PARALLAX_MAP_MODE_2D
+  - _TINT_AREA_ALL
   - _TINT_COLOR_ENABLED
+  - _TRANSPARENCY_BY_LUMINANCE
+  - _VERTEX_DEFORMATION_ENABLED
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -36,7 +41,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _AlphaTransitionMap:
-        m_Texture: {fileID: 2800000, guid: 13fcdac9c69346544b5ebae50f79ff60, type: 3}
+        m_Texture: {fileID: 2800000, guid: 369001d6109c8104ba05a7e124288f5a, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _AlphaTransitionMap2DArray:
@@ -48,9 +53,9 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _AlphaTransitionMapSecondTexture:
-        m_Texture: {fileID: 2800000, guid: 8d9ca6a1c8d79254f93ba67f51e01e20, type: 3}
+        m_Texture: {fileID: 2800000, guid: 251cc6079cd699249825aef4a1d39020, type: 3}
         m_Scale: {x: 1, y: 1}
-        m_Offset: {x: 0, y: 0}
+        m_Offset: {x: 0, y: 0.24}
     - _AlphaTransitionMapSecondTexture2DArray:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -60,14 +65,30 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BaseMap:
-        m_Texture: {fileID: 0}
-        m_Scale: {x: 1, y: 1}
+        m_Texture: {fileID: 2800000, guid: 369001d6109c8104ba05a7e124288f5a, type: 3}
+        m_Scale: {x: 2, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BaseMap2DArray:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BaseMap3D:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailAlbedoMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DetailNormalMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -88,10 +109,22 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _FlowMap:
+        m_Texture: {fileID: 2800000, guid: 1c110aa9e682b9049b81fb29de0027d6, type: 3}
+        m_Scale: {x: 0.55, y: 0.19}
+        m_Offset: {x: 0, y: 3.15}
+    - _GradientMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
-    - _GradientMap:
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -104,6 +137,10 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ParallaxMap3D:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SpecGlossMap:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -120,15 +157,30 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _VertexDeformationMap:
+        m_Texture: {fileID: 2800000, guid: 13fcdac9c69346544b5ebae50f79ff60, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0.5}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AddPrecomputedVelocity: 0
+    - _AlphaClip: 0
+    - _AlphaToMask: 0
     - _AlphaTransitionMapChannelsX: 0
     - _AlphaTransitionMapMode: 0
     - _AlphaTransitionMapOffsetXCoord: 0
-    - _AlphaTransitionMapOffsetYCoord: 1
+    - _AlphaTransitionMapOffsetYCoord: 0
     - _AlphaTransitionMapProgress: 0
     - _AlphaTransitionMapProgressCoord: 0
     - _AlphaTransitionMapRandomRowCoord: 0
@@ -139,7 +191,7 @@ Material:
     - _AlphaTransitionMapSecondTextureChannelsX: 0
     - _AlphaTransitionMapSecondTextureMapMode: 0
     - _AlphaTransitionMapSecondTextureOffsetXCoord: 0
-    - _AlphaTransitionMapSecondTextureOffsetYCoord: 1
+    - _AlphaTransitionMapSecondTextureOffsetYCoord: 0
     - _AlphaTransitionMapSecondTextureProgress: 0
     - _AlphaTransitionMapSecondTextureProgressCoord: 0
     - _AlphaTransitionMapSecondTextureRandomRowCoord: 0
@@ -153,13 +205,13 @@ Material:
     - _AlphaTransitionProgress: 0
     - _AlphaTransitionProgressCoord: 0
     - _AlphaTransitionProgressCoordSecondTexture: 0
-    - _AlphaTransitionProgressSecondTexture: 0.5
+    - _AlphaTransitionProgressSecondTexture: 0.16
     - _AlphaTransitionSecondTextureBlendMode: 2
     - _BaseMapChannel: 0
     - _BaseMapMirrorSampling: 0
     - _BaseMapMode: 0
     - _BaseMapOffsetXCoord: 0
-    - _BaseMapOffsetYCoord: 0
+    - _BaseMapOffsetYCoord: 1
     - _BaseMapProgress: 0
     - _BaseMapProgressCoord: 0
     - _BaseMapRandomRowCoord: 0
@@ -170,18 +222,23 @@ Material:
     - _BaseMapSliceCount: 4
     - _BaseMapToneBrights: 0.5
     - _BaseMapToneBrightsCoord: 0
-    - _BaseMapToneChannel: 3
+    - _BaseMapToneChannel: 1
     - _BaseMapToneDarktones: 0.5
     - _BaseMapToneDarktonesCoord: 0
-    - _BaseMapToneHighlights: 0.75
+    - _BaseMapToneHighlights: 0.73
     - _BaseMapToneHighlightsCoord: 0
-    - _BaseMapToneMidtones: 0.5
+    - _BaseMapToneMidtones: 0.49
     - _BaseMapToneMidtonesCoord: 0
-    - _BaseMapToneMode: 0
-    - _BaseMapToneShadows: 0.25
+    - _BaseMapToneMode: 1
+    - _BaseMapToneShadows: 0.1
     - _BaseMapToneShadowsCoord: 0
+    - _Blend: 0
     - _BlendDst: 10
+    - _BlendModePreserveSpecular: 1
     - _BlendSrc: 5
+    - _BumpScale: 1
+    - _ClearCoatMask: 0
+    - _ClearCoatSmoothness: 0
     - _ColorCorrectionMode: 0
     - _Cull: 0
     - _Cutoff: 0.5
@@ -189,8 +246,12 @@ Material:
     - _DepthFadeFar: 10
     - _DepthFadeNear: 1
     - _DepthFadeWidth: 1
-    - _DissolveSharpness: 0
-    - _DissolveSharpnessSecondTexture: 0
+    - _DetailAlbedoMapScale: 1
+    - _DetailNormalMapScale: 1
+    - _DissolveSharpness: 0.757
+    - _DissolveSharpnessSecondTexture: 0.863
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
     - _EmissionAreaType: 0
     - _EmissionColorType: 0
     - _EmissionIntensity: 1
@@ -207,7 +268,8 @@ Material:
     - _EmissionMapRotationCoord: 0
     - _EmissionMapRowCount: 1
     - _EmissionMapSliceCount: 4
-    - _FlowIntensity: 1
+    - _EnvironmentReflections: 1
+    - _FlowIntensity: -0.1
     - _FlowIntensityCoord: 0
     - _FlowMapChannelsX: 0
     - _FlowMapChannelsY: 1
@@ -216,15 +278,21 @@ Material:
     - _FlowMapRotation: 0
     - _FlowMapRotationCoord: 0
     - _FlowMapTarget: 1
+    - _GlossMapScale: 0
+    - _Glossiness: 0
+    - _GlossyReflections: 0
     - _InverseLuminanceTransparency: 0
     - _InverseRimTransparency: 0
     - _InverseTintRim: 0
     - _KeepEdgeTransparency: 1
-    - _LuminanceTransparencyEnabled: 0
-    - _LuminanceTransparencyProgress: 0.5
+    - _LuminanceTransparencyEnabled: 1
+    - _LuminanceTransparencyProgress: 1
     - _LuminanceTransparencyProgressCoord: 0
-    - _LuminanceTransparencySharpness: 0.5
+    - _LuminanceTransparencySharpness: 0
     - _LuminanceTransparencySharpnessCoord: 0
+    - _Metallic: 0
+    - _OcclusionStrength: 1
+    - _Parallax: 0.005
     - _ParallaxMapChannel: 0
     - _ParallaxMapMode: 0
     - _ParallaxMapOffsetXCoord: 0
@@ -238,12 +306,15 @@ Material:
     - _ParallaxMapTarget: 1
     - _ParallaxStrength: 0.3
     - _QueueOffset: 0
+    - _ReceiveShadows: 1
     - _RenderType: 2
     - _RimTransparencyEnabled: 0
     - _RimTransparencyProgress: 0.5
     - _RimTransparencyProgressCoord: 0
     - _RimTransparencySharpness: 0.5
     - _RimTransparencySharpnessCoord: 0
+    - _ScreenSpaceReflections: 1
+    - _ScreenSpaceReflectionsContributeTransparent: 1
     - _ShadowCasterAlphaAffectedByAlphaTransitionMap: 0
     - _ShadowCasterAlphaAffectedByFlowMap: 0
     - _ShadowCasterAlphaAffectedByTintColor: 0
@@ -252,9 +323,15 @@ Material:
     - _ShadowCasterAlphaTestEnabled: 0
     - _ShadowCasterApplyVertexDeformation: 0
     - _ShadowCasterEnabled: 0
+    - _Smoothness: 0.5
+    - _SmoothnessTextureChannel: 0
     - _SoftParticlesEnabled: 0
     - _SoftParticlesIntensity: 1
-    - _TintAreaMode: 0
+    - _SpecularHighlights: 1
+    - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _Surface: 0
+    - _TintAreaMode: 1
     - _TintBlendRate: 1
     - _TintBlendRateCoord: 0
     - _TintColorMode: 0
@@ -278,31 +355,36 @@ Material:
     - _VertexAlphaMode: 0
     - _VertexDeformationBaseValue: 0
     - _VertexDeformationEnabled: 0
-    - _VertexDeformationIntensity: 0.1
+    - _VertexDeformationIntensity: 0
     - _VertexDeformationIntensityCoord: 0
     - _VertexDeformationMapChannel: 0
     - _VertexDeformationMapOffsetXCoord: 0
     - _VertexDeformationMapOffsetYCoord: 0
+    - _WorkflowMode: 1
+    - _XRMotionVectorsPass: 1
     - _ZTest: 4
     - _ZWrite: 0
     - _ZWriteOverride: -1
     m_Colors:
     - _AlphaTransitionMapRotationOffsets: {r: 0, g: 0, b: 0, a: 0}
     - _AlphaTransitionMapSecondTextureRotationOffsets: {r: 0, g: 0, b: 0, a: 0}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _BaseMapRotationOffsets: {r: 0, g: 0, b: 0, a: 0}
     - _BaseMapToneBrightsColor: {r: 0.75, g: 0.75, b: 0.75, a: 1}
     - _BaseMapToneDarktonesColor: {r: 0.24999997, g: 0.24999997, b: 0.24999997, a: 1}
     - _BaseMapToneHighlightsColor: {r: 1, g: 1, b: 1, a: 1}
-    - _BaseMapToneMidtonesColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
-    - _BaseMapToneShadowsColor: {r: 0, g: 0, b: 0, a: 1}
+    - _BaseMapToneMidtonesColor: {r: 0.9716981, g: 0.9535979, b: 0, a: 1}
+    - _BaseMapToneShadowsColor: {r: 0.98039216, g: 0.2356305, b: 0.14509805, a: 1}
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionMapRotationOffsets: {r: 0, g: 0, b: 0, a: 0}
     - _FlowMapRotationOffsets: {r: 0, g: 0, b: 0, a: 0}
-    - _TintColor: {r: 1, g: 1, b: 1, a: 1}
+    - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
+    - _TintColor: {r: 4, g: 4, b: 4, a: 1}
     - _TintMapRotationOffsets: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
---- !u!114 &3359178942942581336
+--- !u!114 &7153755928707199344
 MonoBehaviour:
   m_ObjectHideFlags: 11
   m_CorrespondingSourceObject: {fileID: 0}
