@@ -1,7 +1,7 @@
 // LODGroupの画面相対サイズから一つのLODだけを選ぶ。クロスフェードを二重描画しない。
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>対象カメラに対応するLOD選択。</summary>
     public static class EchoLodSelector

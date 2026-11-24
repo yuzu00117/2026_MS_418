@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     public static class EchoSetupValidator
     {

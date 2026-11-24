@@ -6,7 +6,7 @@ using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using Unity.Profiling;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>エコーロケーションの操作窓口。入力は次のLateUpdateで反映する。</summary>
     [DisallowMultipleComponent, DefaultExecutionOrder(1000)]

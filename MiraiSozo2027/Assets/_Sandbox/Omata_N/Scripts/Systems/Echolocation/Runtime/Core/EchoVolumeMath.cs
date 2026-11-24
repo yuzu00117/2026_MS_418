@@ -1,7 +1,7 @@
 // GPU側EchoVolume.hlslと同じ点包含判定。boundsは候補絞り込みだけに使う。
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>球の扇形および消去領域の判定。</summary>
     public static class EchoVolumeMath

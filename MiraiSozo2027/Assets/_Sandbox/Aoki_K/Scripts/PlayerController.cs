@@ -1,5 +1,5 @@
 using Aura.Wave;
-using Echo.Echolocation;
+using Aura.Echolocation;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Aura.Cameras;

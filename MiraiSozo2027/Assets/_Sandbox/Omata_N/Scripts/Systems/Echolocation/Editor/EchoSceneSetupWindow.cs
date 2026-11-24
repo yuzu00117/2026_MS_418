@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     /// <summary>新規シーンの設定順序と、個別ツールへの入口。</summary>
     public sealed class EchoSceneSetupWindow : EditorWindow

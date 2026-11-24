@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     /// <summary>専用タグの3種類の表示を並べた検証シーンを作る。</summary>
     public static class EchoDemoSceneBuilder

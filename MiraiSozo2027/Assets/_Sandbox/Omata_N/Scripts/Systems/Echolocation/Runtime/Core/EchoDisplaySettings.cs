@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>
     /// ①塗りつぶし・②アウトライン・③元のマテリアルの表示設定ひとまとまり。照射中の表示に使う。

@@ -1,5 +1,5 @@
 using UnityEditor;
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     [CustomEditor(typeof(EchoRevealCollider)), CanEditMultipleObjects]
     public sealed class EchoRevealColliderEditor : UnityEditor.Editor

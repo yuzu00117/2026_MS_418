@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>Render Graphパスごとに再利用する固定長の波データ。</summary>
     public sealed class EchoVolumeShaderData

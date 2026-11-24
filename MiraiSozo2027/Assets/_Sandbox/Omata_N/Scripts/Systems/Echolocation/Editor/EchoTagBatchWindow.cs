@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     public sealed class EchoTagBatchWindow : EditorWindow
     {

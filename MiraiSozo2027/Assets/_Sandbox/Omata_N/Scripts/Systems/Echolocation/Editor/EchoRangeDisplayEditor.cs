@@ -1,7 +1,7 @@
 // 旧範囲表示コンポーネントのInspector。新方式はControllerの「範囲表示」で設定する。
 using UnityEditor;
 
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     [CustomEditor(typeof(EchoRangeDisplay)), CanEditMultipleObjects]
     public sealed class EchoRangeDisplayEditor : UnityEditor.Editor

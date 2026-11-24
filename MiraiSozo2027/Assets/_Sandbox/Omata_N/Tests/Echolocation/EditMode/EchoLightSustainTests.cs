@@ -1,6 +1,6 @@
 using NUnit.Framework;
 
-namespace Echo.Echolocation.Tests
+namespace Aura.Echolocation.Tests
 {
     public sealed class EchoLightSustainTests
     {

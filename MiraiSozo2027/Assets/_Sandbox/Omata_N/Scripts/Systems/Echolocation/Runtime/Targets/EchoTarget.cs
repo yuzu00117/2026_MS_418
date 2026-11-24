@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>子Rendererを専用タグの表示・遮断設定で描画する。</summary>
     [DisallowMultipleComponent]

@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>URP用の描画リソース。</summary>
     public sealed class EchoUrpRenderBackend : IEchoRenderBackend

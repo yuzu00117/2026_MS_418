@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>旧シーンの互換用。遮断はEchoTargetの専用タグで設定する。</summary>
     [DisallowMultipleComponent, AddComponentMenu("")]

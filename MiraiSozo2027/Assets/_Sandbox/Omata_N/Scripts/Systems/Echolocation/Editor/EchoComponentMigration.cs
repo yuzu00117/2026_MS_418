@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     /// <summary>旧EchoTag・EchoRangeDisplay・EchoRevealWorldの値をEchoTarget・EchoControllerへ移し、旧コンポーネントを外す。</summary>
     public static class EchoComponentMigration

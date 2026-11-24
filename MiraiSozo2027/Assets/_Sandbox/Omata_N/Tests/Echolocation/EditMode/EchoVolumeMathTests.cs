@@ -2,7 +2,7 @@
 using NUnit.Framework;
 using UnityEngine;
 
-namespace Echo.Echolocation.Tests
+namespace Aura.Echolocation.Tests
 {
     public sealed class EchoVolumeMathTests
     {

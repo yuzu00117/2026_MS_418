@@ -1,5 +1,5 @@
 using UnityEditor;
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     [CustomEditor(typeof(EchoRevealWorld)), CanEditMultipleObjects]
     public sealed class EchoRevealWorldEditor : UnityEditor.Editor

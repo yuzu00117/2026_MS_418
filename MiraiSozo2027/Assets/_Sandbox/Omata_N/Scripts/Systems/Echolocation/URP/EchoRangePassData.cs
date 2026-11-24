@@ -4,7 +4,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     sealed internal class EchoRangePassData
     {

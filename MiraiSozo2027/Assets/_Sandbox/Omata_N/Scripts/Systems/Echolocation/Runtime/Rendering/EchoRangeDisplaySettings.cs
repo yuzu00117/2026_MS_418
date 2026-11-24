@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>可視面の色と空間の境界線。EchoControllerが保持し、描画は対象CameraのURPパスが行う。</summary>
     [Serializable]

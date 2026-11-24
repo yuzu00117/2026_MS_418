@@ -1,10 +1,10 @@
 using System.Collections.Generic;
-using Echo.Echolocation.Editor;
+using Aura.Echolocation.Editor;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-namespace Echo.Echolocation.Tests
+namespace Aura.Echolocation.Tests
 {
     public sealed class EchoDedicatedTagTests
     {

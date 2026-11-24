@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Profiling;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     internal struct EchoTargetEntry
     {

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     /// <summary>頂点属性を補間し、最大辺長以下の三角形へ分割する。実行時のMesh生成は不要。</summary>
     public static class EchoSurfaceBaker

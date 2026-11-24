@@ -1,7 +1,7 @@
 // 実体化の状態遷移だけを持つ。GPUの接触結果やUnityの時間に依存させず、EditModeで検証できるようにする。
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>照射の有無と経過時間から、透明・照射中・実体化の状態を進める。</summary>
     public sealed class EchoMaterializationTracker

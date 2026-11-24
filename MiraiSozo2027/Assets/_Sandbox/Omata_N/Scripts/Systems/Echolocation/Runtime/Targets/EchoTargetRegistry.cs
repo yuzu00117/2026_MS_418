@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Profiling;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>Rendererごとの重複をなくし候補を収集する。</summary>
     public sealed class EchoTargetRegistry
