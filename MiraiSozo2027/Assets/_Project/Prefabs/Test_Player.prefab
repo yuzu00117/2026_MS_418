@@ -1414,6 +1414,16 @@ MonoBehaviour:
     _pulseInterval: 2
     _pulseHoldDuration: 3
     _followWaveInterval: 0
+    _lightSustain:
+      _hasSustainLimit: 0
+      _sustainSeconds: 10
+      _depletionMode: 0
+      _recoveryMode: 0
+      _recoverySpeed: 1
+      _isRadiusShrinking: 0
+      _minimumRadius: 2
+      _isAngleShrinking: 0
+      _minimumAngleDegrees: 30
     _onceStockCapacity: 1
     _onceRechargeSeconds: 2
     _offMode: 1
@@ -1913,7 +1923,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0e25dcdffd9b6741b364116d70c7aa0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player
-  _maxHp: 100
+  _maxHp: 3
   _currentHp: 0
   _invincibleTime: 0.5
 --- !u!114 &3380333724038634786
@@ -1928,7 +1938,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b210423104ff28b469ae8202619277e6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WaveDamageDealer
-  _baseDamage: 10
+  _damage: 1
   _targetLayers:
     serializedVersion: 2
     m_Bits: 4294967295

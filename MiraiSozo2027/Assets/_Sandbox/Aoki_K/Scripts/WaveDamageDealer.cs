@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Aura.Combat
 {
     /// <summary>
-    /// WaveEmitter と同じオブジェクトにアタッチし、ビームが当たった対象へダメージを与える（撃ち手側）
+    /// WaveEmitter と同じオブジェクトにアタッチし、ビームが当たった WaveDamageReceiver へ照射情報を渡す（撃ち手側）
     /// </summary>
     [RequireComponent(typeof(WaveEmitter))]
     [DefaultExecutionOrder(100)]
@@ -13,9 +13,8 @@ namespace Aura.Combat
     {
         private WaveEmitter _waveEmitter;
 
-        // 1フレーム内で同じ対象（複数コライダーや反射ビーム）に重複して処理しないためのセット
-        private readonly HashSet<WaveDamageReceiver> _processedReceivers = new HashSet<WaveDamageReceiver>();
-        private readonly HashSet<IDamageable> _processedDamageables = new HashSet<IDamageable>();
+        // 1フレーム内で同じコライダー（反射ビーム等）に重複して処理しないためのセット
+        private readonly HashSet<Collider> _processedColliders = new HashSet<Collider>();
 
         private void Awake()
         {
@@ -25,18 +24,13 @@ namespace Aura.Combat
         protected override void OnDisable()
         {
             base.OnDisable();
-            _processedReceivers.Clear();
-            _processedDamageables.Clear();
+            _processedColliders.Clear();
         }
 
         protected override CachedWaveTarget CreateCachedTarget(Collider hitCollider)
         {
             WaveDamageReceiver receiver = hitCollider.GetComponentInParent<WaveDamageReceiver>();
-            IDamageable damageable = receiver == null
-                ? hitCollider.GetComponentInParent<IDamageable>()
-                : null;
-
-            return new CachedWaveTarget(receiver, damageable);
+            return new CachedWaveTarget(receiver);
         }
 
         private void LateUpdate()
@@ -46,8 +40,7 @@ namespace Aura.Combat
             IReadOnlyList<InfoBeamHit> hits = _waveEmitter.LastHits;
             if (hits == null || hits.Count == 0) return;
 
-            _processedReceivers.Clear();
-            _processedDamageables.Clear();
+            _processedColliders.Clear();
 
             for (int i = 0; i < hits.Count; i++)
             {
@@ -55,26 +48,13 @@ namespace Aura.Combat
                 Collider hitCollider = hit.Collider;
                 if (!IsTargetLayer(hitCollider)) continue;
 
-                CachedWaveTarget target = GetOrFindTarget(hitCollider);
+                // 同じフレーム内で同一コライダーへの重複ヒットをスキップ
+                if (!_processedColliders.Add(hitCollider)) continue;
 
-                // 1. 受け手側に WaveDamageReceiver がある場合
+                CachedWaveTarget target = GetOrFindTarget(hitCollider);
                 if (target.HasValidReceiver)
                 {
-                    if (_processedReceivers.Add(target.Receiver))
-                    {
-                        target.Receiver.ReceiveWaveHit(in hit, _damage);
-                    }
-                    continue;
-                }
-
-                // 2. WaveDamageReceiver が無く、IDamageable のみの場合
-                if (target.HasValidDamageable)
-                {
-                    if (_processedDamageables.Add(target.Damageable))
-                    {
-                        int finalDamage = Mathf.Max(0, Mathf.RoundToInt(_damage * hit.Multiplier));
-                        target.Damageable.TakeDamage(finalDamage);
-                    }
+                    target.Receiver.ReceiveWaveHit(in hit, _damage);
                 }
             }
         }

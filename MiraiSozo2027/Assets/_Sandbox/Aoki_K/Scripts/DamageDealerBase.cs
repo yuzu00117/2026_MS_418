@@ -12,8 +12,8 @@ namespace Aura.Combat
         private const int MaxCacheCount = 512;
 
         [Header("Damage Settings")]
-        [Tooltip("与える基礎ダメージ量")]
-        [SerializeField, Min(1)] protected int _damage = 10;
+        [Tooltip("与える基礎ダメージ量（段階数）")]
+        [SerializeField, Min(1)] protected int _damage = 1;
 
         [Tooltip("ダメージが反映される対象のレイヤー")]
         [SerializeField] protected LayerMask _targetLayers = ~0;

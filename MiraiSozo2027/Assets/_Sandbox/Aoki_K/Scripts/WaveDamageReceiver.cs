@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Aura.Inspector;
 using Aura.ObjectInfo;
 using Aura.Wave;
@@ -8,13 +9,24 @@ using Aura.Entities;
 namespace Aura.Combat
 {
     /// <summary>
-    /// Entity（Enemy / Player）にアタッチし、波動ビームによるアーマー破壊とダメージ方式（多段 / チャージ）を管理する（受け手側）
+    /// Entity（Enemy / Player）にアタッチし、波動ビームの一定時間照射によるアーマー破壊と段階ダメージを管理する（受け手側）
+    /// 通常部位コライダーと弱点部位コライダーのチャージ時間はコライダーごとに別管理される
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Entity))]
     public class WaveDamageReceiver : MonoBehaviour
     {
         private const float ReceivingGraceTime = 0.1f;
+
+        /// <summary>
+        /// コライダー（通常部位・各弱点部位）ごとの照射チャージ状態
+        /// </summary>
+        private struct ColliderChargeState
+        {
+            public Collider Collider;
+            public float Charge;
+            public float LastReceiveTime;
+        }
 
         [Header("Armor Settings（アーマー設定）")]
         [Tooltip("初期状態でアーマーを持っているか（アーマーがある間はKill以外のHPダメージを無効化）")]
@@ -36,19 +48,16 @@ namespace Aura.Combat
         [SerializeField, FilteredEventMenu] private UnityEvent _onArmorBroken = new UnityEvent();
 
         [Header("HP Damage Settings（HPダメージ設定）")]
-        [Tooltip("HPへのダメージの入り方（多段ヒット方式 / 継続照射チャージ方式）")]
-        [SerializeField] private WaveDamageMode _damageMode = WaveDamageMode.MultiHit;
-
         [Tooltip("電磁波でHPにダメージを与えられるか")]
         [SerializeField, ShowWaveTypeAsset(WaveKind.Electromagnetic)] private bool _canHpReactToElectromagnetic = true;
 
         [Tooltip("超音波でHPにダメージを与えられるか")]
         [SerializeField, ShowWaveTypeAsset(WaveKind.Ultrasound)] private bool _canHpReactToUltrasound = true;
 
-        [Tooltip("【継続照射チャージ方式のみ】1回ダメージが入るまでに必要な照射秒数")]
+        [Tooltip("1回ダメージが入るまでに必要な継続照射秒数（通常部位・弱点部位共通）")]
         [SerializeField, Min(0.1f)] private float _damageRequiredSeconds = 1.0f;
 
-        [Tooltip("【継続照射チャージ方式のみ】ビームを当てていない間にダメージ蓄積値が1秒あたりに減衰する量")]
+        [Tooltip("ビームを当てていない間に各部位のダメージ蓄積値が1秒あたりに減衰する量")]
         [SerializeField, Min(0.0f)] private float _damageDecayPerSecond = 0.5f;
 
         private Entity _entity;
@@ -58,8 +67,11 @@ namespace Aura.Combat
         private WaveReaction _waveReaction;
 
         private float _armorCharge;
-        private float _damageCharge;
-        private float _lastReceiveTime = float.NegativeInfinity;
+        private float _lastArmorReceiveTime = float.NegativeInfinity;
+        private int _lastArmorReceiveFrame = -1;
+
+        // 部位（コライダー）ごとのダメージチャージ管理リスト
+        private readonly List<ColliderChargeState> _colliderCharges = new List<ColliderChargeState>(4);
 
         /// <summary>
         /// アーマー破壊までのチャージ割合（0〜1）。UIや演出用
@@ -69,13 +81,27 @@ namespace Aura.Combat
             : 0f;
 
         /// <summary>
-        /// 継続照射チャージダメージのチャージ割合（0〜1）。UIや演出用
+        /// 現在最もチャージが進んでいる部位のダメージチャージ割合（0〜1）。UIや演出用
         /// </summary>
-        public float DamageChargeRatio => _damageMode == WaveDamageMode.ChargeHit && _damageRequiredSeconds > 0f
-            ? Mathf.Clamp01(_damageCharge / _damageRequiredSeconds)
-            : 0f;
+        public float DamageChargeRatio
+        {
+            get
+            {
+                if (_damageRequiredSeconds <= 0f) return 0f;
 
-        private bool IsReceiving => Time.time - _lastReceiveTime <= ReceivingGraceTime;
+                float maxCharge = 0f;
+                for (int i = 0; i < _colliderCharges.Count; i++)
+                {
+                    if (_colliderCharges[i].Charge > maxCharge)
+                    {
+                        maxCharge = _colliderCharges[i].Charge;
+                    }
+                }
+                return Mathf.Clamp01(maxCharge / _damageRequiredSeconds);
+            }
+        }
+
+        private bool IsReceivingArmor => Time.time - _lastArmorReceiveTime <= ReceivingGraceTime;
 
         private void Awake()
         {
@@ -87,18 +113,41 @@ namespace Aura.Combat
             SyncWaveReaction();
         }
 
+        private void OnDisable()
+        {
+            _armorCharge = 0f;
+            _colliderCharges.Clear();
+        }
+
         private void Update()
         {
-            if (_entity == null || _entity.IsDead || IsReceiving) return;
+            if (_entity == null || _entity.IsDead) return;
 
-            // 照射されていない間はチャージを減衰させる
+            // 1. アーマー中の減衰処理
             if (HasArmor)
             {
-                _armorCharge = Mathf.Max(0f, _armorCharge - _armorDecayPerSecond * Time.deltaTime);
+                if (!IsReceivingArmor)
+                {
+                    _armorCharge = Mathf.Max(0f, _armorCharge - _armorDecayPerSecond * Time.deltaTime);
+                }
+                return;
             }
-            else if (_damageMode == WaveDamageMode.ChargeHit)
+
+            // 2. 各部位（コライダー）ごとのダメージチャージ減衰処理
+            for (int i = _colliderCharges.Count - 1; i >= 0; i--)
             {
-                _damageCharge = Mathf.Max(0f, _damageCharge - _damageDecayPerSecond * Time.deltaTime);
+                ColliderChargeState state = _colliderCharges[i];
+                if (state.Collider == null)
+                {
+                    _colliderCharges.RemoveAt(i);
+                    continue;
+                }
+
+                if (Time.time - state.LastReceiveTime > ReceivingGraceTime)
+                {
+                    state.Charge = Mathf.Max(0f, state.Charge - _damageDecayPerSecond * Time.deltaTime);
+                    _colliderCharges[i] = state;
+                }
             }
         }
 
@@ -110,13 +159,22 @@ namespace Aura.Combat
             if (!isActiveAndEnabled || _entity == null || _entity.IsDead) return;
             if (!WaveTypeInfo.TryGetKind(hit.Type, out WaveKind waveKind)) return;
 
+            // 無効部位（倍率0以下）の場合はチャージもダメージも与えない
+            if (hit.Multiplier <= 0f) return;
+
+            // WaveEmitter側で hit.Energy に hit.Multiplier が掛けられているため、純粋な照射秒数（エネルギー）に戻す
+            float rawEnergy = hit.Energy / hit.Multiplier;
+
             // フェーズ1：アーマー中
             if (HasArmor)
             {
                 if (!CanArmorReactTo(waveKind)) return;
+                // 同一フレーム内で複数コライダーに当たってもアーマーチャージは1回分のみ加算
+                if (_lastArmorReceiveFrame == Time.frameCount) return;
 
-                _lastReceiveTime = Time.time;
-                _armorCharge += hit.Energy;
+                _lastArmorReceiveFrame = Time.frameCount;
+                _lastArmorReceiveTime = Time.time;
+                _armorCharge += rawEnergy;
 
                 if (_armorCharge >= _armorRequiredSeconds)
                 {
@@ -126,25 +184,23 @@ namespace Aura.Combat
             }
 
             // フェーズ2：HPダメージ（アーマー無し or アーマー破壊後）
+            // 無敵時間中は次のダメージチャージを溜めない
+            if (_entity.IsInvincible) return;
             if (!CanHpReactTo(waveKind)) return;
 
-            _lastReceiveTime = Time.time;
-            int finalDamage = Mathf.Max(0, Mathf.RoundToInt(baseDamage * hit.Multiplier));
+            int index = GetOrAddColliderChargeIndex(hit.Collider);
+            ColliderChargeState state = _colliderCharges[index];
 
-            if (_damageMode == WaveDamageMode.MultiHit)
+            state.LastReceiveTime = Time.time;
+            state.Charge = Mathf.Min(state.Charge + rawEnergy, _damageRequiredSeconds);
+            _colliderCharges[index] = state;
+
+            // 照射時間が規定秒数に達したら、倍率分のダメージを一括で与えて全チャージをリセット
+            if (state.Charge >= _damageRequiredSeconds)
             {
-                // 多段ヒット方式：Entity側の無敵時間（_invincibleTime）ごとに自動でダメージが入る
+                ResetAllDamageCharges();
+                int finalDamage = Mathf.Max(1, Mathf.RoundToInt(baseDamage * hit.Multiplier));
                 _entity.TakeDamage(finalDamage);
-            }
-            else if (_damageMode == WaveDamageMode.ChargeHit)
-            {
-                // 継続照射チャージ方式：指定秒数溜まるごとに1回ダメージを与える
-                _damageCharge = Mathf.Min(_damageCharge + hit.Energy, _damageRequiredSeconds);
-                if (_damageCharge >= _damageRequiredSeconds && !_entity.IsInvincible)
-                {
-                    _damageCharge = 0f;
-                    _entity.TakeDamage(finalDamage);
-                }
             }
         }
 
@@ -157,9 +213,39 @@ namespace Aura.Combat
             if (_entity == null || !HasArmor) return;
 
             _armorCharge = 0f;
+            ResetAllDamageCharges();
             _armored.SetArmored(false);
             SyncWaveReaction();
             _onArmorBroken?.Invoke();
+        }
+
+        private int GetOrAddColliderChargeIndex(Collider targetCollider)
+        {
+            for (int i = 0; i < _colliderCharges.Count; i++)
+            {
+                if (_colliderCharges[i].Collider == targetCollider)
+                {
+                    return i;
+                }
+            }
+
+            _colliderCharges.Add(new ColliderChargeState
+            {
+                Collider = targetCollider,
+                Charge = 0f,
+                LastReceiveTime = Time.time
+            });
+            return _colliderCharges.Count - 1;
+        }
+
+        private void ResetAllDamageCharges()
+        {
+            for (int i = 0; i < _colliderCharges.Count; i++)
+            {
+                ColliderChargeState state = _colliderCharges[i];
+                state.Charge = 0f;
+                _colliderCharges[i] = state;
+            }
         }
 
         private bool CanArmorReactTo(WaveKind kind)

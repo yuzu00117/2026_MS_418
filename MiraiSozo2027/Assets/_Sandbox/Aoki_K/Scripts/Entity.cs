@@ -8,8 +8,8 @@ namespace Aura.Entities
     public abstract class Entity : MonoBehaviour, IDamageable
     {
         [Header("Status Settings")]
-        [Tooltip("最大HP")]
-        [SerializeField] protected int _maxHp = 100;
+        [Tooltip("最大HP（耐えられる被弾段階数）")]
+        [SerializeField, Min(1)] protected int _maxHp = 3;
         [SerializeField] protected int _currentHp;
         public int MaxHp => _maxHp;
         public int CurrentHp => _currentHp;
@@ -53,9 +53,9 @@ namespace Aura.Entities
         /// ダメージを与える（IDamageable実装・ギミックのUnityEventからも呼び出し可能）
         /// </summary>
         [ShowInEventMenu]
-        public void TakeDamage(int damage)
+        public void TakeDamage(int damage = 1)
         {
-            if(IsDead || damage <= 0 || _isInvincible || IsDamageBlocked) return;
+            if (IsDead || damage <= 0 || _isInvincible || IsDamageBlocked) return;
             _currentHp = Mathf.Max(0, _currentHp - damage);
             OnHpChanged?.Invoke(_currentHp, _maxHp);
             OnDamaged(damage);
@@ -64,7 +64,7 @@ namespace Aura.Entities
                 IsDead = true;
                 OnDeath();
             }
-            else if(_invincibleTime > 0f)
+            else if (_invincibleTime > 0f)
             {
                 _isInvincible = true;
                 _invincibleTimer = 0f;
@@ -77,7 +77,7 @@ namespace Aura.Entities
         [ShowInEventMenu]
         public virtual void Kill()
         {
-            if(IsDead) return;
+            if (IsDead) return;
 
             _isInvincible = false;
             int fatalDamage = _currentHp;
@@ -91,7 +91,7 @@ namespace Aura.Entities
         /// <summary>
         /// イベント：ダメージを受けた際の演出等用
         /// </summary>
-        protected virtual void OnDamaged(int damage = 0) { }
+        protected virtual void OnDamaged(int damage = 1) { }
 
         /// <summary>
         /// HPが0になった際の処理（死亡演出等用）
