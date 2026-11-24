@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
-namespace Echo.Echolocation.Tests
+namespace Aura.Echolocation.Tests
 {
     public sealed class EchoShadowDemoTests
     {

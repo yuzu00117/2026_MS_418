@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine;
 using UnityEngine.Rendering;
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     internal sealed class EchoSurfaceMemory : IDisposable
     {

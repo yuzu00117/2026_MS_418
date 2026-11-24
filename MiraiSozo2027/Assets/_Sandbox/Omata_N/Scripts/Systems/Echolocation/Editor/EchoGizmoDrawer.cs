@@ -2,7 +2,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     public static class EchoGizmoDrawer
     {

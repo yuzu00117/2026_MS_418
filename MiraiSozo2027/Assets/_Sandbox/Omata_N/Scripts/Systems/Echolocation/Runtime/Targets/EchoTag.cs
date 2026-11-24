@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>旧シーンの互換用。専用タグはEchoTargetで指定する。統合ツールで削除できる。</summary>
     [DisallowMultipleComponent, RequireComponent(typeof(EchoTarget)), AddComponentMenu("")]

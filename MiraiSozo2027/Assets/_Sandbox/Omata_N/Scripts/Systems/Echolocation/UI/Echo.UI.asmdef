@@ -1,6 +1,6 @@
 {
     "name": "Echo.UI",
-    "rootNamespace": "Echo.Echolocation",
+    "rootNamespace": "Aura.Echolocation",
     "references": [
         "Echo.Runtime",
         "UnityEngine.UI",

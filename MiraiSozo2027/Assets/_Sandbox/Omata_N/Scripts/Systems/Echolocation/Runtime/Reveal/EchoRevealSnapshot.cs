@@ -1,4 +1,4 @@
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     public readonly struct EchoRevealSnapshot
     {

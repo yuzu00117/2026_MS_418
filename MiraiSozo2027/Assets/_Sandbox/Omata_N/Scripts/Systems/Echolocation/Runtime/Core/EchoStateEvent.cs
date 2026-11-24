@@ -6,7 +6,7 @@ using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using Unity.Profiling;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>Inspectorから接続できる状態変更通知。</summary>
     [Serializable]

@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     public sealed class EchoShadowTexture : IDisposable
     {

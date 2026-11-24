@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>通常メッシュのアダプター。</summary>
     public sealed class EchoMeshGeometryAdapter : IEchoGeometryAdapter

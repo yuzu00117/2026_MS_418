@@ -1,7 +1,7 @@
 // スキニングはUnityのDrawRenderer経路に任せ、毎フレームBakeMeshしない。
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>スキンドメッシュのアダプター。</summary>
     public sealed class EchoSkinnedGeometryAdapter : IEchoGeometryAdapter

@@ -1,5 +1,5 @@
 using UnityEditor;
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     public sealed class EchoSurfaceSetupWindow : EditorWindow
     {

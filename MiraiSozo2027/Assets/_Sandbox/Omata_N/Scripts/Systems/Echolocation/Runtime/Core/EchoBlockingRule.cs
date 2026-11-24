@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     [Serializable]
     public sealed class EchoBlockingRule

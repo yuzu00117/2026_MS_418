@@ -1,7 +1,7 @@
 // ONと波状OFFで共用する時間→距離の計算。フレームレートに依存させない。
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>一定速度の伝播距離を求める純粋関数。</summary>
     public static class EchoPropagation

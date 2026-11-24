@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using UnityEngine.Rendering.Universal;
 
-namespace Echo.Echolocation.Tests
+namespace Aura.Echolocation.Tests
 {
     public sealed class EchoRenderingTests
     {

@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     /// <summary>利用者が指定した個人用Rendererだけに描画Featureを追加する。</summary>
     public sealed class EchoRendererSetupWindow : EditorWindow

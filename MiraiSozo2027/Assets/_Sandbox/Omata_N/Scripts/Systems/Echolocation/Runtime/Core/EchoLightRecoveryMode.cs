@@ -1,4 +1,4 @@
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>ライト方式で使った持続可能な時間の戻し方。</summary>
     public enum EchoLightRecoveryMode

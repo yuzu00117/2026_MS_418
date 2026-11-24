@@ -1,4 +1,4 @@
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>通常の描画を隠すエコー対象の実体化の段階。隠さない対象は常に実体化として扱う。</summary>
     public enum EchoMaterializationState

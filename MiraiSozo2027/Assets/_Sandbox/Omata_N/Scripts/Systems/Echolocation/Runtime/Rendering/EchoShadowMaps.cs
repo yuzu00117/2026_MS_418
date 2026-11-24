@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     public sealed class EchoShadowMaps
     {

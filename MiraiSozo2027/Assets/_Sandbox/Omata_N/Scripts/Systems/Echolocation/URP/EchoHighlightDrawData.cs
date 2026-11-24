@@ -6,7 +6,7 @@ using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Experimental.Rendering;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     sealed internal class EchoHighlightDrawData
     {

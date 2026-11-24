@@ -1,4 +1,4 @@
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>実体化した後、エコーが当たらなくなったときの扱い。</summary>
     public enum EchoMaterializedPersistenceMode

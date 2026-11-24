@@ -1,6 +1,6 @@
 using UnityEditor;
 using UnityEngine;
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     [CustomEditor(typeof(EchoDemoDriver)), CanEditMultipleObjects]
     public sealed class EchoDemoDriverEditor : UnityEditor.Editor

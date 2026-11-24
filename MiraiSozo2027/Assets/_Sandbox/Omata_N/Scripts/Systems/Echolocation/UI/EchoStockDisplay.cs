@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>単発方式のストックを画面右下などに表示する。シーン内のどのGameObjectにも付けられる。</summary>
     [DisallowMultipleComponent]

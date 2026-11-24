@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>ON中に固定位置の波を追加し、伝播完了後m秒で破棄する。</summary>
     public sealed class EchoPulseTimeline

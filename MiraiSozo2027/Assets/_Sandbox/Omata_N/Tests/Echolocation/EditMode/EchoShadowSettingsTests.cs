@@ -1,7 +1,7 @@
 // 新しい透過は反射率ではなく、タグごとの遮断・非遮断であることを検証する。
 using NUnit.Framework;
 
-namespace Echo.Echolocation.Tests
+namespace Aura.Echolocation.Tests
 {
     public sealed class EchoShadowSettingsTests
     {

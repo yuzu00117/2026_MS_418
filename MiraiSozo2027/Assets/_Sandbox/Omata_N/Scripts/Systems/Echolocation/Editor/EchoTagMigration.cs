@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     /// <summary>保存済み個人シーンの旧ルールを参照型へ移す。表示と遮断設定を専用タグアセットに保存する。</summary>
     public static class EchoTagMigration

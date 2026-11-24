@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-namespace Echo.Echolocation.Tests
+namespace Aura.Echolocation.Tests
 {
     internal static class EchoTestSceneLoader
     {

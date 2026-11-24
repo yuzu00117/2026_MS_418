@@ -2,7 +2,7 @@ using System;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     public static class EchoTagAssetMigration
     {

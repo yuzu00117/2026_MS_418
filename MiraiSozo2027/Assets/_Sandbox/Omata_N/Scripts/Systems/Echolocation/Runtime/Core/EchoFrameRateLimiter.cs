@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>エコーの有無に依存せず、ゲーム全体のFPS上限を管理する。</summary>
     [DisallowMultipleComponent]

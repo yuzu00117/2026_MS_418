@@ -3,7 +3,7 @@ using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-namespace Echo.Echolocation.Editor
+namespace Aura.Echolocation.Editor
 {
     /// <summary>ビルド対象シーンから参照される古いベイクデータを検出する。</summary>
     public sealed class EchoSurfaceBuildValidator : IProcessSceneWithReport

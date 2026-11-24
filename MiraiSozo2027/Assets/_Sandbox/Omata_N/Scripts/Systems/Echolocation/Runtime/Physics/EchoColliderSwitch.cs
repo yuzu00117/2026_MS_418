@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>EchoTargetが所有するColliderの一時的な無効化と復元。</summary>
     internal sealed class EchoColliderSwitch

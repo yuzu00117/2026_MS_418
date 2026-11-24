@@ -1,7 +1,7 @@
 // 旧シーンの互換用。範囲表示はEchoControllerの設定で行う。
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>統合前のシーンの値を、再生中だけControllerの範囲表示へ引き継ぐ。統合ツールで削除できる。</summary>
     [DisallowMultipleComponent, RequireComponent(typeof(EchoController)), AddComponentMenu("")]

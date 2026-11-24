@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Echo.Echolocation
+namespace Aura.Echolocation
 {
     /// <summary>名前を変更しても参照が維持されるエコー専用分類。</summary>
     [CreateAssetMenu(menuName = "エコーロケーション/専用タグ", fileName = "SO_EchoTag")]
