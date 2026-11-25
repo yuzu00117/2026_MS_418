@@ -374,6 +374,8 @@ namespace Aura.Gimmick
             {
                 // 線が大きく離れたので降りる。遠く離れた所から乗り直さないよう、離れていた距離は許さない（「乗り直せる距離」だけで判定する）
                 _lineDeviation = 0.0f;
+                // 直前は線を追って上限の速さで動いていたので、そのまま慣性にすると遠くへ飛んでいく。運ばれる速さまでに抑える
+                _velocity = Vector3.ClampMagnitude(_velocity, _carrySpeed);
                 return null;
             }
             return emitter;
