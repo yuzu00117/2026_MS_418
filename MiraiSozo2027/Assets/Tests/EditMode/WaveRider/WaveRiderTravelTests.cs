@@ -57,5 +57,25 @@ namespace Aura.Gimmick.Tests
         {
             Assert.AreEqual(0.5f, WaveRiderTravel.ClampOnBoard(0.2f, -1.0f, 0.5f, 5.0f), Tolerance);
         }
+
+        [Test]
+        public void 壁際で押し戻した分は線から遅れた距離に数えない()
+        {
+            // 幅 3m のライダーが反射の曲がり角で 1.5m 押し戻され、上限 0.2m だけ寄った所。線は動いていないので遅れは無い
+            Assert.AreEqual(0.0f, WaveRiderTravel.GetFollowLag(1.3f, 1.5f), Tolerance);
+        }
+
+        [Test]
+        public void 押し戻しが無ければ目指す位置との差がそのまま遅れになる()
+        {
+            Assert.AreEqual(1.3f, WaveRiderTravel.GetFollowLag(1.3f, 0.0f), Tolerance);
+        }
+
+        [Test]
+        public void 押し戻した分より大きく離れた分は遅れに数える()
+        {
+            // 線が壁の向こうへ速く動いたときは、押し戻した分を超えて離れていくので降りられる
+            Assert.AreEqual(0.8f, WaveRiderTravel.GetFollowLag(1.0f, 0.2f), Tolerance);
+        }
     }
 }
