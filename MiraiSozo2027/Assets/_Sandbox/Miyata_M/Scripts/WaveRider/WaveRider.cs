@@ -111,6 +111,7 @@ namespace Aura.Gimmick
         [SerializeField] private UnityEvent _onReturned = new UnityEvent();  ///< 初期位置へ戻り終えたときに呼ぶ
 
         private bool _isActive;               ///< スイッチで起動しているか（「スイッチで起動する」がオンのときだけ使う）
+        private bool _isActiveSet;            ///< Activate などで起動の状態が決まったか（Awake より前に呼ばれても、「始めから起動しておく」で上書きしないため）
         private WaveReaction _reaction;       ///< 反応する波の種類
         private Rigidbody _body;              ///< 自分の Rigidbody（Kinematic）
         private Vector3 _initialPosition;     ///< ゲーム開始時の位置（ワールド座標）
@@ -140,21 +141,34 @@ namespace Aura.Gimmick
         [ShowInEventMenu]
         public void Activate()
         {
-            _isActive = true;
+            SetActive(true);
         }
 
         /// @brief スイッチが止まったことにする。スイッチの On Deactivated につなぐ。波に乗っていれば降りて、「波が無くなったとき」の動きになる
         [ShowInEventMenu]
         public void Deactivate()
         {
-            _isActive = false;
+            SetActive(false);
         }
 
         /// @brief 起動と停止を入れ替える
         [ShowInEventMenu]
         public void Toggle()
         {
-            _isActive = !_isActive;
+            SetActive(!IsActivated());
+        }
+
+        /// 起動の状態を決める。Awake より前（別の物の Awake からスイッチのイベントが来たときなど）でも、決めた状態を残す
+        private void SetActive(bool isActive)
+        {
+            _isActive = isActive;
+            _isActiveSet = true;
+        }
+
+        /// 今起動しているか。Awake より前で、まだ決まっていなければ「始めから起動しておく」の値
+        private bool IsActivated()
+        {
+            return _isActiveSet ? _isActive : _isActiveOnStart;
         }
 
         /// @brief 乗る波を出すものを差し替える。コードで生成したライダーに、生成後に割り当てるときに使う
@@ -193,7 +207,8 @@ namespace Aura.Gimmick
             {
                 Debug.LogError("WaveRider: 「乗る波を出すもの」（_emitter）が未設定です。波に乗りません", this);
             }
-            _isActive = _isActiveOnStart;
+            _isActive = IsActivated();   // Awake より前に Activate などが呼ばれていれば、その状態を残す
+            _isActiveSet = true;
             _reaction = GetComponent<WaveReaction>();
             _body = GetComponent<Rigidbody>();
             _body.isKinematic = true;
