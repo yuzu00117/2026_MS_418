@@ -288,11 +288,12 @@ namespace Aura.Gimmick
                 _followLag = WaveRiderTravel.GetFollowLag(Vector3.Distance(desired, next), _pushDistance);
                 _isReturnPending = true;
                 ResetNavPlan();   // 乗っている間に動いた分、戻る経路は引き直す
-                _velocity = (next - current) / deltaTime;
                 // 反射の曲がり角では回りながら進むので、回ったあとの向きで押し戻す。波を出しているもの（砲台など）は押し戻さない
                 Vector3 pushed = _collision.PushOutOfWalls(next, _turnDelta, emitter.transform);
                 _pushDistance = Vector3.Distance(pushed, next);
                 next = pushed;
+                // 慣性の初速は、押し戻したあとの実際の動きで求める（壁に押し付けられて動けない向きの速さを残さない）
+                _velocity = (next - current) / deltaTime;
                 // 乗った時点のずれや押し戻しで線から離れていても、途切れた直後に同じ所から乗り直せるよう、離れていた距離を覚える
                 _lineDeviation = Vector3.Distance(next, linePoint);
             }
