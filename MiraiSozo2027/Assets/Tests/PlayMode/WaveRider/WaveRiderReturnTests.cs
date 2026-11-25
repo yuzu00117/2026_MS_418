@@ -130,6 +130,37 @@ namespace Aura.Gimmick.Tests
         }
 
         [UnityTest]
+        public IEnumerator 波が無い間に動いたら乗り直しの上乗せを消す()
+        {
+            CreateRider(10.0f, false);
+            SetField(_rider, "_lineDeviation", 2.0f);   // 最後に乗っていた間に線から 2m 離れていた、という状態にする
+            _rider.SetInitialPosition(new Vector3(0, 0, 3));
+
+            yield return Settle();
+
+            Assert.AreEqual(0.0f, GetFloat("_lineDeviation"));
+        }
+
+        [UnityTest]
+        public IEnumerator 波が無い間に止まっていれば乗り直しの上乗せを残す()
+        {
+            CreateRider(10.0f, false);
+            SetField(_rider, "_lostWaveMode", WaveRiderLostWaveMode.StopInPlace);
+            SetField(_rider, "_lineDeviation", 2.0f);
+
+            yield return Settle();
+
+            Assert.AreEqual(2.0f, GetFloat("_lineDeviation"));
+        }
+
+        private float GetFloat(string name)
+        {
+            FieldInfo field = typeof(WaveRider).GetField(name, BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(field, name);
+            return (float)field.GetValue(_rider);
+        }
+
+        [UnityTest]
         public IEnumerator 波に乗っていなければ戻っても通知を出さない()
         {
             CreateRider(10.0f, false);
