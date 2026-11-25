@@ -81,6 +81,11 @@ namespace Aura.Gimmick
                  "1 ステップに大きく飛んで壁を抜けたり、上に乗った物を飛ばしたりしないための上限。「運ばれる速さ」+「線へ寄る速さ」より小さくても、そちらを上限にする")]
         [SerializeField, Min(0.0f)] private float _maxFollowSpeed = 10.0f;  ///< 線が動いたとき、線に付いていく速さの上限（m/s）
 
+        [InspectorLabel("線から遅れて降りる距離（m）")]
+        [Tooltip("線そのものが速く動いて、付いていく速さの上限で追いつけず、線からこの距離より遅れたら、波から降りる（m）。降りたあとは「波が無くなったとき」の動きになる\n" +
+                 "線が大きく離れたとき、空中をまっすぐ追いかけて壁を抜けないための上限。0 なら降りずに追いかけ続ける")]
+        [SerializeField, Min(0.0f)] private float _dropLagDistance = 1.0f;  ///< 線からこの距離より遅れたら降りる（m）
+
         [InspectorLabel("進む向きに回転を合わせる")]
         [Tooltip("オンにすると、乗っている間、線の進む向き（Y 軸まわり）を正面に向ける。曲がった所では少しずつ向きを変える\n" +
                  "「上の物を運ぶ」がオンなら、上に乗った物も自分の中心まわりに一緒に回る")]
@@ -122,6 +127,7 @@ namespace Aura.Gimmick
         private bool _hasBoarded;             ///< 一度でも波に乗ったか（乗り直しの距離の制限を、最初の 1 回だけ外すため）
         private Vector3 _attachOffset;       ///< 線の上の点（高さのずれを含む）から見た、自分の位置のずれ。乗った時点で求め、少しずつ 0 へ縮める
         private float _lineDeviation;        ///< 最後に乗っていたステップで、線の上の点（高さのずれを含む）から離れていた距離（m）。乗り直せる距離に足す
+        private float _followLag;            ///< 直前のステップで、線に付いていく速さの上限で抑えたため、目指す位置から遅れた距離（m）
         private Quaternion _turnDelta = Quaternion.identity;  ///< 今のステップで自分が回った分。上に乗った物を回すのに使う
         private Vector3 _velocity;           ///< 直前のステップの速度（m/s）。慣性で進むときの初速になる
         private readonly WaveRiderNavReturn _navReturn = new WaveRiderNavReturn();  ///< 経路探索で戻るときの経路
@@ -184,6 +190,7 @@ namespace Aura.Gimmick
             _currentEmitter = null;
             _hasBoarded = false;   // 別の波なので、最初に乗る距離の上限（遠くから引き込まない）で判定し直す
             _lineDeviation = 0.0f;
+            _followLag = 0.0f;
         }
 
         /// @brief 「初期位置へ戻る」で戻る先を変える。コードで生成したあとに位置を動かしたときや、置き直したときに使う
@@ -231,6 +238,7 @@ namespace Aura.Gimmick
             _currentEmitter = null;
             _attachOffset = Vector3.zero;
             _lineDeviation = 0.0f;
+            _followLag = 0.0f;
             ResetNavPlan();
         }
 
@@ -256,8 +264,9 @@ namespace Aura.Gimmick
             }
             else
             {
-                next = Ride(emitter, deltaTime, out Vector3 linePoint);
-                next = LimitFollowStep(current, next, deltaTime);
+                Vector3 desired = Ride(emitter, deltaTime, out Vector3 linePoint);
+                next = LimitFollowStep(current, desired, deltaTime);
+                _followLag = Vector3.Distance(desired, next);
                 _isReturnPending = true;
                 ResetNavPlan();   // 乗っている間に動いた分、戻る経路は引き直す
                 _velocity = (next - current) / deltaTime;
@@ -327,6 +336,7 @@ namespace Aura.Gimmick
                 }
                 _hasBoarded = true;
                 _currentEmitter = emitter;
+                _followLag = 0.0f;
                 // 終点の近くで乗ったとき、次のステップで端まで一気に戻されないよう、先に動ける範囲に収める（収めた分は下のずれに入り、少しずつ寄る）
                 GetTravelLimits(corners, out float startLimit, out float endLimit);
                 _distance = WaveRiderTravel.ClampOnBoard(distance, _direction, startLimit, endLimit);
@@ -336,6 +346,12 @@ namespace Aura.Gimmick
             }
             else if (_distance > WaveLinePath.GetLength(corners) + BeamEndTolerance)
             {
+                return null;
+            }
+            else if (_dropLagDistance > 0.0f && _followLag > _dropLagDistance)
+            {
+                // 線が大きく離れたので降りる。遠く離れた所から乗り直さないよう、離れていた距離は許さない（「乗り直せる距離」だけで判定する）
+                _lineDeviation = 0.0f;
                 return null;
             }
             return emitter;
