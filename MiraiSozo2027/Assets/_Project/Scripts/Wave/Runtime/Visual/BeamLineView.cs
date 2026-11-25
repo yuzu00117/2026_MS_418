@@ -23,7 +23,7 @@ namespace Aura.Wave
                  "いつも見せる: 出している間ずっと見せる\n" +
                  "見える範囲の中だけ: シーンにある有効な WaveRevealSource の範囲（球の一部）に入っている部分だけを見せる。範囲が 1 つも無ければ見せない\n" +
                  "範囲に触れたら全体を見せる: 線のどこかが WaveRevealSource の範囲に触れたら、線の全体を見せる。触れなくなってからも「触れた後も見せる秒数」の間は見せる\n" +
-                 "　エコーロケーションで波が見えるようにするには、エコーを出す物（Test_Player の EchoController）に EchoWaveRevealSource（Scripts/Wave/Echo）を付け、ここを「見える範囲の中だけ」か「範囲に触れたら全体を見せる」にする\n" +
+                 "　エコーロケーションで波が見えるようにするには、エコーを出す物（PF_Player_Gratear の EchoController）に EchoWaveRevealSource（Scripts/Wave/Echo）を付け、ここを「見える範囲の中だけ」か「範囲に触れたら全体を見せる」にする\n" +
                  "当たり判定と、受け手に波を渡すことは、見せ方に関係なく行う")]
         [SerializeField] private BeamLineVisibility _visibility = BeamLineVisibility.Always;  ///< 見せ方
 
