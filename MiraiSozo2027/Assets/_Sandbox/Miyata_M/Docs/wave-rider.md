@@ -103,8 +103,8 @@
 - 検証したのは 3×1×3 と 1×1×1(プレハブ)のライダー。実際の Phononkinesis の曲がる波、電磁スイッチと実際の波の組み合わせは未確認
 
 ## テスト
-- `Assets/Tests/EditMode/WaveRider/` に、線の計算(`WaveLinePath`)、線の上の道のりの進め方と、線から遅れた距離の求め方(`WaveRiderTravel`。押し戻しの向きを見て遅れから引く)、経路に沿って進む計算(`WaveRiderNavReturn`)の EditMode テストがある。Test Runner から実行する
-- `Assets/Tests/PlayMode/WaveRider/` に、初期位置へ戻る動き(戻り終えた通知、戻る速さ 0、向きの復元、壁際で回らない、動く Rigidbody を押しのける、NavMesh で戻る)と、スイッチでの起動(Awake より前の Activate)の PlayMode テストがある。波を出すものは置かず、波が無い状態で動かす。NavMesh のテストは、テスト内で床を焼く
+- `Assets/_Sandbox/Miyata_M/Tests/WaveRider/EditMode/` に、線の計算(`WaveLinePath`)、線の上の道のりの進め方と、線から遅れた距離の求め方(`WaveRiderTravel`。押し戻しの向きを見て遅れから引く)、経路に沿って進む計算(`WaveRiderNavReturn`)の EditMode テストがある。Test Runner から実行する
+- `Assets/_Sandbox/Miyata_M/Tests/WaveRider/PlayMode/` に、初期位置へ戻る動き(戻り終えた通知、戻る速さ 0、向きの復元、壁際で回らない、動く Rigidbody を押しのける、NavMesh で戻る)と、スイッチでの起動(Awake より前の Activate)の PlayMode テストがある。波を出すものは置かず、波が無い状態で動かす。NavMesh のテストは、テスト内で床を焼く
 - 波に乗っている間の動き(乗る、折り返す、押し戻す)の自動テストは無い。動作確認用シーンで確かめる
 - WaveRider のフォルダに asmdef(`Aura.Sandbox.WaveRider`)を置いて、テストから参照している
 
