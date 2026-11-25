@@ -342,7 +342,7 @@ namespace Aura.Gimmick
             if (isOverflow && !_hasWarnedOverlapOverflow)
             {
                 _hasWarnedOverlapOverflow = true;
-                Debug.LogWarning("WaveRider: 上面の Collider が多すぎて、乗っている物を取りこぼす恐れがあります（最大 " + WaveRiderCollision.OverlapBufferSize + " 個）", this);
+                Debug.LogWarning("WaveRider: 上面の Collider が多すぎて、乗っている物を取りこぼす恐れがあります（最大 " + WaveRiderCollision.MaxOverlapBufferSize + " 個）", this);
             }
         }
 

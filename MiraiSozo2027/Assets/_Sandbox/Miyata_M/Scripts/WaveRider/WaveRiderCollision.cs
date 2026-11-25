@@ -17,11 +17,12 @@ namespace Aura.Gimmick
         private const int CornerCount = 8;                         ///< 箱の角の数
         private const float MinIntoOverlapDot = 0.01f;             ///< 進む向きと押し出しの向きの内積がこれより負なら、重なっている壁へ入り込むとみなす（面に沿う動きは止めない）
 
-        public const int OverlapBufferSize = 32;                   ///< 周りで同時に調べる Collider の最大数。超えた分は数えない
+        private const int InitialOverlapBufferSize = 32;           ///< 重なりを受ける入れ物の最初の大きさ。満杯なら倍にして取り直す
+        public const int MaxOverlapBufferSize = 1024;              ///< 重なりを受ける入れ物の大きさの上限。これを超えた分は数えない
 
         private readonly Rigidbody _body;    ///< 自分の Rigidbody（Kinematic）
         private readonly Transform _owner;   ///< 自分の Transform（自分の子を相手にしないため）
-        private readonly Collider[] _overlapBuffer = new Collider[OverlapBufferSize];  ///< 重なりを受ける入れ物（確保を避ける）
+        private Collider[] _overlapBuffer = new Collider[InitialOverlapBufferSize];  ///< 重なりを受ける入れ物（確保を避けるため使い回し、足りないときだけ大きくする）
         private Collider[] _ownColliders;    ///< 自分と子の Collider
 
         public WaveRiderCollision(Rigidbody body, Transform owner)
@@ -136,7 +137,7 @@ namespace Aura.Gimmick
             Vector3 center = _body.position + yaw * localCenter;
             center.y = slabCenterY;
             Vector3 halfExtents = new Vector3(local.extents.x, PassengerSlabHeight * 0.5f, local.extents.z);
-            int count = Physics.OverlapBoxNonAlloc(center, halfExtents, _overlapBuffer, yaw, ~0, QueryTriggerInteraction.Ignore);
+            int count = OverlapBox(center, halfExtents, yaw);
             for (int i = 0; i < count; i++)
             {
                 Rigidbody other = _overlapBuffer[i].attachedRigidbody;
@@ -150,7 +151,7 @@ namespace Aura.Gimmick
                     passengers.Add(other);
                 }
             }
-            return count >= OverlapBufferSize;
+            return count >= MaxOverlapBufferSize;
         }
 
         /// @brief step だけ進めた位置を返す。壁などに当たるなら、その手前までにする。上に乗っている物と、動く Rigidbody は当たり判定から外す
@@ -224,7 +225,7 @@ namespace Aura.Gimmick
                     continue;
                 }
                 Bounds ownBounds = own.bounds;
-                int count = Physics.OverlapBoxNonAlloc(ownBounds.center, ownBounds.extents, _overlapBuffer, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+                int count = OverlapBox(ownBounds.center, ownBounds.extents, Quaternion.identity);
                 for (int i = 0; i < count; i++)
                 {
                     Collider other = _overlapBuffer[i];
@@ -245,6 +246,21 @@ namespace Aura.Gimmick
                 }
             }
             return false;
+        }
+
+        /// @brief 箱に重なる Collider を _overlapBuffer に入れ、その数を返す（トリガーは除く）
+        /// 入れ物が満杯のときは取りこぼしている恐れがあるので、上限（MaxOverlapBufferSize）まで倍にして取り直す
+        /// 大きくした入れ物はそのまま使い回すので、確保が起きるのは周りの Collider が初めて増えたときだけ
+        /// 計算量: O(K log K)（K は重なった Collider の数。取り直しは倍々なので高々 log 回）
+        private int OverlapBox(Vector3 center, Vector3 halfExtents, Quaternion orientation)
+        {
+            int count = Physics.OverlapBoxNonAlloc(center, halfExtents, _overlapBuffer, orientation, ~0, QueryTriggerInteraction.Ignore);
+            while (count >= _overlapBuffer.Length && _overlapBuffer.Length < MaxOverlapBufferSize)
+            {
+                _overlapBuffer = new Collider[Mathf.Min(_overlapBuffer.Length * 2, MaxOverlapBufferSize)];
+                count = Physics.OverlapBoxNonAlloc(center, halfExtents, _overlapBuffer, orientation, ~0, QueryTriggerInteraction.Ignore);
+            }
+            return count;
         }
 
         /// ほかの WaveRider か。WaveRider どうしは押し戻さず、止めもしない（互いに全量押し戻すと、離れすぎては戻るのを繰り返して震えるため）
@@ -275,7 +291,7 @@ namespace Aura.Gimmick
             Quaternion ownRotation = delta * own.transform.rotation;
             Vector3 ownCenter = basePosition + delta * (own.bounds.center - bodyPosition);
             float reach = own.bounds.extents.magnitude;   // 回っても収まるよう、どの向きにも同じ広さで探す
-            int count = Physics.OverlapBoxNonAlloc(ownCenter, Vector3.one * reach, _overlapBuffer, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+            int count = OverlapBox(ownCenter, Vector3.one * reach, Quaternion.identity);
             for (int i = 0; i < count; i++)
             {
                 Collider other = _overlapBuffer[i];
