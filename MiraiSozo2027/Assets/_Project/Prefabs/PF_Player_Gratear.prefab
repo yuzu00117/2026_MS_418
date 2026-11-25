@@ -153,7 +153,7 @@ GameObject:
   - component: {fileID: 3799985241470346745}
   - component: {fileID: 6055651994017012682}
   m_Layer: 0
-  m_Name: Test_Player
+  m_Name: PF_Player_Gratear
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
