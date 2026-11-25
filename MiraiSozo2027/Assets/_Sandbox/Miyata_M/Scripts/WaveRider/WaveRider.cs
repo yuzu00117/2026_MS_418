@@ -252,6 +252,7 @@ namespace Aura.Gimmick
                 _currentEmitter = null;   // 進む向き（_direction）は残す。乗り直したとき、続きの向きで進むため
                 next = LoseWave(current, deltaTime);
                 NotifyIfReturned(next);
+                ResetBoardingAtStart(next);
             }
             else
             {
@@ -426,6 +427,16 @@ namespace Aura.Gimmick
             {
                 _isReturnPending = false;
                 _onReturned.Invoke();
+            }
+        }
+
+        /// @brief 波が無い間に初期位置にいれば、次は最初に乗るときと同じ「最初に乗れる距離」で乗れるようにする
+        /// 初期位置が線から「乗り直せる距離」より離れていると、戻ったあと二度と乗れなくなるため。向きも最初と同じく終点へ向かう
+        private void ResetBoardingAtStart(Vector3 position)
+        {
+            if ((position - _initialPosition).sqrMagnitude <= ReturnedDistance * ReturnedDistance)
+            {
+                _hasBoarded = false;
             }
         }
 
