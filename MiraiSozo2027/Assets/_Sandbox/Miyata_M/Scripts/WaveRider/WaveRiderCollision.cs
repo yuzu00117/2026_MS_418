@@ -145,7 +145,7 @@ namespace Aura.Gimmick
             return count >= OverlapBufferSize;
         }
 
-        /// @brief step だけ進めた位置を返す。壁などに当たるなら、その手前までにする。上に乗っている物は当たり判定から外す
+        /// @brief step だけ進めた位置を返す。壁などに当たるなら、その手前までにする。上に乗っている物と、動く Rigidbody は当たり判定から外す
         /// すでに面に接している所（床の上など）で止まってしまわないよう、接している面に沿って 1 回だけ滑らせる
         /// 計算量: O(H)（H は進む先の当たり判定の数）
         public Vector3 SweepMove(Vector3 current, Vector3 step, HashSet<Rigidbody> passengers, out bool isBlocked)
@@ -235,8 +235,9 @@ namespace Aura.Gimmick
             Vector3 direction = step / stepLength;
             foreach (RaycastHit hit in _body.SweepTestAll(direction, stepLength, QueryTriggerInteraction.Ignore))
             {
+                // 動く Rigidbody（箱、プレイヤーなど）では止まらず、物理で押しのける（乗っている間と同じ）。止まると、どかない限りずっと戻れない
                 Rigidbody hitBody = hit.rigidbody;
-                if (hitBody != null && passengers.Contains(hitBody))
+                if (hitBody != null && (!hitBody.isKinematic || passengers.Contains(hitBody)))
                 {
                     continue;
                 }
