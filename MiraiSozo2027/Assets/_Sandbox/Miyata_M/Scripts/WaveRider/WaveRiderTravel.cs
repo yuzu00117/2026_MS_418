@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace Aura.Gimmick
 {
     /// @brief WaveRider が線の上の道のり s を進める計算（終点で止まる・折り返す、乗った時点の道のりを動ける範囲に収める）
@@ -50,12 +52,22 @@ namespace Aura.Gimmick
         /// @brief 線に付いていく速さの上限で抑えたため、線から遅れた距離を返す（m）
         /// 壁際では毎ステップ押し戻されるので、目指す位置との差には押し戻した分が入る。その分は遅れに数えない
         /// （数えると、反射の曲がり角などで大きいライダーが、線が動いていないのに降りてしまう）
-        /// @param gap 速さの上限で抑えた位置から、目指す位置までの距離（m）
-        /// @param pushDistance 直前のステップで壁から押し戻した距離（m）
+        /// 引くのは、押し戻しのうち目指す位置から離れる向きの分だけ。横の壁から押し戻されている間に線が前後へ動いても、降りる距離は延びない
+        ///
+        ///   押し戻し(push) <-----●-----------------> 目指す位置   gap の向きと逆向きの成分だけ引く
+        ///
+        /// @param gap 速さの上限で抑えた位置から、目指す位置へのずれ（m）
+        /// @param push 直前のステップで壁から押し戻した移動（m）
         /// 計算量: O(1)
-        public static float GetFollowLag(float gap, float pushDistance)
+        public static float GetFollowLag(Vector3 gap, Vector3 push)
         {
-            return System.Math.Max(0.0f, gap - pushDistance);
+            float gapLength = gap.magnitude;
+            if (gapLength <= 0.0f)
+            {
+                return 0.0f;
+            }
+            float pushedBack = Mathf.Max(0.0f, Vector3.Dot(-push, gap / gapLength));
+            return Mathf.Max(0.0f, gapLength - pushedBack);
         }
     }
 }
