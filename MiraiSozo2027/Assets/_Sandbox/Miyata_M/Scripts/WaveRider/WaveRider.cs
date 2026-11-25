@@ -261,6 +261,10 @@ namespace Aura.Gimmick
                 next = LoseWave(current, deltaTime);
                 NotifyIfReturned(next);
                 ResetBoardingAtStart(next);
+                if (next != current)
+                {
+                    _lineDeviation = 0.0f;   // 止まった場所から動いたら、最後に乗っていた間のずれは許さない（遠くから壁越しに引き込まれないため）
+                }
             }
             else
             {
