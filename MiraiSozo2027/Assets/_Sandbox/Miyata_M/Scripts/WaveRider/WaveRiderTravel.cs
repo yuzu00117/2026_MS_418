@@ -37,5 +37,14 @@ namespace Aura.Gimmick
             }
             return distance;
         }
+
+        /// @brief 乗った時点の道のりを、次のステップで飛ばされない範囲に収めて返す
+        /// 終点側の端より先なら端へ。始まりへ向かっているときは、始まり側の端より手前なら端へ（終点へ向かうときは、そのまま進めば範囲に入る）
+        /// 計算量: O(1)
+        public static float ClampOnBoard(float distance, float direction, float startLimit, float endLimit)
+        {
+            float lower = direction < 0.0f ? startLimit : 0.0f;
+            return System.Math.Clamp(distance, System.Math.Min(lower, endLimit), endLimit);
+        }
     }
 }

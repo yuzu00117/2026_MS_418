@@ -305,9 +305,11 @@ namespace Aura.Gimmick
                 }
                 _hasBoarded = true;
                 _currentEmitter = emitter;
-                _distance = distance;
+                // 終点の近くで乗ったとき、次のステップで端まで一気に戻されないよう、先に動ける範囲に収める（収めた分は下のずれに入り、少しずつ寄る）
+                GetTravelLimits(corners, out float startLimit, out float endLimit);
+                _distance = WaveRiderTravel.ClampOnBoard(distance, _direction, startLimit, endLimit);
                 // 線の上へ飛ばず、今の位置から少しずつ寄るため、乗った時点のずれを覚える
-                Vector3 boardPoint = WaveLinePath.GetPointAt(corners, distance, out Vector3 _);
+                Vector3 boardPoint = WaveLinePath.GetPointAt(corners, _distance, out Vector3 _);
                 _attachOffset = current - (boardPoint + Vector3.up * _heightOffset);
             }
             else if (_distance > WaveLinePath.GetLength(corners) + BeamEndTolerance)
