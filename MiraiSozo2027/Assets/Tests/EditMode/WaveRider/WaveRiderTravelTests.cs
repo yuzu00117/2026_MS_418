@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using UnityEngine;
 
 namespace Aura.Gimmick.Tests
 {
@@ -62,20 +63,40 @@ namespace Aura.Gimmick.Tests
         public void 壁際で押し戻した分は線から遅れた距離に数えない()
         {
             // 幅 3m のライダーが反射の曲がり角で 1.5m 押し戻され、上限 0.2m だけ寄った所。線は動いていないので遅れは無い
-            Assert.AreEqual(0.0f, WaveRiderTravel.GetFollowLag(1.3f, 1.5f), Tolerance);
+            Assert.AreEqual(0.0f, WaveRiderTravel.GetFollowLag(new Vector3(1.3f, 0.0f, 0.0f), new Vector3(-1.5f, 0.0f, 0.0f)), Tolerance);
         }
 
         [Test]
         public void 押し戻しが無ければ目指す位置との差がそのまま遅れになる()
         {
-            Assert.AreEqual(1.3f, WaveRiderTravel.GetFollowLag(1.3f, 0.0f), Tolerance);
+            Assert.AreEqual(1.3f, WaveRiderTravel.GetFollowLag(new Vector3(1.3f, 0.0f, 0.0f), Vector3.zero), Tolerance);
         }
 
         [Test]
         public void 押し戻した分より大きく離れた分は遅れに数える()
         {
             // 線が壁の向こうへ速く動いたときは、押し戻した分を超えて離れていくので降りられる
-            Assert.AreEqual(0.8f, WaveRiderTravel.GetFollowLag(1.0f, 0.2f), Tolerance);
+            Assert.AreEqual(0.8f, WaveRiderTravel.GetFollowLag(new Vector3(1.0f, 0.0f, 0.0f), new Vector3(-0.2f, 0.0f, 0.0f)), Tolerance);
+        }
+
+        [Test]
+        public void 横向きの押し戻しは遅れから引かない()
+        {
+            // 横の壁から 1.5m 押し戻されている間に、線が前へ 1.3m 離れた。押し戻しは離れた向きと関係ないので、そのまま遅れになる
+            Assert.AreEqual(1.3f, WaveRiderTravel.GetFollowLag(new Vector3(1.3f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 1.5f)), Tolerance);
+        }
+
+        [Test]
+        public void 斜めの押し戻しは離れる向きの分だけ引く()
+        {
+            // 押し戻し (-0.6, 0, 0.8) のうち、目指す位置から離れる向きの成分は 0.6
+            Assert.AreEqual(0.4f, WaveRiderTravel.GetFollowLag(new Vector3(1.0f, 0.0f, 0.0f), new Vector3(-0.6f, 0.0f, 0.8f)), Tolerance);
+        }
+
+        [Test]
+        public void 目指す位置へ近づく向きの押し戻しは遅れを増やさない()
+        {
+            Assert.AreEqual(1.0f, WaveRiderTravel.GetFollowLag(new Vector3(1.0f, 0.0f, 0.0f), new Vector3(0.5f, 0.0f, 0.0f)), Tolerance);
         }
     }
 }
