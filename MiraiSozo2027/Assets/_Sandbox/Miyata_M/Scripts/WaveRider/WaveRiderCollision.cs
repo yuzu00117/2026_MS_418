@@ -5,7 +5,7 @@ namespace Aura.Gimmick
 {
     /// @brief WaveRider の当たり判定まわりの計算を受け持つ（自分の Collider の外形、壁からの押し戻し、回転の可否、上に乗った物の検出、壁の手前で止める移動）
     /// ・自分の Collider は、自分と子のものを使う。トリガーと無効なものは除く
-    /// ・押し戻しと回転の可否は、同じ「横方向の食い込み」の計算を使う。縦に重ならない物（床）と、動く Rigidbody は相手にしない
+    /// ・押し戻しと回転の可否は、同じ「横方向の食い込み」の計算を使う。縦に重ならない物（床）と、動く Rigidbody と、ほかの WaveRider は相手にしない
     internal sealed class WaveRiderCollision
     {
         private const float MinPushDistance = 0.001f;              ///< 壁から押し戻す重なりの最小（m）。これ以下は接しているだけとみなす
@@ -162,6 +162,13 @@ namespace Aura.Gimmick
             return next;
         }
 
+        /// ほかの WaveRider か。WaveRider どうしは押し戻さず、止めもしない（互いに全量押し戻すと、離れすぎては戻るのを繰り返して震えるため）
+        /// 計算量: O(1)（その Rigidbody の GameObject のコンポーネント数に比例）
+        private static bool IsRider(Rigidbody body)
+        {
+            return body.TryGetComponent<WaveRider>(out _);
+        }
+
         /// 押し戻しや外形に使える Collider か（消えていない、有効、トリガーでない）
         private static bool IsSolid(Collider collider)
         {
@@ -190,7 +197,7 @@ namespace Aura.Gimmick
                 Rigidbody otherBody = other.attachedRigidbody;
                 if (other.transform.IsChildOf(_owner)
                     || (ignoredRoot != null && other.transform.IsChildOf(ignoredRoot))
-                    || (otherBody != null && (!otherBody.isKinematic || (ignoredBodies != null && ignoredBodies.Contains(otherBody)))))
+                    || (otherBody != null && (!otherBody.isKinematic || IsRider(otherBody) || (ignoredBodies != null && ignoredBodies.Contains(otherBody)))))
                 {
                     continue;
                 }
@@ -237,7 +244,8 @@ namespace Aura.Gimmick
             {
                 // 動く Rigidbody（箱、プレイヤーなど）では止まらず、物理で押しのける（乗っている間と同じ）。止まると、どかない限りずっと戻れない
                 Rigidbody hitBody = hit.rigidbody;
-                if (hitBody != null && (!hitBody.isKinematic || passengers.Contains(hitBody)))
+                // ほかの WaveRider とは、乗っている間と同じく、ぶつからずにすり抜ける
+                if (hitBody != null && (!hitBody.isKinematic || IsRider(hitBody) || passengers.Contains(hitBody)))
                 {
                     continue;
                 }
