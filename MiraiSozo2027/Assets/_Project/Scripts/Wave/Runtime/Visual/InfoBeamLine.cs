@@ -52,6 +52,9 @@ namespace Aura.Wave
             return lineObject.AddComponent<InfoBeamLine>();
         }
 
+        /// @brief Draw で描く線の太さと揺れの大きさに掛ける倍率。1 なら波の種類（WaveType）のまま
+        public float SizeScale { get; set; } = 1.0f;
+
         /// @brief 折れ線に沿ってビームの波を描く。揺れを 0 にするのは、fadingCorners が true の曲がり目だけ
         /// @param corners 折れ線の点（始点、曲がり目、終点の順）。2 つ以上
         /// @param fadingCorners corners と同じ数。true の点の前後で揺れを 0 にする（跳ね返った位置など）。null なら間の曲がり目すべて
@@ -145,7 +148,7 @@ namespace Aura.Wave
                     {
                         envelope *= Mathf.SmoothStep(0.0f, 1.0f, (length - distanceInSegment) / CornerFadeLength);
                     }
-                    float offset = Mathf.Sin((distance - phase) * angularScale) * type.Amplitude * envelope;
+                    float offset = Mathf.Sin((distance - phase) * angularScale) * type.Amplitude * SizeScale * envelope;
                     _points[count] = start + forward * distanceInSegment + swing * offset;
                     ++count;
                 }
@@ -155,11 +158,11 @@ namespace Aura.Wave
 
             if (revealVolumes == null)
             {
-                ShowRun(0, 0, count, type.LineWidth, type.Color, 1.0f, BeamEndAlphaScale);
+                ShowRun(0, 0, count, type.LineWidth * SizeScale, type.Color, 1.0f, BeamEndAlphaScale);
                 HideRunsFrom(1);
                 return;
             }
-            ShowRevealedRuns(count, type.LineWidth, type.Color, revealVolumes);
+            ShowRevealedRuns(count, type.LineWidth * SizeScale, type.Color, revealVolumes);
         }
 
         /// @brief 折れ線を揺らさずにそのまま描く（ビームの実体の線を見せるのに使う）。終わりに向かって薄くなる

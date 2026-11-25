@@ -26,6 +26,14 @@ namespace Aura.Wave.Echo
                  "オフなら、エコーの波が届いている範囲（球の一部）に入っている部分だけを見せる。ソナーでは、波の輪ごとに見える")]
         [SerializeField] private bool _isWholeBeamShown;  ///< エコー中は、範囲で切らずに全部見せるか
 
+        [InspectorLabel("見つからなければシーンから探す")]
+        [Tooltip("オンにすると、「エコーロケーション」が空で自分や親にも無いとき、シーンにある EchoController を探して使う（見つかるまで 1 秒ごとに探す）\n" +
+                 "プレイヤーが再生中に GameManager から出てくるシーンで、この部品をシーン側の物に付けるときに使う")]
+        [SerializeField] private bool _isSceneSearched;  ///< 見つからなければシーンから探すか
+
+        private const float SceneSearchInterval = 1.0f;  ///< シーンから探し直す間隔（秒）
+
+        private float _nextSearchTime;  ///< 次にシーンから探す時刻
         private readonly List<WaveRevealVolume> _volumes = new List<WaveRevealVolume>();  ///< このフレームのエコーの範囲
         private WaveRevealSource _source;
 
@@ -62,6 +70,11 @@ namespace Aura.Wave.Echo
 
         private void LateUpdate()
         {
+            if (_controller == null && _isSceneSearched && Time.time >= _nextSearchTime)
+            {
+                _nextSearchTime = Time.time + SceneSearchInterval;
+                _controller = FindAnyObjectByType<EchoController>();
+            }
             _volumes.Clear();
             if (_controller != null && _controller.isActiveAndEnabled)
             {
