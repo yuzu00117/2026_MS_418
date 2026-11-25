@@ -231,6 +231,25 @@ namespace Aura.Gimmick.Tests
         }
 
         [UnityTest]
+        public IEnumerator 戻る途中のほかのWaveRiderでは止まらずすり抜ける()
+        {
+            CreateRider(10.0f, false);
+            // 前面の先に、止まっているもう 1 つのライダー（Kinematic）を置く
+            LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("_emitter"));
+            _wallObject = new GameObject("OtherRider");
+            _wallObject.transform.position = new Vector3(0, 0, 3.5f);
+            _wallObject.AddComponent<BoxCollider>();
+            _wallObject.AddComponent<Aura.ObjectInfo.WaveReaction>();
+            _wallObject.AddComponent<WaveRider>();
+            Physics.SyncTransforms();
+            _rider.SetInitialPosition(new Vector3(0, 0, 6));
+
+            yield return Settle();
+
+            Assert.That((_body.position - new Vector3(0, 0, 6)).magnitude, Is.LessThan(PositionTolerance));
+        }
+
+        [UnityTest]
         public IEnumerator 壁が無ければ同じ向きへ回れる()
         {
             CreateRider(2.0f, true);
