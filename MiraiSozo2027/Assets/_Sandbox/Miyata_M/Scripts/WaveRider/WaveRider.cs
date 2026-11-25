@@ -28,16 +28,9 @@ namespace Aura.Gimmick
         private const float MinDirectionSqrMagnitude = 0.25f; ///< 進む向きの長さの 2 乗がこれより小さければ、向きが取れなかったとみなす
         private const float TurnDegreesPerSecond = 720.0f;    ///< 進む向きに回転を合わせるときの、1 秒あたりの最大の回転（度）
         private const float BeamEndTolerance = 0.05f;         ///< 線が縮んで、自分の道のりより短くなった差がこれ以内なら、揺れとみなして乗り続ける（m）
-        private const float MinPushDistance = 0.001f;        ///< 壁から押し戻す重なりの最小（m）。これ以下は接しているだけとみなす
-        private const float MinPushHorizontalSqrMagnitude = 0.25f; ///< 押し出しの向きの横成分の長さの 2 乗がこれ以下なら、ほぼ縦向きなので押し戻さない
-        private const float PassengerSlabHeight = 0.3f;      ///< 上面の上で乗っている物を探す、薄い箱の高さ（m）
-        private const float ContactDistance = 0.001f;       ///< 当たった距離がこれ以下なら、すでに面に接しているとみなす（m）
-        private const float MinSlideSqrMagnitude = 1.0e-8f;   ///< 面に沿って滑らせる量の長さの 2 乗がこれ以下なら、滑らせない
         private const float NavReplanInterval = 0.5f;         ///< 経路探索で戻るとき、経路を引き直す間隔の最短（秒）
         private const float ReturnedDistance = 0.01f;        ///< 初期位置にこの距離以内に着いたら、戻り終えたとみなす（m）
         private const float ReturnedAngle = 0.5f;            ///< 初期の向きにこの角度以内に着いたら、向きも戻ったとみなす（度）
-        private const int OverlapBufferSize = 32;            ///< 上面で同時に調べる Collider の最大数。超えた分は乗っている物として数えない
-        private const float TopContactTolerance = 0.1f;      ///< 相手の足元が自分の上面からこの高さ以内に潜っていても、上に乗っているとみなす（m）
 
         [InspectorLabel("乗る波を出すもの")]
         [Tooltip("乗る波を出す WaveEmitter（タレットなど）。必ず指定する。空だとエラーを出し、波に乗らない")]
@@ -131,8 +124,7 @@ namespace Aura.Gimmick
         private bool _isReturnPending;       ///< 波に乗ったあと、まだ初期位置へ戻り終えていないか（戻り終えた通知を 1 回だけ出すため）
         private bool _hasWarnedOverlapOverflow;  ///< 上面の Collider が入れ物の数を超えた警告を出したか（毎ステップ出さないため）
 
-        private Collider[] _ownColliders;     ///< 自分と子の Collider（上面の位置を求める）
-        private readonly Collider[] _overlapBuffer = new Collider[OverlapBufferSize];  ///< 上面の重なりを受ける入れ物（確保を避ける）
+        private WaveRiderCollision _collision;  ///< 当たり判定まわりの計算（押し戻し、回転の可否、乗っている物の検出、壁の手前で止める移動）
         private readonly HashSet<Rigidbody> _passengers = new HashSet<Rigidbody>();  ///< 直前の物理ステップで上に乗っていた物
 
         /// @brief 波に乗っているか
@@ -178,8 +170,7 @@ namespace Aura.Gimmick
         public void SetInitialPosition(Vector3 position)
         {
             _initialPosition = position;
-            _navReturn.Reset();   // 引いてあった経路は古い目標向きなので捨てる
-            _nextNavPlanTime = 0.0f;
+            ResetNavPlan();   // 引いてあった経路は古い目標向きなので捨てる
         }
 
         /// @brief 「初期位置へ戻る」で戻る先の向きを変える。生成したあとに向きを変えたときに使う
@@ -202,13 +193,13 @@ namespace Aura.Gimmick
             _body.interpolation = RigidbodyInterpolation.Interpolate;
             _initialPosition = _body.position;
             _initialRotation = _body.rotation;
-            _ownColliders = GetComponentsInChildren<Collider>();
+            _collision = new WaveRiderCollision(_body, transform);
         }
 
-        // 実行中に子の Collider が増えたり減ったりしたら、上面を求める対象を取り直す
+        // 実行中に子の Collider が増えたり減ったりしたら、当たり判定に使う Collider を取り直す
         private void OnTransformChildrenChanged()
         {
-            _ownColliders = GetComponentsInChildren<Collider>();
+            _collision?.RefreshColliders();
         }
 
         // 再び有効になったとき、無効の前の慣性や、乗っていた波、引いてあった経路を持ち越さない
@@ -217,8 +208,7 @@ namespace Aura.Gimmick
             _velocity = Vector3.zero;
             _currentEmitter = null;
             _attachOffset = Vector3.zero;
-            _navReturn.Reset();
-            _nextNavPlanTime = 0.0f;
+            ResetNavPlan();
         }
 
         private void OnDisable()
@@ -244,123 +234,39 @@ namespace Aura.Gimmick
             {
                 next = Ride(emitter, deltaTime);
                 _isReturnPending = true;
-                _navReturn.Reset();   // 乗っている間に動いた分、戻る経路は引き直す
-                _nextNavPlanTime = 0.0f;
+                ResetNavPlan();   // 乗っている間に動いた分、戻る経路は引き直す
                 _velocity = (next - current) / deltaTime;
+                // 反射の曲がり角では回りながら進むので、回ったあとの向きで押し戻す。波を出しているもの（砲台など）は押し戻さない
+                next = _collision.PushOutOfWalls(next, _turnDelta, emitter.transform);
             }
 
-            if (emitter != null)
-            {
-                next = PushOutOfWalls(next, emitter);
-            }
             DetectPassengers();
             CarryPassengers(current, next);
             _body.MovePosition(next);
         }
 
-        /// @brief 次の位置で壁などに食い込んでいたら、横方向だけ押し戻した位置を返す（波を出しているものは除く）
-        /// 波の線は壁の面（反射する所）を通るため、中心が線の上だと壁に半分食い込む。その分を壁から離す
-        /// 動く物（Kinematic でない Rigidbody）と、床のような縦方向の重なりは相手にしない
-        /// 自分の Collider が複数あっても同じ壁を二重に押さないよう、Collider ごとの押し戻しのうち一番大きいものだけを使う
-        /// 計算量: O(C × K)（C は自分の Collider の数、K は重なった Collider の数）
-        private Vector3 PushOutOfWalls(Vector3 next, WaveEmitter emitter)
+        /// @brief 引いてあった戻る経路を捨て、次のステップですぐ引き直せるようにする
+        private void ResetNavPlan()
         {
-            Vector3 push = Vector3.zero;
-            foreach (Collider own in _ownColliders)
-            {
-                if (own == null || !own.enabled || own.isTrigger)
-                {
-                    continue;
-                }
-
-                Vector3 ownPush = GetPushOfCollider(own, next, emitter);
-                if (ownPush.sqrMagnitude > push.sqrMagnitude)
-                {
-                    push = ownPush;
-                }
-            }
-            return next + push;
+            _navReturn.Reset();
+            _nextNavPlanTime = 0.0f;
         }
 
-        /// @brief 自分の Collider 1 つが、次の位置で壁などから受ける押し戻し（横方向）を返す
-        /// 計算量: O(K)（K は重なった Collider の数）
-        private Vector3 GetPushOfCollider(Collider own, Vector3 next, WaveEmitter emitter)
-        {
-            Vector3 push = Vector3.zero;
-            // 反射の曲がり角では回りながら進むので、回ったあとの向きで調べる（回る途中の角が壁に食い込むため）
-            Vector3 ownPosition = next + _turnDelta * (own.transform.position - _body.position);
-            Quaternion ownRotation = _turnDelta * own.transform.rotation;
-            float reach = own.bounds.extents.magnitude;   // 回っても収まるよう、どの向きにも同じ広さで探す
-            int count = Physics.OverlapBoxNonAlloc(ownPosition + _turnDelta * (own.bounds.center - own.transform.position), Vector3.one * reach, _overlapBuffer, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
-            for (int i = 0; i < count; i++)
-            {
-                Collider other = _overlapBuffer[i];
-                Rigidbody otherBody = other.attachedRigidbody;
-                // 波を出しているもの（砲台など）は、線の始まりで必ず重なるので押し戻さない
-                if (other.transform.IsChildOf(transform) || other.transform.IsChildOf(emitter.transform) || (otherBody != null && !otherBody.isKinematic))
-                {
-                    continue;
-                }
-
-                // 縦に重なっていない物（床など）は相手にしない
-                float ownCenterY = ownPosition.y + (own.bounds.center.y - own.transform.position.y);
-                float overlapY = Mathf.Min(ownCenterY + own.bounds.extents.y, other.bounds.max.y) - Mathf.Max(ownCenterY - own.bounds.extents.y, other.bounds.min.y);
-                if (overlapY <= MinPushDistance)
-                {
-                    continue;
-                }
-
-                // 背の高い壁だと、一番浅い押し出しは「真上」になってしまう。高さを相手の中心に揃えて、横向きの押し出しを出させる
-                Vector3 levelPosition = ownPosition + Vector3.up * (other.bounds.center.y - ownCenterY);
-                if (Physics.ComputePenetration(own, levelPosition, ownRotation,
-                        other, other.transform.position, other.transform.rotation, out Vector3 direction, out float distance))
-                {
-                    direction.y = 0.0f;
-                    if (distance > MinPushDistance && direction.sqrMagnitude > MinPushHorizontalSqrMagnitude)
-                    {
-                        push += direction / direction.sqrMagnitude * distance;   // 横向きの分だけで、押し出す長さを割り戻す
-                    }
-                }
-            }
-            return push;
-        }
-
-        /// @brief 自分の上面のすぐ上にある Rigidbody を、乗っている物として集める
-        /// 接触の通知（OnCollisionStay）は、相手が眠ると届かず、運び損ねて滑るので、毎ステップ上面を直接調べる
+        /// @brief 上に乗っている物を集める（運ばない設定なら空にする）。上面の Collider が多すぎたら、警告を 1 回出す
         /// 計算量: O(C + K)（C は自分の Collider の数、K は上面で重なった Collider の数）
         private void DetectPassengers()
         {
-            _passengers.Clear();
             if (!_isCarryingPassengers)
             {
+                _passengers.Clear();
                 return;
             }
 
-            if (!TryGetOwnBounds(out Bounds bounds))
-            {
-                return;
-            }
-
-            Vector3 center = new Vector3(bounds.center.x, bounds.max.y + PassengerSlabHeight * 0.5f - TopContactTolerance, bounds.center.z);
-            Vector3 halfExtents = new Vector3(bounds.extents.x, PassengerSlabHeight * 0.5f, bounds.extents.z);
-            int count = Physics.OverlapBoxNonAlloc(center, halfExtents, _overlapBuffer, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
-            if (count >= OverlapBufferSize && !_hasWarnedOverlapOverflow)
+            bool isOverflow = _collision.DetectPassengers(_passengers);
+            if (isOverflow && !_hasWarnedOverlapOverflow)
             {
                 _hasWarnedOverlapOverflow = true;
-                Debug.LogWarning("WaveRider: 上面の Collider が多すぎて、乗っている物を取りこぼす恐れがあります（最大 " + OverlapBufferSize + " 個）", this);
-            }
-            for (int i = 0; i < count; i++)
-            {
-                Rigidbody other = _overlapBuffer[i].attachedRigidbody;
-                if (other == null || other == _body || other.isKinematic)
-                {
-                    continue;
-                }
-                // 足元が上面より下にある物（横から触れているだけの物）は乗っていないとみなす
-                if (_overlapBuffer[i].bounds.min.y >= bounds.max.y - TopContactTolerance)
-                {
-                    _passengers.Add(other);
-                }
+                Debug.LogWarning("WaveRider: 上面の Collider が多すぎて、乗っている物を取りこぼす恐れがあります（最大 " + WaveRiderCollision.OverlapBufferSize + " 個）", this);
             }
         }
 
@@ -458,63 +364,23 @@ namespace Aura.Gimmick
             {
                 return;   // すでに初期の向きなら、壁との重なりを調べるまでもない（置いてあるだけの間の毎ステップの負荷を避ける）
             }
-            Quaternion rotated = Quaternion.RotateTowards(_body.rotation, _initialRotation, TurnDegreesPerSecond * deltaTime);
+            // 位置の移動は壁の手前で止めるが、回転は別なので、回ると壁に食い込むなら、このステップは回さない（位置が動いて空いたら、また回る）
+            TurnTowards(_initialRotation, deltaTime, true);
+        }
+
+        /// @brief target の向きへ、1 ステップで回れる分だけ回り、その分を _turnDelta に残す（上に乗った物も、この分だけ自分の中心まわりに回す）
+        /// @param isCheckingWalls true なら、回ると壁などに横から食い込むとき、このステップは回さない
+        /// 計算量: isCheckingWalls が true なら O(C × K)（C は自分の Collider の数、K は重なった Collider の数）、false なら O(1)
+        private void TurnTowards(Quaternion target, float deltaTime, bool isCheckingWalls)
+        {
+            Quaternion rotated = Quaternion.RotateTowards(_body.rotation, target, TurnDegreesPerSecond * deltaTime);
             Quaternion delta = rotated * Quaternion.Inverse(_body.rotation);
-            if (IsRotationBlocked(delta))
+            if (isCheckingWalls && _collision.IsRotationBlocked(delta, _passengers))
             {
-                return;   // 回ると壁に食い込むなら、このステップは回さない（位置が動いて空いたら、また回る）
+                return;
             }
             _turnDelta = delta;
             _body.MoveRotation(rotated);
-        }
-
-        /// @brief 自分の中心まわりに delta だけ回ると、壁などに横から食い込むか
-        /// 位置の移動は壁の手前で止めるが、回転は別なので、壁際で回って角が食い込まないよう調べる
-        /// 乗っている物と動く Rigidbody と自分の子は相手にしない。縦に重ならない物（床）も相手にしない
-        /// 計算量: O(C × K)（C は自分の Collider の数、K は重なった Collider の数）
-        private bool IsRotationBlocked(Quaternion delta)
-        {
-            Vector3 bodyPosition = _body.position;
-            foreach (Collider own in _ownColliders)
-            {
-                if (own == null || !own.enabled || own.isTrigger)
-                {
-                    continue;
-                }
-
-                Vector3 ownPosition = bodyPosition + delta * (own.transform.position - bodyPosition);
-                Quaternion ownRotation = delta * own.transform.rotation;
-                Vector3 ownCenter = bodyPosition + delta * (own.bounds.center - bodyPosition);
-                float reach = own.bounds.extents.magnitude;
-                int count = Physics.OverlapBoxNonAlloc(ownCenter, Vector3.one * reach, _overlapBuffer, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
-                for (int i = 0; i < count; i++)
-                {
-                    Collider other = _overlapBuffer[i];
-                    Rigidbody otherBody = other.attachedRigidbody;
-                    if (other.transform.IsChildOf(transform) || (otherBody != null && (!otherBody.isKinematic || _passengers.Contains(otherBody))))
-                    {
-                        continue;
-                    }
-
-                    // 縦に重ならない物（床など）は相手にしない。背の高い壁は、高さを相手の中心に揃えて横向きの押し出しを出させる
-                    float overlapY = Mathf.Min(ownCenter.y + own.bounds.extents.y, other.bounds.max.y) - Mathf.Max(ownCenter.y - own.bounds.extents.y, other.bounds.min.y);
-                    if (overlapY <= MinPushDistance)
-                    {
-                        continue;
-                    }
-                    Vector3 levelPosition = ownPosition + Vector3.up * (other.bounds.center.y - ownCenter.y);
-                    if (Physics.ComputePenetration(own, levelPosition, ownRotation, other, other.transform.position, other.transform.rotation, out Vector3 direction, out float distance)
-                        && distance > MinPushDistance)
-                    {
-                        direction.y = 0.0f;
-                        if (direction.sqrMagnitude > MinPushHorizontalSqrMagnitude)
-                        {
-                            return true;
-                        }
-                    }
-                }
-            }
-            return false;
         }
 
         /// @brief 波に乗ったあとの戻る動きで、初期位置（と初期の向き）に着いたら、戻り終えた通知を 1 回出す
@@ -538,7 +404,7 @@ namespace Aura.Gimmick
         private Vector3 ReturnStraight(Vector3 current, float deltaTime)
         {
             Vector3 target = Vector3.MoveTowards(current, _initialPosition, _returnSpeed * deltaTime);
-            return SweepMove(current, target - current, out bool _);
+            return _collision.SweepMove(current, target - current, _passengers, out bool _);
         }
 
         /// @brief NavMesh の経路で初期位置へ 1 ステップ分戻る。経路が引けないときは、まっすぐ戻る
@@ -567,7 +433,7 @@ namespace Aura.Gimmick
             }
 
             Vector3 target = _navReturn.Step(_returnSpeed * deltaTime);
-            Vector3 next = SweepMove(current, target - current, out bool isBlocked);
+            Vector3 next = _collision.SweepMove(current, target - current, _passengers, out bool isBlocked);
             if (isBlocked)
             {
                 _navReturn.Reset();
@@ -578,61 +444,12 @@ namespace Aura.Gimmick
         /// @brief 慣性で 1 ステップ分進める。壁などに当たる手前で止まる（当たったら速さは 0 になる）
         private Vector3 MoveByInertia(Vector3 current, float deltaTime)
         {
-            Vector3 next = SweepMove(current, _velocity * deltaTime, out bool isBlocked);
+            Vector3 next = _collision.SweepMove(current, _velocity * deltaTime, _passengers, out bool isBlocked);
             if (isBlocked)
             {
                 _velocity = Vector3.zero;
             }
             return next;
-        }
-
-        /// @brief step だけ進めた位置を返す。壁などに当たるなら、その手前までにする
-        /// すでに面に接している所（床の上など）で止まってしまわないよう、接している面に沿って 1 回だけ滑らせる
-        /// 計算量: O(H)（H は進む先の当たり判定の数）
-        private Vector3 SweepMove(Vector3 current, Vector3 step, out bool isBlocked)
-        {
-            Vector3 next = SweepOnce(current, step, out isBlocked, out Vector3 contactNormal, out float hitDistance);
-            if (isBlocked && hitDistance < ContactDistance)
-            {
-                Vector3 slide = Vector3.ProjectOnPlane(step, contactNormal);
-                if (slide.sqrMagnitude > MinSlideSqrMagnitude)
-                {
-                    next = SweepOnce(current, slide, out isBlocked, out _, out _);
-                }
-            }
-            return next;
-        }
-
-        /// @brief step だけ進めた位置を返す。壁などに当たるなら、その手前までにして、当たった面の向きと距離も返す
-        /// 上に乗っている物は当たり判定から外す。SweepTestAll は配列を作るが、波に乗っていない間だけなので許容する
-        /// 計算量: O(H)（H は進む先の当たり判定の数）
-        private Vector3 SweepOnce(Vector3 current, Vector3 step, out bool isBlocked, out Vector3 contactNormal, out float hitDistance)
-        {
-            isBlocked = false;
-            contactNormal = Vector3.zero;
-            float stepLength = step.magnitude;
-            hitDistance = stepLength;
-            if (stepLength <= 0.0f)
-            {
-                return current;
-            }
-
-            Vector3 direction = step / stepLength;
-            foreach (RaycastHit hit in _body.SweepTestAll(direction, stepLength, QueryTriggerInteraction.Ignore))
-            {
-                Rigidbody hitBody = hit.rigidbody;
-                if (hitBody != null && _passengers.Contains(hitBody))
-                {
-                    continue;
-                }
-                if (hit.distance < hitDistance)
-                {
-                    hitDistance = hit.distance;
-                    contactNormal = hit.normal;
-                    isBlocked = true;
-                }
-            }
-            return current + direction * hitDistance;
         }
 
         /// @brief 位置から高さのずれを引いた、線と比べる位置を返す（乗り直しの最寄りの点を、ずれに引きずられずに探すため）
@@ -647,11 +464,11 @@ namespace Aura.Gimmick
         {
             // 波は中心を通るので、終点（壁など）に中心まで行くと半分食い込む。先端が終点に着く所で止める
             WaveLinePath.GetPointAt(corners, float.MaxValue, out Vector3 endDirection);
-            float length = Mathf.Max(0.0f, WaveLinePath.GetLength(corners) - GetFrontExtent(endDirection));
+            float length = Mathf.Max(0.0f, WaveLinePath.GetLength(corners) - _collision.GetFrontExtent(endDirection));
 
             // 始まりも終点と同じく、後ろ側の広がり分だけ手前で折り返す（砲台は押し戻しの対象外なので、食い込まないため）
             WaveLinePath.GetPointAt(corners, 0.0f, out Vector3 startDirection);
-            float startLimit = Mathf.Min(GetFrontExtent(-startDirection), length);
+            float startLimit = Mathf.Min(_collision.GetFrontExtent(-startDirection), length);
 
             _distance += _carrySpeed * _direction * deltaTime;
             if (_distance >= length)
@@ -681,48 +498,8 @@ namespace Aura.Gimmick
             return point + Vector3.up * _heightOffset + _attachOffset;
         }
 
-        /// @brief 自分の（トリガーでない）当たり判定をまとめた、軸平行の箱を求める
-        /// @return 使える当たり判定があれば true
-        /// 計算量: O(C)（C は自分の当たり判定の数）
-        private bool TryGetOwnBounds(out Bounds bounds)
-        {
-            bounds = default;
-            bool hasBounds = false;
-            foreach (Collider own in _ownColliders)
-            {
-                if (own == null || !own.enabled || own.isTrigger)
-                {
-                    continue;
-                }
-                if (hasBounds)
-                {
-                    bounds.Encapsulate(own.bounds);
-                }
-                else
-                {
-                    bounds = own.bounds;
-                    hasBounds = true;
-                }
-            }
-            return hasBounds;
-        }
-
-        /// @brief 自分の中心から、ある向きへ一番出っ張っている所までの距離を返す（m）
-        /// 回転しても足りるよう、当たり判定をまとめた軸平行の箱で測る。当たり判定が無ければ 0
-        /// 計算量: O(C)（C は自分の当たり判定の数）
-        private float GetFrontExtent(Vector3 direction)
-        {
-            if (!TryGetOwnBounds(out Bounds bounds))
-            {
-                return 0.0f;
-            }
-
-            Vector3 absDirection = new Vector3(Mathf.Abs(direction.x), Mathf.Abs(direction.y), Mathf.Abs(direction.z));
-            float extent = Vector3.Dot(bounds.center - _body.position, direction) + Vector3.Dot(bounds.extents, absDirection);
-            return Mathf.Max(0.0f, extent);
-        }
-
         /// @brief 進む向き（Y 軸まわり）へ、少しずつ回転を合わせる
+        /// 乗っている間は、回って食い込んだ分を押し戻しで離すので、壁との重なりで回るのを止めない
         private void FaceTravelDirection(Vector3 travelDirection, float deltaTime)
         {
             travelDirection.y = 0.0f;
@@ -730,10 +507,7 @@ namespace Aura.Gimmick
             {
                 return;
             }
-            Quaternion target = Quaternion.LookRotation(travelDirection.normalized, Vector3.up);
-            Quaternion rotated = Quaternion.RotateTowards(_body.rotation, target, TurnDegreesPerSecond * deltaTime);
-            _turnDelta = rotated * Quaternion.Inverse(_body.rotation);   // 上に乗った物も、この分だけ自分の中心まわりに回す
-            _body.MoveRotation(rotated);
+            TurnTowards(Quaternion.LookRotation(travelDirection.normalized, Vector3.up), deltaTime, false);
         }
 
         /// @brief 上に乗っていた物を、自分の移動と回転と同じだけ動かす
