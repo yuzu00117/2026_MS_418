@@ -287,14 +287,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Echo.Runtime::Echo.Echolocation.EchoController
   _originTransform: {fileID: 8451176360228398916}
-  _directionTransform: {fileID: 8114588384119620780}
+  _directionTransform: {fileID: 0}
   _targetCamera: {fileID: 0}
   _excludedRoot: {fileID: 8114588384119620780}
   _settings:
-    _radius: 40
-    _angleDegrees: 60
+    _radius: 10
+    _angleDegrees: 42
     _duration: 1
-    _scanMode: 2
+    _scanMode: 0
     _pulseInterval: 2
     _pulseHoldDuration: 3
     _followWaveInterval: 0
@@ -565,7 +565,7 @@ MonoBehaviour:
     _waveColor: {r: 0.05, g: 0.9, b: 1, a: 0.85}
     _eraseColor: {r: 1, g: 0.45, b: 0.08, a: 0.85}
     _boundaryColor: {r: 0.1, g: 0.8, b: 1, a: 0.32}
-    _waveWidth: 15
+    _waveWidth: 0.3
   _isGizmoVisible: 1
   _onStateChanged:
     m_PersistentCalls:
