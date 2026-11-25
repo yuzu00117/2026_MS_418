@@ -169,6 +169,23 @@ namespace Aura.Gimmick.Tests
         }
 
         [UnityTest]
+        public IEnumerator 戻る途中の動くRigidbodyでは止まらず押しのけて戻る()
+        {
+            CreateRider(10.0f, false);
+            // 一辺 3m のライダーの前面は z=1.5。その先に、重力の無い動く箱を置く
+            _wallObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _wallObject.transform.position = new Vector3(0, 0, 3.5f);
+            Rigidbody box = _wallObject.AddComponent<Rigidbody>();
+            box.useGravity = false;
+            Physics.SyncTransforms();
+            _rider.SetInitialPosition(new Vector3(0, 0, 6));
+
+            yield return Settle();
+
+            Assert.That((_body.position - new Vector3(0, 0, 6)).magnitude, Is.LessThan(PositionTolerance));
+        }
+
+        [UnityTest]
         public IEnumerator 壁が無ければ同じ向きへ回れる()
         {
             CreateRider(2.0f, true);
