@@ -76,6 +76,11 @@ namespace Aura.Gimmick
                  "0 にすると線へは寄らず、乗った時点のずれ（高さなど）を保ったまま進む")]
         [SerializeField, Min(0.0f)] private float _approachSpeed = 2.0f;  ///< 乗った時点の線とのずれを縮める速さ（m/s）
 
+        [InspectorLabel("線に付いていく速さの上限（m/s）")]
+        [Tooltip("砲台が回ったり波が曲がったりして、線そのものが動いたとき、線に付いていく速さの上限（m/s）。速く動く線には遅れて付いていく\n" +
+                 "1 ステップに大きく飛んで壁を抜けたり、上に乗った物を飛ばしたりしないための上限。「運ばれる速さ」+「線へ寄る速さ」より小さくても、そちらを上限にする")]
+        [SerializeField, Min(0.0f)] private float _maxFollowSpeed = 10.0f;  ///< 線が動いたとき、線に付いていく速さの上限（m/s）
+
         [InspectorLabel("進む向きに回転を合わせる")]
         [Tooltip("オンにすると、乗っている間、線の進む向き（Y 軸まわり）を正面に向ける。曲がった所では少しずつ向きを変える\n" +
                  "「上の物を運ぶ」がオンなら、上に乗った物も自分の中心まわりに一緒に回る")]
@@ -236,6 +241,7 @@ namespace Aura.Gimmick
             else
             {
                 next = Ride(emitter, deltaTime, out Vector3 linePoint);
+                next = LimitFollowStep(current, next, deltaTime);
                 _isReturnPending = true;
                 ResetNavPlan();   // 乗っている間に動いた分、戻る経路は引き直す
                 _velocity = (next - current) / deltaTime;
@@ -502,6 +508,15 @@ namespace Aura.Gimmick
             _attachOffset = Vector3.MoveTowards(_attachOffset, Vector3.zero, _approachSpeed * deltaTime);
             linePoint = point + Vector3.up * _heightOffset;
             return linePoint + _attachOffset;
+        }
+
+        /// @brief 乗っている間の 1 ステップの移動を、線に付いていく速さの上限までに抑える
+        /// 線の上の道のりだけを保つので、線そのものが動く（砲台が回る、波が曲がる）と、その分だけ一気に動いてしまう
+        /// 抑えた分は覚えず、次のステップでまた線の上の点を目指すので、線が止まれば上限の速さで追いつく
+        private Vector3 LimitFollowStep(Vector3 current, Vector3 next, float deltaTime)
+        {
+            float maxSpeed = Mathf.Max(_maxFollowSpeed, _carrySpeed + _approachSpeed);
+            return Vector3.MoveTowards(current, next, maxSpeed * deltaTime);
         }
 
         /// @brief 進む向き（Y 軸まわり）へ、少しずつ回転を合わせる
