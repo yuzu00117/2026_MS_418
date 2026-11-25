@@ -83,6 +83,36 @@ namespace Aura.Gimmick.Tests
         }
 
         [Test]
+        public void Awakeより前に決めた初期位置と初期の向きをAwakeで上書きしない()
+        {
+            WaveRider rider = CreateInactiveRider(false);
+            rider.SetInitialPosition(new Vector3(1, 2, 3));
+            rider.SetInitialRotation(Quaternion.Euler(0, 30, 0));
+            Awaken();
+
+            Assert.AreEqual(new Vector3(1, 2, 3), GetField<Vector3>(rider, "_initialPosition"));
+            Assert.That(Quaternion.Angle(GetField<Quaternion>(rider, "_initialRotation"), Quaternion.Euler(0, 30, 0)), Is.LessThan(0.01f));
+        }
+
+        [Test]
+        public void 何も決めなければ初期位置と初期の向きはAwakeの位置と向き()
+        {
+            WaveRider rider = CreateInactiveRider(false);
+            _riderObject.transform.SetPositionAndRotation(new Vector3(4, 5, 6), Quaternion.Euler(0, 60, 0));
+            Awaken();
+
+            Assert.AreEqual(new Vector3(4, 5, 6), GetField<Vector3>(rider, "_initialPosition"));
+            Assert.That(Quaternion.Angle(GetField<Quaternion>(rider, "_initialRotation"), Quaternion.Euler(0, 60, 0)), Is.LessThan(0.01f));
+        }
+
+        private static T GetField<T>(WaveRider rider, string name)
+        {
+            FieldInfo field = typeof(WaveRider).GetField(name, BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(field, name);
+            return (T)field.GetValue(rider);
+        }
+
+        [Test]
         public void Awakeより前のToggleは始めから起動しておく設定から入れ替える()
         {
             WaveRider rider = CreateInactiveRider(true);
