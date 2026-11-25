@@ -129,7 +129,8 @@ namespace Aura.Gimmick
         private bool _hasBoarded;             ///< 一度でも波に乗ったか（乗り直しの距離の制限を、最初の 1 回だけ外すため）
         private Vector3 _attachOffset;       ///< 線の上の点（高さのずれを含む）から見た、自分の位置のずれ。乗った時点で求め、少しずつ 0 へ縮める
         private float _lineDeviation;        ///< 最後に乗っていたステップで、線の上の点（高さのずれを含む）から離れていた距離（m）。乗り直せる距離に足す
-        private float _followLag;            ///< 直前のステップで、線に付いていく速さの上限で抑えたため、目指す位置から遅れた距離（m）
+        private float _followLag;            ///< 直前のステップで、線に付いていく速さの上限で抑えたため、目指す位置から遅れた距離（m）。押し戻した分は含めない
+        private float _pushDistance;         ///< 直前のステップで、壁から押し戻した距離（m）。遅れに数えないために使う
         private Quaternion _turnDelta = Quaternion.identity;  ///< 今のステップで自分が回った分。上に乗った物を回すのに使う
         private Vector3 _velocity;           ///< 直前のステップの速度（m/s）。慣性で進むときの初速になる
         private readonly WaveRiderNavReturn _navReturn = new WaveRiderNavReturn();  ///< 経路探索で戻るときの経路
@@ -193,6 +194,7 @@ namespace Aura.Gimmick
             _hasBoarded = false;   // 別の波なので、最初に乗る距離の上限（遠くから引き込まない）で判定し直す
             _lineDeviation = 0.0f;
             _followLag = 0.0f;
+            _pushDistance = 0.0f;
         }
 
         /// @brief 「初期位置へ戻る」で戻る先を変える。コードで生成したあとに位置を動かしたときや、置き直したときに使う
@@ -250,6 +252,7 @@ namespace Aura.Gimmick
             _attachOffset = Vector3.zero;
             _lineDeviation = 0.0f;
             _followLag = 0.0f;
+            _pushDistance = 0.0f;
             ResetNavPlan();
         }
 
@@ -281,12 +284,15 @@ namespace Aura.Gimmick
             {
                 Vector3 desired = Ride(emitter, deltaTime, out Vector3 linePoint);
                 next = LimitFollowStep(current, desired, deltaTime);
-                _followLag = Vector3.Distance(desired, next);
+                // 壁際では、直前のステップで押し戻した分だけ目指す位置から離れているので、それは遅れに数えない
+                _followLag = WaveRiderTravel.GetFollowLag(Vector3.Distance(desired, next), _pushDistance);
                 _isReturnPending = true;
                 ResetNavPlan();   // 乗っている間に動いた分、戻る経路は引き直す
                 _velocity = (next - current) / deltaTime;
                 // 反射の曲がり角では回りながら進むので、回ったあとの向きで押し戻す。波を出しているもの（砲台など）は押し戻さない
-                next = _collision.PushOutOfWalls(next, _turnDelta, emitter.transform);
+                Vector3 pushed = _collision.PushOutOfWalls(next, _turnDelta, emitter.transform);
+                _pushDistance = Vector3.Distance(pushed, next);
+                next = pushed;
                 // 乗った時点のずれや押し戻しで線から離れていても、途切れた直後に同じ所から乗り直せるよう、離れていた距離を覚える
                 _lineDeviation = Vector3.Distance(next, linePoint);
             }
@@ -352,6 +358,7 @@ namespace Aura.Gimmick
                 _hasBoarded = true;
                 _currentEmitter = emitter;
                 _followLag = 0.0f;
+                _pushDistance = 0.0f;
                 // 終点の近くで乗ったとき、次のステップで端まで一気に戻されないよう、先に動ける範囲に収める（収めた分は下のずれに入り、少しずつ寄る）
                 GetTravelLimits(corners, out float startLimit, out float endLimit);
                 _distance = WaveRiderTravel.ClampOnBoard(distance, _direction, startLimit, endLimit);

@@ -46,5 +46,16 @@ namespace Aura.Gimmick
             float lower = direction < 0.0f ? startLimit : 0.0f;
             return System.Math.Clamp(distance, System.Math.Min(lower, endLimit), endLimit);
         }
+
+        /// @brief 線に付いていく速さの上限で抑えたため、線から遅れた距離を返す（m）
+        /// 壁際では毎ステップ押し戻されるので、目指す位置との差には押し戻した分が入る。その分は遅れに数えない
+        /// （数えると、反射の曲がり角などで大きいライダーが、線が動いていないのに降りてしまう）
+        /// @param gap 速さの上限で抑えた位置から、目指す位置までの距離（m）
+        /// @param pushDistance 直前のステップで壁から押し戻した距離（m）
+        /// 計算量: O(1)
+        public static float GetFollowLag(float gap, float pushDistance)
+        {
+            return System.Math.Max(0.0f, gap - pushDistance);
+        }
     }
 }
