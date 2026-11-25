@@ -43,7 +43,7 @@ namespace Aura.Gimmick
         [InspectorLabel("波が無くなったとき")]
         [Tooltip("波が遮られた、止まった、スイッチが止まったときの動き\n" +
                  "・その場で止まる: 今の位置で止まる\n" +
-                 "・慣性で進んでから止まる: 直前の速さと向きのまま進み、「慣性の減速（m/s²）」で減速して止まる\n" +
+                 "・慣性で進んでから止まる: 直前の向きのまま、直前の速さ（「運ばれる速さ」まで）で進み、「慣性の減速（m/s²）」で減速して止まる\n" +
                  "・初期位置へ戻る: ゲーム開始時の位置へ「戻る速さ」でまっすぐ戻る。途中に壁などがあれば、その手前で止まる\n" +
                  "・経路探索で初期位置へ戻る: NavMesh の経路で壁を避けて戻る。NavMesh のベイクが必要（無ければまっすぐ戻る）")]
         [SerializeField] private WaveRiderLostWaveMode _lostWaveMode = WaveRiderLostWaveMode.StopInPlace;  ///< 波が無くなったときの動き
@@ -190,6 +190,10 @@ namespace Aura.Gimmick
                 return;
             }
             _emitter = emitter;
+            if (_currentEmitter != null)
+            {
+                LimitLeavingVelocity();   // 乗っていた波から降りるので、ほかの降り方と同じく慣性の初速を抑える
+            }
             _currentEmitter = null;
             _hasBoarded = false;   // 別の波なので、最初に乗る距離の上限（遠くから引き込まない）で判定し直す
             _lineDeviation = 0.0f;
@@ -271,6 +275,10 @@ namespace Aura.Gimmick
             Vector3 next;
             if (emitter == null)
             {
+                if (_currentEmitter != null)
+                {
+                    LimitLeavingVelocity();   // 降りたステップ（波が止まった、遮られた、線から遅れた、スイッチが止まった）
+                }
                 _currentEmitter = null;   // 進む向き（_direction）は残す。乗り直したとき、続きの向きで進むため
                 next = LoseWave(current, deltaTime);
                 NotifyIfReturned(next);
@@ -301,6 +309,14 @@ namespace Aura.Gimmick
             DetectPassengers();
             CarryPassengers(current, next);
             _body.MovePosition(next);
+        }
+
+        /// @brief 波から降りたとき、慣性の初速を「運ばれる速さ」までに抑える
+        /// 乗っている間は、砲台が回るなどで線を追って「線に付いていく速さの上限」まで速く動くことがある。
+        /// そのまま慣性にすると遠くへ飛んでいくので、降りた理由（波が止まった、遮られた、線から遅れた、差し替えた）によらず同じだけ抑える
+        private void LimitLeavingVelocity()
+        {
+            _velocity = Vector3.ClampMagnitude(_velocity, _carrySpeed);
         }
 
         /// @brief 引いてあった戻る経路を捨て、次のステップですぐ引き直せるようにする
@@ -375,8 +391,6 @@ namespace Aura.Gimmick
             {
                 // 線が大きく離れたので降りる。遠く離れた所から乗り直さないよう、離れていた距離は許さない（「乗り直せる距離」だけで判定する）
                 _lineDeviation = 0.0f;
-                // 直前は線を追って上限の速さで動いていたので、そのまま慣性にすると遠くへ飛んでいく。運ばれる速さまでに抑える
-                _velocity = Vector3.ClampMagnitude(_velocity, _carrySpeed);
                 return null;
             }
             return emitter;
