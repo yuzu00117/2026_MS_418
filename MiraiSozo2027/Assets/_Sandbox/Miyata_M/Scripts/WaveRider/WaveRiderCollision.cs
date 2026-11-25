@@ -15,6 +15,7 @@ namespace Aura.Gimmick
         private const float PassengerSlabHeight = 0.3f;            ///< 上面の上で乗っている物を探す、薄い箱の高さ（m）
         private const float TopContactTolerance = 0.1f;            ///< 相手の足元が自分の上面からこの高さ以内に潜っていても、上に乗っているとみなす（m）
         private const int CornerCount = 8;                         ///< 箱の角の数
+        private const float MinIntoOverlapDot = 0.01f;             ///< 進む向きと押し出しの向きの内積がこれより負なら、重なっている壁へ入り込むとみなす（面に沿う動きは止めない）
 
         public const int OverlapBufferSize = 32;                   ///< 周りで同時に調べる Collider の最大数。超えた分は数えない
 
@@ -209,6 +210,43 @@ namespace Aura.Gimmick
             return local;
         }
 
+        /// @brief 今の位置で自分がもう重なっている壁などへ、direction の向きでさらに入り込むか
+        /// 相手にする物は SweepOnce と同じ（動く Rigidbody、ほかの WaveRider、上に乗っている物、自分の子は除く）
+        /// @param normal 入り込む相手から押し出される向き（入り込むときだけ意味がある）
+        /// 計算量: O(C × K)（C は自分の Collider の数、K は重なった Collider の数）
+        private bool IsMovingIntoOverlap(Vector3 direction, HashSet<Rigidbody> passengers, out Vector3 normal)
+        {
+            normal = Vector3.zero;
+            foreach (Collider own in _ownColliders)
+            {
+                if (!IsSolid(own))
+                {
+                    continue;
+                }
+                Bounds ownBounds = own.bounds;
+                int count = Physics.OverlapBoxNonAlloc(ownBounds.center, ownBounds.extents, _overlapBuffer, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+                for (int i = 0; i < count; i++)
+                {
+                    Collider other = _overlapBuffer[i];
+                    Rigidbody otherBody = other.attachedRigidbody;
+                    if (other.transform.IsChildOf(_owner)
+                        || (otherBody != null && (!otherBody.isKinematic || IsRider(otherBody) || passengers.Contains(otherBody))))
+                    {
+                        continue;
+                    }
+                    if (Physics.ComputePenetration(own, own.transform.position, own.transform.rotation,
+                            other, other.transform.position, other.transform.rotation, out Vector3 pushDirection, out float distance)
+                        && distance > MinPushDistance
+                        && Vector3.Dot(direction, pushDirection) < -MinIntoOverlapDot)
+                    {
+                        normal = pushDirection;
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         /// ほかの WaveRider か。WaveRider どうしは押し戻さず、止めもしない（互いに全量押し戻すと、離れすぎては戻るのを繰り返して震えるため）
         /// 計算量: O(1)（その Rigidbody の GameObject のコンポーネント数に比例）
         private static bool IsRider(Rigidbody body)
@@ -287,6 +325,14 @@ namespace Aura.Gimmick
             }
 
             Vector3 direction = step / stepLength;
+            // SweepTestAll は、動き始めにもう重なっている物を返さない。重なっている壁へさらに入り込む向きなら、ここで止める
+            if (IsMovingIntoOverlap(direction, passengers, out Vector3 overlapNormal))
+            {
+                isBlocked = true;
+                contactNormal = overlapNormal;
+                hitDistance = 0.0f;
+                return current;
+            }
             foreach (RaycastHit hit in _body.SweepTestAll(direction, stepLength, QueryTriggerInteraction.Ignore))
             {
                 // 動く Rigidbody（箱、プレイヤーなど）では止まらず、物理で押しのける（乗っている間と同じ）。止まると、どかない限りずっと戻れない
