@@ -606,7 +606,8 @@ namespace Aura.Gimmick
             }
             foreach (Rigidbody passenger in _passengers)
             {
-                if (passenger == null)
+                // 2 つのライダーにまたがって乗っている物は、このステップで先に運んだライダーだけが運ぶ
+                if (passenger == null || !WaveRiderCarriedSet.TryMark(passenger))
                 {
                     continue;
                 }
