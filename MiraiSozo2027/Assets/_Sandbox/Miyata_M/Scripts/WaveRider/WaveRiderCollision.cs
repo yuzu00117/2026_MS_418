@@ -14,6 +14,7 @@ namespace Aura.Gimmick
         private const float MinSlideSqrMagnitude = 1.0e-8f;        ///< 面に沿って滑らせる量の長さの 2 乗がこれ以下なら、滑らせない
         private const float PassengerSlabHeight = 0.3f;            ///< 上面の上で乗っている物を探す、薄い箱の高さ（m）
         private const float TopContactTolerance = 0.1f;            ///< 相手の足元が自分の上面からこの高さ以内に潜っていても、上に乗っているとみなす（m）
+        private const int CornerCount = 8;                         ///< 箱の角の数
 
         public const int OverlapBufferSize = 32;                   ///< 周りで同時に調べる Collider の最大数。超えた分は数えない
 
@@ -126,9 +127,15 @@ namespace Aura.Gimmick
                 return false;
             }
 
-            Vector3 center = new Vector3(bounds.center.x, bounds.max.y + PassengerSlabHeight * 0.5f - TopContactTolerance, bounds.center.z);
-            Vector3 halfExtents = new Vector3(bounds.extents.x, PassengerSlabHeight * 0.5f, bounds.extents.z);
-            int count = Physics.OverlapBoxNonAlloc(center, halfExtents, _overlapBuffer, Quaternion.identity, ~0, QueryTriggerInteraction.Ignore);
+            // 回っているときに軸平行の箱で探すと、角の外（上面の外）の物まで拾うので、自分の向き（Y 軸まわり）に合わせた箱で探す
+            Quaternion yaw = Quaternion.Euler(0.0f, _body.rotation.eulerAngles.y, 0.0f);
+            Bounds local = GetOwnLocalBounds(yaw);
+            float slabCenterY = bounds.max.y + PassengerSlabHeight * 0.5f - TopContactTolerance;
+            Vector3 localCenter = new Vector3(local.center.x, 0.0f, local.center.z);
+            Vector3 center = _body.position + yaw * localCenter;
+            center.y = slabCenterY;
+            Vector3 halfExtents = new Vector3(local.extents.x, PassengerSlabHeight * 0.5f, local.extents.z);
+            int count = Physics.OverlapBoxNonAlloc(center, halfExtents, _overlapBuffer, yaw, ~0, QueryTriggerInteraction.Ignore);
             for (int i = 0; i < count; i++)
             {
                 Rigidbody other = _overlapBuffer[i].attachedRigidbody;
@@ -160,6 +167,46 @@ namespace Aura.Gimmick
                 }
             }
             return next;
+        }
+
+        /// @brief 自分の（トリガーでない）当たり判定をまとめた箱を、自分の位置と yaw の向きから見た座標で求める（呼ぶ前に、使える当たり判定があることを確かめておく）
+        /// BoxCollider は 8 つの角を使うので、回っていても上面の形どおりになる。ほかの形は、ワールドの軸平行の箱の 8 つの角で代える（少し大きめになる）
+        /// 計算量: O(C)（C は自分の当たり判定の数。1 つにつき角 8 つ）
+        private Bounds GetOwnLocalBounds(Quaternion yaw)
+        {
+            Quaternion toLocal = Quaternion.Inverse(yaw);
+            Vector3 origin = _body.position;
+            Bounds local = default;
+            bool hasBounds = false;
+            foreach (Collider own in _ownColliders)
+            {
+                if (!IsSolid(own))
+                {
+                    continue;
+                }
+                BoxCollider box = own as BoxCollider;
+                Vector3 center = box != null ? box.center : own.bounds.center;
+                Vector3 extents = box != null ? box.size * 0.5f : own.bounds.extents;
+                for (int corner = 0; corner < CornerCount; corner++)
+                {
+                    Vector3 offset = new Vector3(
+                        (corner & 1) == 0 ? -extents.x : extents.x,
+                        (corner & 2) == 0 ? -extents.y : extents.y,
+                        (corner & 4) == 0 ? -extents.z : extents.z);
+                    Vector3 world = box != null ? box.transform.TransformPoint(center + offset) : center + offset;
+                    Vector3 point = toLocal * (world - origin);
+                    if (hasBounds)
+                    {
+                        local.Encapsulate(point);
+                    }
+                    else
+                    {
+                        local = new Bounds(point, Vector3.zero);
+                        hasBounds = true;
+                    }
+                }
+            }
+            return local;
         }
 
         /// ほかの WaveRider か。WaveRider どうしは押し戻さず、止めもしない（互いに全量押し戻すと、離れすぎては戻るのを繰り返して震えるため）
