@@ -39,5 +39,23 @@ namespace Aura.Gimmick.Tests
                 Assert.AreEqual(1.0f, direction, "毎ステップ向きが反転しない");
             }
         }
+
+        [Test]
+        public void 乗った道のりが終点側の端より先なら端に収める()
+        {
+            Assert.AreEqual(5.0f, WaveRiderTravel.ClampOnBoard(5.4f, 1.0f, 0.5f, 5.0f), Tolerance);
+        }
+
+        [Test]
+        public void 終点へ向かって乗るなら始まり側の端より手前でもそのまま()
+        {
+            Assert.AreEqual(0.2f, WaveRiderTravel.ClampOnBoard(0.2f, 1.0f, 0.5f, 5.0f), Tolerance);
+        }
+
+        [Test]
+        public void 始まりへ向かって乗るなら始まり側の端に収める()
+        {
+            Assert.AreEqual(0.5f, WaveRiderTravel.ClampOnBoard(0.2f, -1.0f, 0.5f, 5.0f), Tolerance);
+        }
     }
 }
