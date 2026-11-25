@@ -132,6 +132,7 @@ namespace Aura.Gimmick
         private float _followLag;            ///< 直前のステップで、線に付いていく速さの上限で抑えたため、目指す位置から遅れた距離（m）。押し戻した分は含めない
         private Vector3 _pushMove;           ///< 直前のステップで、壁から押し戻した移動（m）。目指す位置から離れる向きの分を、遅れに数えないために使う
         private Quaternion _turnDelta = Quaternion.identity;  ///< 今のステップで自分が回った分。上に乗った物を回すのに使う
+        private Quaternion _nextRotation = Quaternion.identity;  ///< 今のステップで回ったあとの向き（MoveRotation は物理の更新まで _body.rotation に反映されないため）
         private Vector3 _velocity;           ///< 直前のステップの速度（m/s）。慣性で進むときの初速になる
         private readonly WaveRiderNavReturn _navReturn = new WaveRiderNavReturn();  ///< 経路探索で戻るときの経路
         private float _nextNavPlanTime;     ///< 次に経路を引いてよい時刻（Time.time）
@@ -270,6 +271,7 @@ namespace Aura.Gimmick
             float deltaTime = Time.fixedDeltaTime;
             Vector3 current = _body.position;
             _turnDelta = Quaternion.identity;
+            _nextRotation = _body.rotation;
             WaveEmitter emitter = ResolveEmitter(current);
 
             Vector3 next;
@@ -465,6 +467,7 @@ namespace Aura.Gimmick
                 return;
             }
             _turnDelta = delta;
+            _nextRotation = rotated;
             _body.MoveRotation(rotated);
         }
 
@@ -477,7 +480,8 @@ namespace Aura.Gimmick
                 return;
             }
             bool isAtPosition = (position - _initialPosition).sqrMagnitude <= ReturnedDistance * ReturnedDistance;
-            bool isAtRotation = !_isFacingTravelDirection || Quaternion.Angle(_body.rotation, _initialRotation) <= ReturnedAngle;
+            // 位置と同じく、このステップで動いたあと（回ったあと）の向きで判定する。そろったステップで通知する
+            bool isAtRotation = !_isFacingTravelDirection || Quaternion.Angle(_nextRotation, _initialRotation) <= ReturnedAngle;
             if (isAtPosition && isAtRotation)
             {
                 _isReturnPending = false;
