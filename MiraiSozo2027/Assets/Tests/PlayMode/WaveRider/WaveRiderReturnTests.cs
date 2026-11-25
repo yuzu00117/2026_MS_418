@@ -116,6 +116,20 @@ namespace Aura.Gimmick.Tests
         }
 
         [UnityTest]
+        public IEnumerator 初期位置へ戻り終えたら最初に乗れる距離で乗れるようになる()
+        {
+            CreateRider(10.0f, false);
+            SetField(_rider, "_hasBoarded", true);   // 一度乗ったあと、という状態にする
+            _rider.SetInitialPosition(new Vector3(0, 0, 3));
+
+            yield return Settle();
+
+            FieldInfo field = typeof(WaveRider).GetField("_hasBoarded", BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(field, "_hasBoarded");
+            Assert.IsFalse((bool)field.GetValue(_rider));
+        }
+
+        [UnityTest]
         public IEnumerator 波に乗っていなければ戻っても通知を出さない()
         {
             CreateRider(10.0f, false);
