@@ -464,32 +464,28 @@ namespace Aura.Gimmick
             return position - Vector3.up * _heightOffset;
         }
 
+        /// @brief 線の上で動ける道のりの範囲を求める（WaveRiderTravel の図を参照）
+        /// @param startLimit 折り返すときの始まり側の端。endLimit を超えない
+        /// @param endLimit 終点側の端
+        /// 計算量: O(N + C)（N は線の点の数、C は自分の Collider の数）
+        private void GetTravelLimits(IReadOnlyList<Vector3> corners, out float startLimit, out float endLimit)
+        {
+            // 波は中心を通るので、終点（壁など）に中心まで行くと半分食い込む。先端が終点に着く所で止める
+            WaveLinePath.GetPointAt(corners, float.MaxValue, out Vector3 endDirection);
+            endLimit = Mathf.Max(0.0f, WaveLinePath.GetLength(corners) - _collision.GetFrontExtent(endDirection));
+
+            // 始まりも終点と同じく、後ろ側の広がり分だけ手前で折り返す（砲台は押し戻しの対象外なので、食い込まないため）
+            WaveLinePath.GetPointAt(corners, 0.0f, out Vector3 startDirection);
+            startLimit = Mathf.Min(_collision.GetFrontExtent(-startDirection), endLimit);
+        }
+
         /// @brief 線の上の道のりを 1 ステップ分進める。終点では止まる（折り返すなら向きを変える）
         /// 始まりでも終点と同じく、広がり分だけ手前で折り返す
         private void AdvanceDistance(IReadOnlyList<Vector3> corners, float deltaTime)
         {
-            // 波は中心を通るので、終点（壁など）に中心まで行くと半分食い込む。先端が終点に着く所で止める
-            WaveLinePath.GetPointAt(corners, float.MaxValue, out Vector3 endDirection);
-            float length = Mathf.Max(0.0f, WaveLinePath.GetLength(corners) - _collision.GetFrontExtent(endDirection));
-
-            // 始まりも終点と同じく、後ろ側の広がり分だけ手前で折り返す（砲台は押し戻しの対象外なので、食い込まないため）
-            WaveLinePath.GetPointAt(corners, 0.0f, out Vector3 startDirection);
-            float startLimit = Mathf.Min(_collision.GetFrontExtent(-startDirection), length);
-
-            _distance += _carrySpeed * _direction * deltaTime;
-            if (_distance >= length)
-            {
-                _distance = length;
-                if (_endMode == WaveRiderEndMode.PingPong)
-                {
-                    _direction = -1.0f;
-                }
-            }
-            else if (_direction < 0.0f && _distance <= startLimit)
-            {
-                _distance = startLimit;
-                _direction = 1.0f;
-            }
+            GetTravelLimits(corners, out float startLimit, out float endLimit);
+            _distance = WaveRiderTravel.Advance(_distance, ref _direction, _carrySpeed * deltaTime, startLimit, endLimit,
+                _endMode == WaveRiderEndMode.PingPong);
         }
 
         /// @brief 1 ステップ分、線に沿って進めて、次の位置を返す（回転も合わせる）
