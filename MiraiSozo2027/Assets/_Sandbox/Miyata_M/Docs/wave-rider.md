@@ -20,6 +20,7 @@
 
 - 戻る先の初期位置は、生成時(Awake)の位置。生成したあとに位置を動かしたときは、`SetInitialPosition(Vector3)` で戻る先を指定する
 - 戻るときの向きも、生成時(Awake)の向き。生成したあとに向きを変えたときは、`SetInitialRotation(Quaternion)` で指定する
+- 無効のまま生成したときなど、Awake より前に `SetInitialPosition` / `SetInitialRotation` を呼んでも、Awake でその値を上書きしない
 
 ## 構成するもの
 | コンポーネント | 役割 |

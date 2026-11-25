@@ -121,6 +121,8 @@ namespace Aura.Gimmick
         private Rigidbody _body;              ///< 自分の Rigidbody（Kinematic）
         private Vector3 _initialPosition;     ///< ゲーム開始時の位置（ワールド座標）
         private Quaternion _initialRotation;  ///< ゲーム開始時の向き。初期位置へ戻るとき、この向きにも戻す
+        private bool _isInitialPositionSet;   ///< SetInitialPosition で戻る先が決まったか（Awake より前に呼ばれても、Awake の位置で上書きしないため）
+        private bool _isInitialRotationSet;   ///< SetInitialRotation で戻る向きが決まったか（Awake より前に呼ばれても、Awake の向きで上書きしないため）
         private WaveEmitter _currentEmitter;  ///< 今乗っている波を出しているもの。乗っていなければ null
         private float _distance;              ///< 今の線の上の道のり s（m）
         private float _direction = 1.0f;      ///< 線の上を進む向き（1: 終点へ、-1: 先頭へ。折り返しで使う）
@@ -198,6 +200,7 @@ namespace Aura.Gimmick
         public void SetInitialPosition(Vector3 position)
         {
             _initialPosition = position;
+            _isInitialPositionSet = true;
             ResetNavPlan();   // 引いてあった経路は古い目標向きなので捨てる
         }
 
@@ -206,6 +209,7 @@ namespace Aura.Gimmick
         public void SetInitialRotation(Quaternion rotation)
         {
             _initialRotation = rotation;
+            _isInitialRotationSet = true;
         }
 
         private void Awake()
@@ -220,8 +224,15 @@ namespace Aura.Gimmick
             _body = GetComponent<Rigidbody>();
             _body.isKinematic = true;
             _body.interpolation = RigidbodyInterpolation.Interpolate;
-            _initialPosition = _body.position;
-            _initialRotation = _body.rotation;
+            // Awake より前に SetInitialPosition / SetInitialRotation が呼ばれていれば、その値を残す
+            if (!_isInitialPositionSet)
+            {
+                _initialPosition = _body.position;
+            }
+            if (!_isInitialRotationSet)
+            {
+                _initialRotation = _body.rotation;
+            }
             _collision = new WaveRiderCollision(_body, transform);
         }
 
