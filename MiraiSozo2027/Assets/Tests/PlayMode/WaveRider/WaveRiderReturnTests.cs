@@ -249,6 +249,39 @@ namespace Aura.Gimmick.Tests
             Assert.That((_body.position - new Vector3(0, 0, 6)).magnitude, Is.LessThan(PositionTolerance));
         }
 
+        /// 一辺 3m のライダー（x は -1.5～1.5）に、0.2m 重なる壁（x は 1.3～2.3）を置く
+        private void CreateOverlappingWall()
+        {
+            _wallObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _wallObject.transform.position = new Vector3(1.8f, 0, 0);
+            _wallObject.transform.localScale = new Vector3(1, 3, 6);
+            Physics.SyncTransforms();
+        }
+
+        [UnityTest]
+        public IEnumerator 重なっている壁の向こうへは戻らない()
+        {
+            CreateRider(10.0f, false);
+            CreateOverlappingWall();
+            _rider.SetInitialPosition(new Vector3(5, 0, 0));
+
+            yield return Settle();
+
+            Assert.That(_body.position.x, Is.LessThan(0.1f), "重なっている壁へは入り込まない");
+        }
+
+        [UnityTest]
+        public IEnumerator 重なっている壁から離れる向きへは戻れる()
+        {
+            CreateRider(10.0f, false);
+            CreateOverlappingWall();
+            _rider.SetInitialPosition(new Vector3(-3, 0, 0));
+
+            yield return Settle();
+
+            Assert.That((_body.position - new Vector3(-3, 0, 0)).magnitude, Is.LessThan(PositionTolerance));
+        }
+
         [UnityTest]
         public IEnumerator 壁が無ければ同じ向きへ回れる()
         {
