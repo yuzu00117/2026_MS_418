@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using UnityEngine.SceneManagement;
 using MiraiSozo.Options;
+using Aura.Entities;
 using Aura.PlayerControl;
 
 namespace Aura.Core
@@ -22,6 +23,16 @@ namespace Aura.Core
         private bool _isPaused = false;
 
         public bool IsPaused => _isPaused;
+
+        /// <summary>
+        /// 現在シーン上に存在するプレイヤーの参照
+        /// </summary>
+        public Player CurrentPlayer { get; private set; }
+
+        /// <summary>
+        /// プレイヤーがスポーン（またはシーン内で検出）されたときに発火するイベント
+        /// </summary>
+        public static event Action<Player> OnPlayerSpawned;
 
         //ポーズ前の状態保存
         private float _resumeTimeScale = 1f;
@@ -62,17 +73,27 @@ namespace Aura.Core
                 Actions?.Dispose();
                 Actions = null;
                 ActionsChanged?.Invoke();
+                CurrentPlayer = null;
                 Instance = null;
             }
         }
 
         private void TrySpawnPlayer()
         {
-            //プレイヤースタートを検索
+            // 1. すでにシーン内にPlayerが配置されている場合はそれを取得して通知（重複スポーン防止＆テストシーン対応）
+            if (CurrentPlayer == null)
+            {
+                CurrentPlayer = FindFirstObjectByType<Player>();
+            }
+            if (CurrentPlayer != null)
+            {
+                OnPlayerSpawned?.Invoke(CurrentPlayer);
+                return;
+            }
+
+            // 2. プレイヤースタートを検索して新規スポーン
             var starts = GameObject.FindObjectsByType<PlayerStart>(FindObjectsSortMode.None);
             if(starts.Length == 0) return;
-
-            if(PlayerController.Instance != null) return;
 
             if(_playerPrefab == null)
             {
@@ -81,7 +102,12 @@ namespace Aura.Core
             }
 
             PlayerStart firstStart = starts[0];
-            Instantiate(_playerPrefab, firstStart.transform.position, firstStart.transform.rotation);
+            GameObject playerObj = Instantiate(_playerPrefab, firstStart.transform.position, firstStart.transform.rotation);
+            if (playerObj.TryGetComponent(out Player player))
+            {
+                CurrentPlayer = player;
+                OnPlayerSpawned?.Invoke(player);
+            }
         }
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)

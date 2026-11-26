@@ -50,22 +50,8 @@ namespace Aura.PlayerControl
         private static readonly int AnimParamSpeed = Animator.StringToHash("Speed");
         private static readonly int AnimParamIsJumping = Animator.StringToHash("isJumping");
 
-        public static PlayerController Instance { get; private set; }
-
-        // プレイヤーがスポーンしたことを通知するイベント
-        public static event System.Action<PlayerController> OnPlayerSpawned;
-
         private void Awake()
         {
-            if (Instance != null && Instance != this)
-            {
-                Debug.LogWarning("プレイヤーが重複生成されたため破棄しました：" + gameObject.name);
-                Destroy(gameObject);
-                return;
-            }
-
-            Instance = this;
-
             // コンポーネントの取得
             _rb = GetComponent<Rigidbody>();
             _animator = GetComponent<Animator>();
@@ -95,9 +81,6 @@ namespace Aura.PlayerControl
                 _cameraTransform = mainCam.transform;
                 InjectCameraReference(mainCam);
             }
-
-            // プレイヤーがスポーンしたことを通知
-            OnPlayerSpawned?.Invoke(this);
 
             if (_rb != null)
             {
@@ -266,7 +249,10 @@ namespace Aura.PlayerControl
             if (_echoController != null)
             {
                 _echoController.TargetCamera = cam;
-                _echoController.DirectionTransform = cam.transform; // 正面基準もカメラに
+                if(_echoController.DirectionTransform == null)
+                {
+                    _echoController.DirectionTransform = cam.transform; // 正面基準もカメラに
+                }
             }
             // Phononkinesis へカメラを渡す
             if (_phononkinesis != null)
