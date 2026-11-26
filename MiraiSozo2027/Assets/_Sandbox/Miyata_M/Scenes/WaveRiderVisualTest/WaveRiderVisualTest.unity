@@ -168,6 +168,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3690656175291946816, guid: 1c3b9c380b60a9b4fa414b04bb0385f4, type: 3}
+      propertyPath: _requiredMass
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3690656175291946816, guid: 1c3b9c380b60a9b4fa414b04bb0385f4, type: 3}
       propertyPath: _onActivated.m_PersistentCalls.m_Calls.Array.size
       value: 1
       objectReference: {fileID: 0}

@@ -66,6 +66,7 @@ namespace Aura.Gimmick.EditorTools
         private const float BlockerSpeed = 1.5f;      ///< E の遮る板が上下する速さ（m/s）
         private const float BlockerWait = 2.0f;       ///< E の遮る板が端で止まる時間（秒）
         private const float BlockerLift = 3.0f;       ///< E の遮る板が線の上へ退いている高さ（m）。上から始まるので、最初は乗れる
+        private const float PlayerOnlyPlateMass = 1.0f; ///< G の床スイッチの起動に必要な Mass。プレイヤー(Mass 1)だけで踏んで起動するようにする
 
         private static Material s_riderMaterial;
         private static Material s_wallMaterial;
@@ -224,6 +225,7 @@ namespace Aura.Gimmick.EditorTools
             plate.name = "G_PressurePlate";
             plate.transform.position = new Vector3(x - 3.0f, 0.05f, -3.0f);
             PressurePlate sensor = plate.GetComponentInChildren<PressurePlate>();
+            SetFloat(sensor, "_requiredMass", PlayerOnlyPlateMass);   // プレハブの既定値(2)では、Mass 1 のプレイヤーだけで踏んでも起動しない
             AddListener(sensor, "_onActivated", rider.Activate);
             AddListener(sensor, "_onDeactivated", rider.Deactivate);
             PlaceLabel(x, "G スイッチ（左手前の床スイッチ）\n踏んでいる間だけ往復する");
