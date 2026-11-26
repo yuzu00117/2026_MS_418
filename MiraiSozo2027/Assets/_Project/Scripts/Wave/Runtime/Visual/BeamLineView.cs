@@ -31,6 +31,11 @@ namespace Aura.Wave
         [Tooltip("「範囲に触れたら全体を見せる」のとき、線が範囲に触れなくなってから、全体を見せ続ける秒数。0 なら触れている間だけ見せる")]
         [SerializeField, Min(0.0f)] private float _revealHoldSeconds = DefaultRevealHoldSeconds;  ///< 範囲に触れなくなってから全体を見せ続ける秒数
 
+        [InspectorLabel("太さの倍率")]
+        [Tooltip("線の太さと揺れの大きさに掛ける倍率。1 なら波の種類（WaveType）の「線の太さ」「振幅」のまま\n" +
+                 "大きな装置の太い波など、この発射口だけ太く見せたいときに上げる。見た目だけで、当たり判定の太さは WaveEmitter の「当たり判定の半径」で決める")]
+        [SerializeField, Min(0.01f)] private float _sizeScale = 1.0f;  ///< 線の太さと揺れの大きさに掛ける倍率
+
         private const float DefaultRevealHoldSeconds = 2.0f;  ///< 「触れた後も見せる秒数」の初期値（エコーの専用タグの残存時間と同じくらい）
         private const float TouchSampleSpacing = 0.25f;       ///< 範囲に触れたかを調べるとき、線の上で調べる点の間隔（m）
 
@@ -63,6 +68,7 @@ namespace Aura.Wave
             {
                 _line = InfoBeamLine.Create("InfoBeam", transform, _lineMaterial);
             }
+            _line.SizeScale = _sizeScale;
             float phase = Time.time * frame.Type.ScrollSpeed;
             if (_visibility == BeamLineVisibility.InRevealVolumes)
             {
