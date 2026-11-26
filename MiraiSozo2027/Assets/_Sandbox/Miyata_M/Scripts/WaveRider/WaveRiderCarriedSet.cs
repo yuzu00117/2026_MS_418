@@ -8,14 +8,14 @@ namespace Aura.Gimmick
     /// 物理ステップ（Time.fixedTime）が変わったら空にする
     public static class WaveRiderCarriedSet
     {
-        private static readonly HashSet<Rigidbody> Carried = new HashSet<Rigidbody>();  ///< この物理ステップで運んだ物
-        private static float _stepTime = -1.0f;   ///< Carried を集めている物理ステップの時刻（Time.fixedTime）
+        private static readonly HashSet<Rigidbody> _carried = new HashSet<Rigidbody>();  ///< この物理ステップで運んだ物
+        private static float _stepTime = -1.0f;   ///< _carried を集めている物理ステップの時刻（Time.fixedTime）
 
         /// ドメインの再読み込みを切った再生でも、前の再生の物を持ち越さない
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetOnLoad()
         {
-            Carried.Clear();
+            _carried.Clear();
             _stepTime = -1.0f;
         }
 
@@ -26,10 +26,10 @@ namespace Aura.Gimmick
             float now = Time.fixedTime;
             if (now != _stepTime)
             {
-                Carried.Clear();
+                _carried.Clear();
                 _stepTime = now;
             }
-            return Carried.Add(body);
+            return _carried.Add(body);
         }
     }
 }
