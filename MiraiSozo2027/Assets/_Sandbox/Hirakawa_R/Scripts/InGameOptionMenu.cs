@@ -135,7 +135,11 @@ namespace MiraiSozo.Options
             if (canvas != null && canvas == BoundCanvas) return true;
             UnwireControls();
             // オプションを使わないシーンにはCanvasを配置しない。
-            if (canvas == null) return false;
+            if (canvas == null)
+            {
+                OptionMenuTheme.Use(null);
+                return false;
+            }
             if (!CacheViews(canvas)) return false;
             ApplyFont(canvas);
             SetTestHudVisible(_showTestHud);
@@ -162,6 +166,8 @@ namespace MiraiSozo.Options
             _settingsGroup = GetOrAddCanvasGroup(_settings);
             _menuGroup = GetOrAddCanvasGroup(_overlay);
             _menuAnimation = _overlay.GetComponent<OptionMenuAnimation>();
+            // 見た目を整える前に、このシーンのCanvasのテーマへ切り替える（未指定なら標準のテーマに戻す）。
+            OptionMenuTheme.Use(_menuAnimation != null ? _menuAnimation.Theme : null);
             OptionSoftStyle.ApplyPanel((RectTransform)_pause.transform, true);
             OptionSoftStyle.ApplyPanel((RectTransform)_settings.transform, false);
             var dialog = FindConfirmationDialog();

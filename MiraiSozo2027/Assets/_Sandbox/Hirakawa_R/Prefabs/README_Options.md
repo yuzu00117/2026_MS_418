@@ -1,23 +1,34 @@
-# PF_InGameOptions.prefab
+# オプション用Prefab
 
-Canvas、ポーズメニュー、4タブのオプション、設定保存をまとめたPrefabです。
+ゲーム内オプションは、次の2つのPrefabを組み合わせて使います。
 
-1. `PF_InGameOptions.prefab` を使いたいSceneのHierarchy直下へドラッグします。
-2. Play中に **ESC**（ゲームパッドではStart）でメニューを開きます。
-3. ゲーム側のカメラ・入力・音源を以下の方法で接続します。
+| Prefab | 内容 |
+| --- | --- |
+| `PF_GameManager` | `GameManager`（ポーズ・ゲーム入力）、`GameOptions`（設定の保存と反映）、`InGameOptionMenu`（メニューの制御） |
+| `PF_OptionsCanvas` | ポーズメニュー・4タブのオプション・確認画面のCanvas |
+
+## 新しいSceneへの導入
+
+1. Sceneに `PF_GameManager` と `PF_OptionsCanvas` を配置します。
+2. `GameManager` の **Menu UI** に、Scene上の `PF_OptionsCanvas` を指定します。
+3. Play中に **ESC**（ゲームパッドではStart）でメニューを開きます。
+
+見た目・演出・効果音は実行時に自動で適用されます。設定は `Assets/_Sandbox/Hirakawa_R/Resources/OptionMenuTheme.asset` で変更します。
+テーマはSceneごとに、`PF_OptionsCanvas` 内の `Menu Overlay` にある `OptionMenuAnimation` の **Theme** で指定できます。未指定のSceneでは、前のSceneのテーマを引き継がず、`Resources/OptionMenuTheme` を使います。
+
+## PF_InGameOptions について（旧構成）
+
+`PF_InGameOptions` は旧Sandbox構成のPrefabで、`GameOptions` と `InGameOptionMenu` を単独で持っています。
+**`PF_GameManager` と同じSceneに置かないでください。** `GameOptions` が重複して片方のPrefabが破棄され、ポーズメニューが動作しなくなります。
+現在は `Tools > Hirakawa R > Options > Setup Scene_OptionTestScene` で旧テスト構成を再生成するときだけ使います。新しいSceneでは使用しません。
 
 ## ゲーム側の接続
 
-- **カメラ**：`Assets/_Sandbox/Hirakawa_R/Scripts/OptionCameraBehavior.cs` を使用し、Targetをプレイヤーへ設定します。感度と反転はこのコピー版へ反映します。視野角・明度はMainCameraの付いた透視投影カメラにも反映します。
-- **ゲーム入力**：`GameManager.Actions` を使用します（オプション専用の入力管理はありません）。
-- **ポーズ担当**：`GameManager` がポーズを管理します。Sceneに `PF_GameManager` を配置してください。
+- **カメラ**：プレイヤーのカメラに `CameraBehavior` を使うと、感度と反転が反映されます。視野角・明度は MainCamera の透視投影カメラに反映します。
+- **ゲーム入力・ポーズ**：`GameManager.Actions` と `GameManager` が担当します（オプション専用の管理オブジェクトはありません）。
 - **音源**：AudioSourceに `MiraiSozo.Options.OptionAudioChannel` を付け、CategoryをSE / BGM / Voiceから選びます。
-- **画面揺れ**：カメラに `MiraiSozo.Options.OptionCameraShake` を付け、演出から `Play()` を呼びます。
+- **画面揺れ**：カメラに `MiraiSozo.Options.OptionCameraShake` を付け、演出から `Play(strength, duration)` を呼びます。
 
-SceneにEventSystemがあればモジュール構成や有効状態を変更せず使用し、なければ自動生成します。既存のEventSystemには、そのSceneのUIを操作できる入力モジュールを設定してください。
-Sceneを移動しても設定とメニューを保持し、各SceneにPrefabを置いた場合は重複するインスタンスを除去します。
-テスト用HUDは既定で非表示です。
-
+SceneにEventSystemがあればそのまま使用し、なければ自動生成します。既存のEventSystemには、そのSceneのUIを操作できる入力モジュールを設定してください。
 タイトル・ステージセレクトのボタンは将来の接続用で、シーン移動は行いません。
-依存スクリプトは `Assets/_Sandbox/Hirakawa_R/Scripts` 内にあります。Prefabと併せて管理してください。
-動作例は `Assets/_Sandbox/Hirakawa_R/Scenes/Scene_OptionTestScene.unity`、詳細は `Assets/_Sandbox/Hirakawa_R/README_Options.md` を参照してください。
+依存スクリプトは `Assets/_Sandbox/Hirakawa_R/Scripts` 内にあります。詳細は `Assets/_Sandbox/Hirakawa_R/README_Options.md` を参照してください。

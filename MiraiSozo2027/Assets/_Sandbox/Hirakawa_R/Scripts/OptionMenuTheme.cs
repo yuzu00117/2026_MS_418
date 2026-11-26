@@ -13,30 +13,36 @@ namespace MiraiSozo.Options
     {
         private const string ResourcePath = "OptionMenuTheme";
         private static OptionMenuTheme _current;
+        private static OptionMenuTheme _default;
 
         /// <summary>設定が変わったとき（Inspectorでの変更や差し替え）に通知する。</summary>
         public static event Action Changed;
 
-        public static OptionMenuTheme Current
+        public static OptionMenuTheme Current => _current != null ? _current : (_current = GetDefault());
+
+        /// <summary>
+        /// 使用するテーマを切り替える。nullならResources/OptionMenuThemeに戻す。
+        /// シーンごとに指定するため、テーマ未指定のシーンでは前のシーンのテーマを引き継がない。
+        /// </summary>
+        public static void Use(OptionMenuTheme theme)
         {
-            get
+            var next = theme != null ? theme : GetDefault();
+            if (next == _current) return;
+            _current = next;
+            Changed?.Invoke();
+        }
+
+        private static OptionMenuTheme GetDefault()
+        {
+            if (_default != null) return _default;
+            _default = Resources.Load<OptionMenuTheme>(ResourcePath);
+            // アセットが見つからない場合も、初期値で動くようにする。
+            if (_default == null)
             {
-                if (_current != null) return _current;
-                _current = Resources.Load<OptionMenuTheme>(ResourcePath);
-                // アセットが見つからない場合も、初期値で動くようにする。
-                if (_current == null)
-                {
-                    _current = CreateInstance<OptionMenuTheme>();
-                    _current.hideFlags = HideFlags.DontSave;
-                }
-                return _current;
+                _default = CreateInstance<OptionMenuTheme>();
+                _default.hideFlags = HideFlags.DontSave;
             }
-            set
-            {
-                if (value == null || value == _current) return;
-                _current = value;
-                Changed?.Invoke();
-            }
+            return _default;
         }
 
         private void OnValidate()
