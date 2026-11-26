@@ -209,6 +209,22 @@ namespace Aura.Wave
             }
         }
 
+        /// @brief すべての支点（曲がり）を即座に解除し、ビームを真っすぐな初期状態に戻す
+        public void ClearAnchors()
+        {
+            for (int i = _anchors.Count - 1; i >= 0; --i)
+            {
+                BeamPoint point = _anchors[i].Point;
+                if (point != null)
+                {
+                    point.IsHeld = false;
+                }
+                RemoveAnchorAt(i);
+            }
+            _suppressedAnchors.Clear();
+            _legFrames.Clear();
+        }
+
         /// @brief Redirect で、覚えた曲がりの、曲がり始めから支点までの、曲がり始めの向きに沿った長さ（m）
         /// 掴み直したとき、ここから曲がり始めるようにすると、掴んだ瞬間の形が今の形と同じになる。曲がっていなければ -1（Bend Range を使う）
         private static float GetBendAlong(Anchor anchor)

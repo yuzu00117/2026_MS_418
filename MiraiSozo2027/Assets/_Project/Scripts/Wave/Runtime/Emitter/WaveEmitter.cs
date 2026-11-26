@@ -521,6 +521,13 @@ namespace Aura.Wave
             GetComponents(_fanViews);
         }
 
+        /// @brief ビームの曲がり（すべての支点）を即座にリセットして真っすぐに戻す
+        public void ResetBend()
+        {
+            _chain?.ClearAnchors();
+            _hasLockedAim = false;
+        }
+
         //============================================================
         // Unity のメッセージ
         //============================================================

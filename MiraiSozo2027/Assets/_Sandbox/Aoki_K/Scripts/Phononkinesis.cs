@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Aura.Core;
+using Aura.Wave;
 
 namespace Aura.Kinesis
 {
@@ -72,6 +73,9 @@ namespace Aura.Kinesis
         private PhononkinesisTarget _currentTarget;
         private RaycastHit _currentHit;
         private bool _hasTarget;
+        private bool _hasRaycastHit;
+        private Vector3 _currentAimEndPoint;
+        private readonly RaycastHit[] _raycastBuffer = new RaycastHit[16];
 
         // 掴んだ瞬間のローカルオフセット（横・縦）
         private float _localOffsetX;
@@ -142,7 +146,7 @@ namespace Aura.Kinesis
 
         private void FixedUpdate()
         {
-            if (_currentState == State.Holding && _heldTarget != null && _heldTarget.Rb != null)
+            if (_currentState == State.Holding && _heldTarget != null && _heldTarget.Rb != null && !_heldTarget.Rb.isKinematic)
             {
                 ApplyPhysicsFollow();
             }
@@ -167,20 +171,40 @@ namespace Aura.Kinesis
         }
 
         /// <summary>
-        /// ① 探索状態
+        /// ① 探索状態（カメラの照準先へ向かって基準点からレイを飛ばし、LineRendererと判定を完全一致させる）
         /// </summary>
         private void UpdateSearching()
         {
-            Ray ray = new Ray(_cameraTransform.position, _cameraTransform.forward);
-            _hasTarget = Physics.Raycast(ray, out _currentHit, _maxRaycastDistance, _grabbableLayer);
+            Vector3 origin = GetOriginPosition();
+            Vector3 camPos = _cameraTransform.position;
+            Vector3 camForward = _cameraTransform.forward;
 
-            if (_hasTarget)
+            // 1. カメラから画面中央（クロスヘア方向）へレイを飛ばし、狙っている目標点 aimPoint を求める
+            float camRayDistance = _maxRaycastDistance + Vector3.Distance(camPos, origin);
+            Vector3 aimPoint = TryRaycastIgnoreSelf(camPos, camForward, camRayDistance, out RaycastHit camHit)
+                ? camHit.point
+                : camPos + (camForward * camRayDistance);
+
+            // 2. LineRendererの始点（頭 or カメラ）から aimPoint に向かう向きを計算して判定レイを飛ばす
+            Vector3 toAim = aimPoint - origin;
+            Vector3 rayDir = (toAim.sqrMagnitude > 0.0001f && Vector3.Dot(toAim, camForward) > 0f)
+                ? toAim.normalized
+                : camForward;
+
+            _hasRaycastHit = TryRaycastIgnoreSelf(origin, rayDir, _maxRaycastDistance, out _currentHit);
+            _currentAimEndPoint = _hasRaycastHit
+                ? _currentHit.point
+                : origin + (rayDir * _maxRaycastDistance);
+
+            // 3. 当たった対象が PhononkinesisTarget を持っていればロックオン可能にする
+            if (_hasRaycastHit)
             {
                 PhononkinesisTarget target = _currentHit.collider.GetComponentInParent<PhononkinesisTarget>();
 
                 if (target != null && target.CanBeGrabbed)
                 {
                     _currentTarget = target;
+                    _hasTarget = true;
 
                     // 掴むボタン (Confirmed)
                     if (_actions.Player.Confirmed.triggered)
@@ -193,6 +217,32 @@ namespace Aura.Kinesis
 
             _currentTarget = null;
             _hasTarget = false;
+        }
+
+        /// <summary>
+        /// プレイヤー自身（および子階層）のコライダーを除外して最も近いヒットを取得する
+        /// </summary>
+        private bool TryRaycastIgnoreSelf(Vector3 origin, Vector3 direction, float maxDistance, out RaycastHit nearestHit)
+        {
+            int hitCount = Physics.RaycastNonAlloc(origin, direction, _raycastBuffer, maxDistance, _grabbableLayer);
+            float closestDist = float.MaxValue;
+            nearestHit = default;
+            bool found = false;
+
+            for (int i = 0; i < hitCount; i++)
+            {
+                RaycastHit hit = _raycastBuffer[i];
+                if (hit.collider == null) continue;
+                if (hit.collider.transform.IsChildOf(transform)) continue;
+
+                if (hit.distance < closestDist)
+                {
+                    closestDist = hit.distance;
+                    nearestHit = hit;
+                    found = true;
+                }
+            }
+            return found;
         }
 
         /// <summary>
@@ -229,14 +279,33 @@ namespace Aura.Kinesis
         /// </summary>
         private void UpdateHolding()
         {
-            if (_heldTarget == null)
+            // 対象が破棄された、または外部（ビーム停止・リセット等）でKinematicに戻された場合は手を離してサーチへ戻る
+            if (_heldTarget == null || _heldTarget.Rb == null || _heldTarget.Rb.isKinematic)
             {
+                ReleaseObject();
                 _currentState = State.Searching;
+                _currentTarget = null;
+                _hasTarget = false;
                 return;
             }
 
             // ホイールやコントローラーでの距離調整
             HandleDistanceAdjustment();
+
+            // キャンセルボタン (Cancel): 波（BeamPoint）を掴んでいる場合は全支点の曲がりをリセットしてサーチ状態に戻る
+            if (_actions.Player.Cancel.triggered)
+            {
+                if (_heldTarget.TryGetComponent(out BeamPoint beamPoint) && beamPoint.Emitter != null)
+                {
+                    WaveEmitter emitter = beamPoint.Emitter;
+                    ReleaseObject();
+                    emitter.ResetBend();
+                    _currentState = State.Searching;
+                    _currentTarget = null;
+                    _hasTarget = false;
+                    return;
+                }
+            }
 
             // 配置確定ボタン (Confirmed)
             if (_actions.Player.Confirmed.triggered)
@@ -468,18 +537,17 @@ namespace Aura.Kinesis
         private void UpdateLaserVisual()
         {
             if (_lineRenderer == null) return;
-            // 始点: 三人称ならプレイヤーの頭付近、一人称ならカメラ
-            Vector3 startPos = (_targetHeadTransform != null) ? _targetHeadTransform.position : _cameraTransform.position;
+            // 始点: GetOriginPosition() で判定レイの始点と完全一致させる
+            Vector3 startPos = GetOriginPosition();
             if (_currentState == State.Searching)
             {
                 _lineRenderer.enabled = true;
                 _lineRenderer.startWidth = _beamWidth;
                 _lineRenderer.endWidth = _beamWidth;
-                // 終点: 対象があればその衝突点、なければ射程限界まで
-                Vector3 endPos = _hasTarget ? _currentHit.point : _cameraTransform.position + (_cameraTransform.forward * _maxRaycastDistance);
+                // 終点: 判定レイの実際の到達点（壁・床・対象物のヒット位置、または射程限界）
                 _lineRenderer.SetPosition(0, startPos);
-                _lineRenderer.SetPosition(1, endPos);
-                // ★色の適用
+                _lineRenderer.SetPosition(1, _currentAimEndPoint);
+                // ★色の適用（掴める対象に当たっているときだけロック色）
                 Color color = _hasTarget ? _lockColor : _searchColor;
                 ApplyLineColor(color);
             }
@@ -522,7 +590,7 @@ namespace Aura.Kinesis
             if (_currentState == State.Searching && _cameraTransform != null)
             {
                 Gizmos.color = _hasTarget ? Color.green : Color.red;
-                Gizmos.DrawRay(_cameraTransform.position, _cameraTransform.forward * _maxRaycastDistance);
+                Gizmos.DrawLine(GetOriginPosition(), _currentAimEndPoint);
             }
         }
     }
