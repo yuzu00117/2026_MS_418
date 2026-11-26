@@ -161033,22 +161033,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Main Camera
       objectReference: {fileID: 0}
-    - target: {fileID: 7150550199315190158, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
-      propertyPath: _distance
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 7150550199315190158, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
-      propertyPath: _adsDistance
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 7150550199315190158, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
-      propertyPath: _targetHeight
-      value: 1.73
-      objectReference: {fileID: 0}
-    - target: {fileID: 7150550199315190158, guid: 78030e71024a7824f8a487e1c6493b4e, type: 3}
-      propertyPath: _adsTargetHeight
-      value: 1.75
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
