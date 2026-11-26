@@ -18,7 +18,6 @@ Material:
   - _ALPHA_TRANSITION_MAP_SECOND_TEXTURE_MODE_2D
   - _BASE_MAP_MODE_2D
   - _DISSOLVE_TRANSITION_ENABLED
-  - _EMISSION_AREA_ALL
   - _EMISSION_COLOR_COLOR
   - _EMISSION_MAP_MODE_2D
   - _PARALLAX_MAP_MODE_2D
@@ -246,11 +245,11 @@ Material:
     - _DepthFadeWidth: 1
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
-    - _DissolveSharpness: 0
+    - _DissolveSharpness: 0.647
     - _DissolveSharpnessSecondTexture: 0.587
     - _DstBlend: 0
     - _DstBlendAlpha: 0
-    - _EmissionAreaType: 1
+    - _EmissionAreaType: 0
     - _EmissionColorType: 0
     - _EmissionIntensity: 11.3
     - _EmissionIntensityCoord: 0
@@ -378,7 +377,7 @@ Material:
     - _EmissionMapRotationOffsets: {r: 0, g: 0, b: 0, a: 0}
     - _FlowMapRotationOffsets: {r: 0, g: 0, b: 0, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
-    - _TintColor: {r: 1, g: 0.49785483, b: 0, a: 1}
+    - _TintColor: {r: 0, g: 0.06515461, b: 5.7056594, a: 1}
     - _TintMapRotationOffsets: {r: 0, g: 0, b: 0, a: 0}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

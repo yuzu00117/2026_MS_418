@@ -198,7 +198,7 @@ Material:
     - _AlphaTransitionMapSecondTextureSliceCount: 4
     - _AlphaTransitionMapSliceCount: 4
     - _AlphaTransitionMode: 2
-    - _AlphaTransitionProgress: 0.17
+    - _AlphaTransitionProgress: 0.18
     - _AlphaTransitionProgressCoord: 0
     - _AlphaTransitionProgressCoordSecondTexture: 0
     - _AlphaTransitionProgressSecondTexture: 0
@@ -244,13 +244,13 @@ Material:
     - _DepthFadeWidth: 1
     - _DetailAlbedoMapScale: 1
     - _DetailNormalMapScale: 1
-    - _DissolveSharpness: 0.543
+    - _DissolveSharpness: 0.528
     - _DissolveSharpnessSecondTexture: 0.5
     - _DstBlend: 0
     - _DstBlendAlpha: 0
     - _EmissionAreaType: 1
     - _EmissionColorType: 0
-    - _EmissionIntensity: 5.3
+    - _EmissionIntensity: 2.45
     - _EmissionIntensityCoord: 0
     - _EmissionMapChannelsX: 0
     - _EmissionMapMode: 0
@@ -372,7 +372,7 @@ Material:
     - _BaseMapToneMidtonesColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _BaseMapToneShadowsColor: {r: 0, g: 0, b: 0, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
-    - _EmissionColor: {r: 10.680627, g: 6.16899, b: 1.1727747, a: 1}
+    - _EmissionColor: {r: 0.55854386, g: 2.6209195, b: 11.85355, a: 1}
     - _EmissionMapRotationOffsets: {r: 0, g: 0, b: 0, a: 0}
     - _FlowMapRotationOffsets: {r: 0, g: 0, b: 0, a: 0}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}

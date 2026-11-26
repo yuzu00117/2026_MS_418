@@ -194,7 +194,7 @@ Material:
     - _DissolveSharpnessSecondTexture: 0.5
     - _EmissionAreaType: 1
     - _EmissionColorType: 0
-    - _EmissionIntensity: 24.7
+    - _EmissionIntensity: 5.1
     - _EmissionIntensityCoord: 0
     - _EmissionMapChannelsX: 0
     - _EmissionMapMode: 0
@@ -296,7 +296,7 @@ Material:
     - _BaseMapToneHighlightsColor: {r: 1, g: 1, b: 1, a: 1}
     - _BaseMapToneMidtonesColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
     - _BaseMapToneShadowsColor: {r: 0, g: 0, b: 0, a: 1}
-    - _EmissionColor: {r: 2.670157, g: 1.07414, b: 0, a: 1}
+    - _EmissionColor: {r: 0, g: 0.3148302, b: 3.5648696, a: 1}
     - _EmissionMapRotationOffsets: {r: 0, g: 0, b: 0, a: 0}
     - _FlowMapRotationOffsets: {r: 0, g: 0, b: 0, a: 0}
     - _TintColor: {r: 1, g: 0.63795865, b: 0, a: 1}
