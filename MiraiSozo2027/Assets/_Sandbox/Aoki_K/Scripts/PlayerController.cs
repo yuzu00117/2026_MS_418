@@ -30,6 +30,10 @@ namespace Aura.PlayerControl
         [Header("References")]
         [SerializeField] private Transform _cameraTransform;
         [SerializeField] private GroundChecker _groundChecker;
+        [Tooltip("ADS中にカメラを寄せる位置と向き（プレイヤーの子）。未設定ならカメラ側の距離・横オフセットで寄せる")]
+        [SerializeField] private Transform _adsPosition;
+        [Tooltip("ADS中に上下へ傾ける子（見た目・銃口・エコーの発生位置・ADS位置の親）。当たり判定は入れない。未設定ならカメラだけが上下を向く")]
+        [SerializeField] private Transform _aimPivot;
 
         private Rigidbody _rb;
         private Animator _animator;
@@ -43,10 +47,16 @@ namespace Aura.PlayerControl
 
         // 移動制御用キャッシュ変数
         private Vector3 _moveDirection = Vector3.zero;
+        // Rigidbodyの補間と食い違わないよう、Updateでは目標の向きだけを決め、回転はFixedUpdateで行う
+        private Quaternion _targetRotation = Quaternion.identity;
+        private bool _isAiming; // ADS中はカメラの向きへすぐに合わせるため、回転の速さの制限を使わない
         private float _currentMoveSpeed = 0f;
         private bool _jumpRequested = false;
 
         // Animator パラメータハッシュ
+        // 入力がほぼ0の時に向きがぶれないよう、これより小さい移動量は止まっている扱いにする
+        private const float MinMoveSqrMagnitude = 0.001f;
+
         private static readonly int AnimParamSpeed = Animator.StringToHash("Speed");
         private static readonly int AnimParamIsJumping = Animator.StringToHash("isJumping");
 
@@ -89,6 +99,9 @@ namespace Aura.PlayerControl
                 // 物理移動を滑らかにするための補間を有効化
                 _rb.interpolation = RigidbodyInterpolation.Interpolate;
             }
+
+            // 開始直後に意図しない向きへ回らないよう、今の向きから始める
+            _targetRotation = transform.rotation;
         }
 
         // Update is called once per frame
@@ -109,7 +122,7 @@ namespace Aura.PlayerControl
                 camRight.Normalize();
 
                 Vector3 moveVector = camForward * input.y + camRight * input.x;
-                if (moveVector.sqrMagnitude > 0.001f)
+                if (moveVector.sqrMagnitude > MinMoveSqrMagnitude)
                 {
                     _moveDirection = moveVector.normalized;
                 }
@@ -129,15 +142,16 @@ namespace Aura.PlayerControl
             // 0.0(停止) 〜 1.0(最高速ダッシュ) の正規化速度
             float normalizedSpeed = _runSpeed > 0f ? (_currentMoveSpeed / _runSpeed) : 0f;
 
-            // キャラクターの回転処理
-            if (_moveDirection.sqrMagnitude > 0.001f)
+            // キャラクターの目標の向き（実際の回転はFixedUpdateで行う）
+            // ADS中はカメラの左右の向きに合わせ、それ以外は移動方向へ向ける
+            _isAiming = _cameraBehavior != null && _actions.Player.FocusAim.IsPressed();
+            if (_isAiming)
             {
-                Quaternion targetRotation = Quaternion.LookRotation(_moveDirection, Vector3.up);
-                transform.rotation = Quaternion.RotateTowards(
-                    transform.rotation,
-                    targetRotation,
-                    _rotateSpeed * Time.deltaTime
-                );
+                _targetRotation = Quaternion.Euler(0f, _cameraBehavior.Yaw, 0f);
+            }
+            else if (_moveDirection.sqrMagnitude > MinMoveSqrMagnitude)
+            {
+                _targetRotation = Quaternion.LookRotation(_moveDirection, Vector3.up);
             }
 
             // アニメーション更新
@@ -165,7 +179,7 @@ namespace Aura.PlayerControl
             // ADS
             if(_cameraBehavior != null)
             {
-                _cameraBehavior.SetAds(_actions.Player.FocusAim.IsPressed());
+                _cameraBehavior.SetAds(_isAiming);
             }
 
             // フォノンキネシス
@@ -225,7 +239,12 @@ namespace Aura.PlayerControl
             Vector3 targetVelocity = _moveDirection * _currentMoveSpeed;
             _rb.linearVelocity = new Vector3(targetVelocity.x, _rb.linearVelocity.y, targetVelocity.z);
 
-            // 2. ジャンプの物理適用
+            // 2. 回転（Transformを直接書き換えると補間に上書きされるため、Rigidbody経由で回す）
+            _rb.MoveRotation(_isAiming
+                ? _targetRotation
+                : Quaternion.RotateTowards(_rb.rotation, _targetRotation, _rotateSpeed * Time.fixedDeltaTime));
+
+            // 3. ジャンプの物理適用
             if (_jumpRequested)
             {
                 // 上方向の速度をリセットして安定して跳べるようにする
@@ -239,6 +258,10 @@ namespace Aura.PlayerControl
         {
             // CameraBehavior コンポーネントを取得
             _cameraBehavior = cam.GetComponent<CameraBehavior>();
+            if (_cameraBehavior != null)
+            {
+                _cameraBehavior.SetAdsTransforms(_adsPosition, _aimPivot);
+            }
 
             // WaveEmitter へ照準カメラを渡す
             if (_waveEmitter != null)

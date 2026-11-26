@@ -236,6 +236,7 @@ Inspector の「状態変更時の通知」（UnityEvent）でも、`StateChange
 | `IsScaledToRadius` / `BaseRadius` | `bool` / `float` | 最大半径に大きさを合わせるか／Prefab のままの大きさの半径（m） |
 | `IsSpeedMatchedToDuration` / `BaseDuration` | `bool` / `float` | 伝播時間に速さを合わせるか／Prefab のままの速さで広がりきる時間（秒） |
 | `IsFacingDirection` | `bool` | 正面の基準の水平方向に向けるか |
+| `IsPitchFollowed` | `bool` | 上下の傾きも合わせるか（`IsFacingDirection` が `true` のときだけ効く） |
 | `IsPlaying` | `bool` | 再生中か（読み取り専用） |
 | `SetPlaying(bool, Transform)` | 関数 | 再生・停止を切り替える。再生時は指定した Transform の子として生成する |
 | `Apply(float, float, Transform)` | 関数 | 半径・伝播時間・正面の基準に合わせて、生成したエフェクトの大きさ・速さ・向きを変える。Controller が毎フレーム呼ぶ |

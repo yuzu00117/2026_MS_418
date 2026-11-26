@@ -78,6 +78,18 @@ namespace Aura.Cameras
         [SerializeField] private float _adsFov = 40.0f;
         [Tooltip("通常⇔ADSの遷移時間（秒）")]
         [SerializeField] private float _adsTransitionDuration = 0.3f;
+        [Tooltip("ADS位置を使う時に、ADS中に下へ向けられる最大角度（度）。ADS位置の向きが基準")]
+        [SerializeField, Min(0f)] private float _adsMaxDownAngle = 30.0f;
+        [Tooltip("ADS位置を使う時に、ADS中に上へ向けられる最大角度（度）。ADS位置の向きが基準")]
+        [SerializeField, Min(0f)] private float _adsMaxUpAngle = 30.0f;
+        [Tooltip("ADSを離した時に、上下に向けた分がADS位置の向きへ戻るまでの時間（秒）")]
+        [SerializeField, Min(0f)] private float _adsPitchReturnDuration = 0.1f;
+        // プレイヤーの子のADS位置。設定されていれば、ADS中はこの位置・向きへカメラを寄せる
+        private Transform _adsAnchor;
+        // ADS中に上下へ傾けるプレイヤーの子（見た目・銃口・エコーの発生位置・ADS位置をまとめた親）。当たり判定は含めない
+        private Transform _adsPivot;
+        private float _adsPitchOffset; // ADS位置の向きから上下に向けた角度（正で下向き）
+        private float _adsPitchReturnSpeed; // ADSを離した時の角度から、指定時間で0へ戻す速さ（度/秒）
         private Camera _camera;
         private float _defaultFov = 60.0f;
         private bool _isAds = false;
@@ -112,6 +124,10 @@ namespace Aura.Cameras
         public float SensitivityY => _sensitivityY;
         public bool InvertX => _invertX;
         public bool InvertY => _invertY;
+        /// <summary>カメラの左右の向き（度）。ADS中にプレイヤーをカメラへ向けるために使う</summary>
+        public float Yaw => _yaw;
+        /// <summary>ADS中か</summary>
+        public bool IsAds => _isAds;
 
         private const float MinOffsetDistance = 0.0001f; // フェード開始距離と終了距離の最小ギャップ
         private const float MinFadeDistanceGap = 0.01f; // フェード開始距離と終了距離の最小ギャップ
@@ -131,7 +147,29 @@ namespace Aura.Cameras
 
         public void SetAds(bool isAds)
         {
+            // 離した瞬間の角度から数えて、指定時間でちょうど戻りきる速さにする
+            if (_isAds && !isAds)
+            {
+                _adsPitchReturnSpeed = _adsPitchReturnDuration > 0.0f
+                    ? Mathf.Abs(_adsPitchOffset) / _adsPitchReturnDuration
+                    : float.MaxValue;
+            }
             _isAds = isAds;
+        }
+
+        /// <summary>
+        /// ADS中にカメラを寄せる位置と向き（anchor）と、上下に傾けるプレイヤーの子（pivot）を設定する。
+        /// anchorがnullなら距離・横オフセット・注視点の高さで寄せ、pivotがnullならカメラだけを上下に向ける
+        /// </summary>
+        public void SetAdsTransforms(Transform anchor, Transform pivot)
+        {
+            if (_adsPivot != null && _adsPivot != pivot)
+            {
+                // 差し替え前に傾けた分を残さない
+                _adsPivot.localRotation = Quaternion.identity;
+            }
+            _adsAnchor = anchor;
+            _adsPivot = pivot;
         }
 
         private void Awake()
@@ -213,7 +251,22 @@ namespace Aura.Cameras
             // 2. 角度の加算（反転フラグを反映）
             _yaw += lookInput.x * _sensitivityX * (_invertX ? -1f : 1f);
             float verticalDelta = lookInput.y * _sensitivityY * (_invertY ? 1f : -1f);
-            _pitch += verticalDelta;
+            bool hasAdsAnchor = _adsAnchor != null;
+            if (_isAds && hasAdsAnchor)
+            {
+                // ADS中の上下はADS位置の向きを基準に、指定した角度の範囲だけ動かす
+                _adsPitchOffset = Mathf.Clamp(_adsPitchOffset + verticalDelta, -_adsMaxUpAngle, _adsMaxDownAngle);
+            }
+            else
+            {
+                _pitch += verticalDelta;
+                _adsPitchOffset = Mathf.MoveTowards(_adsPitchOffset, 0.0f, _adsPitchReturnSpeed * Time.deltaTime);
+            }
+            if (_adsPivot != null)
+            {
+                // ADS位置もpivotの子なので、カメラの位置を決める前に傾けておく
+                _adsPivot.localRotation = Quaternion.Euler(_adsPitchOffset, 0.0f, 0.0f);
+            }
             // 3. 上下角度を制限（地面への潜り込みや真上反転を防止）
             _pitch = Mathf.Clamp(_pitch, _minPitch, _maxPitch);
             // 4. 回転クォータニオンの生成
@@ -222,9 +275,11 @@ namespace Aura.Cameras
             float targetAdsWeight = _isAds ? 1.0f : 0.0f;
             float adsStep = _adsTransitionDuration > 0.0f ? (Time.deltaTime / _adsTransitionDuration) : 1.0f;
             _adsWeight = Mathf.MoveTowards(_adsWeight, targetAdsWeight, adsStep);
-            float currentTargetHeight = Mathf.Lerp(_targetHeight, _adsTargetHeight, _adsWeight);
-            float currentDistance = Mathf.Lerp(_distance, _adsDistance, _adsWeight);
-            float currentSideOffset = Mathf.Lerp(_sideOffset, _adsSideOffset, _adsWeight);
+            // ADS位置があればカメラ全体をそこへ寄せるため、距離などの寄せ方は使わない
+            float offsetAdsWeight = hasAdsAnchor ? 0.0f : _adsWeight;
+            float currentTargetHeight = Mathf.Lerp(_targetHeight, _adsTargetHeight, offsetAdsWeight);
+            float currentDistance = Mathf.Lerp(_distance, _adsDistance, offsetAdsWeight);
+            float currentSideOffset = Mathf.Lerp(_sideOffset, _adsSideOffset, offsetAdsWeight);
             if (_camera != null)
             {
                 float baseFov = GameOptions.Instance != null ? GameOptions.Instance.Values.fieldOfView : _defaultFov;
@@ -294,6 +349,31 @@ namespace Aura.Cameras
             }
             // 8. カメラの向きを適用
             transform.rotation = cameraRotation;
+
+            // 9. ADS位置へ寄せる（一人称モードでは使わない）
+            bool isFirstPerson = GameSettings.Instance != null && GameSettings.Instance.IsFirstPersonMode;
+            if (hasAdsAnchor && !isFirstPerson && _adsWeight > 0.0f)
+            {
+                ApplyAdsAnchor(targetFocusPosition);
+            }
+        }
+
+        /// <summary>
+        /// ADS位置の位置・向きへ、遷移率に合わせてカメラを寄せる
+        /// </summary>
+        private void ApplyAdsAnchor(Vector3 targetFocusPosition)
+        {
+            // プレイヤーの回転は物理の更新で少し遅れるため、プレイヤーから見たADS位置をカメラの左右の向きで置き直す
+            Quaternion yawRotation = Quaternion.Euler(0.0f, _yaw, 0.0f);
+            Quaternion targetInverse = Quaternion.Inverse(_target.rotation);
+            Vector3 adsPosition = _target.position + yawRotation * (targetInverse * (_adsAnchor.position - _target.position));
+            // pivotで傾けている時は、ADS位置の向きに上下の分がすでに入っている
+            Quaternion pitchRotation = _adsPivot != null ? Quaternion.identity : Quaternion.Euler(_adsPitchOffset, 0.0f, 0.0f);
+            Quaternion adsRotation = yawRotation * (targetInverse * _adsAnchor.rotation) * pitchRotation;
+
+            transform.position = Vector3.Lerp(transform.position, adsPosition, _adsWeight);
+            transform.rotation = Quaternion.Slerp(transform.rotation, adsRotation, _adsWeight);
+            UpdatePlayerTransparency(Vector3.Distance(transform.position, targetFocusPosition));
         }
 
         /// <summary>
