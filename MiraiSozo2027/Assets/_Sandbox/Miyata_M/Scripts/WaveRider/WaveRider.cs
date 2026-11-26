@@ -143,6 +143,7 @@ namespace Aura.Gimmick
 
         private WaveRiderCollision _collision;  ///< 当たり判定まわりの計算（押し戻し、回転の可否、乗っている物の検出、壁の手前で止める移動）
         private readonly HashSet<Rigidbody> _passengers = new HashSet<Rigidbody>();  ///< 直前の物理ステップで上に乗っていた物
+        private readonly WaveRiderFriction _friction = new WaveRiderFriction();  ///< 自分の Collider の摩擦を取り除き、外れたときや消えるときに元へ戻す
 
         /// @brief 波に乗っているか
         public bool IsRiding => _currentEmitter != null;
@@ -241,12 +242,34 @@ namespace Aura.Gimmick
                 _initialRotation = _body.rotation;
             }
             _collision = new WaveRiderCollision(_body, transform);
+            RemoveCarryFriction();
         }
 
         // 実行中に子の Collider が増えたり減ったりしたら、当たり判定に使う Collider を取り直す
         private void OnTransformChildrenChanged()
         {
-            _collision?.RefreshColliders();
+            if (_collision == null)
+            {
+                return;
+            }
+            _collision.RefreshColliders();
+            RemoveCarryFriction();
+        }
+
+        private void OnDestroy()
+        {
+            _friction.RestoreAll();
+        }
+
+        /// @brief 上に乗った物を運ぶときは、自分の Collider の摩擦を 0 にする
+        /// MovePosition で動くライダーの速さが摩擦で上の物に伝わり、運ぶ処理の分と合わせて 2 倍進むのを防ぐ。
+        /// 運ばない設定では、摩擦だけが上の物を動かすので、材質は変えない
+        private void RemoveCarryFriction()
+        {
+            if (_isCarryingPassengers)
+            {
+                _collision.RemoveFriction(_friction);
+            }
         }
 
         // 再び有効になったとき、無効の前の慣性や、乗っていた波、引いてあった経路を持ち越さない

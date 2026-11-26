@@ -13,6 +13,13 @@ namespace Aura.Gimmick.Tests
     {
         private const float SmallBoxSize = 0.1f;   ///< 上に置く小さな箱の 1 辺（m）
         private const float RiderTop = 0.5f;       ///< 1m のライダーの上面の高さ（m）
+        private const float CargoSize = 0.3f;      ///< 運ばれる、重力のある箱の 1 辺（m）
+        private const float CarrySpeed = 2.0f;     ///< 運ぶ検証で、ライダーが戻る速さ（m/s）
+        private const float CarryTarget = 3.0f;    ///< 運ぶ検証で、ライダーが向かう初期位置の z（m）
+        private const int CarrySteps = 40;         ///< 運ぶ検証で動かす物理ステップ数（戻り終える前に止める）
+        private const float CarryRatioTolerance = 0.1f;  ///< 箱の進んだ距離とライダーの進んだ距離の比の、1 からのずれの許容
+        private const float ChildFriction = 0.6f;  ///< 子に付ける材質の摩擦（元へ戻ったかを見分けるため）
+        private const float ChildBounciness = 0.3f;  ///< 子に付ける材質の跳ね返り（複製で残るかを見るため）
 
         private readonly List<GameObject> _objects = new List<GameObject>();
 
@@ -57,6 +64,13 @@ namespace Aura.Gimmick.Tests
             return body;
         }
 
+        private static void SetField(object target, string name, object value)
+        {
+            FieldInfo field = typeof(WaveRider).GetField(name, BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(field, name);
+            field.SetValue(target, value);
+        }
+
         private static HashSet<Rigidbody> GetPassengers(WaveRider rider)
         {
             FieldInfo field = typeof(WaveRider).GetField("_passengers", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -79,6 +93,77 @@ namespace Aura.Gimmick.Tests
             HashSet<Rigidbody> passengers = GetPassengers(rider);
             Assert.IsTrue(passengers.Contains(inside), "上面の真ん中の物は乗っている");
             Assert.IsFalse(passengers.Contains(outside), "上面の外の角の物は乗っていない");
+        }
+    
+        [UnityTest]
+        public IEnumerator 上に置いた重力のある箱はライダーと同じ距離だけ運ばれる()
+        {
+            // 初期位置（z = CarryTarget）へ戻る動きで、波を出すもの無しにライダーを一定の速さで動かす
+            WaveRider rider = CreateRider(0.0f);
+            SetField(rider, "_lostWaveMode", WaveRiderLostWaveMode.ReturnToStart);
+            SetField(rider, "_returnSpeed", CarrySpeed);
+            SetField(rider, "_isReturnPending", true);
+            rider.SetInitialPosition(new Vector3(0, 0, CarryTarget));
+            Rigidbody riderBody = rider.GetComponent<Rigidbody>();
+
+            // 既定の材質（摩擦あり）の、重力のある箱を上面に置く
+            GameObject box = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _objects.Add(box);
+            box.transform.localScale = Vector3.one * CargoSize;
+            box.transform.position = new Vector3(0, RiderTop + CargoSize * 0.5f, 0);
+            Rigidbody cargo = box.AddComponent<Rigidbody>();
+            Physics.SyncTransforms();
+
+            float riderStart = riderBody.position.z;
+            float cargoStart = cargo.position.z;
+            for (int i = 0; i < CarrySteps; i++)
+            {
+                yield return new WaitForFixedUpdate();
+            }
+
+            float riderMoved = riderBody.position.z - riderStart;
+            float cargoMoved = cargo.position.z - cargoStart;
+            Assert.That(riderMoved, Is.GreaterThan(0.5f), "ライダーが動いていない");
+            Assert.That(cargoMoved / riderMoved, Is.EqualTo(1.0f).Within(CarryRatioTolerance),
+                "箱の進んだ距離 " + cargoMoved + "m、ライダーの進んだ距離 " + riderMoved + "m");
+        }
+
+        [UnityTest]
+        public IEnumerator 子のColliderは付いている間だけ摩擦が0になり外すと元の材質へ戻る()
+        {
+            WaveRider rider = CreateRider(0.0f);
+            yield return new WaitForFixedUpdate();
+
+            // 材質の付いた子と、材質の無い子を、動き始めてから足す
+            var material = new PhysicsMaterial("TestChildMaterial");
+            material.staticFriction = ChildFriction;
+            material.dynamicFriction = ChildFriction;
+            material.bounciness = ChildBounciness;
+            GameObject withMaterial = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _objects.Add(withMaterial);
+            Collider withCollider = withMaterial.GetComponent<Collider>();
+            withCollider.sharedMaterial = material;
+            GameObject withoutMaterial = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _objects.Add(withoutMaterial);
+            Collider withoutCollider = withoutMaterial.GetComponent<Collider>();
+            withMaterial.transform.SetParent(rider.transform, false);
+            withoutMaterial.transform.SetParent(rider.transform, false);
+            yield return new WaitForFixedUpdate();
+
+            Assert.That(withCollider.sharedMaterial, Is.Not.SameAs(material), "材質の付いた子が複製されていない");
+            Assert.That(withCollider.sharedMaterial.dynamicFriction, Is.EqualTo(0.0f));
+            Assert.That(withCollider.sharedMaterial.bounciness, Is.EqualTo(ChildBounciness));
+            Assert.That(withoutCollider.sharedMaterial, Is.Not.Null, "材質の無い子に摩擦 0 の材質が付いていない");
+            Assert.That(withoutCollider.sharedMaterial.dynamicFriction, Is.EqualTo(0.0f));
+
+            // 子から外すと、元の材質（無ければ材質無し）へ戻る
+            withMaterial.transform.SetParent(null, true);
+            withoutMaterial.transform.SetParent(null, true);
+            yield return new WaitForFixedUpdate();
+
+            Assert.That(withCollider.sharedMaterial, Is.SameAs(material));
+            Assert.That(withoutCollider.sharedMaterial, Is.Null);
+            Object.Destroy(material);
         }
     }
 }

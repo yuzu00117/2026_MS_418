@@ -38,6 +38,13 @@ namespace Aura.Gimmick
             _ownColliders = _owner.GetComponentsInChildren<Collider>();
         }
 
+        /// @brief 自分と子の Collider から摩擦を取り除き、子から外れた Collider は元の材質へ戻す（WaveRiderFriction を参照）
+        /// 計算量: O(C + A)（C は自分の Collider の数、A は摩擦を取り除いてある Collider の数）
+        public void RemoveFriction(WaveRiderFriction friction)
+        {
+            friction.Apply(_ownColliders);
+        }
+
         /// @brief 自分の（トリガーでない）当たり判定をまとめた、軸平行の箱を求める
         /// @return 使える当たり判定があれば true
         /// 計算量: O(C)（C は自分の当たり判定の数）
