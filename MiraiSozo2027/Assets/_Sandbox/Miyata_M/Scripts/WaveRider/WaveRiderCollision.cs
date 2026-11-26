@@ -264,10 +264,11 @@ namespace Aura.Gimmick
         }
 
         /// ほかの WaveRider か。WaveRider どうしは押し戻さず、止めもしない（互いに全量押し戻すと、離れすぎては戻るのを繰り返して震えるため）
-        /// 計算量: O(1)（その Rigidbody の GameObject のコンポーネント数に比例）
+        /// 有効な WaveRider が OnEnable で登録した集合を引く（周りの Collider ごとに GetComponent しないため）
+        /// 計算量: O(1)
         private static bool IsRider(Rigidbody body)
         {
-            return body.TryGetComponent<WaveRider>(out _);
+            return WaveRiderRegistry.Contains(body);
         }
 
         /// 押し戻しや外形に使える Collider か（消えていない、有効、トリガーでない）

@@ -259,11 +259,13 @@ namespace Aura.Gimmick
             _followLag = 0.0f;
             _pushMove = Vector3.zero;
             ResetNavPlan();
+            WaveRiderRegistry.Register(_body);   // ほかの WaveRider の当たり判定から、ライダーとして見分けられるようにする
         }
 
         private void OnDisable()
         {
             _passengers.Clear();
+            WaveRiderRegistry.Unregister(_body);
         }
 
         private void FixedUpdate()
