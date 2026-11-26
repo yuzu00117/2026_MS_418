@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Aura.Wave.Echo
 {
     /// @brief エコーロケーション（Omata_N の EchoController）の今の範囲を、波の見た目を見せる範囲（WaveRevealSource）に毎フレーム写す
-    /// EchoController と同じ GameObject（チームの Test_Player）に付け、見せたいビームの BeamLineView の「見せ方」を「見える範囲の中だけ」にすると、
+    /// EchoController と同じ GameObject（プレイヤーの PF_Player_Gratear）に付け、見せたいビームの BeamLineView の「見せ方」を「見える範囲の中だけ」にすると、
     /// エコーの波が届いている所だけビームが見える（ふだんは見えない）。当たり判定と、受け手に波を渡すことは変わらない
     /// アセンブリ Aura.Wave.Echo だけが Echo.Runtime（Omata_N）を参照する。Scripts/Wave の本体（Aura.Wave）はエコーを知らないので、
     /// エコーの無いプロジェクトへ移すときは、Scripts/Wave/Echo を外す
