@@ -522,7 +522,6 @@ namespace Aura.Wave
         }
 
         /// @brief ビームの曲がり（すべての支点）を即座にリセットして真っすぐに戻す
-        [ShowInEventMenu]
         public void ResetBend()
         {
             _chain?.ClearAnchors();

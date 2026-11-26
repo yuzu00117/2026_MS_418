@@ -146,7 +146,7 @@ namespace Aura.Kinesis
 
         private void FixedUpdate()
         {
-            if (_currentState == State.Holding && _heldTarget != null && _heldTarget.Rb != null)
+            if (_currentState == State.Holding && _heldTarget != null && _heldTarget.Rb != null && !_heldTarget.Rb.isKinematic)
             {
                 ApplyPhysicsFollow();
             }
@@ -279,9 +279,13 @@ namespace Aura.Kinesis
         /// </summary>
         private void UpdateHolding()
         {
-            if (_heldTarget == null)
+            // 対象が破棄された、または外部（ビーム停止・リセット等）でKinematicに戻された場合は手を離してサーチへ戻る
+            if (_heldTarget == null || _heldTarget.Rb == null || _heldTarget.Rb.isKinematic)
             {
+                ReleaseObject();
                 _currentState = State.Searching;
+                _currentTarget = null;
+                _hasTarget = false;
                 return;
             }
 
@@ -297,7 +301,8 @@ namespace Aura.Kinesis
                     ReleaseObject();
                     emitter.ResetBend();
                     _currentState = State.Searching;
-                    UpdateSearching();
+                    _currentTarget = null;
+                    _hasTarget = false;
                     return;
                 }
             }

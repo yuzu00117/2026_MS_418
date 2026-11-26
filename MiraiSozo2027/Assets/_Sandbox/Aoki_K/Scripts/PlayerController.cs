@@ -45,6 +45,7 @@ namespace Aura.PlayerControl
         private Vector3 _moveDirection = Vector3.zero;
         private float _currentMoveSpeed = 0f;
         private bool _jumpRequested = false;
+        private bool _isWaitingFireRelease = false;
 
         // Animator パラメータハッシュ
         private static readonly int AnimParamSpeed = Animator.StringToHash("Speed");
@@ -168,6 +169,9 @@ namespace Aura.PlayerControl
                 _cameraBehavior.SetAds(_actions.Player.FocusAim.IsPressed());
             }
 
+            // フォノンキネシスが起動中かどうか（Toggle前後どちらでも検知できるよう記録）
+            bool wasKinesisActive = _phononkinesis != null && _phononkinesis.IsActive;
+
             // フォノンキネシス
             if (_phononkinesis != null)
             {
@@ -177,19 +181,39 @@ namespace Aura.PlayerControl
                 }
             }
 
+            bool isKinesisActive = wasKinesisActive || (_phononkinesis != null && _phononkinesis.IsActive);
+
             // 波照射
             if (_waveEmitter != null)
             {
-                bool canFire = _phononkinesis == null || !_phononkinesis.IsActive; // フォノンキネシスがアクティブな場合は発射不可
-                _waveEmitter.SetTriggerHeld(canFire && _actions.Player.Fire.IsPressed());
-
-                if (_actions.Player.SwitchWave.triggered)
+                if (isKinesisActive)
                 {
-                    _waveEmitter.SelectNextSource();
+                    // サーチ中・ホールド中は発射・切り替えを無効化し、発射ボタン離し待ちにする
+                    _isWaitingFireRelease = true;
+                    _waveEmitter.SetTriggerHeld(false);
                 }
-                if (_actions.Player.ToggleFireMode.triggered)
+                else
                 {
-                    _waveEmitter.ToggleFireShape();
+                    // 配置確定時などに押された発射ボタン（左クリック等）が一度離されるまで待機
+                    if (_isWaitingFireRelease && !_actions.Player.Fire.IsPressed())
+                    {
+                        _isWaitingFireRelease = false;
+                    }
+
+                    bool canUseWave = !_isWaitingFireRelease;
+                    _waveEmitter.SetTriggerHeld(canUseWave && _actions.Player.Fire.IsPressed());
+
+                    if (canUseWave)
+                    {
+                        if (_actions.Player.SwitchWave.triggered)
+                        {
+                            _waveEmitter.SelectNextSource();
+                        }
+                        if (_actions.Player.ToggleFireMode.triggered)
+                        {
+                            _waveEmitter.ToggleFireShape();
+                        }
+                    }
                 }
             }
 
