@@ -3,8 +3,8 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using MiraiSozo.Options;
 using Aura.Core;
+using Aura.Entities;
 using Aura.Kinesis;
-using Aura.PlayerControl;
 
 namespace Aura.Cameras
 {
@@ -146,12 +146,12 @@ namespace Aura.Cameras
 
         private void OnEnable()
         {
-            PlayerController.OnPlayerSpawned += HandlePlayerSpawned;
+            GameManager.OnPlayerSpawned += HandlePlayerSpawned;
         }
 
         private void OnDisable()
         {
-            PlayerController.OnPlayerSpawned -= HandlePlayerSpawned;
+            GameManager.OnPlayerSpawned -= HandlePlayerSpawned;
         }
 
         private void OnDestroy()
@@ -159,7 +159,7 @@ namespace Aura.Cameras
             CleanupMaterialInstances();
         }
 
-        private void HandlePlayerSpawned(PlayerController player)
+        private void HandlePlayerSpawned(Player player)
         {
             if (player != null)
             {
@@ -182,9 +182,17 @@ namespace Aura.Cameras
             {
                 InitializeTarget(_target);
             }
-            else if (PlayerController.Instance != null)
+            else if (GameManager.Instance != null && GameManager.Instance.CurrentPlayer != null)
             {
-                InitializeTarget(PlayerController.Instance.transform);
+                InitializeTarget(GameManager.Instance.CurrentPlayer.transform);
+            }
+            else
+            {
+                Player existingPlayer = FindFirstObjectByType<Player>();
+                if (existingPlayer != null)
+                {
+                    InitializeTarget(existingPlayer.transform);
+                }
             }
         }
 

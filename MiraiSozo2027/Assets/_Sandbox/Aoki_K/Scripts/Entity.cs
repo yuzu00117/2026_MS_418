@@ -97,5 +97,28 @@ namespace Aura.Entities
         /// HPが0になった際の処理（死亡演出等用）
         /// </summary>
         protected abstract void OnDeath();
+
+        #if UNITY_EDITOR
+        [ContextMenu("Debug: 1ダメージ受ける (TakeDamage)")]
+        private void DebugTakeDamage()
+        {
+            if (!Application.isPlaying)
+            {
+                Debug.LogWarning("Playモード中に実行してください。");
+                return;
+            }
+            TakeDamage(1);
+        }
+        [ContextMenu("Debug: 即死する (Kill)")]
+        private void DebugKill()
+        {
+            if (!Application.isPlaying)
+            {
+                Debug.LogWarning("Playモード中に実行してください。");
+                return;
+            }
+            Kill();
+        }
+        #endif
     }
 }
