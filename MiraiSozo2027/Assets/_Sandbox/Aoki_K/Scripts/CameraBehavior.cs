@@ -252,7 +252,9 @@ namespace Aura.Cameras
             _yaw += lookInput.x * _sensitivityX * (_invertX ? -1f : 1f);
             float verticalDelta = lookInput.y * _sensitivityY * (_invertY ? 1f : -1f);
             bool hasAdsAnchor = _adsAnchor != null;
-            if (_isAds && hasAdsAnchor)
+            // 一人称ではADS位置へ寄せないため、ADS中も通常どおり上下の向きで見る
+            bool isFirstPerson = GameSettings.Instance != null && GameSettings.Instance.IsFirstPersonMode;
+            if (_isAds && hasAdsAnchor && !isFirstPerson)
             {
                 // ADS中の上下はADS位置の向きを基準に、指定した角度の範囲だけ動かす
                 _adsPitchOffset = Mathf.Clamp(_adsPitchOffset + verticalDelta, -_adsMaxUpAngle, _adsMaxDownAngle);
@@ -351,7 +353,6 @@ namespace Aura.Cameras
             transform.rotation = cameraRotation;
 
             // 9. ADS位置へ寄せる（一人称モードでは使わない）
-            bool isFirstPerson = GameSettings.Instance != null && GameSettings.Instance.IsFirstPersonMode;
             if (hasAdsAnchor && !isFirstPerson && _adsWeight > 0.0f)
             {
                 ApplyAdsAnchor(targetFocusPosition);
@@ -371,7 +372,16 @@ namespace Aura.Cameras
             Quaternion pitchRotation = _adsPivot != null ? Quaternion.identity : Quaternion.Euler(_adsPitchOffset, 0.0f, 0.0f);
             Quaternion adsRotation = yawRotation * (targetInverse * _adsAnchor.rotation) * pitchRotation;
 
-            transform.position = Vector3.Lerp(transform.position, adsPosition, _adsWeight);
+            // 寄せた先が壁の向こうにならないよう、注視点からの間に壁があれば手前で止める
+            Vector3 cameraPosition = Vector3.Lerp(transform.position, adsPosition, _adsWeight);
+            Vector3 offset = cameraPosition - targetFocusPosition;
+            float offsetDistance = offset.magnitude;
+            if (offsetDistance > MinOffsetDistance)
+            {
+                Vector3 castDirection = offset / offsetDistance;
+                cameraPosition = targetFocusPosition + castDirection * CalculateCollisionDistance(targetFocusPosition, castDirection, offsetDistance);
+            }
+            transform.position = cameraPosition;
             transform.rotation = Quaternion.Slerp(transform.rotation, adsRotation, _adsWeight);
             UpdatePlayerTransparency(Vector3.Distance(transform.position, targetFocusPosition));
         }
