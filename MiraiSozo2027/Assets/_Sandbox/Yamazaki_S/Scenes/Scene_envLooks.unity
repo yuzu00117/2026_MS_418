@@ -2064,7 +2064,10 @@ PlayableDirector:
   m_ExposedReferences:
     m_References:
     - 44117ec8864c41d4f9e8bc0ebdf7953d: {fileID: 1439384357}
+    - 1fce342663184b644bbb805b1a965c5d: {fileID: 1439384357}
+    - e93b1ad72df86e044848b288a33c75ef: {fileID: 1439384357}
     - d67460bc940c5e444b0ebeba2eebb8d6: {fileID: 1439384357}
+    - c65dd9a6edc507e46af2869e89d742aa: {fileID: 1439384357}
     - 4b6361e7f78da664e8353d7a662eff25: {fileID: 0}
     - 505b7d1479f4fef4bb82f72be676c684: {fileID: 0}
     - 94baa4e318b4a224f9689bf897840c77: {fileID: 1439384357}
@@ -2789,6 +2792,34 @@ PrefabInstance:
       propertyPath: m_Name
       value: PF_vfx_enemyAtkBall Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 1513799042006099985, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: randomSeed
+      value: 2654
+      objectReference: {fileID: 0}
+    - target: {fileID: 1513799042006099985, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: autoRandomSeed
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1626222005384270945, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: randomSeed
+      value: 2657
+      objectReference: {fileID: 0}
+    - target: {fileID: 1626222005384270945, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: autoRandomSeed
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1989105595041279866, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: looping
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1989105595041279866, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: randomSeed
+      value: 2652
+      objectReference: {fileID: 0}
+    - target: {fileID: 1989105595041279866, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: autoRandomSeed
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2236989931377342738, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -2827,6 +2858,18 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2236989931377342738, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2241536144384896575, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: looping
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2241536144384896575, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: randomSeed
+      value: 2652
+      objectReference: {fileID: 0}
+    - target: {fileID: 2241536144384896575, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: autoRandomSeed
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2507857761957204969, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
@@ -2869,6 +2912,14 @@ PrefabInstance:
       propertyPath: 'm_TrailVertexStreams.Array.data[6]'
       value: 38
       objectReference: {fileID: 0}
+    - target: {fileID: 2741066921698284664, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: randomSeed
+      value: 2655
+      objectReference: {fileID: 0}
+    - target: {fileID: 2741066921698284664, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: autoRandomSeed
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3371521978204815805, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
       propertyPath: m_UseCustomVertexStreams
       value: 1
@@ -2880,6 +2931,30 @@ PrefabInstance:
     - target: {fileID: 3371521978204815805, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
       propertyPath: 'm_VertexStreams.Array.data[4]'
       value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4322284806179137842, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: looping
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4322284806179137842, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: randomSeed
+      value: 2652
+      objectReference: {fileID: 0}
+    - target: {fileID: 4322284806179137842, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: autoRandomSeed
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4685394036225663025, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: looping
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6527303921325376778, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: randomSeed
+      value: 2658
+      objectReference: {fileID: 0}
+    - target: {fileID: 6527303921325376778, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: autoRandomSeed
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6999186741574624547, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
       propertyPath: m_UseCustomVertexStreams
@@ -2901,6 +2976,18 @@ PrefabInstance:
       propertyPath: 'm_VertexStreams.Array.data[6]'
       value: 38
       objectReference: {fileID: 0}
+    - target: {fileID: 7620961649600088505, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: looping
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7620961649600088505, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: randomSeed
+      value: 2652
+      objectReference: {fileID: 0}
+    - target: {fileID: 7620961649600088505, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: autoRandomSeed
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8339414140184824773, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
       propertyPath: m_UseCustomVertexStreams
       value: 1
@@ -2921,6 +3008,18 @@ PrefabInstance:
       propertyPath: 'm_VertexStreams.Array.data[6]'
       value: 38
       objectReference: {fileID: 0}
+    - target: {fileID: 8360827839810518865, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: looping
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8360827839810518865, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: randomSeed
+      value: 2652
+      objectReference: {fileID: 0}
+    - target: {fileID: 8360827839810518865, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: autoRandomSeed
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8538369051099104988, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
       propertyPath: m_UseCustomVertexStreams
       value: 1
@@ -2941,6 +3040,10 @@ PrefabInstance:
       propertyPath: 'm_VertexStreams.Array.data[6]'
       value: 38
       objectReference: {fileID: 0}
+    - target: {fileID: 8665396031515590420, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: looping
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8823391237915238527, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
       propertyPath: m_UseCustomVertexStreams
       value: 1
@@ -2952,6 +3055,14 @@ PrefabInstance:
     - target: {fileID: 8823391237915238527, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
       propertyPath: 'm_VertexStreams.Array.data[4]'
       value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8932715996920614026, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: randomSeed
+      value: 2656
+      objectReference: {fileID: 0}
+    - target: {fileID: 8932715996920614026, guid: c393f2ce1521df544b5e2e137f1d4d22, type: 3}
+      propertyPath: autoRandomSeed
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
