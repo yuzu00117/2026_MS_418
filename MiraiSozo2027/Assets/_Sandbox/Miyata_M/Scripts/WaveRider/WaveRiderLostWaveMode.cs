@@ -13,5 +13,8 @@ namespace Aura.Gimmick
 
         [InspectorName("初期位置へ戻る")]
         ReturnToStart = 2,
+
+        [InspectorName("経路探索で初期位置へ戻る")]
+        ReturnByNavMesh = 3,
     }
 }

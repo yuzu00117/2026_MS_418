@@ -272,6 +272,7 @@ MonoBehaviour:
   _lostWaveMode: 2
   _inertiaDeceleration: 3
   _returnSpeed: 2
+  _boardDistance: 5
   _rejoinDistance: 0.3
   _heightOffset: 0.5
   _approachSpeed: 2
