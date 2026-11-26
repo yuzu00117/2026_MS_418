@@ -18,6 +18,8 @@ namespace Aura.Gimmick.Tests
         private const float CarryTarget = 3.0f;    ///< 運ぶ検証で、ライダーが向かう初期位置の z（m）
         private const int CarrySteps = 40;         ///< 運ぶ検証で動かす物理ステップ数（戻り終える前に止める）
         private const float CarryRatioTolerance = 0.1f;  ///< 箱の進んだ距離とライダーの進んだ距離の比の、1 からのずれの許容
+        private const float ChildFriction = 0.6f;  ///< 子に付ける材質の摩擦（元へ戻ったかを見分けるため）
+        private const float ChildBounciness = 0.3f;  ///< 子に付ける材質の跳ね返り（複製で残るかを見るため）
 
         private readonly List<GameObject> _objects = new List<GameObject>();
 
@@ -124,6 +126,44 @@ namespace Aura.Gimmick.Tests
             Assert.That(riderMoved, Is.GreaterThan(0.5f), "ライダーが動いていない");
             Assert.That(cargoMoved / riderMoved, Is.EqualTo(1.0f).Within(CarryRatioTolerance),
                 "箱の進んだ距離 " + cargoMoved + "m、ライダーの進んだ距離 " + riderMoved + "m");
+        }
+
+        [UnityTest]
+        public IEnumerator 子のColliderは付いている間だけ摩擦が0になり外すと元の材質へ戻る()
+        {
+            WaveRider rider = CreateRider(0.0f);
+            yield return new WaitForFixedUpdate();
+
+            // 材質の付いた子と、材質の無い子を、動き始めてから足す
+            var material = new PhysicsMaterial("TestChildMaterial");
+            material.staticFriction = ChildFriction;
+            material.dynamicFriction = ChildFriction;
+            material.bounciness = ChildBounciness;
+            GameObject withMaterial = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _objects.Add(withMaterial);
+            Collider withCollider = withMaterial.GetComponent<Collider>();
+            withCollider.sharedMaterial = material;
+            GameObject withoutMaterial = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            _objects.Add(withoutMaterial);
+            Collider withoutCollider = withoutMaterial.GetComponent<Collider>();
+            withMaterial.transform.SetParent(rider.transform, false);
+            withoutMaterial.transform.SetParent(rider.transform, false);
+            yield return new WaitForFixedUpdate();
+
+            Assert.That(withCollider.sharedMaterial, Is.Not.SameAs(material), "材質の付いた子が複製されていない");
+            Assert.That(withCollider.sharedMaterial.dynamicFriction, Is.EqualTo(0.0f));
+            Assert.That(withCollider.sharedMaterial.bounciness, Is.EqualTo(ChildBounciness));
+            Assert.That(withoutCollider.sharedMaterial, Is.Not.Null, "材質の無い子に摩擦 0 の材質が付いていない");
+            Assert.That(withoutCollider.sharedMaterial.dynamicFriction, Is.EqualTo(0.0f));
+
+            // 子から外すと、元の材質（無ければ材質無し）へ戻る
+            withMaterial.transform.SetParent(null, true);
+            withoutMaterial.transform.SetParent(null, true);
+            yield return new WaitForFixedUpdate();
+
+            Assert.That(withCollider.sharedMaterial, Is.SameAs(material));
+            Assert.That(withoutCollider.sharedMaterial, Is.Null);
+            Object.Destroy(material);
         }
     }
 }

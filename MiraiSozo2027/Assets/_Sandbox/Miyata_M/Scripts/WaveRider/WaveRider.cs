@@ -143,7 +143,7 @@ namespace Aura.Gimmick
 
         private WaveRiderCollision _collision;  ///< 当たり判定まわりの計算（押し戻し、回転の可否、乗っている物の検出、壁の手前で止める移動）
         private readonly HashSet<Rigidbody> _passengers = new HashSet<Rigidbody>();  ///< 直前の物理ステップで上に乗っていた物
-        private readonly List<PhysicsMaterial> _frictionlessCopies = new List<PhysicsMaterial>();  ///< 摩擦を取り除くために複製した材質（消えるときに消す）
+        private readonly WaveRiderFriction _friction = new WaveRiderFriction();  ///< 自分の Collider の摩擦を取り除き、外れたときや消えるときに元へ戻す
 
         /// @brief 波に乗っているか
         public bool IsRiding => _currentEmitter != null;
@@ -258,7 +258,7 @@ namespace Aura.Gimmick
 
         private void OnDestroy()
         {
-            WaveRiderFriction.Release(_frictionlessCopies);
+            _friction.RestoreAll();
         }
 
         /// @brief 上に乗った物を運ぶときは、自分の Collider の摩擦を 0 にする
@@ -268,7 +268,7 @@ namespace Aura.Gimmick
         {
             if (_isCarryingPassengers)
             {
-                _collision.RemoveFriction(_frictionlessCopies);
+                _collision.RemoveFriction(_friction);
             }
         }
 
