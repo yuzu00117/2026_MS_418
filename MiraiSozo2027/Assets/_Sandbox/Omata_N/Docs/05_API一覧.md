@@ -55,6 +55,7 @@
 |---|---|---|---|
 | `Settings` | `EchoSettings` | 読 | スキャンの設定。中身は書き換えられる（[EchoSettings](#echosettings)） |
 | `RangeDisplay` | `EchoRangeDisplaySettings` | 読 | 範囲表示の設定。中身は書き換えられる |
+| `ScanEffect` | `EchoScanEffect` | 読 | 使用中に再生するエフェクト（[EchoScanEffect](#echoscaneffect使用中のエフェクト)） |
 | `TargetCamera` | `Camera` | 読書 | 描画カメラ |
 | `OriginTransform` | `Transform` | 読書 | スキャン中心 |
 | `DirectionTransform` | `Transform` | 読書 | 正面の基準 |
@@ -224,6 +225,21 @@ Inspector の「状態変更時の通知」（UnityEvent）でも、`StateChange
 | `IsBoundaryVisible` | `bool` | 空間の境界線を表示 |
 | `FillColor` / `WaveColor` / `EraseColor` / `BoundaryColor` | `Color` | 範囲内・拡張波・消去波・境界線の色 |
 | `WaveWidth` | `float` | 波の帯幅（m） |
+
+### EchoScanEffect（使用中のエフェクト）
+
+`EchoController.ScanEffect` の中身です。再生と停止は Controller が `IsEchoInUse` に合わせて行うので、通常は呼ぶ必要はありません。
+
+| 名前 | 型 | 内容 |
+|---|---|---|
+| `Prefab` | `GameObject` | 再生するパーティクルの Prefab。差し替えると次の再生から反映する |
+| `IsScaledToRadius` / `BaseRadius` | `bool` / `float` | 最大半径に大きさを合わせるか／Prefab のままの大きさの半径（m） |
+| `IsSpeedMatchedToDuration` / `BaseDuration` | `bool` / `float` | 伝播時間に速さを合わせるか／Prefab のままの速さで広がりきる時間（秒） |
+| `IsFacingDirection` | `bool` | 正面の基準の水平方向に向けるか |
+| `IsPlaying` | `bool` | 再生中か（読み取り専用） |
+| `SetPlaying(bool, Transform)` | 関数 | 再生・停止を切り替える。再生時は指定した Transform の子として生成する |
+| `Apply(float, float, Transform)` | 関数 | 半径・伝播時間・正面の基準に合わせて、生成したエフェクトの大きさ・速さ・向きを変える。Controller が毎フレーム呼ぶ |
+| `Release()` | 関数 | 生成したエフェクトを破棄する |
 
 ## EchoFrameData（1 つの波の情報）
 

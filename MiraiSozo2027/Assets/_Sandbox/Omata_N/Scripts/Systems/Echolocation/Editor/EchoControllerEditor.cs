@@ -8,6 +8,7 @@ namespace Aura.Echolocation.Editor
     public sealed class EchoControllerEditor : UnityEditor.Editor
     {
         private const string LightSustainPath = "_settings._lightSustain";
+        private const string ScanEffectPath = "_scanEffect";
         void DrawField(string path, string label) => EditorGUILayout.PropertyField(serializedObject.FindProperty(path), new GUIContent(label), true);
         void DrawEnum(string path, string label, string[] choices)
         {
@@ -79,6 +80,12 @@ namespace Aura.Echolocation.Editor
             }
 
             EditorGUILayout.Space();
+            EditorGUILayout.LabelField("エフェクト", EditorStyles.boldLabel);
+            DrawField(ScanEffectPath + "._prefab", "使用中に再生するエフェクト");
+            if (serializedObject.FindProperty(ScanEffectPath + "._prefab").objectReferenceValue)
+                DrawScanEffect();
+
+            EditorGUILayout.Space();
             EditorGUILayout.LabelField("対象と表示", EditorStyles.boldLabel);
             DrawField("_settings._targetLayers", "対象レイヤー");
             DrawField("_excludedRoot", "除外するルート");
@@ -93,6 +100,28 @@ namespace Aura.Echolocation.Editor
                 foreach (var selected in targets)
                     EchoSetupValidator.Validate((EchoController)selected);
             DrawRuntimeStatus();
+        }
+
+        void DrawScanEffect()
+        {
+            EditorGUI.indentLevel++;
+            DrawField(ScanEffectPath + "._isScaledToRadius", "最大半径に大きさを合わせる");
+            if (serializedObject.FindProperty(ScanEffectPath + "._isScaledToRadius").boolValue)
+            {
+                EditorGUI.indentLevel++;
+                DrawField(ScanEffectPath + "._baseRadius", "基準の半径（m）");
+                EditorGUI.indentLevel--;
+            }
+            DrawField(ScanEffectPath + "._isSpeedMatchedToDuration", "伝播時間に速さを合わせる");
+            if (serializedObject.FindProperty(ScanEffectPath + "._isSpeedMatchedToDuration").boolValue)
+            {
+                EditorGUI.indentLevel++;
+                DrawField(ScanEffectPath + "._baseDuration", "基準の時間（秒）");
+                EditorGUI.indentLevel--;
+            }
+            DrawField(ScanEffectPath + "._isFacingDirection", "正面の基準に向きを合わせる");
+            EditorGUI.indentLevel--;
+            EditorGUILayout.HelpBox("エコーをONにすると、スキャン中心の子として生成して再生します。OFF後に波が消えきったら放出を止め、出ている粒子は寿命まで残ります。大きさ・速さ・向きは生成したエフェクトだけを変え、元のPrefabは変えません。開き角はPrefabの形のままです。", MessageType.Info);
         }
 
         void DrawLightSustain()
