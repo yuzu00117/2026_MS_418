@@ -165,6 +165,16 @@
                     "interactions": "",
                     "initialStateCheck": false,
                     "priority": 0
+                },
+                {
+                    "name": "Cancel",
+                    "type": "Button",
+                    "id": "fd330dfd-f7f8-4078-b90b-4ee4a1ad8ec0",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
                 }
             ],
             "bindings": [
@@ -578,7 +588,7 @@
                 {
                     "name": "negative",
                     "id": "21726faa-f62d-4383-bb22-dc25222854b7",
-                    "path": "<Gamepad>/rightShoulder",
+                    "path": "<Gamepad>/dpad/down",
                     "interactions": "",
                     "processors": "",
                     "groups": ";Gamepad",
@@ -589,10 +599,10 @@
                 {
                     "name": "positive",
                     "id": "b34276bf-b9ef-4a53-894b-94eac97d78af",
-                    "path": "<Gamepad>/rightTrigger",
+                    "path": "<Gamepad>/dpad/up",
                     "interactions": "",
                     "processors": "",
-                    "groups": "",
+                    "groups": ";Gamepad",
                     "action": "AdjustDistance",
                     "isComposite": false,
                     "isPartOfComposite": true
@@ -715,6 +725,28 @@
                     "processors": "",
                     "groups": ";Gamepad",
                     "action": "FocusAim",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "87f9d420-7b06-4985-9d37-54c411b07813",
+                    "path": "<Keyboard>/f",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "Cancel",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "f3945971-d46e-4c3f-a9d3-7af4e60deadb",
+                    "path": "<Gamepad>/buttonWest",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Cancel",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
