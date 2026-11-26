@@ -30,6 +30,8 @@ namespace Aura.Echolocation
         private float _baseDuration = DefaultBaseDuration;
         [SerializeField, Tooltip("正面の基準の水平方向にエフェクトの正面を向けます。オフならスキャン中心の向きのままです。")]
         private bool _isFacingDirection;
+        [SerializeField, Tooltip("正面の基準に向きを合わせる時に、上下の傾きも合わせます。オフなら水平方向だけ合わせます。")]
+        private bool _isPitchFollowed;
 
         private GameObject _instance;
         private GameObject _createdFrom;
@@ -52,6 +54,8 @@ namespace Aura.Echolocation
         public float BaseDuration { get => _baseDuration; set => _baseDuration = value; }
         /// <summary>正面の基準の水平方向に向けるか。</summary>
         public bool IsFacingDirection { get => _isFacingDirection; set => _isFacingDirection = value; }
+        /// <summary>上下の傾きも合わせるか。IsFacingDirectionがtrueのときだけ効く。</summary>
+        public bool IsPitchFollowed { get => _isPitchFollowed; set => _isPitchFollowed = value; }
 
         /// <summary>再生中か。</summary>
         public bool IsPlaying { get; private set; }
@@ -78,11 +82,17 @@ namespace Aura.Echolocation
             float scale = _isScaledToRadius ? Mathf.Max(0, radius) / Mathf.Max(MinimumBaseValue, _baseRadius) : 1;
             effect.localScale = _originalScale * scale;
 
-            Vector3 forward = direction ? Vector3.ProjectOnPlane(direction.forward, Vector3.up) : Vector3.zero;
-            if (_isFacingDirection && forward.sqrMagnitude > MinimumHorizontalSqrLength)
-                effect.rotation = Quaternion.LookRotation(forward, Vector3.up) * _originalRotation;
-            else if (!_isFacingDirection)
+            if (!_isFacingDirection)
                 effect.localRotation = _originalRotation;
+            else if (direction && _isPitchFollowed)
+                // 正面の基準の上方向を使うと、真上・真下を向いても向きが決まる。
+                effect.rotation = Quaternion.LookRotation(direction.forward, direction.up) * _originalRotation;
+            else if (direction)
+            {
+                Vector3 forward = Vector3.ProjectOnPlane(direction.forward, Vector3.up);
+                if (forward.sqrMagnitude > MinimumHorizontalSqrLength)
+                    effect.rotation = Quaternion.LookRotation(forward, Vector3.up) * _originalRotation;
+            }
 
             float speedRatio = _isSpeedMatchedToDuration && duration > 0 ? Mathf.Max(MinimumBaseValue, _baseDuration) / duration : 1;
             // 再生速度はパーティクルごとに持つため、変わった時だけ書き換える。

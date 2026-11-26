@@ -78,6 +78,26 @@ namespace Aura.Echolocation.Tests
         }
 
         [Test]
+        public void ApplyFollowsPitchWhenEnabled()
+        {
+            _effect.IsFacingDirection = true;
+            _effect.IsPitchFollowed = true;
+            var direction = new GameObject("Direction");
+            direction.transform.rotation = Quaternion.Euler(30, 90, 0);
+            try
+            {
+                _effect.SetPlaying(true, _origin.transform);
+                _effect.Apply(8.5f, 3, direction.transform);
+                var instance = _origin.transform.GetChild(0);
+                Assert.That(Vector3.Angle(instance.forward, direction.transform.forward), Is.LessThan(.01f), "上下の傾きも含めて同じ向きになる");
+            }
+            finally
+            {
+                Object.DestroyImmediate(direction);
+            }
+        }
+
+        [Test]
         public void ApplyKeepsPrefabValuesWhenOptionsAreOff()
         {
             var main = _prefab.GetComponent<ParticleSystem>().main;
