@@ -71,7 +71,7 @@ namespace MiraiSozo.Options
         public bool IsClosing => _onClosed != null;
 
         /// <summary>このCanvasで使うテーマ。未指定ならnull（Resources/OptionMenuThemeを使う）。</summary>
-        public OptionMenuTheme Theme => _theme;
+        public OptionMenuTheme AssignedTheme => _theme;
         /// <summary>ポーズ画面とオプション画面の間を移る演出の再生中か。</summary>
         public bool IsTransitioning => _transition != null;
         /// <summary>開閉や画面の移動など、いずれかの演出を再生中か。</summary>

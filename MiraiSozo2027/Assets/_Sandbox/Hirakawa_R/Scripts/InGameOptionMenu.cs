@@ -167,7 +167,7 @@ namespace MiraiSozo.Options
             _menuGroup = GetOrAddCanvasGroup(_overlay);
             _menuAnimation = _overlay.GetComponent<OptionMenuAnimation>();
             // 見た目を整える前に、このシーンのCanvasのテーマへ切り替える（未指定なら標準のテーマに戻す）。
-            OptionMenuTheme.Use(_menuAnimation != null ? _menuAnimation.Theme : null);
+            OptionMenuTheme.Use(_menuAnimation != null ? _menuAnimation.AssignedTheme : null);
             OptionSoftStyle.ApplyPanel((RectTransform)_pause.transform, true);
             OptionSoftStyle.ApplyPanel((RectTransform)_settings.transform, false);
             var dialog = FindConfirmationDialog();
