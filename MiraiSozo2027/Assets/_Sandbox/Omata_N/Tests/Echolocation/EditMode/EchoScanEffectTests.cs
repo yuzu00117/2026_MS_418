@@ -90,6 +90,24 @@ namespace Aura.Echolocation.Tests
         }
 
         [Test]
+        public void ApplyKeepsPrefabRootScaleAndRotation()
+        {
+            _prefab.transform.localScale = new Vector3(2, 1, 3);
+            _prefab.transform.localRotation = Quaternion.Euler(0, 45, 0);
+            _effect.SetPlaying(true, _origin.transform);
+            var instance = _origin.transform.GetChild(0);
+
+            _effect.Apply(8.5f, 3, _origin.transform);
+            Assert.That(instance.localScale, Is.EqualTo(new Vector3(2, 1, 3)), "合わせる設定がオフならPrefabの拡大率のまま");
+            Assert.That(Quaternion.Angle(instance.localRotation, Quaternion.Euler(0, 45, 0)), Is.LessThan(.01f));
+
+            _effect.IsScaledToRadius = true;
+            _effect.BaseRadius = 17;
+            _effect.Apply(8.5f, 3, _origin.transform);
+            Assert.That(Vector3.Distance(instance.localScale, new Vector3(1, .5f, 1.5f)), Is.LessThan(1e-4f), "Prefabの拡大率に倍率を掛ける");
+        }
+
+        [Test]
         public void DoesNothingWithoutPrefab()
         {
             _effect.Prefab = null;

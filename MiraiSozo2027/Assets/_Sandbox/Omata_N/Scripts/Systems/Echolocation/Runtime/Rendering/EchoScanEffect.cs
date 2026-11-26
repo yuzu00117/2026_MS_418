@@ -35,6 +35,9 @@ namespace Aura.Echolocation
         private GameObject _createdFrom;
         private ParticleSystem[] _particles = Array.Empty<ParticleSystem>();
         private float[] _originalSpeeds = Array.Empty<float>();
+        // Prefabの一番上に設定された拡大率と回転。合わせる設定はこれを基準に掛け、オフの時はこれに戻す。
+        private Vector3 _originalScale = Vector3.one;
+        private Quaternion _originalRotation = Quaternion.identity;
         private float _appliedSpeedRatio = 1;
 
         /// <summary>再生するPrefab。変更すると次の再生から反映する。</summary>
@@ -73,13 +76,13 @@ namespace Aura.Echolocation
 
             var effect = _instance.transform;
             float scale = _isScaledToRadius ? Mathf.Max(0, radius) / Mathf.Max(MinimumBaseValue, _baseRadius) : 1;
-            effect.localScale = Vector3.one * scale;
+            effect.localScale = _originalScale * scale;
 
             Vector3 forward = direction ? Vector3.ProjectOnPlane(direction.forward, Vector3.up) : Vector3.zero;
             if (_isFacingDirection && forward.sqrMagnitude > MinimumHorizontalSqrLength)
-                effect.rotation = Quaternion.LookRotation(forward, Vector3.up);
+                effect.rotation = Quaternion.LookRotation(forward, Vector3.up) * _originalRotation;
             else if (!_isFacingDirection)
-                effect.localRotation = Quaternion.identity;
+                effect.localRotation = _originalRotation;
 
             float speedRatio = _isSpeedMatchedToDuration && duration > 0 ? Mathf.Max(MinimumBaseValue, _baseDuration) / duration : 1;
             // 再生速度はパーティクルごとに持つため、変わった時だけ書き換える。
@@ -107,6 +110,8 @@ namespace Aura.Echolocation
             _createdFrom = null;
             _particles = Array.Empty<ParticleSystem>();
             _originalSpeeds = Array.Empty<float>();
+            _originalScale = Vector3.one;
+            _originalRotation = Quaternion.identity;
             _appliedSpeedRatio = 1;
         }
 
@@ -124,6 +129,8 @@ namespace Aura.Echolocation
                 Release();
                 _instance = Object.Instantiate(_prefab, parent);
                 _createdFrom = _prefab;
+                _originalScale = _instance.transform.localScale;
+                _originalRotation = _instance.transform.localRotation;
                 _particles = _instance.GetComponentsInChildren<ParticleSystem>(true);
                 // 速さを倍率で掛けるため、Prefabに設定された元の再生速度を覚えておく。
                 _originalSpeeds = new float[_particles.Length];
