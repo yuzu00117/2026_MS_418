@@ -29,6 +29,8 @@ namespace Aura.Echolocation
         private EchoSettings _settings = new EchoSettings();
         [SerializeField]
         private EchoRangeDisplaySettings _rangeDisplay = new EchoRangeDisplaySettings();
+        [SerializeField]
+        private EchoScanEffect _scanEffect = new EchoScanEffect();
         [SerializeField, Tooltip("Scene Viewに範囲を表示します。")]
         [UnityEngine.Serialization.FormerlySerializedAs("showGizmos")]
         private bool _isGizmoVisible = true;
@@ -114,6 +116,8 @@ namespace Aura.Echolocation
         public EchoSettings Settings => _settings;
         /// <summary>スキャン範囲の色と境界線。検出範囲そのものは変えない。</summary>
         public EchoRangeDisplaySettings RangeDisplay => _rangeDisplay ??= new EchoRangeDisplaySettings();
+        /// <summary>エコーを使っている間に再生するエフェクト。</summary>
+        public EchoScanEffect ScanEffect => _scanEffect ??= new EchoScanEffect();
         /// <summary>描画するCamera。</summary>
         public Camera TargetCamera { get => _targetCamera; set => _targetCamera = value; }
         /// <summary>カメラ位置に依存しないスキャン中心。未指定時は自身。</summary>
@@ -167,7 +171,12 @@ namespace Aura.Echolocation
             RangeDisplay.Validate();
         }
 
-        void OnDestroy() => RangeDisplay.ReleaseMesh();
+        void OnDestroy()
+        {
+            RangeDisplay.ReleaseMesh();
+            // スキャン中心が別の階層にある場合も残らないよう、生成したエフェクトを破棄する。
+            ScanEffect.Release();
+        }
 
         void OnEnable()
         {
@@ -390,6 +399,9 @@ namespace Aura.Echolocation
                 if (_targetCamera)
                     _registry.Collect(_frames, _settings.TargetLayers, _excludedRoot ? _excludedRoot : transform, _targetCamera, _tags, _items);
                 NotifyUsage();
+                // 再生を始めたフレームから設定に合わせるため、使用状態を反映した後に行う。
+                Transform origin = _originTransform ? _originTransform : transform;
+                ScanEffect.Apply(_settings.Radius, _settings.Duration, _directionTransform ? _directionTransform : origin);
             }
         }
 
@@ -577,6 +589,7 @@ namespace Aura.Echolocation
             if (isInUse == _isPreviousEchoInUse)
                 return;
             _isPreviousEchoInUse = isInUse;
+            ScanEffect.SetPlaying(isInUse, _originTransform ? _originTransform : transform);
             UsageChanged?.Invoke(isInUse);
         }
 
