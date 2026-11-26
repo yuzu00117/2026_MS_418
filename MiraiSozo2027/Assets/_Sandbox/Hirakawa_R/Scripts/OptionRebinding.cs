@@ -32,9 +32,14 @@ namespace MiraiSozo.Options
 
         public static bool TryApply(Entry entry, string path, out string message)
         {
-            if (!IsKeyboardOrMouseButton(path) || string.Equals(path, "<Keyboard>/escape", StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(path, "<Keyboard>/escape", StringComparison.OrdinalIgnoreCase))
             {
-                message = "ESCはメニュー用です。別のキー・マウスボタンを選んでください。";
+                message = "ESCはメニュー用です。別のキーまたはマウスボタンを選んでください。";
+                return false;
+            }
+            if (!IsKeyboardOrMouseButton(path))
+            {
+                message = "この入力は割り当てられません。キーボードのキーまたはマウスボタンを選んでください。";
                 return false;
             }
             string original = entry.Action.bindings[entry.Index].effectivePath;
@@ -44,7 +49,7 @@ namespace MiraiSozo.Options
                 {
                     if (other.Action == entry.Action && other.Index == entry.Index) continue;
                     if (!string.Equals(other.Action.bindings[other.Index].effectivePath, path, StringComparison.OrdinalIgnoreCase)) continue;
-                    message = "「" + other.Label + "」が使用中です。別のキーを選んでください。";
+                    message = "「" + other.Label + "」が使用中です。別のキーまたはマウスボタンを選んでください。";
                     return false;
                 }
             }

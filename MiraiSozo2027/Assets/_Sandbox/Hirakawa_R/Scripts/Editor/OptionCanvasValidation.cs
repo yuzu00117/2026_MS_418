@@ -64,6 +64,7 @@ namespace MiraiSozo.Options.Editor
             ValidateNavigation(manager, menu, canvas);
             ValidateSingleListener(menu, canvas);
             manager.ResumePause();
+            CompleteAnimations(canvas);
             Assert(canvases.SetEquals(GetCanvases()), "開閉・操作後もCanvasを追加生成しない");
             Assert(menu.BoundCanvas == canvas, "最初に配置したCanvasへの参照を保持");
         }
@@ -80,6 +81,7 @@ namespace MiraiSozo.Options.Editor
                 Assert(Time.timeScale == 0f && !GameManager.Actions.Player.enabled && GameManager.Actions.UI.enabled,
                     "ポーズ中の時間・入力切り替え " + i);
                 FindButton(canvas, "Resume").onClick.Invoke();
+                CompleteAnimations(canvas);
                 Assert(!menu.IsOpen && !manager.IsPaused, "ゲームに戻るボタンで再開 " + i);
             }
             Assert(Mathf.Approximately(Time.timeScale, timeScale), "開く前の時間倍率を復元");
@@ -91,15 +93,19 @@ namespace MiraiSozo.Options.Editor
         {
             manager.Pause();
             FindButton(canvas, "Open Options").onClick.Invoke();
+            CompleteAnimations(canvas);
             Assert(canvas.transform.Find("Menu Overlay/Options Panel").gameObject.activeSelf, "オプションボタンで設定画面へ移動");
             FindButton(canvas, "Reset Tab").onClick.Invoke();
             Assert(canvas.transform.Find("Menu Overlay/Confirmation").gameObject.activeSelf, "初期化ボタンで確認画面を表示");
             FindButton(canvas, "Confirm Cancel").onClick.Invoke();
+            CompleteAnimations(canvas);
             Assert(!canvas.transform.Find("Menu Overlay/Confirmation").gameObject.activeSelf, "キャンセルで設定画面へ戻る");
             menu.HandlePause();
+            CompleteAnimations(canvas);
             Assert(menu.IsOpen && manager.IsPaused && canvas.transform.Find("Menu Overlay/Pause Panel").gameObject.activeSelf,
                 "戻る操作一回でポーズ画面へ移動しメニューを維持");
             menu.HandlePause();
+            CompleteAnimations(canvas);
             Assert(!menu.IsOpen && !manager.IsPaused, "ポーズ画面の戻る操作でゲームを再開");
         }
 
@@ -107,6 +113,7 @@ namespace MiraiSozo.Options.Editor
         {
             GameManager.Instance.Pause();
             menu.OpenOptions();
+            CompleteAnimations(canvas);
             menu.SelectTab(OptionMenuLayout.SystemTab);
             int index = OptionValues.FrameRates.ToList().IndexOf(GameOptions.Instance.Values.frameRate);
             int expected = OptionValues.FrameRates[(index + 1) % OptionValues.FrameRates.Count];
@@ -128,6 +135,14 @@ namespace MiraiSozo.Options.Editor
 
         private static Button FindButton(Canvas canvas, string name) => canvas.GetComponentsInChildren<Button>(true).First(button => button.name == name);
 
+        // 開閉やオプション画面への演出は数フレームかけて進むため、確認の前に最後まで進める。
+        private static void CompleteAnimations(Canvas canvas)
+        {
+            var animation = canvas.GetComponentInChildren<OptionMenuAnimation>(true);
+            if (animation != null) animation.CompleteAnimations();
+            foreach (var dialog in canvas.GetComponentsInChildren<OptionDialogAnimation>(true)) dialog.Complete();
+        }
+
         private static void Assert(bool condition, string message)
         {
             if (!condition) throw new InvalidOperationException(message);
@@ -144,7 +159,11 @@ namespace MiraiSozo.Options.Editor
             }
             finally
             {
-                try { manager.ResumePause(); }
+                try
+                {
+                    manager.ResumePause();
+                    if (menu.BoundCanvas != null) CompleteAnimations(menu.BoundCanvas);
+                }
                 finally
                 {
                     menu.SelectTab(activeTab);

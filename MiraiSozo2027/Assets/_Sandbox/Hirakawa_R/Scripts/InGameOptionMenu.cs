@@ -24,7 +24,10 @@ namespace MiraiSozo.Options
         private const float PreviewAttackRate = 30f;
         private const float PreviewReleaseRate = 6f;
         private const float RebindTimeoutSeconds = 10f;
+        // フォント未指定時にOSのフォントから作る日本語フォントの基準サイズ。
+        private const int RuntimeFontSize = 22;
         private static readonly string[] PreviewNames = { "SE", "BGM", "Voice" };
+        private static bool _hasReportedMissingCanvas;
         public static InGameOptionMenu Instance { get; private set; }
         [Tooltip("Sceneに配置済みのオプション用Canvas。未設定時はGameManagerのMenu UI等から取得します。")]
         [SerializeField] private Canvas _canvas;
@@ -32,13 +35,17 @@ namespace MiraiSozo.Options
         [SerializeField] private Font _font;
         [SerializeField] private bool _showTestHud;
         private readonly Dictionary<string, Transform> _views = new Dictionary<string, Transform>();
-        private readonly List<Button> _bindingButtons = new List<Button>();
+        private readonly List<(Button Button, Text KeyLabel)> _bindingButtons = new List<(Button, Text)>();
         private readonly List<AudioSource> _previews = new List<AudioSource>();
         private readonly List<AudioClip> _previewClips = new List<AudioClip>();
         private readonly List<Action> _removeViewListeners = new List<Action>();
         private GameObject _testHud;
-        private Text _pauseStatus;
         private CanvasGroup _pauseGroup, _settingsGroup;
+        private CanvasGroup _menuGroup;
+        private OptionMenuAnimation _menuAnimation;
+        private OptionDescriptionWindow _description;
+        private OptionDialogAnimation _dialogAnimation;
+        private OptionMenuSound _sound;
         private GameOptions _options;
         private Font _runtimeFont;
         private GameObject _overlay, _pause, _settings, _confirmation;
@@ -51,6 +58,7 @@ namespace MiraiSozo.Options
         public Canvas BoundCanvas { get; private set; }
         public bool IsOpen => BoundCanvas != null && _overlay != null && _overlay.activeSelf;
         public bool IsRebinding => _rebind != null;
+        public bool IsClosing => _menuAnimation != null && _menuAnimation.IsClosing;
         public int ActiveTab => _tab;
 
 #if UNITY_EDITOR
@@ -62,6 +70,9 @@ namespace MiraiSozo.Options
             if (testHud != null) testHud.gameObject.SetActive(isTestHudVisible);
         }
 #endif
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetMissingCanvasNotice() => _hasReportedMissingCanvas = false;
 
         private Canvas FindExistingCanvas()
         {
@@ -78,10 +89,23 @@ namespace MiraiSozo.Options
             foreach (var canvas in FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
                 if (canvas.transform.Find("Menu Overlay") == null) continue;
-                if (candidate != null) return null;
+                if (candidate != null)
+                {
+                    Debug.LogWarning("オプション用Canvasの候補が複数あります。CanvasまたはGameManagerのMenu UIで使用する画面を指定してください。", this);
+                    return null;
+                }
                 candidate = canvas;
             }
+            if (candidate == null) ReportMissingCanvas();
             return candidate;
+        }
+
+        private void ReportMissingCanvas()
+        {
+            if (_hasReportedMissingCanvas) return;
+            _hasReportedMissingCanvas = true;
+            // タイトルなどオプションを使わないシーンでも出るため、エラーではなく案内として1回だけ出す。
+            Debug.Log("オプション用Canvasが見つかりません。このシーンではオプションメニューを開けません。", this);
         }
 
         private void SetTestHudVisible(bool visible)
@@ -95,8 +119,14 @@ namespace MiraiSozo.Options
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
             _options = GetComponent<GameOptions>();
-            if (TryInitializeView()) EnsureEventSystem();
+            RefreshSceneView();
             SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private void RefreshSceneView()
+        {
+            if (TryInitializeView()) EnsureEventSystem();
+            else if (_ownedEventSystem != null) _ownedEventSystem.gameObject.SetActive(false);
         }
 
         private bool TryInitializeView()
@@ -104,11 +134,8 @@ namespace MiraiSozo.Options
             var canvas = _canvas != null ? _canvas : FindExistingCanvas();
             if (canvas != null && canvas == BoundCanvas) return true;
             UnwireControls();
-            if (canvas == null)
-            {
-                Debug.LogError("オプション用Canvasを特定できません。CanvasまたはGameManagerのMenu UIに配置済みの画面を設定してください。", this);
-                return false;
-            }
+            // オプションを使わないシーンにはCanvasを配置しない。
+            if (canvas == null) return false;
             if (!CacheViews(canvas)) return false;
             ApplyFont(canvas);
             SetTestHudVisible(_showTestHud);
@@ -124,21 +151,109 @@ namespace MiraiSozo.Options
         {
             _views.Clear();
             foreach (var view in canvas.GetComponentsInChildren<Transform>(true)) _views[view.name] = view;
-            foreach (string name in new[] { "Menu Overlay", "Pause Panel", "Options Panel", "Confirmation" })
-            {
-                if (_views.ContainsKey(name)) continue;
-                Debug.LogError("オプション用Canvasに必要なUIがありません: " + name, this);
-                return false;
-            }
+            if (!ValidateRequiredViews(canvas)) return false;
             _overlay = GetView("Menu Overlay").gameObject;
             _pause = GetView("Pause Panel").gameObject;
             _settings = GetView("Options Panel").gameObject;
             _confirmation = GetView("Confirmation").gameObject;
             var testHud = canvas.transform.Find("Test HUD");
             _testHud = testHud != null ? testHud.gameObject : null;
-            _pauseStatus = GetView<Text>("Pause Status");
             _pauseGroup = GetOrAddCanvasGroup(_pause);
             _settingsGroup = GetOrAddCanvasGroup(_settings);
+            _menuGroup = GetOrAddCanvasGroup(_overlay);
+            _menuAnimation = _overlay.GetComponent<OptionMenuAnimation>();
+            OptionSoftStyle.ApplyPanel((RectTransform)_pause.transform, true);
+            OptionSoftStyle.ApplyPanel((RectTransform)_settings.transform, false);
+            var dialog = FindConfirmationDialog();
+            OptionSoftStyle.ApplyPanel(dialog, true);
+            _dialogAnimation = OptionDialogAnimation.Attach(dialog);
+            OptionAmbientSonar.Attach((RectTransform)_pause.transform, fromLeft: false);
+            OptionAmbientSonar.Attach((RectTransform)_settings.transform, fromLeft: true);
+            _description = OptionDescriptionWindow.Create((RectTransform)_pause.transform,
+                () => _menuAnimation != null && _menuAnimation.IsBusy, () => GetSound().PlayDescription());
+            BindDescriptions();
+            // 初めて開いたときに音の読み込みで遅れないよう、接続時に準備しておく。
+            GetSound();
+            OptionInputMode.Attach(_overlay, GetActivePanel, () => IsRebinding || IsSwapPending);
+            return true;
+        }
+
+        // 確認画面の中で、メッセージとボタンをまとめている枠（なければ確認画面そのもの）。
+        private RectTransform FindConfirmationDialog()
+        {
+            var root = _confirmation.transform;
+            var message = GetView("Confirm Message");
+            var container = message;
+            while (container.parent != null && container.parent != root) container = container.parent;
+            bool holdsButtons = GetView("Confirm Accept").IsChildOf(container) && GetView("Confirm Cancel").IsChildOf(container);
+            bool isFrame = container != message && holdsButtons && container.GetComponent<Graphic>() != null;
+            return (RectTransform)(isFrame ? container : root);
+        }
+
+        // キー操作を始めたときに一番上の項目を選ぶ範囲。
+        private Transform GetActivePanel()
+        {
+            if (_confirmation.activeSelf) return _confirmation.transform;
+            return _settings.activeSelf ? _settings.transform : _pause.transform;
+        }
+
+        // マウスを乗せたときに右側へ表示する説明。見出しにはボタンの表示名を使う。
+        private void BindDescriptions()
+        {
+            _description.Bind(GetView<Button>("Resume"), "メニューを閉じて、中断したところからゲームを再開します。");
+            _description.Bind(GetView<Button>("Return Title"), "ゲームを中断して、タイトル画面に戻ります。");
+            _description.Bind(GetView<Button>("Return Stage"), "ゲームを中断して、ステージセレクト画面に戻ります。");
+            _description.Bind(GetView<Button>("Open Options"), "ゲーム内の音量やカメラ、キー操作などを変えられます。");
+            _description.Bind(GetView<Button>("Quit"), "ゲームを終了します。");
+        }
+
+        private bool ValidateRequiredViews(Canvas canvas)
+        {
+            return RequireViews<Transform>(canvas, "Menu Overlay", "Pause Panel", "Options Panel", "Confirmation")
+                && RequireViews<Button>(canvas, "Resume", "Open Options", "Back", "Return Title", "Return Stage",
+                    "Quit", "Reset Tab", "Confirm Cancel", "Confirm Accept", "FPS Previous", "FPS Next", "Preview Shake")
+                && RequireViews<Text>(canvas, "Option Status", "FPS Value", "Confirm Message", "Confirm Accept Text")
+                && RequireViews<Toggle>(canvas, "Invert X", "Invert Y", "Aim Assist")
+                && RequireViews<GridLayoutGroup>(canvas, "Binding Content")
+                && ValidateTabs(canvas)
+                && ValidateSliders(canvas)
+                && ValidateAudioPreviews(canvas);
+        }
+
+        private bool ValidateTabs(Canvas canvas)
+        {
+            for (int tab = 0; tab < OptionMenuLayout.TabCount; tab++)
+            {
+                string name = "Tab " + tab;
+                if (!RequireViews<Button>(canvas, name) || !RequireViews<Image>(canvas, name)
+                    || !RequireViews<Text>(canvas, name + " Text") || !RequireViews<Transform>(canvas, "Page " + tab))
+                    return false;
+            }
+            return true;
+        }
+
+        private bool ValidateSliders(Canvas canvas)
+        {
+            foreach (string name in new[] { "Brightness", "FOV", "Sensitivity X", "Sensitivity Y", "Shake Reduction", "Master", "SE", "BGM", "Voice" })
+                if (!RequireViews<Slider>(canvas, name) || !RequireViews<Text>(canvas, name + " Value")) return false;
+            return true;
+        }
+
+        private bool ValidateAudioPreviews(Canvas canvas)
+        {
+            foreach (string name in PreviewNames)
+                if (!RequireViews<Button>(canvas, "Preview " + name)) return false;
+            return true;
+        }
+
+        private bool RequireViews<T>(Canvas canvas, params string[] names) where T : Component
+        {
+            foreach (string name in names)
+            {
+                if (_views.TryGetValue(name, out var view) && view.TryGetComponent<T>(out _)) continue;
+                Debug.LogError($"オプション用Canvasの「{name}」に必要なUIコンポーネント（{typeof(T).Name}）がありません。", canvas);
+                return false;
+            }
             return true;
         }
 
@@ -150,7 +265,7 @@ namespace MiraiSozo.Options
 
         private void Update()
         {
-            if (!IsOpen || GameManager.Actions == null) return;
+            if (!IsOpen || IsClosing || GameManager.Actions == null) return;
             // ESC/StartのPauseはGameManagerが処理する。同じ入力で二段階戻らないよう除外する。
             if (GameManager.Actions.UI.Cancel.triggered && !GameManager.Actions.All.Pause.triggered) HandlePause();
         }
@@ -158,7 +273,7 @@ namespace MiraiSozo.Options
         private void ApplyFont(Canvas canvas)
         {
             if (_font == null && _runtimeFont == null)
-                _runtimeFont = Font.CreateDynamicFontFromOSFont(new[] { "Yu Gothic UI", "Meiryo", "Hiragino Sans", "Noto Sans CJK JP", "Arial" }, 22);
+                _runtimeFont = Font.CreateDynamicFontFromOSFont(new[] { "Yu Gothic UI", "Meiryo", "Hiragino Sans", "Noto Sans CJK JP", "Arial" }, RuntimeFontSize);
             foreach (var text in canvas.GetComponentsInChildren<Text>(true)) text.font = _font != null ? _font : _runtimeFont;
         }
 
@@ -185,7 +300,7 @@ namespace MiraiSozo.Options
             CancelRebind();
             CloseMenu();
             StopPreviews();
-            if (TryInitializeView()) EnsureEventSystem();
+            RefreshSceneView();
         }
 
         private Transform GetView(string name) => _views[name];
@@ -202,7 +317,7 @@ namespace MiraiSozo.Options
         {
             foreach (var remove in _removeViewListeners) remove();
             _removeViewListeners.Clear();
-            foreach (var button in _bindingButtons) if (button != null) button.onClick.RemoveAllListeners();
+            foreach (var cell in _bindingButtons) if (cell.Button != null) cell.Button.onClick.RemoveAllListeners();
             _bindingButtons.Clear();
             BoundCanvas = null;
         }
@@ -226,8 +341,8 @@ namespace MiraiSozo.Options
             });
             BindClick("Open Options", OpenOptions);
             BindClick("Back", Back);
-            BindClick("Return Title", () => GetView<Text>("Pause Status").text = "タイトルへの接続は後日追加予定です。");
-            BindClick("Return Stage", () => GetView<Text>("Pause Status").text = "ステージセレクトへの接続は後日追加予定です。");
+            BindClick("Return Title", () => ShowConfirmation("タイトル画面へ戻る機能は準備中です。", "閉じる", null));
+            BindClick("Return Stage", () => ShowConfirmation("ステージセレクトへ戻る機能は準備中です。", "閉じる", null));
             BindClick("Quit", () => ShowConfirmation("ゲームを閉じますか？", "ゲームを閉じる", Quit));
             BindClick("Reset Tab", () => ShowConfirmation("このタブの設定を初期状態に戻しますか？", "初期化する", ResetActiveTab));
             BindClick("Confirm Cancel", DismissConfirmation);
@@ -247,7 +362,7 @@ namespace MiraiSozo.Options
             for (int i = 0; i < OptionMenuLayout.TabCount; i++)
             {
                 int tab = i;
-                BindClick("Tab " + i, () => SelectTab(tab));
+                BindClick("Tab " + i, () => SwitchTab(tab));
             }
         }
 
@@ -331,7 +446,7 @@ namespace MiraiSozo.Options
 
         public void HandlePause()
         {
-            if (IsRebinding || Time.frameCount <= _ignorePauseThroughFrame) return;
+            if (IsRebinding || IsClosing || Time.frameCount <= _ignorePauseThroughFrame) return;
             if (!IsOpen) OpenMenu();
             else Back();
         }
@@ -342,35 +457,76 @@ namespace MiraiSozo.Options
             BoundCanvas.gameObject.SetActive(true);
             SetTestHudVisible(false);
             _overlay.SetActive(true);
+            _menuGroup.alpha = 1f;
+            _menuGroup.interactable = true;
+            _menuGroup.blocksRaycasts = true;
             _pause.SetActive(true);
             _settings.SetActive(false);
             _confirmation.SetActive(false);
             SetDialogInteraction(true);
-            _pauseStatus.text = "ESC  ゲームに戻る";
-            SelectControl("Open Options");
+            SelectControl("Resume");
+            if (_menuAnimation != null) _menuAnimation.PlayOpening((RectTransform)_pause.transform);
+            GetSound().PlayWindow();
         }
 
         public void OpenOptions()
         {
-            if (BoundCanvas == null) return;
+            if (BoundCanvas == null || IsClosing || IsSwapPending) return;
+            // 閉じた状態から直接開く場合は、OpenMenuの音だけを鳴らす。
             if (!IsOpen) OpenMenu();
+            else GetSound().PlayWindow();
+            if (_menuAnimation == null || !_pause.activeSelf)
+            {
+                if (_menuAnimation != null) _menuAnimation.StopOpening();
+                ShowOptionsPanel();
+                return;
+            }
+            // 演出の途中（説明ウィンドウがオプション画面の大きさになった瞬間）にShowOptionsPanelが呼ばれる。
+            _menuAnimation.PlayOptionsOpening((RectTransform)_pause.transform, (RectTransform)_settings.transform, _description, ShowOptionsPanel);
+        }
+
+        private bool IsSwapPending => _menuAnimation != null && _menuAnimation.IsSwapPending;
+
+        private void ShowPausePanel()
+        {
+            _settings.SetActive(false);
+            _pause.SetActive(true);
+            SelectControl("Open Options");
+        }
+
+        private void ShowOptionsPanel()
+        {
             _pause.SetActive(false);
             _settings.SetActive(true);
             SelectTab(_tab);
         }
 
+        // ボタンからのタブ切り替え。実際にタブが変わったときだけ音を鳴らす。
+        private void SwitchTab(int tab)
+        {
+            int previous = _tab;
+            SelectTab(tab);
+            if (_tab != previous) GetSound().PlayTabSwitch();
+        }
+
+        // メニューを閉じた後も鳴り終わるよう、常に有効なこのオブジェクトの下に作る。
+        private OptionMenuSound GetSound() => _sound != null ? _sound : (_sound = OptionMenuSound.Create(transform));
+
         public void SelectTab(int tab)
         {
             bool isOpen = IsOpen;
-            if (IsRebinding || (isOpen && _confirmation.activeSelf)) return;
+            if (IsRebinding || IsClosing || (isOpen && _confirmation.activeSelf)) return;
             _tab = Mathf.Clamp(tab, OptionMenuLayout.SystemTab, OptionMenuLayout.ControlsTab);
             // 閉じている間は選択だけを記憶し、次に開いたときに画面へ反映する。
             if (!isOpen) return;
             for (int i = 0; i < OptionMenuLayout.TabCount; i++)
             {
                 GetView("Page " + i).gameObject.SetActive(i == _tab);
-                GetView<Image>("Tab " + i).color = i == _tab ? OptionMenuLayout.Accent : OptionMenuLayout.Surface;
-                GetView<Text>("Tab " + i + " Text").color = i == _tab ? OptionMenuLayout.Background : Color.white;
+                var button = GetView<Button>("Tab " + i);
+                var colors = button.colors;
+                colors.normalColor = i == _tab ? OptionMenuLayout.AccentSurface : OptionMenuLayout.Surface;
+                button.colors = colors;
+                GetView<Text>("Tab " + i + " Text").color = OptionMenuLayout.TextColor;
             }
             StopPreviews();
             Refresh();
@@ -382,6 +538,8 @@ namespace MiraiSozo.Options
 
         public void Back()
         {
+            // 画面を入れ替える前の演出中は、戻る操作を受け付けない。
+            if (IsClosing || IsSwapPending) return;
             // ポーズメニューのタブ戻り関数（Actions.UI.Cancelで呼び出し予定）
             if (IsRebinding) { CancelRebind(); return; }
             if (_confirmation.activeSelf) { DismissConfirmation(); return; }
@@ -389,9 +547,10 @@ namespace MiraiSozo.Options
             {
                 StopPreviews();
                 _options.Save();
-                _settings.SetActive(false);
-                _pause.SetActive(true);
-                SelectControl("Open Options");
+                GetSound().PlayWindow();
+                // 演出の途中（オプション画面を畳みきった瞬間）にShowPausePanelが呼ばれる。
+                if (_menuAnimation != null) _menuAnimation.PlayOptionsClosing((RectTransform)_settings.transform, (RectTransform)_pause.transform, ShowPausePanel);
+                else ShowPausePanel();
             }
             else
             {
@@ -406,10 +565,31 @@ namespace MiraiSozo.Options
             }
         }
 
+        public void RequestClose(Action onClosed)
+        {
+            if (IsClosing) return;
+            if (!IsOpen) { onClosed?.Invoke(); return; }
+            GetSound().PlayWindow();
+            CancelRebind();
+            StopPreviews();
+            _menuGroup.interactable = false;
+            if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
+            Action complete = () =>
+            {
+                try { CloseMenu(); }
+                finally { onClosed?.Invoke(); }
+            };
+            if (_description != null) _description.Hide();
+            var visiblePanel = (RectTransform)(_settings.activeSelf ? _settings : _pause).transform;
+            if (_menuAnimation != null) _menuAnimation.PlayClosing(complete, visiblePanel);
+            else complete();
+        }
+
         public void CloseMenu()
         {
             // ポーズメニューの閉じる関数（Actions.All.Pauseで呼び出し予定）
             if (!IsOpen) return;
+            if (IsClosing) { _menuAnimation.CompleteClosing(); return; }
             try
             {
                 CancelRebind();
@@ -419,6 +599,7 @@ namespace MiraiSozo.Options
             finally
             {
                 _confirmation.SetActive(false);
+                if (_description != null) _description.HideImmediate();
                 SetDialogInteraction(true);
                 _confirmAction = null;
                 _confirmationOrigin = null;
@@ -466,15 +647,26 @@ namespace MiraiSozo.Options
             GetView<Text>("Confirm Message").text = text;
             GetView<Text>("Confirm Accept Text").text = caption;
             _confirmation.SetActive(true);
+            if (_dialogAnimation != null) _dialogAnimation.PlayOpen();
+            GetSound().PlayWindow();
             SelectControl("Confirm Cancel");
         }
 
         private void DismissConfirmation()
         {
+            if (_dialogAnimation != null && _dialogAnimation.IsClosing) return;
+            _confirmAction = null;
+            GetSound().PlayWindow();
+            var origin = _confirmationOrigin;
+            if (_dialogAnimation != null) _dialogAnimation.PlayClose(() => FinishDismiss(origin));
+            else FinishDismiss(origin);
+        }
+
+        private void FinishDismiss(GameObject origin)
+        {
             _confirmation.SetActive(false);
             SetDialogInteraction(true);
-            _confirmAction = null;
-            if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(_confirmationOrigin);
+            if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(origin);
         }
 
         private void SetDialogInteraction(bool interactable)
@@ -495,23 +687,27 @@ namespace MiraiSozo.Options
 
         private void BuildBindingRows()
         {
-            var content = GetView("Binding Content");
+            var grid = GetView<GridLayoutGroup>("Binding Content");
+            var content = (RectTransform)grid.transform;
             foreach (Transform child in content) { child.gameObject.SetActive(false); Destroy(child.gameObject); }
             _bindingButtons.Clear();
             var entries = OptionRebinding.GetEntries(GameManager.Actions.Player.Get());
-            for (int i = 0; i < entries.Count; i++)
-            {
-                var entry = entries[i];
-                string display = entry.Action.GetBindingDisplayString(entry.Index);
-                var button = OptionMenuLayout.CreateButton("Binding " + i, content, entry.Label + "     [ " + display + " ]", Vector2.zero, new Vector2(OptionMenuLayout.BindingWidth, OptionMenuLayout.BindingHeight));
-                button.gameObject.AddComponent<LayoutElement>().preferredHeight = OptionMenuLayout.BindingHeight;
-                button.GetComponentInChildren<Text>().font = _font != null ? _font : _runtimeFont;
-                button.GetComponentInChildren<Text>().fontSize = OptionMenuLayout.BindingFontSize;
-                button.onClick.AddListener(() => BeginRebind(entry, button));
-                _bindingButtons.Add(button);
-            }
-            Canvas.ForceUpdateCanvases();
-            GetView<ScrollRect>("Binding Viewport").verticalNormalizedPosition = 1f;
+            int slotCount = Mathf.Max(OptionMenuLayout.MinimumBindingSlots, entries.Count);
+            var font = _font != null ? _font : _runtimeFont;
+            OptionMenuLayout.FitBindingGrid(grid, slotCount);
+            foreach (var entry in entries) AddBindingButton(content, entry, font);
+            for (int index = entries.Count; index < slotCount; index++)
+                OptionMenuLayout.CreateReservedBindingSlot(content, font);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(content);
+        }
+
+        private void AddBindingButton(Transform content, OptionRebinding.Entry entry, Font font)
+        {
+            string display = entry.Action.GetBindingDisplayString(entry.Index);
+            var button = OptionMenuLayout.CreateBindingButton(content, entry.Label, display, font, out var keyLabel);
+            button.name = "Binding " + _bindingButtons.Count;
+            button.onClick.AddListener(() => BeginRebind(entry, button));
+            _bindingButtons.Add((button, keyLabel));
         }
 
         public void BeginRebind(OptionRebinding.Entry entry, Button button = null)
@@ -519,7 +715,8 @@ namespace MiraiSozo.Options
             if (IsRebinding || !IsOpen || !_settings.activeSelf) return;
             _ignorePauseThroughFrame = Time.frameCount + 1;
             foreach (var selectable in _settings.GetComponentsInChildren<Selectable>(true)) selectable.interactable = false;
-            SetStatus("「" + entry.Label + "」：キーを押してください（ESCでキャンセル／10秒で終了）");
+            SetStatus("「" + entry.Label + "」：キーまたはマウスボタンを押してください（ESCでキャンセル／"
+                + Mathf.RoundToInt(RebindTimeoutSeconds) + "秒で自動キャンセル）");
             bool applied = false;
             string result = "キー変更をキャンセルしました。";
             _rebind = entry.Action.PerformInteractiveRebinding(entry.Index)
@@ -557,7 +754,7 @@ namespace MiraiSozo.Options
             // コールバックの最中にボタンを破棄せず、表示文字列だけを更新する。
             var entries = OptionRebinding.GetEntries(GameManager.Actions.Player.Get());
             for (int i = 0; i < Mathf.Min(entries.Count, _bindingButtons.Count); i++)
-                _bindingButtons[i].GetComponentInChildren<Text>().text = entries[i].Label + "     [ " + entries[i].Action.GetBindingDisplayString(entries[i].Index) + " ]";
+                _bindingButtons[i].KeyLabel.text = entries[i].Action.GetBindingDisplayString(entries[i].Index);
             SetStatus(message);
             if (EventSystem.current != null && origin != null) EventSystem.current.SetSelectedGameObject(origin.gameObject);
         }

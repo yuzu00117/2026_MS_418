@@ -4,7 +4,7 @@ namespace MiraiSozo.Options
 {
     public class OptionCameraBehavior : MonoBehaviour
     {
-        private InputSystem_Actions _actions => OptionGameManager.Actions;
+        private InputSystem_Actions _actions => GameManager.Actions;
         private float _yaw;
         private float _pitch;
 
@@ -51,7 +51,7 @@ namespace MiraiSozo.Options
 
         private void LateUpdate()
         {
-            if (_target == null || _actions == null || (OptionGameManager.Instance != null && OptionGameManager.Instance.IsPaused)) return;
+            if (_target == null || _actions == null || (GameManager.Instance != null && GameManager.Instance.IsPaused)) return;
             Vector2 lookInput = _actions.Player.Look.ReadValue<Vector2>();
             _yaw += lookInput.x * _sensitivityX * (_invertX ? -1f : 1f);
             float verticalDelta = lookInput.y * _sensitivityY * (_invertY ? 1f : -1f);

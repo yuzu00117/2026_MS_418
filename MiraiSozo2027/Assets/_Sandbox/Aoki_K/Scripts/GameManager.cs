@@ -153,6 +153,18 @@ public class GameManager : MonoBehaviour
     public void ResumePause()
     {
         if(!_isPaused || Actions == null) return;
+        var menu = InGameOptionMenu.Instance;
+        if (menu != null && menu.IsOpen)
+        {
+            menu.RequestClose(CompleteResumePause);
+            return;
+        }
+        CompleteResumePause();
+    }
+
+    private void CompleteResumePause()
+    {
+        if (!_isPaused || Actions == null) return;
         _isPaused = false;
         Time.timeScale = _resumeTimeScale;
         Cursor.lockState = _resumeCursorLock;

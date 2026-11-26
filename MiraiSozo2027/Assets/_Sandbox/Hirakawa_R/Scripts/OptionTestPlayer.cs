@@ -25,16 +25,17 @@ namespace MiraiSozo.Options
 
         private void Update()
         {
-            if (OptionGameManager.Actions == null || OptionGameManager.Instance.IsPaused) return;
+            var actions = GameManager.Actions;
+            if (actions == null || (GameManager.Instance != null && GameManager.Instance.IsPaused)) return;
             if (_cameraTransform == null) return;
-            Vector2 input = OptionGameManager.Actions.Player.Move.ReadValue<Vector2>();
+            Vector2 input = actions.Player.Move.ReadValue<Vector2>();
             Vector3 forward = Vector3.ProjectOnPlane(_cameraTransform.forward, Vector3.up).normalized;
             Vector3 right = Vector3.ProjectOnPlane(_cameraTransform.right, Vector3.up).normalized;
             var movement = Vector3.ClampMagnitude(forward * input.y + right * input.x, 1f);
             if (_controller.isGrounded)
             {
                 _verticalSpeed = _groundedSpeed;
-                if (OptionGameManager.Actions.Player.Jump.WasPressedThisFrame()) _verticalSpeed = _jumpSpeed;
+                if (actions.Player.Jump.WasPressedThisFrame()) _verticalSpeed = _jumpSpeed;
             }
             _verticalSpeed += Physics.gravity.y * Time.deltaTime;
             _controller.Move((movement * _moveSpeed + Vector3.up * _verticalSpeed) * Time.deltaTime);
