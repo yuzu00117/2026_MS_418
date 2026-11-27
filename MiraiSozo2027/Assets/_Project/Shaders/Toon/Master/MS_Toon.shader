@@ -10,7 +10,10 @@
 //   ワールド空間で法線方向に押し出すだけの単純な方式。太さはワールド上の長さで、遠いほど細く見える(拡大率には影響されない)。
 //   押し出し方向は自動で選ぶ: 焼き込みスムース法線(UV3, ToonSmoothNormalBaker)があればそれ、無ければモデル中心からの向き。
 // - オブジェクト下側ほど暗くする高さグラデーション(Gradient 項目)を持つ。
-// - 未対応(意図的): ライトマップ(焼き込みGI)、透過、アルファテスト。必要になったら追加する。
+// - 透過は「スクリプトから一時的に半透明にする」用途だけ対応する(例: CameraBehavior の近距離フェード)。
+//   URP 標準 Lit と同じ名前の隠し項目(_Surface / _SrcBlend / _DstBlend / _ZWrite など)を持つので、
+//   Lit 向けの切り替え処理がそのまま効く。普段は不透明の値なので見た目は変わらない。
+// - 未対応(意図的): ライトマップ(焼き込みGI)、インスペクタからの透過設定、アルファテスト。必要になったら追加する。
 Shader "MS/Toon"
 {
     Properties
@@ -61,6 +64,14 @@ Shader "MS/Toon"
         [Toggle] _UseGlobalStyle ("Use Global Style", Float) = 1
         [Toggle(_TOON_LITE)] _Lite ("Lite", Float) = 0
         [Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull", Float) = 2
+
+        // スクリプトから半透明に切り替えるための隠し項目。名前は URP 標準 Lit に合わせている。
+        [HideInInspector] _Surface ("__surface", Float) = 0
+        [HideInInspector] _SrcBlend ("__src", Float) = 1
+        [HideInInspector] _DstBlend ("__dst", Float) = 0
+        [HideInInspector] _SrcBlendAlpha ("__srcA", Float) = 1
+        [HideInInspector] _DstBlendAlpha ("__dstA", Float) = 0
+        [HideInInspector] _ZWrite ("__zw", Float) = 1
     }
 
     SubShader
@@ -105,7 +116,8 @@ Shader "MS/Toon"
             Name "ForwardLit"
             Tags { "LightMode" = "UniversalForward" }
 
-            ZWrite On
+            Blend [_SrcBlend] [_DstBlend], [_SrcBlendAlpha] [_DstBlendAlpha]
+            ZWrite [_ZWrite]
             Cull [_Cull]
 
             HLSLPROGRAM
@@ -288,7 +300,8 @@ Shader "MS/Toon"
                 #endif
 
                 color = MixFog(color, input.fogFactor);
-                return half4(color, 1.0);
+                // 不透明時は Blend One Zero なので値は使われない。半透明時だけ効く
+                return half4(color, baseSample.a * _BaseColor.a);
             }
             ENDHLSL
         }
@@ -300,7 +313,9 @@ Shader "MS/Toon"
             Tags { "LightMode" = "SRPDefaultUnlit" }
 
             Cull Front
-            ZWrite On
+            // 本体と一緒に半透明にしないと、輪郭線だけが濃く残る
+            Blend [_SrcBlend] [_DstBlend], [_SrcBlendAlpha] [_DstBlendAlpha]
+            ZWrite [_ZWrite]
 
             HLSLPROGRAM
             #pragma target 3.5
@@ -369,7 +384,7 @@ Shader "MS/Toon"
 
                 // 色は全ピクセル共通の値なので Fragment で解決する(Varyings を増やさない)
                 float3 color = MixFog(ResolveMaterialOutline().color, input.fogFactor);
-                return half4(color, 1.0);
+                return half4(color, _BaseColor.a);
             }
             ENDHLSL
         }
