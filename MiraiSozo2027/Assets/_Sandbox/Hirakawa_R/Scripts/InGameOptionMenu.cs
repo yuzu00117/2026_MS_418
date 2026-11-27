@@ -70,6 +70,8 @@ namespace MiraiSozo.Options
             _confirmation = GetView("Confirmation").gameObject;
             GetView("Test HUD").gameObject.SetActive(_showTestHud);
             _overlay.SetActive(false);
+            // パッド操作で選択中の項目が分かるように枠を出す（プレハブに保存済みのUIにも効くよう実行時に付ける）
+            if (_overlay.GetComponent<OptionSelectionHighlight>() == null) _overlay.AddComponent<OptionSelectionHighlight>();
             EnsureEventSystem();
             WireControls();
             CreateAudioPreviews();
