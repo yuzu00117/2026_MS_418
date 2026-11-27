@@ -128,7 +128,6 @@ namespace Aura.Cameras
         public float Yaw => _yaw;
         /// <summary>ADS中か</summary>
         public bool IsAds => _isAds;
-
         private const float MinOffsetDistance = 0.0001f; // フェード開始距離と終了距離の最小ギャップ
         private const float MinFadeDistanceGap = 0.01f; // フェード開始距離と終了距離の最小ギャップ
         private const float InvisibleAlphaThreshold = 0.001f; // 完全透明とみなすアルファ値の閾値
@@ -264,11 +263,6 @@ namespace Aura.Cameras
                 _pitch += verticalDelta;
                 _adsPitchOffset = Mathf.MoveTowards(_adsPitchOffset, 0.0f, _adsPitchReturnSpeed * Time.deltaTime);
             }
-            if (_adsPivot != null)
-            {
-                // ADS位置もpivotの子なので、カメラの位置を決める前に傾けておく
-                _adsPivot.localRotation = Quaternion.Euler(_adsPitchOffset, 0.0f, 0.0f);
-            }
             // 3. 上下角度を制限（地面への潜り込みや真上反転を防止）
             _pitch = Mathf.Clamp(_pitch, _minPitch, _maxPitch);
             // 4. 回転クォータニオンの生成
@@ -357,6 +351,43 @@ namespace Aura.Cameras
             {
                 ApplyAdsAnchor(targetFocusPosition);
             }
+
+            // 10. プレイヤーの見た目（pivot）の向き
+            if (_adsPivot != null)
+            {
+                UpdateAdsPivot(_isAds && hasAdsAnchor && !isFirstPerson);
+            }
+        }
+
+        /// <summary>
+        /// ADS中はpivotをカメラの左右・上下の向きに合わせる。ADS中でなければ、上下に向けた分だけを残して正面へ戻す。
+        /// </summary>
+        private void UpdateAdsPivot(bool isAiming)
+        {
+            // プレイヤー本体は物理の更新（FixedUpdate）でしか回らず、毎フレーム回るカメラより遅れてカクついて見える。
+            // ADS中は見た目（pivot）の左右を毎フレームカメラの向きに合わせ、本体の遅れを打ち消す。
+            Quaternion yawCorrection = isAiming
+                ? Quaternion.Inverse(_target.rotation) * Quaternion.Euler(0.0f, _yaw, 0.0f)
+                : Quaternion.identity;
+            _adsPivot.localRotation = yawCorrection * Quaternion.Euler(_adsPitchOffset, 0.0f, 0.0f);
+        }
+
+        // 掴んでいる物を無視する設定の時だけ、掴んでいる物を返す
+        private Transform GetIgnoredHeldTarget()
+        {
+            return (_isIgnoreHeldObject && _playerPhononkinesis != null && _playerPhononkinesis.HeldTarget != null)
+                ? _playerPhononkinesis.HeldTarget.transform
+                : null;
+        }
+
+        // プレイヤー自身・掴んでいる物・波の制御点（見えないコライダー）は、カメラの判定から除く
+        private bool IsIgnoredHit(RaycastHit hit, Transform heldTargetTransform)
+        {
+            if (hit.collider == null) return true;
+            Transform hitTransform = hit.transform;
+            if (hitTransform == _target || hitTransform.IsChildOf(_target)) return true;
+            if (heldTargetTransform != null && (hitTransform == heldTargetTransform || hitTransform.IsChildOf(heldTargetTransform))) return true;
+            return hit.collider.name.StartsWith("BeamPoint");
         }
 
         /// <summary>
@@ -364,13 +395,25 @@ namespace Aura.Cameras
         /// </summary>
         private void ApplyAdsAnchor(Vector3 targetFocusPosition)
         {
-            // プレイヤーの回転は物理の更新で少し遅れるため、プレイヤーから見たADS位置をカメラの左右の向きで置き直す
-            Quaternion yawRotation = Quaternion.Euler(0.0f, _yaw, 0.0f);
-            Quaternion targetInverse = Quaternion.Inverse(_target.rotation);
-            Vector3 adsPosition = _target.position + yawRotation * (targetInverse * (_adsAnchor.position - _target.position));
-            // pivotで傾けている時は、ADS位置の向きに上下の分がすでに入っている
-            Quaternion pitchRotation = _adsPivot != null ? Quaternion.identity : Quaternion.Euler(_adsPitchOffset, 0.0f, 0.0f);
-            Quaternion adsRotation = yawRotation * (targetInverse * _adsAnchor.rotation) * pitchRotation;
+            Vector3 adsPosition;
+            Quaternion adsRotation;
+            if (_adsPivot != null)
+            {
+                // pivotは照準の先へ向けるため、その向きでカメラを動かすとレイの向きが変わり続けて揺れる。
+                // pivotから見たADS位置を、マウスで決めた左右・上下の向きで置き直し、カメラはpivotの向きに引っ張られないようにする
+                Quaternion aimRotation = Quaternion.Euler(0.0f, _yaw, 0.0f) * Quaternion.Euler(_adsPitchOffset, 0.0f, 0.0f);
+                Quaternion pivotInverse = Quaternion.Inverse(_adsPivot.rotation);
+                adsPosition = _adsPivot.position + aimRotation * (pivotInverse * (_adsAnchor.position - _adsPivot.position));
+                adsRotation = aimRotation * (pivotInverse * _adsAnchor.rotation);
+            }
+            else
+            {
+                // プレイヤーの回転は物理の更新で少し遅れるため、プレイヤーから見たADS位置をカメラの左右の向きで置き直す
+                Quaternion yawRotation = Quaternion.Euler(0.0f, _yaw, 0.0f);
+                Quaternion targetInverse = Quaternion.Inverse(_target.rotation);
+                adsPosition = _target.position + yawRotation * (targetInverse * (_adsAnchor.position - _target.position));
+                adsRotation = yawRotation * (targetInverse * _adsAnchor.rotation) * Quaternion.Euler(_adsPitchOffset, 0.0f, 0.0f);
+            }
 
             // 寄せた先が壁の向こうにならないよう、注視点からの間に壁があれば手前で止める
             Vector3 cameraPosition = Vector3.Lerp(transform.position, adsPosition, _adsWeight);
@@ -403,25 +446,12 @@ namespace Aura.Cameras
                 QueryTriggerInteraction.Ignore
             );
 
-            Transform heldTargetTransform = (_isIgnoreHeldObject && _playerPhononkinesis != null && _playerPhononkinesis.HeldTarget != null)
-                ? _playerPhononkinesis.HeldTarget.transform
-                : null;
+            Transform heldTargetTransform = GetIgnoredHeldTarget();
 
             for (int i = 0; i < hitCount; i++)
             {
                 RaycastHit hit = _hitBuffer[i];
-                if (hit.collider == null) continue;
-
-                Transform hitTransform = hit.transform;
-
-                // プレイヤー自身およびその子オブジェクトのコライダーは除外
-                if (hitTransform == _target || hitTransform.IsChildOf(_target)) continue;
-
-                // フォノンキネシスで現在掴んでいるオブジェクトは除外
-                if (heldTargetTransform != null && (hitTransform == heldTargetTransform || hitTransform.IsChildOf(heldTargetTransform))) continue;
-
-                // 波の制御点（見えないコライダー）は除外
-                if (hit.collider.name.StartsWith("BeamPoint")) continue;
+                if (IsIgnoredHit(hit, heldTargetTransform)) continue;
 
                 if (hit.distance < closestDistance)
                 {
