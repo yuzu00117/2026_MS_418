@@ -91,7 +91,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 6c63baa8b1e8d124a8442342697ab254, type: 2}
+  - {fileID: 2100000, guid: edbb645544988aa4dbe949ad5baa2efc, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -155,6 +155,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PhononkinesisTarget
   _releaseBehavior: 0
+  _inertiaDamping: 0.5
+  _diagonalUpwardThreshold: 0.7
   _canBeGrabbed: 1
 --- !u!114 &3067783004210741885
 MonoBehaviour:

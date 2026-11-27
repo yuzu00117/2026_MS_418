@@ -68,7 +68,7 @@ namespace MS.Toon.Editor
         private const string RampMapName = "_RampMap";
         private const string UndoName = "共通設定から個別設定へ切り替え";
         private const string NoticeUsingGlobal = "共通設定を使用中です(値を変えると個別設定に切り替わります)";
-        private const string WarnNoApplier = "シーンに ToonStyleApplier が無いため、共通設定は反映されません(このマテリアルの値で描画されます)";
+        private const string WarnNoApplier = "シーンに ToonStyleApplier が無いため(通常は PF_GameManager に付いています)、共通設定は反映されません(このマテリアルの値で描画されます)";
         private const string WarnNoProfile = "ToonStyleApplier に Profile が設定されていないため、共通設定は反映されません(このマテリアルの値で描画されます)";
 
         // 共通値で置換表示するグループ。トグルと、そのトグルがオンの間に置換されるプロパティ名を束ねる

@@ -1340,6 +1340,8 @@ MonoBehaviour:
   _animDampTime: 0.1
   _cameraTransform: {fileID: 0}
   _groundChecker: {fileID: 4120551395615623928}
+  _adsPosition: {fileID: 0}
+  _aimPivot: {fileID: 0}
 --- !u!54 &2045787908689986872
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -1409,6 +1411,14 @@ MonoBehaviour:
   _settings:
     _radius: 10
     _angleDegrees: 42
+    _adsRadius: 30
+    _adsAngleDegrees: 38.6
+    _isAdsTransitionSeamless: 1
+    _adsTransitionSeconds: 0.3
+    _adsAimDistance: 100
+    _adsAimLayers:
+      serializedVersion: 2
+      m_Bits: 4294967291
     _duration: 1
     _scanMode: 0
     _pulseInterval: 2
@@ -1682,6 +1692,38 @@ MonoBehaviour:
     _eraseColor: {r: 1, g: 0.45, b: 0.08, a: 0.85}
     _boundaryColor: {r: 0.1, g: 0.8, b: 1, a: 0.32}
     _waveWidth: 0.3
+  _scanEffect:
+    _prefab: {fileID: 0}
+    _isScaledToRadius: 0
+    _baseRadius: 17
+    _isSpeedMatchedToDuration: 0
+    _baseDuration: 1.5
+    _isFacingDirection: 0
+    _isPitchFollowed: 0
+  _startEffect:
+    _prefab: {fileID: 0}
+    _isScaledToRadius: 0
+    _baseRadius: 17
+    _isSpeedMatchedToDuration: 0
+    _baseDuration: 1.5
+    _isFacingDirection: 0
+    _isPitchFollowed: 0
+  _adsScanEffect:
+    _prefab: {fileID: 0}
+    _isScaledToRadius: 0
+    _baseRadius: 17
+    _isSpeedMatchedToDuration: 0
+    _baseDuration: 1.5
+    _isFacingDirection: 0
+    _isPitchFollowed: 0
+  _adsStartEffect:
+    _prefab: {fileID: 0}
+    _isScaledToRadius: 0
+    _baseRadius: 17
+    _isSpeedMatchedToDuration: 0
+    _baseDuration: 1.5
+    _isFacingDirection: 0
+    _isPitchFollowed: 0
   _isGizmoVisible: 1
   _onStateChanged:
     m_PersistentCalls:
@@ -1999,7 +2041,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -876546973899608171, guid: 1b0911110c48fc047b9d0c5678322118, type: 3}
+  - {fileID: 2100000, guid: 2463d829260ed5e40bce025fa0208fba, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
