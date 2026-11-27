@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 using MiraiSozo.Options;
 using Aura.Entities;
 using Aura.PlayerControl;
+using Aura.UI;
 
 namespace Aura.Core
 {
@@ -19,6 +20,12 @@ namespace Aura.Core
         [Header("Player")]
         [Tooltip("プレイヤーのプレハブ")]
         [SerializeField] private GameObject _playerPrefab;
+
+        [Header("Player UI")]
+        [Tooltip("プレイヤーUIのプレハブ (PF_UICanvas)")]
+        [SerializeField] private GameObject _playerUI;
+
+        private GameObject _currentPlayerUI;
 
         private bool _isPaused = false;
 
@@ -87,6 +94,7 @@ namespace Aura.Core
             }
             if (CurrentPlayer != null)
             {
+                TrySpawnPlayerUI();
                 OnPlayerSpawned?.Invoke(CurrentPlayer);
                 return;
             }
@@ -106,8 +114,30 @@ namespace Aura.Core
             if (playerObj.TryGetComponent(out Player player))
             {
                 CurrentPlayer = player;
+                TrySpawnPlayerUI();
                 OnPlayerSpawned?.Invoke(player);
             }
+        }
+
+        private void TrySpawnPlayerUI()
+        {
+            // すでに生成済み、またはシーン内に直接配置されている場合は重複生成しない
+            if (_currentPlayerUI != null) return;
+
+            PlayerLifeUI existingUI = FindFirstObjectByType<PlayerLifeUI>();
+            if (existingUI != null)
+            {
+                _currentPlayerUI = existingUI.transform.root.gameObject;
+                return;
+            }
+
+            if (_playerUI == null)
+            {
+                Debug.LogWarning("PlayerUI (PF_UICanvas) が設定されていません");
+                return;
+            }
+
+            _currentPlayerUI = Instantiate(_playerUI);
         }
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
