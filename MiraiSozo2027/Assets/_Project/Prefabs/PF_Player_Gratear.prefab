@@ -313,6 +313,7 @@ GameObject:
   - component: {fileID: 6055651994017012682}
   - component: {fileID: -5704771431086666332}
   - component: {fileID: 3380333724038634786}
+  - component: {fileID: 7415926535897932384}
   m_Layer: 0
   m_Name: PF_Player_Gratear
   m_TagString: Untagged
@@ -1109,3 +1110,20 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2234447185d44e02abb0f1e39ef78115, type: 3}
   m_PrefabInstance: {fileID: 7034042163618339740}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7415926535897932384
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8923635859648306710}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 302471f3e0e046ff8edf06e12997acd2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Aura.PlayerControl.PlayerAbilityLock
+  _exclusions:
+  - _first: 0
+    _second: 1
+  - _first: 0
+    _second: 2

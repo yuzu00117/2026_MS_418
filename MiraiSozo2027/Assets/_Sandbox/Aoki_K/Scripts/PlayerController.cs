@@ -42,6 +42,7 @@ namespace Aura.PlayerControl
         private EchoController _echoController;
         private Phononkinesis _phononkinesis;
         private CameraBehavior _cameraBehavior;
+        private PlayerAbilityLock _abilityLock;
 
         private InputSystem_Actions _actions => GameManager.Actions;
 
@@ -69,6 +70,13 @@ namespace Aura.PlayerControl
             _waveEmitter = GetComponent<WaveEmitter>();
             _echoController = GetComponent<EchoController>();
             _phononkinesis = GetComponent<Phononkinesis>();
+            _abilityLock = GetComponent<PlayerAbilityLock>();
+        }
+
+        // 同時に使えない能力を使っている間は、その能力を始めさせない。PlayerAbilityLock が無ければ制限しない
+        private bool CanUseAbility(PlayerAbility ability)
+        {
+            return _abilityLock == null || _abilityLock.CanUse(ability);
         }
 
         private void OnEnable()
@@ -189,7 +197,9 @@ namespace Aura.PlayerControl
             // フォノンキネシス
             if (_phononkinesis != null)
             {
-                if (_actions.Player.LayoutMode.triggered)
+                // 終わらせる操作はいつでも受け付け、始める操作だけ同時に使えない能力の使用中は無視する
+                bool canToggleKinesis = _phononkinesis.IsActive || CanUseAbility(PlayerAbility.Phononkinesis);
+                if (_actions.Player.LayoutMode.triggered && canToggleKinesis)
                 {
                     _phononkinesis.TogglePhononkinesis();
                 }
@@ -200,9 +210,11 @@ namespace Aura.PlayerControl
             // 波照射
             if (_waveEmitter != null)
             {
-                if (isKinesisActive)
+                // 撃っている最中でなければ、同時に使えない能力（エコーなど）の使用中は撃ち始めさせない
+                bool isWaveBlocked = !_waveEmitter.IsFiring && !CanUseAbility(PlayerAbility.Wave);
+                if (isKinesisActive || isWaveBlocked)
                 {
-                    // サーチ中・ホールド中は発射・切り替えを無効化し、発射ボタン離し待ちにする
+                    // サーチ中・ホールド中や、同時に使えない能力の使用中は発射・切り替えを無効化し、発射ボタン離し待ちにする
                     _isWaitingFireRelease = true;
                     _waveEmitter.SetTriggerHeld(false);
                 }
@@ -236,7 +248,9 @@ namespace Aura.PlayerControl
             {
                 // ADS中かどうかでエコーのエフェクトを切り替えるため、ON/OFFの操作より先に伝える
                 _echoController.IsAiming = _isAiming;
-                if (_actions.Player.EchoScan.triggered)
+                // 終わらせる操作はいつでも受け付け、始める操作だけ同時に使えない能力の使用中は無視する
+                bool canToggleEcho = _echoController.IsScanRequested || CanUseAbility(PlayerAbility.Echolocation);
+                if (_actions.Player.EchoScan.triggered && canToggleEcho)
                 {
                     _echoController.ToggleScan();
                 }
