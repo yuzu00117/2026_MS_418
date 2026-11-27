@@ -34,6 +34,8 @@ namespace MS.Toon.Editor
             { "_Smoothness", "明暗の境目のぼかし具合。0 でくっきりしたトゥーン、上げるほど境目が柔らかくなる。" },
             { "_ShadowColor", "影の部分に乗せる色。影が真っ黒にならず、色味のある影にするために使う。" },
             { "_ShadowStrength", "影の色を乗せる強さ。0 で影色なし、1 で影色を最大限反映する。" },
+            { "_AmbientTint", "周りの環境光に掛ける色味。白でそのまま。" },
+            { "_AmbientStrength", "周りの環境光の強さ。0 で環境光なし(暗部が暗くなる)、1 でそのまま。" },
 
             // Rim
             { "_UseRim", "輪郭に沿った縁取りの光(リムライト)を使う。Lite がオンの間は無効になる。" },
@@ -69,6 +71,11 @@ namespace MS.Toon.Editor
         private const string UndoName = "共通設定から個別設定へ切り替え";
         private const string NoticeUsingGlobal = "共通設定を使用中です(値を変えると個別設定に切り替わります)";
         private const string WarnNoApplier = "シーンに ToonStyleApplier が無いため(通常は PF_GameManager に付いています)、共通設定は反映されません(このマテリアルの値で描画されます)";
+        private const string ProfileFieldLabel = "個別の設定ファイル";
+        private const string ProfileFieldTooltip = "このマテリアルだけ別の値で描きたいときに ToonStyleProfile を登録する。登録すると値がマテリアルへ書き込まれ、共通設定を切り替えても変わらない。外すと共通設定に戻る。";
+        private const string NoticeProfileHelp = "全体の見た目に従います。このマテリアルだけ変えたいときは、個別の設定ファイルを登録してください(同じマテリアルを使う物すべてに効きます)。";
+        private const string NoticeOverriddenFormat = "個別の設定ファイル「{0}」の値です。変えるときは、そのファイルを編集してください。";
+        private const string WarnMissingProfile = "登録された個別の設定ファイルが見つかりません(削除された可能性があります)。登録し直すか、外してください。";
         private const string WarnNoProfile = "ToonStyleApplier に Profile が設定されていないため、共通設定は反映されません(このマテリアルの値で描画されます)";
 
         // 共通値で置換表示するグループ。トグルと、そのトグルがオンの間に置換されるプロパティ名を束ねる
@@ -103,7 +110,7 @@ namespace MS.Toon.Editor
             }),
             new GlobalGroup(UseGlobalStyleName, new[]
             {
-                "_ShadowColor", "_ShadowStrength", "_RimColor", "_RimPower", "_RimIntensity", "_Smoothness", RampMapName,
+                "_ShadowColor", "_ShadowStrength", "_AmbientTint", "_AmbientStrength", "_RimColor", "_RimPower", "_RimIntensity", "_Smoothness", RampMapName,
             }),
         };
 
@@ -112,6 +119,7 @@ namespace MS.Toon.Editor
             new Dictionary<string, System.Func<ToonStyleProfile, Color>>
             {
                 { "_ShadowColor", p => p.ShadowColor },
+                { "_AmbientTint", p => p.AmbientTint },
                 { "_RimColor", p => p.RimColor },
                 { "_OutlineColor", p => p.OutlineColor },
             };
@@ -120,6 +128,7 @@ namespace MS.Toon.Editor
             new Dictionary<string, System.Func<ToonStyleProfile, float>>
             {
                 { "_ShadowStrength", p => p.ShadowStrength },
+                { "_AmbientStrength", p => p.AmbientStrength },
                 { "_RimPower", p => p.RimPower },
                 { "_RimIntensity", p => p.RimIntensity },
                 { "_Smoothness", p => p.Smoothness },
@@ -134,12 +143,16 @@ namespace MS.Toon.Editor
             ToonStyleProfile profile = GetActiveProfile();
             SubscribeProfile(profile);
 
+            ToonStyleProfile ownProfile = DrawOwnProfileField(materialEditor);
+
             // グループ見出しの通知は、各グループで最初に現れたプロパティの手前に1回だけ出す
             bool[] toggleOn = new bool[Groups.Length];
+            bool[] overridden = new bool[Groups.Length];
             bool[] noticeShown = new bool[Groups.Length];
             for (int i = 0; i < Groups.Length; i++)
             {
                 toggleOn[i] = IsToggleOn(FindProperty(Groups[i].ToggleName, properties, false));
+                overridden[i] = IsOverriddenBy(ownProfile, Groups[i]);
             }
 
             foreach (MaterialProperty property in properties)
@@ -152,6 +165,21 @@ namespace MS.Toon.Editor
                 string name = property.name;
                 int groupIndex = FindGroupIndex(name);
                 GlobalGroup group = groupIndex >= 0 ? Groups[groupIndex] : null;
+
+                // 個別の設定ファイルが受け持つ項目は、マテリアル側で直すと次の書き戻しで消えるため読み取り専用にする
+                if (group != null && overridden[groupIndex])
+                {
+                    if (!noticeShown[groupIndex])
+                    {
+                        noticeShown[groupIndex] = true;
+                        EditorGUILayout.HelpBox(string.Format(NoticeOverriddenFormat, ownProfile.name), MessageType.Info);
+                    }
+                    using (new EditorGUI.DisabledScope(true))
+                    {
+                        DrawProperty(materialEditor, property);
+                    }
+                    continue;
+                }
 
                 if (group != null && !noticeShown[groupIndex])
                 {
@@ -177,6 +205,60 @@ namespace MS.Toon.Editor
             }
 
             DrawStandardFooter(materialEditor);
+        }
+
+        // 複数選択時は先頭のマテリアルの登録を表示し、変更は選択中の全マテリアルへ行う
+        private static ToonStyleProfile DrawOwnProfileField(MaterialEditor materialEditor)
+        {
+            var first = materialEditor.target as Material;
+            ToonStyleProfile current = ToonMaterialProfileLink.GetProfile(first);
+            bool mixed = false;
+            foreach (Object target in materialEditor.targets)
+            {
+                if (ToonMaterialProfileLink.GetProfileGuid(target as Material) != ToonMaterialProfileLink.GetProfileGuid(first))
+                {
+                    mixed = true;
+                    break;
+                }
+            }
+
+            EditorGUI.showMixedValue = mixed;
+            EditorGUI.BeginChangeCheck();
+            var picked = (ToonStyleProfile)EditorGUILayout.ObjectField(
+                new GUIContent(ProfileFieldLabel, ProfileFieldTooltip), current, typeof(ToonStyleProfile), false);
+            EditorGUI.showMixedValue = false;
+            if (EditorGUI.EndChangeCheck())
+            {
+                foreach (Object target in materialEditor.targets)
+                {
+                    ToonMaterialProfileLink.Register(target as Material, picked);
+                }
+                current = picked;
+            }
+
+            if (mixed)
+            {
+                return null;
+            }
+            if (current == null && !string.IsNullOrEmpty(ToonMaterialProfileLink.GetProfileGuid(first)))
+            {
+                EditorGUILayout.HelpBox(WarnMissingProfile, MessageType.Warning);
+            }
+            else if (current == null)
+            {
+                EditorGUILayout.HelpBox(NoticeProfileHelp, MessageType.None);
+            }
+            EditorGUILayout.Space();
+            return current;
+        }
+
+        private static bool IsOverriddenBy(ToonStyleProfile ownProfile, GlobalGroup group)
+        {
+            if (ownProfile == null)
+            {
+                return false;
+            }
+            return group.ToggleName == UseGlobalOutlineName ? ownProfile.OverrideOutline : ownProfile.OverrideStyle;
         }
 
         private static int FindGroupIndex(string propertyName)

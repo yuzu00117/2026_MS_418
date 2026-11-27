@@ -11,7 +11,7 @@ namespace MS.Toon.Editor
     public class ToonStyleProfileEditor : UnityEditor.Editor
     {
         // 説明文はこのクラスの表示専用。文言を直すときはここだけ変えれば済むように定数にする
-        private const string HelpText = "ゲーム全体のトゥーン調の絵作りの設定です。シーンの ToonStyleApplier に設定すると、Use Global Style がオンの MS/Toon マテリアル全部に反映されます。複製して値を変えると別のスタイルを作れます。Ramp が未設定のときは、各マテリアルのランプを使います。";
+        private const string HelpText = "ゲーム全体のトゥーン調の絵作りの設定です。シーンの ToonStyleApplier に設定すると、Use Global Style がオンの MS/Toon マテリアル全部に反映されます。複製して値を変えると別のスタイルを作れます。Ramp が未設定のときは、各マテリアルのランプを使います。マテリアルの「個別の設定ファイル」に登録すると、そのマテリアルだけこの値で描きます(下の Per-Material Use で上書きする項目を選べます。共通設定として使うときは無視されます)。";
 
         public override void OnInspectorGUI()
         {
