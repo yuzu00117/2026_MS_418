@@ -31,6 +31,12 @@ namespace Aura.Echolocation
         private EchoRangeDisplaySettings _rangeDisplay = new EchoRangeDisplaySettings();
         [SerializeField]
         private EchoScanEffect _scanEffect = new EchoScanEffect();
+        [SerializeField]
+        private EchoScanEffect _startEffect = new EchoScanEffect();
+        [SerializeField]
+        private EchoScanEffect _adsScanEffect = new EchoScanEffect();
+        [SerializeField]
+        private EchoScanEffect _adsStartEffect = new EchoScanEffect();
         [SerializeField, Tooltip("Scene Viewに範囲を表示します。")]
         [UnityEngine.Serialization.FormerlySerializedAs("showGizmos")]
         private bool _isGizmoVisible = true;
@@ -79,6 +85,8 @@ namespace Aura.Echolocation
         private float _followWaveElapsed;
         private readonly EchoLightSustain _lightSustain = new EchoLightSustain();
         private float _lightAngleDegrees;
+        // ライト方式でOFFにした時の最大半径。ADSを解除して今の半径が小さくなっても、消去が照らしていた端まで届くよう固定する。
+        private float _lightEraseRadius;
         /// <summary>ライト方式の残りの持続可能な時間（秒）。時間制限がない設定では0。</summary>
         public float LightSustainRemainingSeconds => _lightSustain.GetRemainingSeconds(_settings.LightSustain);
         /// <summary>ライト方式の残りの持続可能な時間の割合（0～1）。時間制限がない設定では1。ゲージの表示に使う。</summary>
@@ -118,6 +126,32 @@ namespace Aura.Echolocation
         public EchoRangeDisplaySettings RangeDisplay => _rangeDisplay ??= new EchoRangeDisplaySettings();
         /// <summary>エコーを使っている間に再生するエフェクト。</summary>
         public EchoScanEffect ScanEffect => _scanEffect ??= new EchoScanEffect();
+        /// <summary>ADS中にエコーを使っている間、通常のエフェクトの代わりに再生するエフェクト。未設定なら通常のエフェクトのまま。</summary>
+        public EchoScanEffect AdsScanEffect => _adsScanEffect ??= new EchoScanEffect();
+        /// <summary>ADS中にエコーをONにした時に1回だけ再生するエフェクト。</summary>
+        public EchoScanEffect AdsStartEffect => _adsStartEffect ??= new EchoScanEffect();
+        /// <summary>ADS中でない時にエコーをONにした時に1回だけ再生するエフェクト。</summary>
+        public EchoScanEffect StartEffect => _startEffect ??= new EchoScanEffect();
+        /// <summary>ADS中か。プレイヤー側から毎フレーム設定する。エフェクトと、半径・全開き角（ADS中の値）の切り替えに使う。</summary>
+        public bool IsAiming { get; set; }
+        private float _adsBlend;
+        /// <summary>通常の範囲からADS中の範囲への移り具合（0：通常～1：ADS中）。</summary>
+        public float AdsBlend => _adsBlend;
+        /// <summary>今の最大半径（m）。ADSの移り具合に合わせて、通常とADS中の値の間になる。</summary>
+        public float CurrentRadius => Mathf.Lerp(_settings.Radius, _settings.AdsRadius, _adsBlend);
+        /// <summary>今の全開き角（度）。ADSの移り具合に合わせて、通常とADS中の値の間になる。</summary>
+        public float CurrentAngleDegrees => Mathf.Lerp(_settings.AngleDegrees, _settings.AdsAngleDegrees, _adsBlend);
+        /// <summary>今のエコーの発射向き。ADS中は照準のレイが当たった場所へ向き、それ以外は正面の基準のforward。</summary>
+        public Vector3 CurrentForward { get; private set; }
+        /// <summary>ADS中に照準のレイが当たった場所（当たらなければレイの端）。HasAdsAimPointがfalseの時は使わない。</summary>
+        public Vector3 AdsAimPoint { get; private set; }
+        /// <summary>このフレームで照準のレイを飛ばしたか（ADS中で、描画カメラとレイの長さがある時）。</summary>
+        public bool HasAdsAimPoint { get; private set; }
+        // 照準のレイの当たりを受け取るバッファ。毎フレーム配列を作らないよう使い回す。
+        private static readonly RaycastHit[] _aimHits = new RaycastHit[AimHitCapacity];
+        private const int AimHitCapacity = 16;
+        // 発生位置とほぼ同じ場所に当たった時は向きが決まらないため、正面の基準の向きのままにする。
+        private const float MinimumAimSqrDistance = 1e-4f;
         /// <summary>描画するCamera。</summary>
         public Camera TargetCamera { get => _targetCamera; set => _targetCamera = value; }
         /// <summary>カメラ位置に依存しないスキャン中心。未指定時は自身。</summary>
@@ -176,6 +210,9 @@ namespace Aura.Echolocation
             RangeDisplay.ReleaseMesh();
             // スキャン中心が別の階層にある場合も残らないよう、生成したエフェクトを破棄する。
             ScanEffect.Release();
+            StartEffect.Release();
+            AdsScanEffect.Release();
+            AdsStartEffect.Release();
         }
 
         void OnEnable()
@@ -289,10 +326,10 @@ namespace Aura.Echolocation
             if (_settings.ScanMode == EchoScanMode.Intermittent)
             {
                 var preview = GetPreview();
-                _pulseTimeline.Start(preview.Origin, preview.Forward, _settings);
+                _pulseTimeline.Start(preview.Origin, preview.Forward, _settings, CurrentRadius);
             }
 
-            ChangeState(_settings.Radius > 0 ? EchoState.Revealing : EchoState.Hidden);
+            ChangeState(CurrentRadius > 0 ? EchoState.Revealing : EchoState.Hidden);
         }
 
         void Request(bool isOn)
@@ -304,10 +341,13 @@ namespace Aura.Echolocation
                 return;
             IsScanRequested = isOn;
             if (isOn)
+            {
                 BeginReveal();
+                PlayStartEffect();
+            }
             else if (_settings.ScanMode == EchoScanMode.Intermittent)
             {
-                _pulseTimeline.Stop(_settings);
+                _pulseTimeline.Stop(_settings, CurrentRadius);
                 _hasPendingClockReset = true;
             }
             else if (_settings.OffMode == EchoOffMode.Immediate || CurrentOuterRadius <= 0 || _settings.Duration == 0)
@@ -319,6 +359,8 @@ namespace Aura.Echolocation
             {
                 _elapsed = 0;
                 CurrentEraseRadius = 0;
+                // 照らしている端（CurrentOuterRadius）は今の最大半径以下なので、この半径で消せば必ず消しきれる。
+                _lightEraseRadius = Mathf.Max(CurrentRadius, CurrentOuterRadius);
                 _hasPendingClockReset = true;
                 ChangeState(EchoState.Hiding);
             }
@@ -329,6 +371,10 @@ namespace Aura.Echolocation
             using (_updateMarker.Auto())
             {
                 _settings.Validate();
+                // ONにした瞬間の波もADS中の範囲で出すため、操作を反映する前に移り具合を進める。
+                UpdateAdsBlend();
+                // ONにした瞬間の波も照準の向きで出すため、操作を反映する前に向きを決める。
+                UpdateForward();
                 _hasPendingClockReset = false;
                 // イベント内で積まれた操作は次回へ回し、無限の再入を防ぐ。
                 int count = _commands.Count;
@@ -378,11 +424,11 @@ namespace Aura.Echolocation
                     // 断続方式は波そのものを繰り返すため、ライト方式用の拡張波は出さない。
                     FollowWaveRadius = -1;
                     var preview = GetPreview();
-                    _pulseTimeline.Advance(delta, _settings, preview.Origin, preview.Forward, _frames);
-                    Frame = _frames.Count > 0 ? _frames[_frames.Count - 1] : new EchoFrameData(preview.Origin, preview.Forward, _settings.AngleDegrees, 0, 0, EchoState.Hidden, _settings.OcclusionMode);
+                    _pulseTimeline.Advance(delta, _settings, CurrentRadius, CurrentAngleDegrees, preview.Origin, preview.Forward, _frames);
+                    Frame = _frames.Count > 0 ? _frames[_frames.Count - 1] : new EchoFrameData(preview.Origin, preview.Forward, CurrentAngleDegrees, 0, 0, EchoState.Hidden, _settings.OcclusionMode);
                     CurrentOuterRadius = Frame.OuterRadius;
                     CurrentEraseRadius = Frame.EraseRadius;
-                    ChangeState(_frames.Count > 0 ? Frame.State : IsScanRequested && _settings.Radius > 0 ? EchoState.Active : EchoState.Hidden);
+                    ChangeState(_frames.Count > 0 ? Frame.State : IsScanRequested && CurrentRadius > 0 ? EchoState.Active : EchoState.Hidden);
                 }
                 else if (_settings.ScanMode == EchoScanMode.Single)
                 {
@@ -392,7 +438,7 @@ namespace Aura.Echolocation
                 else
                     AdvanceLight(delta);
 
-                _shadowMaps.Update(_frames, _settings, _excludedRoot ? _excludedRoot : transform);
+                _shadowMaps.Update(_frames, _settings, CurrentRadius, _excludedRoot ? _excludedRoot : transform);
                 _tags.Update(_settings.TagColorRules);
                 _registry.UpdateHidden(_settings.TargetLayers, _excludedRoot ? _excludedRoot : transform, _targetCamera, _tags);
                 _items.Clear();
@@ -401,7 +447,12 @@ namespace Aura.Echolocation
                 NotifyUsage();
                 // 再生を始めたフレームから設定に合わせるため、使用状態を反映した後に行う。
                 Transform origin = _originTransform ? _originTransform : transform;
-                ScanEffect.Apply(_settings.Radius, _settings.Duration, _directionTransform ? _directionTransform : origin);
+                // エフェクトもエコーの発射向き（ADS中は照準の先）に合わせる。
+                Vector3 up = (_directionTransform ? _directionTransform : origin).up;
+                ScanEffect.Apply(CurrentRadius, _settings.Duration, CurrentForward, up);
+                StartEffect.Apply(CurrentRadius, _settings.Duration, CurrentForward, up);
+                AdsScanEffect.Apply(CurrentRadius, _settings.Duration, CurrentForward, up);
+                AdsStartEffect.Apply(CurrentRadius, _settings.Duration, CurrentForward, up);
             }
         }
 
@@ -412,14 +463,14 @@ namespace Aura.Echolocation
             if (_lightSustain.Advance(IsScanRequested, delta, sustain) && sustain.DepletionMode == EchoLightDepletionMode.TurnOff)
                 Request(false);
             float ratio = _lightSustain.GetRatio(sustain);
-            float radius = sustain.GetRadius(_settings.Radius, ratio);
-            float angle = sustain.GetAngleDegrees(_settings.AngleDegrees, ratio);
+            float radius = sustain.GetRadius(CurrentRadius, ratio);
+            float angle = sustain.GetAngleDegrees(CurrentAngleDegrees, ratio);
 
             _elapsed += delta;
             if (CurrentState == EchoState.Revealing)
             {
                 // 広がる速さは最大半径を基準に保ち、狭めた半径で止める。
-                CurrentOuterRadius = Mathf.Min(EchoPropagation.GetDistance(_settings.Radius, _settings.Duration, _elapsed), radius);
+                CurrentOuterRadius = Mathf.Min(EchoPropagation.GetDistance(CurrentRadius, _settings.Duration, _elapsed), radius);
                 if (_settings.Duration == 0 || _elapsed >= _settings.Duration)
                     ChangeState(EchoState.Active);
             }
@@ -427,7 +478,7 @@ namespace Aura.Echolocation
                 CurrentOuterRadius = radius;
             else if (CurrentState == EchoState.Hiding)
             {
-                CurrentEraseRadius = EchoPropagation.GetDistance(_settings.Radius, _settings.Duration, _elapsed);
+                CurrentEraseRadius = EchoPropagation.GetDistance(_lightEraseRadius, _settings.Duration, _elapsed);
                 if (CurrentEraseRadius >= CurrentOuterRadius)
                 {
                     CurrentOuterRadius = CurrentEraseRadius = 0;
@@ -440,7 +491,7 @@ namespace Aura.Echolocation
             else _lightAngleDegrees = angle;
             UpdateFollowWave(delta, radius);
             Transform origin = _originTransform ? _originTransform : transform, direction = _directionTransform ? _directionTransform : origin;
-            Frame = new EchoFrameData(origin.position, direction.forward, angle, CurrentOuterRadius, CurrentEraseRadius, CurrentState, _settings.OcclusionMode);
+            Frame = new EchoFrameData(origin.position, CurrentForward, angle, CurrentOuterRadius, CurrentEraseRadius, CurrentState, _settings.OcclusionMode);
             _frames.Clear();
             if (CurrentState != EchoState.Hidden)
                 _frames.Add(Frame);
@@ -449,7 +500,7 @@ namespace Aura.Echolocation
         /// <summary>ストックがあれば、今の位置・向きから帯状の波を1つ発信する。</summary>
         void FireOnce()
         {
-            if (_onceStock <= 0 || _settings.Radius <= 0 || _onceWaves.Count >= EchoPulseTimeline.MaxPulses)
+            if (_onceStock <= 0 || CurrentRadius <= 0 || _onceWaves.Count >= EchoPulseTimeline.MaxPulses)
                 return;
             // 対象の再収集は全検索で重いため、伝播中の波がない時の発信だけで行う。
             if (_onceWaves.Count == 0)
@@ -460,6 +511,63 @@ namespace Aura.Echolocation
             SetOnceStock(_onceStock - 1);
             IsScanRequested = true;
             ChangeState(EchoState.Revealing);
+            PlayStartEffect();
+        }
+
+        // 少しずつ切り替える設定では、指定した秒数で通常とADS中の範囲の間を移る。
+        void UpdateAdsBlend()
+        {
+            float target = IsAiming ? 1 : 0;
+            float seconds = _settings.AdsTransitionSeconds;
+            if (!_settings.IsAdsTransitionSeamless || seconds <= 0)
+            {
+                _adsBlend = target;
+                return;
+            }
+            float delta = _settings.TimeMode == EchoTimeMode.Scaled ? Time.deltaTime : Time.unscaledDeltaTime;
+            _adsBlend = Mathf.MoveTowards(_adsBlend, target, delta / seconds);
+        }
+
+        // カメラは肩の後ろにあるため、正面の基準の向きのままでは照準から横にずれる。
+        // ADS中は描画カメラの向きにレイを飛ばし、当たった場所（当たらなければレイの端）へ発生位置から向ける。
+        // 描画カメラはこのControllerより先にLateUpdateで動くため、同じフレームのカメラの向きを使える。
+        void UpdateForward()
+        {
+            Transform origin = _originTransform ? _originTransform : transform;
+            Vector3 forward = (_directionTransform ? _directionTransform : origin).forward;
+            HasAdsAimPoint = IsAiming && _targetCamera && _settings.AdsAimDistance > 0;
+            if (HasAdsAimPoint)
+            {
+                Transform cameraTransform = _targetCamera.transform;
+                AdsAimPoint = FindAdsAimPoint(cameraTransform.position, cameraTransform.forward);
+                Vector3 toAimPoint = AdsAimPoint - origin.position;
+                // ADSの移り具合に合わせて向きも移し、半径・角度と同じ速さで照準へ向ける。
+                if (toAimPoint.sqrMagnitude > MinimumAimSqrDistance)
+                    forward = Vector3.Slerp(forward, toAimPoint.normalized, _adsBlend);
+            }
+            CurrentForward = forward;
+        }
+
+        // プレイヤー自身（除外するルート）とトリガーには当てない。
+        Vector3 FindAdsAimPoint(Vector3 position, Vector3 direction)
+        {
+            float distance = _settings.AdsAimDistance;
+            Transform excluded = _excludedRoot ? _excludedRoot : transform;
+            int count = Physics.RaycastNonAlloc(position, direction, _aimHits, distance, _settings.AdsAimLayers, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < count; i++)
+            {
+                var hit = _aimHits[i];
+                if (hit.collider && hit.distance < distance && !hit.transform.IsChildOf(excluded))
+                    distance = hit.distance;
+            }
+            return position + direction * distance;
+        }
+
+        // ONにした時だけ、ADS中かどうかで分けて1回出す。設定の変更で広がりをやり直す時は出さない。
+        void PlayStartEffect()
+        {
+            Transform origin = _originTransform ? _originTransform : transform;
+            (IsAiming ? AdsStartEffect : StartEffect).PlayOnce(origin);
         }
 
         // 帯状の波は手前から自然に消えるため、「手前から順番」では伝播を最後まで続ける。
@@ -483,8 +591,8 @@ namespace Aura.Echolocation
             {
                 var wave = _onceWaves[i];
                 wave.Elapsed += delta;
-                float front = _settings.Duration <= 0 ? _settings.Radius + width : _settings.Radius / _settings.Duration * wave.Elapsed;
-                if (front - width >= _settings.Radius)
+                float front = _settings.Duration <= 0 ? CurrentRadius + width : CurrentRadius / _settings.Duration * wave.Elapsed;
+                if (front - width >= CurrentRadius)
                     _onceWaves.RemoveAt(i);
                 else
                     _onceWaves[i] = wave;
@@ -493,8 +601,8 @@ namespace Aura.Echolocation
             // 描画側は古い波から順に受け取る。
             foreach (var wave in _onceWaves)
             {
-                float front = _settings.Duration <= 0 ? _settings.Radius + width : _settings.Radius / _settings.Duration * wave.Elapsed;
-                _frames.Add(new EchoFrameData(wave.Origin, wave.Forward, _settings.AngleDegrees, Mathf.Min(front, _settings.Radius),
+                float front = _settings.Duration <= 0 ? CurrentRadius + width : CurrentRadius / _settings.Duration * wave.Elapsed;
+                _frames.Add(new EchoFrameData(wave.Origin, wave.Forward, CurrentAngleDegrees, Mathf.Min(front, CurrentRadius),
                     Mathf.Max(0, front - width), EchoState.Revealing, _settings.OcclusionMode, wave.Id, true));
             }
 
@@ -553,7 +661,7 @@ namespace Aura.Echolocation
             CurrentOuterRadius = CurrentEraseRadius = 0;
             IsScanRequested = false;
             var preview = GetPreview();
-            Frame = new EchoFrameData(preview.Origin, preview.Forward, _settings.AngleDegrees, 0, 0, EchoState.Hidden, _settings.OcclusionMode, 0, true);
+            Frame = new EchoFrameData(preview.Origin, preview.Forward, CurrentAngleDegrees, 0, 0, EchoState.Hidden, _settings.OcclusionMode, 0, true);
             ChangeState(EchoState.Hidden);
         }
 
@@ -579,25 +687,37 @@ namespace Aura.Echolocation
             }
 
             // 先端が端に届いても、内側の帯が端を抜けきるまでは先端を進めて描き続ける。
-            float front = _settings.Radius / _settings.Duration * phase;
+            float front = CurrentRadius / _settings.Duration * phase;
             FollowWaveRadius = front < radius + RangeDisplay.WaveWidth ? front : -1;
         }
 
         void NotifyUsage()
         {
             bool isInUse = IsEchoInUse;
+            // ADSは使用中でも切り替わるため、エフェクトは毎フレーム反映する。
+            UpdateLoopEffects(isInUse);
             if (isInUse == _isPreviousEchoInUse)
                 return;
             _isPreviousEchoInUse = isInUse;
-            ScanEffect.SetPlaying(isInUse, _originTransform ? _originTransform : transform);
             UsageChanged?.Invoke(isInUse);
+        }
+
+        // 使用中はADS中ならADS用、それ以外は通常のループを再生する。ADS用が未設定なら通常のまま。
+        void UpdateLoopEffects(bool isInUse)
+        {
+            Transform origin = _originTransform ? _originTransform : transform;
+            bool isAdsLoop = IsAiming && AdsScanEffect.Prefab;
+            ScanEffect.SetPlaying(isInUse && !isAdsLoop, origin);
+            AdsScanEffect.SetPlaying(isInUse && isAdsLoop, origin);
         }
 
         /// <summary>Scene View用に最大領域を返す。</summary>
         public EchoFrameData GetPreview()
         {
             var origin = _originTransform ? _originTransform : transform;
-            return new EchoFrameData(origin.position, (_directionTransform ? _directionTransform : origin).forward, _settings.AngleDegrees, _settings.Radius, 0, EchoState.Active, _settings.OcclusionMode);
+            // 再生前（Scene Viewでの確認など）はまだ向きを決めていないため、正面の基準のforwardを使う。
+            Vector3 forward = CurrentForward.sqrMagnitude > 0 ? CurrentForward : (_directionTransform ? _directionTransform : origin).forward;
+            return new EchoFrameData(origin.position, forward, CurrentAngleDegrees, CurrentRadius, 0, EchoState.Active, _settings.OcclusionMode);
         }
 
         /// <summary>範囲Gizmo表示の可否。</summary>

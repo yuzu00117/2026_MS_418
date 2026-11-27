@@ -27,6 +27,19 @@ namespace Aura.Echolocation.Tests
         }
 
         void Tick(float delta, Vector3 origin) => _timeline.Advance(delta, _settings, origin, Vector3.right, _frames);
+
+        [Test]
+        public void WavesStoppedAtLargerRadiusFinishErasingAfterRadiusShrinks()
+        {
+            // ADS中（半径20）にOFFにしてから、ADSを解除して半径10に戻した場合を想定する。
+            _settings.OffMode = EchoOffMode.Wave;
+            _timeline.Start(Vector3.zero, Vector3.forward, _settings, 20);
+            _timeline.Advance(2, _settings, 20, 70, Vector3.zero, Vector3.forward, _frames);
+            _timeline.Stop(_settings, 20);
+            for (int i = 0; i < 10 && _frames.Count > 0; i++)
+                _timeline.Advance(1, _settings, 10, 70, Vector3.zero, Vector3.forward, _frames);
+            Assert.That(_frames, Is.Empty, "OFF時の半径で消去を進めるため、半径が小さくなっても消しきれる");
+        }
         [Test]
         public void OldWaveKeepsItsOriginAndForwardWhenNextWaveStarts()
         {

@@ -128,6 +128,17 @@ namespace Aura.Echolocation.Tests
         }
 
         [Test]
+        public void PlayOnceCreatesEffectWithoutChangingPlayingState()
+        {
+            _effect.PlayOnce(_origin.transform);
+            Assert.That(_origin.transform.childCount, Is.EqualTo(1));
+            Assert.That(_effect.IsPlaying, Is.False, "1回だけの再生はループの再生状態に含めない");
+
+            _effect.PlayOnce(_origin.transform);
+            Assert.That(_origin.transform.childCount, Is.EqualTo(1), "続けて呼んでも作り直さない");
+        }
+
+        [Test]
         public void DoesNothingWithoutPrefab()
         {
             _effect.Prefab = null;

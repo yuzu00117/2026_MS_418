@@ -73,7 +73,14 @@ namespace Aura.Echolocation
         /// 生成したエフェクトの大きさ・速さ・向きを設定に合わせる。生成前は何もしない。
         /// 伝播時間が0（即時）の時は合わせる速さがないため、Prefabのままの速さにする。
         /// </summary>
-        public void Apply(float radius, float duration, Transform direction)
+        public void Apply(float radius, float duration, Transform direction) =>
+            Apply(radius, duration, direction ? direction.forward : Vector3.zero, direction ? direction.up : Vector3.up);
+
+        /// <summary>
+        /// 向きを直接指定して、生成したエフェクトの大きさ・速さ・向きを設定に合わせる。
+        /// ADS中に照準へ向けたエコーの発射向きなど、Transformのforwardとは別の向きに合わせる時に使う。forwardが0なら向きは変えない。
+        /// </summary>
+        public void Apply(float radius, float duration, Vector3 forward, Vector3 up)
         {
             if (!_instance)
                 return;
@@ -82,16 +89,17 @@ namespace Aura.Echolocation
             float scale = _isScaledToRadius ? Mathf.Max(0, radius) / Mathf.Max(MinimumBaseValue, _baseRadius) : 1;
             effect.localScale = _originalScale * scale;
 
+            bool hasDirection = forward.sqrMagnitude > MinimumHorizontalSqrLength;
             if (!_isFacingDirection)
                 effect.localRotation = _originalRotation;
-            else if (direction && _isPitchFollowed)
+            else if (hasDirection && _isPitchFollowed)
                 // 正面の基準の上方向を使うと、真上・真下を向いても向きが決まる。
-                effect.rotation = Quaternion.LookRotation(direction.forward, direction.up) * _originalRotation;
-            else if (direction)
+                effect.rotation = Quaternion.LookRotation(forward, up) * _originalRotation;
+            else if (hasDirection)
             {
-                Vector3 forward = Vector3.ProjectOnPlane(direction.forward, Vector3.up);
-                if (forward.sqrMagnitude > MinimumHorizontalSqrLength)
-                    effect.rotation = Quaternion.LookRotation(forward, Vector3.up) * _originalRotation;
+                Vector3 horizontal = Vector3.ProjectOnPlane(forward, Vector3.up);
+                if (horizontal.sqrMagnitude > MinimumHorizontalSqrLength)
+                    effect.rotation = Quaternion.LookRotation(horizontal, Vector3.up) * _originalRotation;
             }
 
             float speedRatio = _isSpeedMatchedToDuration && duration > 0 ? Mathf.Max(MinimumBaseValue, _baseDuration) / duration : 1;
@@ -125,15 +133,46 @@ namespace Aura.Echolocation
             _appliedSpeedRatio = 1;
         }
 
+        /// <summary>
+        /// 最初から1回だけ再生する。ループしないエフェクト用で、再生中に呼ぶと最初からやり直す。
+        /// 1回だけの再生はループの再生状態（IsPlaying）に含めない。Prefabを差し替えて作り直した時は、前のエフェクトごと破棄するためIsPlayingはfalseになる。
+        /// </summary>
+        public void PlayOnce(Transform parent)
+        {
+            if (!PrepareInstance(parent))
+                return;
+            // 続けて呼ばれた時も始まりから見せるため、前の再生を消してからやり直す。
+            foreach (var particle in _particles)
+                if (particle)
+                {
+                    particle.Stop(false, ParticleSystemStopBehavior.StopEmittingAndClear);
+                    particle.Play(false);
+                }
+        }
+
         void Play(Transform parent)
         {
-            if (!_prefab || !parent)
+            // 毎フレーム呼ばれても、再生中なら何もしない。
+            if (IsPlaying && _instance && _createdFrom == _prefab && _instance.transform.parent == parent)
+                return;
+            if (!PrepareInstance(parent))
             {
                 Stop();
                 return;
             }
 
-            // 生成は初回とPrefabを差し替えた時だけにし、ON/OFFのたびに作り直さない。
+            // Prefabの一番上にParticleSystemがない構成でも再生できるよう、親子をまとめず1つずつ再生する。
+            foreach (var particle in _particles)
+                if (particle) particle.Play(false);
+            IsPlaying = true;
+        }
+
+        // 生成は初回とPrefabを差し替えた時だけにし、再生のたびに作り直さない。Prefabが未設定ならfalse。
+        bool PrepareInstance(Transform parent)
+        {
+            if (!_prefab || !parent)
+                return false;
+
             if (!_instance || _createdFrom != _prefab)
             {
                 Release();
@@ -151,10 +190,7 @@ namespace Aura.Echolocation
                 _instance.transform.SetParent(parent, false);
 
             _instance.SetActive(true);
-            // Prefabの一番上にParticleSystemがない構成でも再生できるよう、親子をまとめず1つずつ再生する。
-            foreach (var particle in _particles)
-                if (particle) particle.Play(false);
-            IsPlaying = true;
+            return true;
         }
 
         void Stop()

@@ -9,9 +9,17 @@ namespace Aura.Echolocation
     [Serializable]
     public sealed class EchoSettings
     {
-        private const float DefaultRadius = 10;
+        private const float DefaultRadius = 15;
         internal const float FullCircleDegrees = 360;
-        private const float DefaultDuration = 1;
+        private const float DefaultAngleDegrees = 70;
+        private const float DefaultDuration = .75f;
+        private const float DefaultAdsRadius = 30;
+        private const float DefaultAdsAngleDegrees = 38.6f;
+        // カメラのADSの遷移時間（0.3秒）に合わせ、範囲と画面が同じ速さで切り替わるようにする。
+        private const float DefaultAdsTransitionSeconds = .3f;
+        private const float DefaultAdsAimDistance = 100;
+        // Ignore Raycastレイヤー（2番）は、照準のレイにも当てない。
+        private const int DefaultAdsAimLayers = ~(1 << 2);
         private const float DefaultPulseInterval = 2;
         private const float MinimumPulseInterval = .05f;
         private const float DefaultPulseHoldDuration = 3;
@@ -25,8 +33,44 @@ namespace Aura.Echolocation
         [Range(0, FullCircleDegrees), Tooltip("全開き角。正面から片側はこの半分、360で全方向です。")]
         [UnityEngine.SerializeField]
         [UnityEngine.Serialization.FormerlySerializedAs("AngleDegrees")]
-        private float _angleDegrees = FullCircleDegrees;
+        private float _angleDegrees = DefaultAngleDegrees;
         public float AngleDegrees { get => _angleDegrees; set => _angleDegrees = value; }
+
+        [Min(0), Tooltip("ADS中の最大半径。TransformのScaleには依存しません。")]
+        [UnityEngine.SerializeField]
+        private float _adsRadius = DefaultAdsRadius;
+        /// <summary>ADS中の最大半径（m）。</summary>
+        public float AdsRadius { get => _adsRadius; set => _adsRadius = value; }
+
+        [Range(0, FullCircleDegrees), Tooltip("ADS中の全開き角（度）。")]
+        [UnityEngine.SerializeField]
+        private float _adsAngleDegrees = DefaultAdsAngleDegrees;
+        /// <summary>ADS中の全開き角（度）。</summary>
+        public float AdsAngleDegrees { get => _adsAngleDegrees; set => _adsAngleDegrees = value; }
+
+        [Tooltip("ADSの開始・終了時に、半径と全開き角を少しずつ切り替えます。オフなら一瞬で切り替えます。")]
+        [UnityEngine.SerializeField]
+        private bool _isAdsTransitionSeamless = true;
+        /// <summary>ADSの開始・終了時に、半径と全開き角を少しずつ切り替えるか。</summary>
+        public bool IsAdsTransitionSeamless { get => _isAdsTransitionSeamless; set => _isAdsTransitionSeamless = value; }
+
+        [Min(0), Tooltip("少しずつ切り替える時に、切り替わりきるまでの秒数。0なら一瞬で切り替えます。")]
+        [UnityEngine.SerializeField]
+        private float _adsTransitionSeconds = DefaultAdsTransitionSeconds;
+        /// <summary>ADSの切り替えにかける秒数。IsAdsTransitionSeamlessがtrueのときだけ効く。</summary>
+        public float AdsTransitionSeconds { get => _adsTransitionSeconds; set => _adsTransitionSeconds = value; }
+
+        [Min(0), Tooltip("ADS中に描画カメラの向きへ飛ばすレイの長さ（m）。最初に当たった場所、当たらなければレイの端へエコーを向けます。0なら正面の基準の向きのままです。")]
+        [UnityEngine.SerializeField]
+        private float _adsAimDistance = DefaultAdsAimDistance;
+        /// <summary>ADS中に描画カメラの向きへ飛ばすレイの長さ（m）。0ならエコーは正面の基準の向きのまま。</summary>
+        public float AdsAimDistance { get => _adsAimDistance; set => _adsAimDistance = value; }
+
+        [Tooltip("ADS中のレイが当たるレイヤー。")]
+        [UnityEngine.SerializeField]
+        private LayerMask _adsAimLayers = DefaultAdsAimLayers;
+        /// <summary>ADS中のレイが当たるレイヤー。</summary>
+        public LayerMask AdsAimLayers { get => _adsAimLayers; set => _adsAimLayers = value; }
 
         [Min(0), Tooltip("半径0から最大半径までの秒数。0なら即時です。")]
         [UnityEngine.SerializeField]
@@ -123,7 +167,11 @@ namespace Aura.Echolocation
             Duration = GetFiniteNonNegative(Duration, DefaultDuration);
             PulseHoldDuration = GetFiniteNonNegative(PulseHoldDuration, DefaultPulseHoldDuration);
             PulseInterval = Mathf.Max(MinimumPulseInterval, GetFiniteNonNegative(PulseInterval, DefaultPulseInterval), (Duration + PulseHoldDuration) / EchoPulseTimeline.MaxPulses);
-            AngleDegrees = Mathf.Clamp(GetFiniteNonNegative(AngleDegrees, FullCircleDegrees), 0, FullCircleDegrees);
+            AngleDegrees = Mathf.Clamp(GetFiniteNonNegative(AngleDegrees, DefaultAngleDegrees), 0, FullCircleDegrees);
+            AdsRadius = GetFiniteNonNegative(AdsRadius, DefaultAdsRadius);
+            AdsAngleDegrees = Mathf.Clamp(GetFiniteNonNegative(AdsAngleDegrees, DefaultAdsAngleDegrees), 0, FullCircleDegrees);
+            AdsTransitionSeconds = GetFiniteNonNegative(AdsTransitionSeconds, DefaultAdsTransitionSeconds);
+            AdsAimDistance = GetFiniteNonNegative(AdsAimDistance, DefaultAdsAimDistance);
             FollowWaveInterval = GetFiniteNonNegative(FollowWaveInterval, 0);
             LightSustain.Validate();
             OnceStockCapacity = Mathf.Clamp(OnceStockCapacity, 1, EchoPulseTimeline.MaxPulses);

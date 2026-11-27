@@ -234,6 +234,8 @@ namespace Aura.PlayerControl
             // EchoLocation
             if (_echoController != null)
             {
+                // ADS中かどうかでエコーのエフェクトを切り替えるため、ON/OFFの操作より先に伝える
+                _echoController.IsAiming = _isAiming;
                 if (_actions.Player.EchoScan.triggered)
                 {
                     _echoController.ToggleScan();

@@ -166,12 +166,16 @@ namespace Aura.Echolocation
         }
 
         /// <summary>位置の異なる生存波ごとに更新する。遮断物の移動やタグ変更は同じフレームに反映する。</summary>
-        public void Update(IReadOnlyList<EchoFrameData> frames, EchoSettings settings, Transform excluded)
+        public void Update(IReadOnlyList<EchoFrameData> frames, EchoSettings settings, Transform excluded) =>
+            Update(frames, settings, settings.Radius, excluded);
+
+        /// <summary>最大半径を指定して更新する。ADS中など、設定とは別の半径を使う時に使う。</summary>
+        public void Update(IReadOnlyList<EchoFrameData> frames, EchoSettings settings, float radius, Transform excluded)
         {
             _timer.Restart();
             IsReady = false;
             UpdatedFaceCount = 0;
-            if (!settings.Shadow.IsEnabled || frames.Count == 0 || settings.Radius <= 0)
+            if (!settings.Shadow.IsEnabled || frames.Count == 0 || radius <= 0)
             {
                 if (_atlas)
                     Clear();
@@ -209,7 +213,7 @@ namespace Aura.Echolocation
             }
 
             Allocate(_origins.Count, settings.Shadow.Resolution);
-            float near = Mathf.Min(MaximumNearPlane, settings.Radius * NearPlaneRatio), far = Mathf.Max(near + MaximumNearPlane, settings.Radius);
+            float near = Mathf.Min(MaximumNearPlane, radius * NearPlaneRatio), far = Mathf.Max(near + MaximumNearPlane, radius);
             if (far != _cachedFar)
             {
                 InvalidateCache();

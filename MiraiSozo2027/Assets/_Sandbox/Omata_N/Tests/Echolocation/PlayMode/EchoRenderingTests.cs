@@ -45,6 +45,8 @@ namespace Aura.Echolocation.Tests
             _controller.TargetCamera = _camera;
             _controller.Settings.Duration = 0;
             _controller.Settings.Radius = 10;
+            // 既定の全開き角は前方だけなので、全方向を前提にした描画テストでは明示する。
+            _controller.Settings.AngleDegrees = 360;
             _controller.Settings.Shadow.IsEnabled = false;
             _definition = AssignTag(_target, Color.green);
             _controller.Settings.TagColorRules.Add(_definition.Settings);
