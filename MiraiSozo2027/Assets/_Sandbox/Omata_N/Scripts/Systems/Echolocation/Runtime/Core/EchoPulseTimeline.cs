@@ -15,6 +15,8 @@ namespace Aura.Echolocation
         private double _eraseElapsed;
         private bool _isEmitting;
         private bool _isHiding;
+        // OFFにした時の最大半径。ADSを解除して半径が小さくなっても、固定した各波の外側まで消去が届くよう、消し終わるまで使う。
+        private float _eraseRadius;
         /// <summary>保持中の波をすべて破棄し、発生を停止する。</summary>
         public void Clear()
         {
@@ -50,6 +52,7 @@ namespace Aura.Echolocation
 
             _isHiding = true;
             _eraseElapsed = 0;
+            _eraseRadius = radius;
             for (int i = 0; i < _pulses.Count; i++)
             {
                 EchoPulse p = _pulses[i];
@@ -69,7 +72,8 @@ namespace Aura.Echolocation
             delta = Mathf.Max(0, delta);
             if (_isHiding)
                 _eraseElapsed += delta;
-            float erase = EchoPropagation.GetDistance(radius, settings.Duration, (float)_eraseElapsed);
+            // 固定した外側（FrozenRadius）はOFF時の半径で決めたため、消去も同じ半径で進める。
+            float erase = EchoPropagation.GetDistance(_isHiding ? _eraseRadius : radius, settings.Duration, (float)_eraseElapsed);
             for (int i = _pulses.Count - 1; i >= 0; i--)
             {
                 EchoPulse p = _pulses[i];

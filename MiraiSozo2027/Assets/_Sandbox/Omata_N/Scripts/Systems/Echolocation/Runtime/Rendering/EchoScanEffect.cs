@@ -135,7 +135,7 @@ namespace Aura.Echolocation
 
         /// <summary>
         /// 最初から1回だけ再生する。ループしないエフェクト用で、再生中に呼ぶと最初からやり直す。
-        /// 再生・停止の状態（IsPlaying）は変えない。
+        /// 1回だけの再生はループの再生状態（IsPlaying）に含めない。Prefabを差し替えて作り直した時は、前のエフェクトごと破棄するためIsPlayingはfalseになる。
         /// </summary>
         public void PlayOnce(Transform parent)
         {

@@ -85,6 +85,8 @@ namespace Aura.Echolocation
         private float _followWaveElapsed;
         private readonly EchoLightSustain _lightSustain = new EchoLightSustain();
         private float _lightAngleDegrees;
+        // ライト方式でOFFにした時の最大半径。ADSを解除して今の半径が小さくなっても、消去が照らしていた端まで届くよう固定する。
+        private float _lightEraseRadius;
         /// <summary>ライト方式の残りの持続可能な時間（秒）。時間制限がない設定では0。</summary>
         public float LightSustainRemainingSeconds => _lightSustain.GetRemainingSeconds(_settings.LightSustain);
         /// <summary>ライト方式の残りの持続可能な時間の割合（0～1）。時間制限がない設定では1。ゲージの表示に使う。</summary>
@@ -357,6 +359,8 @@ namespace Aura.Echolocation
             {
                 _elapsed = 0;
                 CurrentEraseRadius = 0;
+                // 照らしている端（CurrentOuterRadius）は今の最大半径以下なので、この半径で消せば必ず消しきれる。
+                _lightEraseRadius = Mathf.Max(CurrentRadius, CurrentOuterRadius);
                 _hasPendingClockReset = true;
                 ChangeState(EchoState.Hiding);
             }
@@ -474,7 +478,7 @@ namespace Aura.Echolocation
                 CurrentOuterRadius = radius;
             else if (CurrentState == EchoState.Hiding)
             {
-                CurrentEraseRadius = EchoPropagation.GetDistance(CurrentRadius, _settings.Duration, _elapsed);
+                CurrentEraseRadius = EchoPropagation.GetDistance(_lightEraseRadius, _settings.Duration, _elapsed);
                 if (CurrentEraseRadius >= CurrentOuterRadius)
                 {
                     CurrentOuterRadius = CurrentEraseRadius = 0;

@@ -57,6 +57,31 @@ namespace Aura.Echolocation.Tests
         }
 
         [UnityTest]
+        public IEnumerator LightErasesCompletelyWhenAimingEndsDuringHiding()
+        {
+            _go = new GameObject("ADS hiding test");
+            var controller = _go.AddComponent<EchoController>();
+            controller.Settings.ScanMode = EchoScanMode.Light;
+            controller.Settings.OffMode = EchoOffMode.Wave;
+            controller.Settings.Radius = 10;
+            controller.Settings.AdsRadius = 20;
+            controller.Settings.Duration = .2f;
+            controller.Settings.IsAdsTransitionSeamless = false;
+            controller.IsAiming = true;
+            controller.SetScanEnabled(true);
+            float timeout = Time.time + 3;
+            while (controller.CurrentState != EchoState.Active && Time.time < timeout) yield return null;
+
+            // ADS中（半径20）にOFFにしてから、ADSを解除して半径10に戻す。
+            controller.SetScanEnabled(false);
+            yield return null;
+            controller.IsAiming = false;
+            timeout = Time.time + 3;
+            while (controller.CurrentState != EchoState.Hidden && Time.time < timeout) yield return null;
+            Assert.That(controller.CurrentState, Is.EqualTo(EchoState.Hidden), "消去がADS中の端まで届き、消去中のまま残らない");
+        }
+
+        [UnityTest]
         public IEnumerator AimingPointsForwardAtCameraRayHit()
         {
             _go = new GameObject("ADS aim test");
