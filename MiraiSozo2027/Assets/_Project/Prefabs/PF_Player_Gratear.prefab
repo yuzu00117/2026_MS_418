@@ -376,7 +376,7 @@ MonoBehaviour:
   _runSpeed: 8
   _walkSpeed: 5.5
   _walkOnModifierKey: 1
-  _jumpForce: 5
+  _jumpForce: 7
   _rotateSpeed: 720
   _animDampTime: 0.1
   _cameraTransform: {fileID: 0}

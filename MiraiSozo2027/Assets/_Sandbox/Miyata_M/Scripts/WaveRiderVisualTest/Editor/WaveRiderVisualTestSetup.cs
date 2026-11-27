@@ -2,6 +2,7 @@ using System.IO;
 using Aura.Gimmick;
 using Aura.ObjectInfo;
 using Aura.Wave;
+using Aura.PlayerControl;
 using Unity.AI.Navigation;
 using UnityEditor;
 using UnityEditor.Events;
