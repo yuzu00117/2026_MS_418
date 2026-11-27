@@ -68,8 +68,7 @@ namespace MS.Toon.Editor
         private const string RampMapName = "_RampMap";
         private const string UndoName = "共通設定から個別設定へ切り替え";
         private const string NoticeUsingGlobal = "共通設定を使用中です(値を変えると個別設定に切り替わります)";
-        private const string NoticeUsingDefault = "シーンに ToonStyleApplier が無いため、標準設定(SO_ToonStyle_Main)を使用中です(値を変えると個別設定に切り替わります)";
-        private const string WarnNoApplier = "ToonStyleApplier も標準設定(SO_ToonStyle_Main)も見つからないため、共通設定は反映されません(このマテリアルの値で描画されます)";
+        private const string WarnNoApplier = "シーンに ToonStyleApplier が無いため(通常は PF_GameManager に付いています)、共通設定は反映されません(このマテリアルの値で描画されます)";
         private const string WarnNoProfile = "ToonStyleApplier に Profile が設定されていないため、共通設定は反映されません(このマテリアルの値で描画されます)";
 
         // 共通値で置換表示するグループ。トグルと、そのトグルがオンの間に置換されるプロパティ名を束ねる
@@ -197,8 +196,7 @@ namespace MS.Toon.Editor
             ToonStyleApplier applier = ToonStyleApplier.Active;
             if (applier == null || !applier.isActiveAndEnabled)
             {
-                // Applier が無いシーンでは標準プロファイルが反映されているので、その値を見せる
-                return ToonStyleDefault.Profile;
+                return null;
             }
             return applier.Profile;
         }
@@ -236,11 +234,6 @@ namespace MS.Toon.Editor
         {
             if (!toggleOn)
             {
-                return;
-            }
-            if (ToonStyleDefault.IsInUse)
-            {
-                EditorGUILayout.HelpBox(NoticeUsingDefault, MessageType.Info);
                 return;
             }
             ToonStyleApplier applier = ToonStyleApplier.Active;
