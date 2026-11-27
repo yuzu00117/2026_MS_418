@@ -108,6 +108,7 @@ Shader "MS/Toon"
             float  _GradientStrength;
             float  _GradientHeight;
             float  _GradientOffset;
+            float  _Surface;
         CBUFFER_END
         ENDHLSL
 
@@ -300,8 +301,8 @@ Shader "MS/Toon"
                 #endif
 
                 color = MixFog(color, input.fogFactor);
-                // 不透明時は Blend One Zero なので値は使われない。半透明時だけ効く
-                return half4(color, baseSample.a * _BaseColor.a);
+                // 不透明時は URP 標準 Lit と同じく 1 を書く。画面の透明度を読む処理(背景を抜いた撮影など)で透けないようにするため
+                return half4(color, _Surface > 0.5 ? baseSample.a * _BaseColor.a : 1.0);
             }
             ENDHLSL
         }
@@ -384,7 +385,7 @@ Shader "MS/Toon"
 
                 // 色は全ピクセル共通の値なので Fragment で解決する(Varyings を増やさない)
                 float3 color = MixFog(ResolveMaterialOutline().color, input.fogFactor);
-                return half4(color, _BaseColor.a);
+                return half4(color, _Surface > 0.5 ? _BaseColor.a : 1.0);
             }
             ENDHLSL
         }
