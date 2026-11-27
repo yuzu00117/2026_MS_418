@@ -320,14 +320,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 6596034716859031855, guid: 3bd859b72780fd54a9070020d63ee7fb, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
-      value: 
-      objectReference: {fileID: 2100000, guid: e0203276fe004634bbc5cb34b17ee16a, type: 2}
-    - target: {fileID: 7064581644763748629, guid: 3bd859b72780fd54a9070020d63ee7fb, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
-      value: 
-      objectReference: {fileID: 2100000, guid: b12ff92a0da004e4b98120fe2a0f5139, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -346,18 +338,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2036504177685406017}
     m_Modifications:
-    - target: {fileID: 285475663279125483, guid: bd62df72167a35a409a0b265b9c672f9, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
-      value: 
-      objectReference: {fileID: 2100000, guid: 008d93a23f5a90641a802a5d913343f5, type: 2}
     - target: {fileID: 2250207924873078728, guid: bd62df72167a35a409a0b265b9c672f9, type: 3}
       propertyPath: m_Name
       value: Turret
       objectReference: {fileID: 0}
-    - target: {fileID: 6386727172137033867, guid: bd62df72167a35a409a0b265b9c672f9, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
-      value: 
-      objectReference: {fileID: 2100000, guid: 008d93a23f5a90641a802a5d913343f5, type: 2}
     - target: {fileID: 7731606089974204641, guid: bd62df72167a35a409a0b265b9c672f9, type: 3}
       propertyPath: m_LocalPosition.x
       value: -6
@@ -398,10 +382,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8224862534616500597, guid: bd62df72167a35a409a0b265b9c672f9, type: 3}
-      propertyPath: 'm_Materials.Array.data[0]'
-      value: 
-      objectReference: {fileID: 2100000, guid: 008d93a23f5a90641a802a5d913343f5, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
