@@ -10,7 +10,7 @@ namespace MS.Toon
     [DisallowMultipleComponent]
     public class ToonStyleApplier : MonoBehaviour
     {
-        [Tooltip("現在適用するプロファイル。未設定ならデフォルト(各マテリアル値)で描画する")]
+        [Tooltip("現在適用するプロファイル。未設定なら各マテリアルの値で描画する。Applier が無いシーンでは SO_ToonStyle_Main が使われる")]
         [SerializeField] private ToonStyleProfile _profile;
         [Tooltip("インスペクタのプルダウンや SetProfileByIndex で切り替える候補")]
         [SerializeField] private ToonStyleProfile[] _profiles;
@@ -45,8 +45,9 @@ namespace MS.Toon
                 return;
             }
             Unsubscribe();
-            ToonStyleProfile.ClearGlobals();
             Active = null;
+            // Applier が外れたら、マテリアル値に戻すのではなく標準プロファイルへ戻す
+            ToonStyleDefault.ApplyIfNoApplier();
         }
 
         private void OnValidate()
