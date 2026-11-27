@@ -154,6 +154,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6905134206868734958}
     m_Modifications:
+    - target: {fileID: 2855420369374398523, guid: 6a7ab1e61b75c8042b2541701266209b, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: b12ff92a0da004e4b98120fe2a0f5139, type: 2}
     - target: {fileID: 5402501217470485970, guid: 6a7ab1e61b75c8042b2541701266209b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 3
@@ -198,6 +202,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Switch_Ultrasound
       objectReference: {fileID: 0}
+    - target: {fileID: 7319862257053120535, guid: 6a7ab1e61b75c8042b2541701266209b, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 52beccad81dd4e548b37e914dd6a2f35, type: 2}
     - target: {fileID: 9133117635966344985, guid: 6a7ab1e61b75c8042b2541701266209b, type: 3}
       propertyPath: _onActivated.m_PersistentCalls.m_Calls.Array.size
       value: 1
@@ -300,6 +308,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6596034716859031855, guid: 3bd859b72780fd54a9070020d63ee7fb, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e0203276fe004634bbc5cb34b17ee16a, type: 2}
+    - target: {fileID: 7064581644763748629, guid: 3bd859b72780fd54a9070020d63ee7fb, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: b12ff92a0da004e4b98120fe2a0f5139, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

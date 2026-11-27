@@ -90,7 +90,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 88a6a2401adb016468dbaddfc5159687, type: 2}
+  - {fileID: 2100000, guid: 321d268ad28455940bb494903bb057e5, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -244,11 +244,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33c8cdbf026f6624ca5da32892ec487b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.Gimmick::Aura.Gimmick.GimmickMover
-  _activeOffset: {x: 0, y: -2.4, z: 0}
-  _speed: 3
   _motionMode: 0
   _endWaitSeconds: 1
   _isActiveOnStart: 0
+  _activeOffset: {x: 0, y: -2.4, z: 0}
+  _speed: 3
+  _canCarryRiders: 0
 --- !u!1 &3261140419574215818
 GameObject:
   m_ObjectHideFlags: 0
@@ -338,7 +339,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 0dcabd3479238ba4189803062a65f54d, type: 2}
+  - {fileID: 2100000, guid: 936dcc0456718bb4085468b939f403ea, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

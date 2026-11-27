@@ -105,6 +105,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6596034716859031855, guid: 3bd859b72780fd54a9070020d63ee7fb, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e0203276fe004634bbc5cb34b17ee16a, type: 2}
+    - target: {fileID: 7064581644763748629, guid: 3bd859b72780fd54a9070020d63ee7fb, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: b12ff92a0da004e4b98120fe2a0f5139, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

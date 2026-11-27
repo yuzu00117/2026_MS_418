@@ -46,11 +46,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 33c8cdbf026f6624ca5da32892ec487b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Aura.Gimmick::Aura.Gimmick.GimmickMover
-  _activeOffset: {x: 0, y: 5.3125, z: 0}
-  _speed: 1.6666666
   _motionMode: 0
   _endWaitSeconds: 1
   _isActiveOnStart: 0
+  _activeOffset: {x: 0, y: 5.3125, z: 0}
+  _speed: 1.6666666
+  _canCarryRiders: 0
 --- !u!114 &1471739573341983198
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -152,7 +153,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 22b0c729880443344b795951ba27176b, type: 2}
+  - {fileID: 2100000, guid: 4aed964daef5ece47ac3f3ffbea65590, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
