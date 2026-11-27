@@ -313,7 +313,6 @@ GameObject:
   - component: {fileID: -5704771431086666332}
   - component: {fileID: 3380333724038634786}
   - component: {fileID: 7415926535897932384}
-  - component: {fileID: 6016394920153766604}
   m_Layer: 0
   m_Name: PF_Player_Gratear
   m_TagString: Untagged
@@ -1031,19 +1030,6 @@ MonoBehaviour:
     _second: 1
   - _first: 0
     _second: 2
---- !u!114 &6016394920153766604
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8923635859648306710}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c1e320a0965fe9446b7e22ff50f10bfc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Aura.Toon::MS.Toon.ToonCharacterStyle
-  _profile: {fileID: 11400000, guid: 686101a103bf11f4ebd6c526278473d8, type: 2}
 --- !u!1001 &40192677664452904
 PrefabInstance:
   m_ObjectHideFlags: 0
