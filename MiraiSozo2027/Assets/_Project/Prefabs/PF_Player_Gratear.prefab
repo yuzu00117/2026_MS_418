@@ -452,6 +452,10 @@ MonoBehaviour:
   _settings:
     _radius: 15
     _angleDegrees: 70
+    _adsRadius: 30
+    _adsAngleDegrees: 38.6
+    _isAdsTransitionSeamless: 1
+    _adsTransitionSeconds: 0.3
     _duration: 0.75
     _scanMode: 0
     _pulseInterval: 2
@@ -465,8 +469,8 @@ MonoBehaviour:
       _recoverySpeed: 1
       _isRadiusShrinking: 0
       _minimumRadius: 2
-      _isAngleShrinking: 0
-      _minimumAngleDegrees: 30
+      _isAngleShrinking: 1
+      _minimumAngleDegrees: 0
     _onceStockCapacity: 1
     _onceRechargeSeconds: 2
     _offMode: 0
@@ -726,7 +730,31 @@ MonoBehaviour:
     _boundaryColor: {r: 0.1, g: 0.8, b: 1, a: 0.32}
     _waveWidth: 15
   _scanEffect:
+    _prefab: {fileID: 5129105525540286476, guid: a959ab2a9a880e543aaedd8207d4bb0c, type: 3}
+    _isScaledToRadius: 0
+    _baseRadius: 17
+    _isSpeedMatchedToDuration: 0
+    _baseDuration: 1.5
+    _isFacingDirection: 1
+    _isPitchFollowed: 1
+  _startEffect:
     _prefab: {fileID: 5129105525540286476, guid: 7ac4dcc87e776e0449edfa5418965b05, type: 3}
+    _isScaledToRadius: 0
+    _baseRadius: 17
+    _isSpeedMatchedToDuration: 0
+    _baseDuration: 1.5
+    _isFacingDirection: 1
+    _isPitchFollowed: 1
+  _adsScanEffect:
+    _prefab: {fileID: 5129105525540286476, guid: 45d9119d54cc306439a8c616eb8cfc8c, type: 3}
+    _isScaledToRadius: 0
+    _baseRadius: 17
+    _isSpeedMatchedToDuration: 0
+    _baseDuration: 1.5
+    _isFacingDirection: 1
+    _isPitchFollowed: 1
+  _adsStartEffect:
+    _prefab: {fileID: 5129105525540286476, guid: b4581f3679f8e314cb32822524d5c17e, type: 3}
     _isScaledToRadius: 0
     _baseRadius: 17
     _isSpeedMatchedToDuration: 0

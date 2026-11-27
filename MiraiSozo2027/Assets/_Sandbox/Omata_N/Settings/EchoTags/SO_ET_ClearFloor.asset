@@ -60,7 +60,7 @@ MonoBehaviour:
       _outlineWidth: 1
       _originalOpacity: 0.1
     _materialization:
-      _requiredSeconds: 1
+      _requiredSeconds: 3
       _interruptionMode: 2
       _decaySpeed: 0.25
       _persistenceMode: 1
