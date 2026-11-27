@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 using MiraiSozo.Options;
 using Aura.Core;
@@ -42,6 +43,8 @@ namespace Aura.Cameras
         [Header("Rotation Settings")]
         [SerializeField] private float _sensitivityX = 0.2f;
         [SerializeField] private float _sensitivityY = 0.2f;
+        [Tooltip("スティックで回すときの感度の倍率。スティックを倒しきったときの回転は「感度 × この値」（度/秒）。感度0.2なら180度/秒")]
+        [SerializeField, Min(0f)] private float _stickSpeedScale = 900.0f;
         [SerializeField] private float _minPitch = 30.0f; //見下ろし限界（度）
         [SerializeField] private float _maxPitch = 120.0f; //見上げ限界（度）
         [SerializeField] private bool _invertX = false; //横方向反転（チェックを入れると左右反転）
@@ -246,7 +249,14 @@ namespace Aura.Cameras
             if (GameManager.Instance != null && GameManager.Instance.IsPaused) return;
 
             // 1. Input System から Look（マウス移動 / 右スティック）を取得
-            Vector2 lookInput = _actions.Player.Look.ReadValue<Vector2>();
+            InputAction lookAction = _actions.Player.Look;
+            Vector2 lookInput = lookAction.ReadValue<Vector2>();
+            // マウスは1フレームの移動量なのでそのまま使う。スティックは倒した量（-1～1）なので、
+            // 秒あたりの回転にしてフレーム時間を掛ける（掛けないと1フレーム0.2度しか回らず、FPSでも速さが変わる）
+            if (!(lookAction.activeControl?.device is Pointer))
+            {
+                lookInput *= _stickSpeedScale * Time.deltaTime;
+            }
             // 2. 角度の加算（反転フラグを反映）
             _yaw += lookInput.x * _sensitivityX * (_invertX ? -1f : 1f);
             float verticalDelta = lookInput.y * _sensitivityY * (_invertY ? 1f : -1f);
