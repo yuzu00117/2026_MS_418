@@ -24,16 +24,22 @@ namespace Aura.Echolocation
         }
 
         /// <summary>残存波を破棄し、その場で最初の波を出す。</summary>
-        public void Start(Vector3 origin, Vector3 forward, EchoSettings settings)
+        public void Start(Vector3 origin, Vector3 forward, EchoSettings settings) => Start(origin, forward, settings, settings.Radius);
+
+        /// <summary>最大半径を指定して最初の波を出す。ADS中など、設定とは別の半径を使う時に使う。</summary>
+        public void Start(Vector3 origin, Vector3 forward, EchoSettings settings, float radius)
         {
             Clear();
             _isEmitting = true;
-            if (settings.Radius > 0 && (settings.Duration > 0 || settings.PulseHoldDuration > 0))
+            if (radius > 0 && (settings.Duration > 0 || settings.PulseHoldDuration > 0))
                 _pulses.Add(new EchoPulse { Origin = origin, Forward = forward.normalized, Id = ++_sequence });
         }
 
         /// <summary>新しい波を止める。波状OFFは各波の外側を固定し、各中心から消去する。</summary>
-        public void Stop(EchoSettings settings)
+        public void Stop(EchoSettings settings) => Stop(settings, settings.Radius);
+
+        /// <summary>最大半径を指定して新しい波を止める。</summary>
+        public void Stop(EchoSettings settings, float radius)
         {
             _isEmitting = false;
             if (settings.OffMode == EchoOffMode.Immediate || settings.Duration <= 0)
@@ -47,19 +53,23 @@ namespace Aura.Echolocation
             for (int i = 0; i < _pulses.Count; i++)
             {
                 EchoPulse p = _pulses[i];
-                p.FrozenRadius = EchoPropagation.GetDistance(settings.Radius, settings.Duration, (float)p.Age);
+                p.FrozenRadius = EchoPropagation.GetDistance(radius, settings.Duration, (float)p.Age);
                 _pulses[i] = p;
             }
         }
 
         /// <summary>時間を進め、古い順で生存中の領域を返す。長い停止フレーム後の発生は現在地で1回に集約する。</summary>
-        public void Advance(float delta, EchoSettings settings, Vector3 origin, Vector3 forward, List<EchoFrameData> outputItems)
+        public void Advance(float delta, EchoSettings settings, Vector3 origin, Vector3 forward, List<EchoFrameData> outputItems) =>
+            Advance(delta, settings, settings.Radius, settings.AngleDegrees, origin, forward, outputItems);
+
+        /// <summary>最大半径と全開き角を指定して時間を進める。ADS中など、設定とは別の範囲を使う時に使う。</summary>
+        public void Advance(float delta, EchoSettings settings, float radius, float angleDegrees, Vector3 origin, Vector3 forward, List<EchoFrameData> outputItems)
         {
             outputItems.Clear();
             delta = Mathf.Max(0, delta);
             if (_isHiding)
                 _eraseElapsed += delta;
-            float erase = EchoPropagation.GetDistance(settings.Radius, settings.Duration, (float)_eraseElapsed);
+            float erase = EchoPropagation.GetDistance(radius, settings.Duration, (float)_eraseElapsed);
             for (int i = _pulses.Count - 1; i >= 0; i--)
             {
                 EchoPulse p = _pulses[i];
@@ -78,7 +88,7 @@ namespace Aura.Echolocation
                     // 1フレームに大量発生させず、過去のプレイヤー位置を推測もしない。
                     _sinceEmission %= settings.PulseInterval;
                     // 寿命が0の波は、再発生時にも1フレームだけ表示しない。
-                    if (settings.Radius > 0 && (settings.Duration > 0 || settings.PulseHoldDuration > 0) && _pulses.Count < MaxPulses)
+                    if (radius > 0 && (settings.Duration > 0 || settings.PulseHoldDuration > 0) && _pulses.Count < MaxPulses)
                         _pulses.Add(new EchoPulse { Origin = origin, Forward = forward.normalized, Id = ++_sequence });
                 }
             }
@@ -86,7 +96,7 @@ namespace Aura.Echolocation
             foreach (EchoPulse p in _pulses)
             {
                 var state = _isHiding ? EchoState.Hiding : p.Age < settings.Duration ? EchoState.Revealing : EchoState.Active;
-                outputItems.Add(new EchoFrameData(p.Origin, p.Forward, settings.AngleDegrees, _isHiding ? p.FrozenRadius : EchoPropagation.GetDistance(settings.Radius, settings.Duration, (float)p.Age), _isHiding ? erase : 0, state, settings.OcclusionMode, p.Id));
+                outputItems.Add(new EchoFrameData(p.Origin, p.Forward, angleDegrees, _isHiding ? p.FrozenRadius : EchoPropagation.GetDistance(radius, settings.Duration, (float)p.Age), _isHiding ? erase : 0, state, settings.OcclusionMode, p.Id));
             }
         }
     }

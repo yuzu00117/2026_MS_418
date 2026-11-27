@@ -9,6 +9,9 @@ namespace Aura.Echolocation.Editor
     {
         private const string LightSustainPath = "_settings._lightSustain";
         private const string ScanEffectPath = "_scanEffect";
+        private const string StartEffectPath = "_startEffect";
+        private const string AdsScanEffectPath = "_adsScanEffect";
+        private const string AdsStartEffectPath = "_adsStartEffect";
         void DrawField(string path, string label) => EditorGUILayout.PropertyField(serializedObject.FindProperty(path), new GUIContent(label), true);
         void DrawEnum(string path, string label, string[] choices)
         {
@@ -34,6 +37,23 @@ namespace Aura.Echolocation.Editor
             DrawField("_settings._radius", "最大半径（m）");
             DrawField("_settings._angleDegrees", "全開き角（度）");
             DrawField("_settings._duration", "伝播時間（秒）");
+            DrawField("_settings._adsRadius", "ADS中の最大半径（m）");
+            DrawField("_settings._adsAngleDegrees", "ADS中の全開き角（度）");
+            DrawField("_settings._isAdsTransitionSeamless", "ADSの切り替えを少しずつ行う");
+            if (serializedObject.FindProperty("_settings._isAdsTransitionSeamless").boolValue)
+            {
+                EditorGUI.indentLevel++;
+                DrawField("_settings._adsTransitionSeconds", "切り替えにかける時間（秒）");
+                EditorGUI.indentLevel--;
+            }
+            DrawField("_settings._adsAimDistance", "ADS中の照準のレイの長さ（m）");
+            if (serializedObject.FindProperty("_settings._adsAimDistance").floatValue > 0)
+            {
+                EditorGUI.indentLevel++;
+                DrawField("_settings._adsAimLayers", "照準のレイが当たるレイヤー");
+                EditorGUI.indentLevel--;
+                EditorGUILayout.HelpBox("ADS中は描画カメラの向きにレイを飛ばし、最初に当たった場所（当たらなければレイの端）へエコーの発射向きを向けます。プレイヤーの向きは変えません。除外するルートの配下とトリガーには当たりません。", MessageType.Info);
+            }
             DrawField("_settings._scanMode", "スキャン方式");
             DrawRangeDisplay();
             bool isRangeVisible = serializedObject.FindProperty("_rangeDisplay._isEnabled").boolValue;
@@ -81,9 +101,15 @@ namespace Aura.Echolocation.Editor
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("エフェクト", EditorStyles.boldLabel);
-            DrawField(ScanEffectPath + "._prefab", "使用中に再生するエフェクト");
-            if (serializedObject.FindProperty(ScanEffectPath + "._prefab").objectReferenceValue)
-                DrawScanEffect();
+            DrawScanEffect(ScanEffectPath, "使用中に再生するエフェクト",
+                "エコーをONにすると、スキャン中心の子として生成して再生します。OFF後に波が消えきったら放出を止め、出ている粒子は寿命まで残ります。");
+            DrawScanEffect(StartEffectPath, "開始した時のエフェクト",
+                "ADS中でない時にエコーをONにした時だけ、1回再生します（ループしないPrefabを使います）。上のループと同時に再生します。");
+            DrawScanEffect(AdsScanEffectPath, "ADS中に再生するエフェクト",
+                "エコーを使っている間、ADS中はこちらに切り替えてループします。ADS中にONにしなくても、ADSを始めた時点で切り替わります。未設定ならADS中も上のエフェクトのままです。");
+            DrawScanEffect(AdsStartEffectPath, "ADS中に開始した時のエフェクト",
+                "ADS中にエコーをONにした時だけ、1回再生します（ループしないPrefabを使います）。ADS中のループと同時に再生します。");
+            EditorGUILayout.HelpBox("大きさ・速さ・向きは生成したエフェクトだけを変え、元のPrefabは変えません。開き角はPrefabの形のままです。ADS中かどうかはプレイヤー側から EchoController.IsAiming で受け取ります。", MessageType.Info);
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("対象と表示", EditorStyles.boldLabel);
@@ -102,32 +128,36 @@ namespace Aura.Echolocation.Editor
             DrawRuntimeStatus();
         }
 
-        void DrawScanEffect()
+        // 3つのエフェクトは同じ設定項目を持つため、Prefabを設定した時だけ合わせ方を表示する。
+        void DrawScanEffect(string path, string label, string help)
         {
+            DrawField(path + "._prefab", label);
+            if (!serializedObject.FindProperty(path + "._prefab").objectReferenceValue)
+                return;
             EditorGUI.indentLevel++;
-            DrawField(ScanEffectPath + "._isScaledToRadius", "最大半径に大きさを合わせる");
-            if (serializedObject.FindProperty(ScanEffectPath + "._isScaledToRadius").boolValue)
+            DrawField(path + "._isScaledToRadius", "最大半径に大きさを合わせる");
+            if (serializedObject.FindProperty(path + "._isScaledToRadius").boolValue)
             {
                 EditorGUI.indentLevel++;
-                DrawField(ScanEffectPath + "._baseRadius", "基準の半径（m）");
+                DrawField(path + "._baseRadius", "基準の半径（m）");
                 EditorGUI.indentLevel--;
             }
-            DrawField(ScanEffectPath + "._isSpeedMatchedToDuration", "伝播時間に速さを合わせる");
-            if (serializedObject.FindProperty(ScanEffectPath + "._isSpeedMatchedToDuration").boolValue)
+            DrawField(path + "._isSpeedMatchedToDuration", "伝播時間に速さを合わせる");
+            if (serializedObject.FindProperty(path + "._isSpeedMatchedToDuration").boolValue)
             {
                 EditorGUI.indentLevel++;
-                DrawField(ScanEffectPath + "._baseDuration", "基準の時間（秒）");
+                DrawField(path + "._baseDuration", "基準の時間（秒）");
                 EditorGUI.indentLevel--;
             }
-            DrawField(ScanEffectPath + "._isFacingDirection", "正面の基準に向きを合わせる");
-            if (serializedObject.FindProperty(ScanEffectPath + "._isFacingDirection").boolValue)
+            DrawField(path + "._isFacingDirection", "正面の基準に向きを合わせる");
+            if (serializedObject.FindProperty(path + "._isFacingDirection").boolValue)
             {
                 EditorGUI.indentLevel++;
-                DrawField(ScanEffectPath + "._isPitchFollowed", "上下の傾きも合わせる");
+                DrawField(path + "._isPitchFollowed", "上下の傾きも合わせる");
                 EditorGUI.indentLevel--;
             }
             EditorGUI.indentLevel--;
-            EditorGUILayout.HelpBox("エコーをONにすると、スキャン中心の子として生成して再生します。OFF後に波が消えきったら放出を止め、出ている粒子は寿命まで残ります。大きさ・速さ・向きは生成したエフェクトだけを変え、元のPrefabは変えません。開き角はPrefabの形のままです。", MessageType.Info);
+            EditorGUILayout.HelpBox(help, MessageType.None);
         }
 
         void DrawLightSustain()

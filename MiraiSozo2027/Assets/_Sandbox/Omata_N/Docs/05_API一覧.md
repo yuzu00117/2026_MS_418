@@ -56,6 +56,14 @@
 | `Settings` | `EchoSettings` | 読 | スキャンの設定。中身は書き換えられる（[EchoSettings](#echosettings)） |
 | `RangeDisplay` | `EchoRangeDisplaySettings` | 読 | 範囲表示の設定。中身は書き換えられる |
 | `ScanEffect` | `EchoScanEffect` | 読 | 使用中に再生するエフェクト（[EchoScanEffect](#echoscaneffect使用中のエフェクト)） |
+| `StartEffect` | `EchoScanEffect` | 読 | ADS 中でない時にエコーを ON にした時に 1 回だけ再生するエフェクト |
+| `AdsScanEffect` | `EchoScanEffect` | 読 | ADS 中に `ScanEffect` の代わりにループするエフェクト |
+| `AdsStartEffect` | `EchoScanEffect` | 読 | ADS 中にエコーを ON にした時に 1 回だけ再生するエフェクト |
+| `IsAiming` | `bool` | 読書 | ADS 中か。プレイヤー側から毎フレーム設定する。エフェクトと、半径・全開き角（ADS 中の値）の切り替えに使う |
+| `AdsBlend` | `float` | 読 | 通常の範囲から ADS 中の範囲への移り具合（0：通常～1：ADS 中） |
+| `CurrentForward` | `Vector3` | 読 | 今のエコーの発射向き。ADS 中は照準のレイが当たった場所へ向き、それ以外は正面の基準の forward |
+| `AdsAimPoint` / `HasAdsAimPoint` | `Vector3` / `bool` | 読 | ADS 中に照準のレイが当たった場所（当たらなければレイの端）／このフレームでレイを飛ばしたか |
+| `CurrentRadius` / `CurrentAngleDegrees` | `float` | 読 | 今の最大半径（m）／全開き角（度）。ADS の移り具合に合わせて、通常と ADS 中の値の間になる |
 | `TargetCamera` | `Camera` | 読書 | 描画カメラ |
 | `OriginTransform` | `Transform` | 読書 | スキャン中心 |
 | `DirectionTransform` | `Transform` | 読書 | 正面の基準 |
@@ -184,6 +192,9 @@ Inspector の「状態変更時の通知」（UnityEvent）でも、`StateChange
 | `Radius` | `float` | 最大半径（m） |
 | `AngleDegrees` | `float` | 全開き角（度） |
 | `Duration` | `float` | 伝播時間（秒） |
+| `AdsRadius` / `AdsAngleDegrees` | `float` | ADS 中の最大半径（m）／全開き角（度） |
+| `IsAdsTransitionSeamless` / `AdsTransitionSeconds` | `bool` / `float` | ADS の切り替えを少しずつ行うか／切り替えにかける秒数 |
+| `AdsAimDistance` / `AdsAimLayers` | `float` / `LayerMask` | ADS 中の照準のレイの長さ（m、0 で無効）／当たるレイヤー |
 | `ScanMode` | `EchoScanMode` | スキャン方式 |
 | `FollowWaveInterval` | `float` | ライト方式の拡張波を繰り返す間隔（秒） |
 | `LightSustain` | `EchoLightSustainSettings` | ライト方式の持続可能な時間 |
@@ -228,7 +239,7 @@ Inspector の「状態変更時の通知」（UnityEvent）でも、`StateChange
 
 ### EchoScanEffect（使用中のエフェクト）
 
-`EchoController.ScanEffect` の中身です。再生と停止は Controller が `IsEchoInUse` に合わせて行うので、通常は呼ぶ必要はありません。
+`EchoController.ScanEffect`・`StartEffect`・`AdsScanEffect`・`AdsStartEffect` の中身です。再生と停止は Controller が `IsEchoInUse` と `IsAiming` に合わせて行うので、通常は呼ぶ必要はありません。
 
 | 名前 | 型 | 内容 |
 |---|---|---|
@@ -239,6 +250,8 @@ Inspector の「状態変更時の通知」（UnityEvent）でも、`StateChange
 | `IsPitchFollowed` | `bool` | 上下の傾きも合わせるか（`IsFacingDirection` が `true` のときだけ効く） |
 | `IsPlaying` | `bool` | 再生中か（読み取り専用） |
 | `SetPlaying(bool, Transform)` | 関数 | 再生・停止を切り替える。再生時は指定した Transform の子として生成する |
+| `PlayOnce(Transform)` | 関数 | 最初から 1 回だけ再生する（ループしないエフェクト用）。再生中に呼ぶと最初からやり直す。`IsPlaying` は変えない |
+| `Apply(float, float, Vector3, Vector3)` | 関数 | 向き（forward・up）を直接指定して合わせる。Controller はエコーの発射向き（`CurrentForward`）で呼ぶ |
 | `Apply(float, float, Transform)` | 関数 | 半径・伝播時間・正面の基準に合わせて、生成したエフェクトの大きさ・速さ・向きを変える。Controller が毎フレーム呼ぶ |
 | `Release()` | 関数 | 生成したエフェクトを破棄する |
 

@@ -18,6 +18,79 @@ namespace Aura.Echolocation.Tests
         }
 
         [UnityTest]
+        public IEnumerator AimingSwitchesRadiusAndAngleImmediatelyWhenNotSeamless()
+        {
+            _go = new GameObject("ADS range test");
+            var controller = _go.AddComponent<EchoController>();
+            controller.Settings.Radius = 10;
+            controller.Settings.AngleDegrees = 70;
+            controller.Settings.AdsRadius = 20;
+            controller.Settings.AdsAngleDegrees = 40;
+            controller.Settings.IsAdsTransitionSeamless = false;
+            controller.IsAiming = true;
+            yield return null;
+            Assert.That(controller.CurrentRadius, Is.EqualTo(20).Within(1e-4f));
+            Assert.That(controller.CurrentAngleDegrees, Is.EqualTo(40).Within(1e-4f));
+
+            controller.IsAiming = false;
+            yield return null;
+            Assert.That(controller.CurrentRadius, Is.EqualTo(10).Within(1e-4f));
+            Assert.That(controller.CurrentAngleDegrees, Is.EqualTo(70).Within(1e-4f));
+        }
+
+        [UnityTest]
+        public IEnumerator AimingMovesRadiusGraduallyWhenSeamless()
+        {
+            _go = new GameObject("ADS seamless test");
+            var controller = _go.AddComponent<EchoController>();
+            controller.Settings.Radius = 10;
+            controller.Settings.AdsRadius = 20;
+            controller.Settings.IsAdsTransitionSeamless = true;
+            controller.Settings.AdsTransitionSeconds = 1;
+            controller.IsAiming = true;
+            yield return null;
+            Assert.That(controller.CurrentRadius, Is.GreaterThan(10).And.LessThan(20), "1秒かけて移るので、1フレームでは途中");
+
+            float timeout = Time.time + 3;
+            while (controller.AdsBlend < 1 && Time.time < timeout) yield return null;
+            Assert.That(controller.CurrentRadius, Is.EqualTo(20).Within(1e-4f));
+        }
+
+        [UnityTest]
+        public IEnumerator AimingPointsForwardAtCameraRayHit()
+        {
+            _go = new GameObject("ADS aim test");
+            var cameraObject = new GameObject("Aim camera", typeof(Camera));
+            cameraObject.transform.SetParent(_go.transform);
+            cameraObject.transform.position = new Vector3(1, 0, -1);
+            var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wall.transform.SetParent(_go.transform);
+            wall.transform.position = new Vector3(0, 0, 10);
+            wall.transform.localScale = new Vector3(10, 10, 1);
+            var controllerObject = new GameObject("Controller");
+            controllerObject.transform.SetParent(_go.transform);
+            var controller = controllerObject.AddComponent<EchoController>();
+            controller.TargetCamera = cameraObject.GetComponent<Camera>();
+            controller.ExcludedRoot = controllerObject.transform;
+            controller.Settings.IsAdsTransitionSeamless = false;
+            controller.Settings.AdsAimDistance = 100;
+            // 作った当たり判定を物理に反映させてからレイを飛ばす。
+            yield return new WaitForFixedUpdate();
+
+            controller.IsAiming = true;
+            yield return null;
+            Assert.That(controller.HasAdsAimPoint, Is.True);
+            Assert.That(controller.AdsAimPoint.z, Is.EqualTo(9.5f).Within(.01f), "壁の手前の面に当たる");
+            Vector3 expected = (controller.AdsAimPoint - controllerObject.transform.position).normalized;
+            Assert.That(Vector3.Angle(controller.CurrentForward, expected), Is.LessThan(.1f), "発生位置から当たった場所へ向く");
+
+            controller.IsAiming = false;
+            yield return null;
+            Assert.That(controller.HasAdsAimPoint, Is.False);
+            Assert.That(Vector3.Angle(controller.CurrentForward, controllerObject.transform.forward), Is.LessThan(.1f), "ADS中でなければ正面の基準の向き");
+        }
+
+        [UnityTest]
         public IEnumerator PublicCommandsAndDisableClearTheScan()
         {
             _go = new GameObject("Controller test");
