@@ -5,7 +5,7 @@ namespace MS.Toon
 {
     /// <summary>
     /// ゲーム全体のトゥーン調の絵作りをまとめたプロファイル。
-    /// ToonStyleApplier がこの値を _Global* としてシェーダーへ反映する。
+    /// ToonProjectSettings(全体の既定)または ToonStyleApplier(シーンごとの上書き)がこの値を _Global* としてシェーダーへ反映する。
     /// マテリアルに「個別の設定ファイル」として登録すると、そのマテリアルだけこの値で描く
     /// (登録の仕組みは Editor 側の ToonMaterialProfileLink)。
     /// </summary>

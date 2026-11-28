@@ -70,13 +70,12 @@ namespace MS.Toon.Editor
         private const string RampMapName = "_RampMap";
         private const string UndoName = "共通設定から個別設定へ切り替え";
         private const string NoticeUsingGlobal = "共通設定を使用中です(値を変えると個別設定に切り替わります)";
-        private const string WarnNoApplier = "シーンに ToonStyleApplier が無いため(通常は PF_GameManager に付いています)、共通設定は反映されません(このマテリアルの値で描画されます)";
+        private const string WarnNoGlobal = "共通設定が見つからないため反映されません(このマテリアルの値で描画されます)。SO_ToonProjectSettings を Preloaded Assets に登録し、Default Profile を設定してください。";
         private const string ProfileFieldLabel = "個別の設定ファイル";
         private const string ProfileFieldTooltip = "このマテリアルだけ別の値で描きたいときに ToonStyleProfile を登録する。登録すると値がマテリアルへ書き込まれ、共通設定を切り替えても変わらない。外すと共通設定に戻る。";
         private const string NoticeProfileHelp = "全体の見た目に従います。このマテリアルだけ変えたいときは、個別の設定ファイルを登録してください(同じマテリアルを使う物すべてに効きます)。";
         private const string NoticeOverriddenFormat = "個別の設定ファイル「{0}」の値です。変えるときは、そのファイルを編集してください。";
         private const string WarnMissingProfile = "登録された個別の設定ファイルが見つかりません(削除された可能性があります)。登録し直すか、外してください。";
-        private const string WarnNoProfile = "ToonStyleApplier に Profile が設定されていないため、共通設定は反映されません(このマテリアルの値で描画されます)";
 
         // 共通値で置換表示するグループ。トグルと、そのトグルがオンの間に置換されるプロパティ名を束ねる
         private sealed class GlobalGroup
@@ -273,14 +272,10 @@ namespace MS.Toon.Editor
             return -1;
         }
 
+        // シーンの Applier を優先し、無ければプロジェクトの共通設定。シェーダーへ反映する値と同じ判定を使う
         private static ToonStyleProfile GetActiveProfile()
         {
-            ToonStyleApplier applier = ToonStyleApplier.Active;
-            if (applier == null || !applier.isActiveAndEnabled)
-            {
-                return null;
-            }
-            return applier.Profile;
+            return ToonProjectSettings.ResolveEffectiveProfile();
         }
 
         // 複数選択で値が割れているトグルは「共通使用中」と断定できないので、置換しない
@@ -318,14 +313,9 @@ namespace MS.Toon.Editor
             {
                 return;
             }
-            ToonStyleApplier applier = ToonStyleApplier.Active;
-            if (applier == null || !applier.isActiveAndEnabled)
+            if (profile == null)
             {
-                EditorGUILayout.HelpBox(WarnNoApplier, MessageType.Warning);
-            }
-            else if (profile == null)
-            {
-                EditorGUILayout.HelpBox(WarnNoProfile, MessageType.Warning);
+                EditorGUILayout.HelpBox(WarnNoGlobal, MessageType.Warning);
             }
             else
             {

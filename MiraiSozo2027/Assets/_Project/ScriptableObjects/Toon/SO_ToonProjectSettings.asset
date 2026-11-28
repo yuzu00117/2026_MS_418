@@ -1,0 +1,15 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2661de9e2044a274d9672141229d1a9c, type: 3}
+  m_Name: SO_ToonProjectSettings
+  m_EditorClassIdentifier: Aura.Toon::MS.Toon.ToonProjectSettings
+  _defaultProfile: {fileID: 11400000, guid: 99126546110404368b8d171df88bb55b, type: 2}
