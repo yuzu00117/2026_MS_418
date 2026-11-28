@@ -13,13 +13,13 @@ Material:
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords:
-  - _USEGLOBALOUTLINE_ON
   - _USEGLOBALSTYLE_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
-  stringTagMap: {}
+  stringTagMap:
+    MSToonStyleProfile: 686101a103bf11f4ebd6c526278473d8
   disabledShaderPasses: []
   m_LockedProperties: 
   m_SavedProperties:
@@ -43,29 +43,37 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _AmbientStrength: 1
     - _BumpScale: 1
     - _Cull: 2
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
     - _GradientHeight: 1
     - _GradientOffset: 0.5
     - _GradientStrength: 0.3
     - _Lite: 0
-    - _OutlineWidth: 0.02
+    - _OutlineWidth: 0.01
     - _RimIntensity: 0.5
     - _RimPower: 3
     - _ShadowStrength: 1
     - _Smoothness: 0.05
     - _SpecularIntensity: 0.5
     - _SpecularSize: 0.5
+    - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _Surface: 0
     - _UseEmission: 0
-    - _UseGlobalOutline: 1
+    - _UseGlobalOutline: 0
     - _UseGlobalStyle: 1
     - _UseNormalMap: 0
     - _UseRim: 0
     - _UseSpecular: 0
+    - _ZWrite: 1
     m_Colors:
+    - _AmbientTint: {r: 1, g: 1, b: 1, a: 1}
     - _BaseColor: {r: 0.55488104, g: 0.70183074, b: 0.88621026, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
-    - _OutlineColor: {r: 0.09999997, g: 0.09999997, b: 0.09999997, a: 1}
+    - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
     - _RimColor: {r: 1, g: 1, b: 1, a: 1}
     - _ShadowColor: {r: 0.54999995, g: 0.54999995, b: 0.72, a: 1}
   m_BuildTextureStacks: []

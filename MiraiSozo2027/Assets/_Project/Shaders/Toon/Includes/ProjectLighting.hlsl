@@ -24,13 +24,6 @@
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
 // ---------------------------------------------------------------------------
-// 環境光はマテリアル側に調整項目が無いため、プロファイル無効時の値をここで持つ。
-// 他の項目のデフォルトはマテリアルのプロパティ初期値が担う。
-// ---------------------------------------------------------------------------
-#define MS_TOON_DEFAULT_AMBIENT_TINT    float3(1.0, 1.0, 1.0)
-#define MS_TOON_DEFAULT_AMBIENT_STRENGTH 1.0
-
-// ---------------------------------------------------------------------------
 // グローバル入力(Shader.SetGlobal* で設定。マテリアルのプロパティではない)
 // ---------------------------------------------------------------------------
 CBUFFER_START(MSToonGlobals)
@@ -75,6 +68,7 @@ struct ToonStyle
 // useGlobalStyle: マテリアル側の「グローバルスタイルを使う」トグル(0/1)
 ToonStyle ToonResolveStyle(float useGlobalStyle,
                            float localSmoothness, float3 localShadowColor, float localShadowStrength,
+                           float3 localAmbientTint, float localAmbientStrength,
                            float3 localRimColor, float localRimPower, float localRimIntensity)
 {
     ToonStyle s;
@@ -83,8 +77,8 @@ ToonStyle ToonResolveStyle(float useGlobalStyle,
     s.smoothness      = g ? _GlobalSmoothness     : localSmoothness;
     s.shadowColor     = g ? _GlobalShadowColor.rgb : localShadowColor;
     s.shadowStrength  = g ? _GlobalShadowColor.a   : localShadowStrength;
-    s.ambientTint     = g ? _GlobalAmbientTint.rgb : MS_TOON_DEFAULT_AMBIENT_TINT;
-    s.ambientStrength = g ? _GlobalAmbientTint.a   : MS_TOON_DEFAULT_AMBIENT_STRENGTH;
+    s.ambientTint     = g ? _GlobalAmbientTint.rgb : localAmbientTint;
+    s.ambientStrength = g ? _GlobalAmbientTint.a   : localAmbientStrength;
     s.rimColor        = g ? _GlobalRimColor.rgb    : localRimColor;
     s.rimPower        = g ? _GlobalRimPower        : localRimPower;
     s.rimIntensity    = g ? _GlobalRimIntensity    : localRimIntensity;

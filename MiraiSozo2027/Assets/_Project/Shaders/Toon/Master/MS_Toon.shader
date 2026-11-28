@@ -1,9 +1,11 @@
 // プロジェクト共通トゥーンシェーダー(URP / HLSL 手書き)
 //
 // - ライティング処理は Includes/ProjectLighting.hlsl に集約。絵作りを変える場合は基本そちらを触る。
-// - 全体の見た目は _Global* (ToonStyleProfile -> ToonStyleApplier) で一括変更できる。
+// - 全体の見た目は _Global* で一括変更できる(ToonStyleProfile を ToonProjectSettings(全体の既定) か ToonStyleApplier(シーンごとの上書き) が反映)。
 //   マテリアルの "Use Global Style" をオフにすると、そのマテリアルだけ個別値で動く。
-//   共通値の対応: リム(色・絞り・強さ)は Use Global Style、輪郭線(色・太さ)は Use Global Outline で切り替わる。
+//   共通値の対応: 影・環境光・リム・階調は Use Global Style、輪郭線(色・太さ)は Use Global Outline で切り替わる。
+//   マテリアルに個別の設定ファイル(ToonStyleProfile)を登録すると、その値がマテリアルへ書き込まれ、
+//   登録した項目のトグルがオフになる(共通設定を切り替えても変わらない)。仕組みは ToonMaterialProfileLink。
 // - Mobile 向け: "Lite" をオンにすると 法線マップ / リム / スペキュラ / 追加ライト を無効化する。
 // - 輪郭線・ポスト用に DepthOnly / DepthNormals パスを持つ。
 // - 裏面押し出し法の Outline パスを持つ(処理は Includes/ToonOutline.hlsl)。
@@ -38,6 +40,9 @@ Shader "MS/Toon"
         _Smoothness ("Smoothness", Range(0, 1)) = 0.05
         _ShadowColor ("Shadow Color", Color) = (0.55, 0.55, 0.72, 1)
         _ShadowStrength ("Shadow Color Strength", Range(0, 1)) = 1
+        // 共通スタイルを使わないマテリアルでも、環境光を共通設定・個別設定ファイルと同じ値にそろえるための項目
+        _AmbientTint ("Ambient Tint", Color) = (1, 1, 1, 1)
+        _AmbientStrength ("Ambient Strength", Range(0, 2)) = 1
 
         [Header(Rim)]
         [Toggle(_TOON_RIM)] _UseRim ("Use Rim", Float) = 0
@@ -96,6 +101,8 @@ Shader "MS/Toon"
             float  _Smoothness;
             float4 _ShadowColor;
             float  _ShadowStrength;
+            float4 _AmbientTint;
+            float  _AmbientStrength;
             float4 _RimColor;
             float  _RimPower;
             float  _RimIntensity;
@@ -238,6 +245,7 @@ Shader "MS/Toon"
                 float3 viewDirWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
 
                 ToonStyle style = ToonResolveStyle(_UseGlobalStyle, _Smoothness, _ShadowColor.rgb, _ShadowStrength,
+                                                   _AmbientTint.rgb, _AmbientStrength,
                                                    _RimColor.rgb, _RimPower, _RimIntensity);
                 float aa = ToonRampAA(normalWS); // 一様な制御フローで計算しておく
 
