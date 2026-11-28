@@ -12,7 +12,7 @@ namespace MS.Toon.Editor
     public class ToonStyleApplierEditor : UnityEditor.Editor
     {
         // 説明文はこのクラスの表示専用。文言を直すときはここだけ変えれば済むように定数にする
-        private const string HelpText = "シーンに1つだけ置きます。Profile に入れたものが現在のスタイルになります。Profiles に候補を入れておくと、下の「スタイル切り替え」から選んで切り替えられます。このコンポーネントを無効にすると、各マテリアル自身の値に戻ります。";
+        private const string HelpText = "シーンに1つだけ置きます。Profile に入れたものが現在のスタイルになります。Profiles に候補を入れておくと、下の「スタイル切り替え」から選んで切り替えられます。このコンポーネントを無効にすると、各マテリアル自身の値に戻ります。マテリアルに個別の設定ファイルが登録されている場合は、そのファイルで上書きした項目(輪郭線・影など)だけファイルの値で描き、上書きしていない項目はここの共通設定に従います。";
 
         private const string DuplicateText = "シーンに ToonStyleApplier が複数あります。このコンポーネントは無視されます(有効なのは別のオブジェクトのものです)。不要なものを削除してください。";
 

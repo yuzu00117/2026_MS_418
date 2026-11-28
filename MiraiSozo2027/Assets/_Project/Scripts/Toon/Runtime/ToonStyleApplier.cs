@@ -5,12 +5,13 @@ namespace MS.Toon
     /// <summary>
     /// ToonStyleProfile をシェーダーのグローバル値へ反映する。
     /// シーンに1つ置く。エディット中もプロファイル変更が即座に Scene ビューへ反映される。
+    /// 個別の設定ファイルが登録されたマテリアルは、そのファイルで上書きしていない項目だけこの値に従う。
     /// </summary>
     [ExecuteAlways]
     [DisallowMultipleComponent]
     public class ToonStyleApplier : MonoBehaviour
     {
-        [Tooltip("現在適用するプロファイル。未設定ならデフォルト(各マテリアル値)で描画する")]
+        [Tooltip("現在適用するプロファイル。未設定ならデフォルト(各マテリアル値)で描画する。個別の設定ファイルが登録されたマテリアルは、上書きしていない項目だけこの設定に従う")]
         [SerializeField] private ToonStyleProfile _profile;
         [Tooltip("インスペクタのプルダウンや SetProfileByIndex で切り替える候補")]
         [SerializeField] private ToonStyleProfile[] _profiles;
