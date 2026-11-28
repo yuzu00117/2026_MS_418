@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: -8356192709976688666}
   - component: {fileID: -620260115563388905}
   - component: {fileID: -8373235287848267281}
-  - component: {fileID: 8664410659561252374}
   m_Layer: 0
   m_Name: PF_GameManager
   m_TagString: Untagged
@@ -107,21 +106,6 @@ MonoBehaviour:
   _canvas: {fileID: 0}
   _font: {fileID: 0}
   _showTestHud: 0
---- !u!114 &8664410659561252374
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3720786117580805148}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a4dc1c12df0c34d7ff80dc33b058073c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Aura.Toon::MS.Toon.ToonStyleApplier
-  _profile: {fileID: 11400000, guid: 99126546110404368b8d171df88bb55b, type: 2}
-  _profiles:
-  - {fileID: 11400000, guid: 99126546110404368b8d171df88bb55b, type: 2}
 --- !u!1 &4507672529738522101
 GameObject:
   m_ObjectHideFlags: 0
