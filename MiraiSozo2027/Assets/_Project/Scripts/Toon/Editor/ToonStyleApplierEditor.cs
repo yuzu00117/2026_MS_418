@@ -1,11 +1,10 @@
-using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
 namespace MS.Toon.Editor
 {
     /// <summary>
-    /// ToonStyleApplier のインスペクタ。先頭に使い方と切り替え用のプルダウンを出してから標準の項目を描く。
+    /// ToonStyleApplier のインスペクタ。先頭に使い方を出してから標準の項目を描く。
     /// 複数選択での一括変更にも対応し、同じ設定を複数のシーンオブジェクトへ揃えやすくする。
     /// </summary>
     [CustomEditor(typeof(ToonStyleApplier)), CanEditMultipleObjects]
@@ -14,27 +13,11 @@ namespace MS.Toon.Editor
         // 説明文はこのクラスの表示専用。文言を直すときはここだけ変えれば済むように定数にする
         private const string HelpText =
             "シーンに1つ置き、ゲーム全体の見た目を決めます。\n" +
-            "・Profile:いま使う設定ファイル\n" +
-            "・Profiles:下の「スタイル切り替え」で選べる候補\n" +
+            "・Profile:使う設定ファイル\n" +
             "・このコンポーネントを無効にすると、各マテリアル自身の値に戻ります\n" +
             "・個別の設定ファイルを登録したマテリアルは、そのファイルで上書きした項目だけファイルの値になります";
 
         private const string DuplicateText = "シーンに ToonStyleApplier が複数あります。このコンポーネントは無視されます(有効なのは別のオブジェクトのものです)。不要なものを削除してください。";
-
-        private const string SwitchLabel = "スタイル切り替え";
-        private const string OutsideCandidatesLabel = "(候補外)";
-        private const string EmptySlotLabel = "(未設定)";
-        private const string UndoName = "Switch Toon Style";
-
-        private SerializedProperty _profileProperty;
-        private SerializedProperty _profilesProperty;
-
-        private void OnEnable()
-        {
-            // フィールド名は ToonStyleApplier の [SerializeField] と一致させること
-            _profileProperty = serializedObject.FindProperty("_profile");
-            _profilesProperty = serializedObject.FindProperty("_profiles");
-        }
 
         public override void OnInspectorGUI()
         {
@@ -51,66 +34,7 @@ namespace MS.Toon.Editor
 
             // 説明は標準項目より上に出す。DrawDefaultInspector は Header/Tooltip など既存の表示をそのまま残すため、自前で描画しない
             EditorGUILayout.HelpBox(HelpText, MessageType.Info);
-            serializedObject.Update();
-            DrawProfileSwitcher();
             DrawDefaultInspector();
-        }
-
-        // Profiles の候補から1つ選んで、一発で Profile を切り替えるプルダウン。
-        // 候補の一覧は先頭の選択対象のものを使う(複数選択で候補が違う場合は先頭に合わせる)。
-        private void DrawProfileSwitcher()
-        {
-            if (_profilesProperty == null || _profilesProperty.arraySize == 0)
-            {
-                return;
-            }
-
-            var candidates = new List<ToonStyleProfile>();
-            var labels = new List<string>();
-            for (int i = 0; i < _profilesProperty.arraySize; i++)
-            {
-                ToonStyleProfile candidate = _profilesProperty.GetArrayElementAtIndex(i).objectReferenceValue as ToonStyleProfile;
-                candidates.Add(candidate);
-                // 同じ名前が並ぶと見分けられないので番号を付ける
-                labels.Add($"{i}: {(candidate != null ? candidate.name : EmptySlotLabel)}");
-            }
-
-            int selected = candidates.IndexOf(_profileProperty.objectReferenceValue as ToonStyleProfile);
-            if (selected < 0)
-            {
-                // 現在の Profile が候補に無いときは、そのことが分かる項目を末尾に足して選んでおく
-                labels.Add(OutsideCandidatesLabel);
-                selected = labels.Count - 1;
-            }
-
-            EditorGUI.showMixedValue = _profileProperty.hasMultipleDifferentValues;
-            EditorGUI.BeginChangeCheck();
-            int next = EditorGUILayout.Popup(SwitchLabel, selected, labels.ToArray());
-            EditorGUI.showMixedValue = false;
-            if (!EditorGUI.EndChangeCheck() || next >= candidates.Count)
-            {
-                return;
-            }
-
-            ApplyToTargets(candidates[next]);
-        }
-
-        // SetProfile を通して切り替えるのは、シェーダーのグローバル値への反映まで即座に行うため
-        private void ApplyToTargets(ToonStyleProfile profile)
-        {
-            foreach (Object t in targets)
-            {
-                ToonStyleApplier applier = t as ToonStyleApplier;
-                if (applier == null)
-                {
-                    continue;
-                }
-                Undo.RecordObject(applier, UndoName);
-                applier.SetProfile(profile);
-                PrefabUtility.RecordPrefabInstancePropertyModifications(applier);
-                EditorUtility.SetDirty(applier);
-            }
-            serializedObject.Update();
         }
     }
 }

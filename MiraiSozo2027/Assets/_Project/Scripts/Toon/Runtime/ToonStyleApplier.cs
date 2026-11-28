@@ -13,8 +13,6 @@ namespace MS.Toon
     {
         [Tooltip("現在適用するプロファイル。未設定ならデフォルト(各マテリアル値)で描画する。個別の設定ファイルが登録されたマテリアルは、上書きしていない項目だけこの設定に従う")]
         [SerializeField] private ToonStyleProfile _profile;
-        [Tooltip("インスペクタのプルダウンや SetProfileByIndex で切り替える候補")]
-        [SerializeField] private ToonStyleProfile[] _profiles;
 
         private ToonStyleProfile _subscribedProfile;
 
@@ -73,16 +71,6 @@ namespace MS.Toon
         {
             _profile = profile;
             Apply();
-        }
-
-        public void SetProfileByIndex(int index)
-        {
-            if (_profiles == null || _profiles.Length == 0)
-            {
-                return;
-            }
-            int wrapped = ((index % _profiles.Length) + _profiles.Length) % _profiles.Length;
-            SetProfile(_profiles[wrapped]);
         }
 
         private void Apply()
