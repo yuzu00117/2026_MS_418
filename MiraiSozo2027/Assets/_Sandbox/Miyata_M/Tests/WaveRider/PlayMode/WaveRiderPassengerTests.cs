@@ -17,6 +17,7 @@ namespace Aura.Gimmick.Tests
         private const float CarrySpeed = 2.0f;     ///< 運ぶ検証で、ライダーが戻る速さ（m/s）
         private const float CarryTarget = 3.0f;    ///< 運ぶ検証で、ライダーが向かう初期位置の z（m）
         private const int CarrySteps = 40;         ///< 運ぶ検証で動かす物理ステップ数（戻り終える前に止める）
+        private const float MinRiderMove = 0.5f;   ///< 運ぶ検証で、ライダーが動いたとみなす最小の距離（m）。これより短いと比が当てにならない
         private const float CarryRatioTolerance = 0.1f;  ///< 箱の進んだ距離とライダーの進んだ距離の比の、1 からのずれの許容
         private const float ChildFriction = 0.6f;  ///< 子に付ける材質の摩擦（元へ戻ったかを見分けるため）
         private const float ChildBounciness = 0.3f;  ///< 子に付ける材質の跳ね返り（複製で残るかを見るため）
@@ -123,7 +124,7 @@ namespace Aura.Gimmick.Tests
 
             float riderMoved = riderBody.position.z - riderStart;
             float cargoMoved = cargo.position.z - cargoStart;
-            Assert.That(riderMoved, Is.GreaterThan(0.5f), "ライダーが動いていない");
+            Assert.That(riderMoved, Is.GreaterThan(MinRiderMove), "ライダーが動いていない");
             Assert.That(cargoMoved / riderMoved, Is.EqualTo(1.0f).Within(CarryRatioTolerance),
                 "箱の進んだ距離 " + cargoMoved + "m、ライダーの進んだ距離 " + riderMoved + "m");
         }

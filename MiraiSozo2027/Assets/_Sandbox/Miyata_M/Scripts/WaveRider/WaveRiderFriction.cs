@@ -11,12 +11,12 @@ namespace Aura.Gimmick
     {
         private const string FrictionlessName = "WaveRider_Frictionless";   ///< 作る材質の名前（Inspector で見分けるため）
 
-        private static PhysicsMaterial s_frictionless;   ///< 材質の無い Collider に付ける、摩擦の無い材質（全ライダーで使い回す）
+        private static PhysicsMaterial _frictionless;   ///< 材質の無い Collider に付ける、摩擦の無い材質（全ライダーで使い回す）
 
-        private readonly Dictionary<Collider, PhysicsMaterial> _originals = new Dictionary<Collider, PhysicsMaterial>();   ///< 摩擦を取り除いた Collider と、その元の材質（無ければ null）
-        private readonly Dictionary<Collider, PhysicsMaterial> _applied = new Dictionary<Collider, PhysicsMaterial>();     ///< 摩擦を取り除いた Collider と、代わりに付けた材質
-        private readonly HashSet<Collider> _current = new HashSet<Collider>();   ///< いまの自分の Collider（外れた物を見分けるため使い回す）
-        private readonly List<Collider> _detached = new List<Collider>();       ///< 外れた Collider（辞書を回しながら消せないため使い回す）
+        private readonly Dictionary<Collider, PhysicsMaterial> _originalMaterials = new Dictionary<Collider, PhysicsMaterial>();   ///< 摩擦を取り除いた Collider と、その元の材質（無ければ null）
+        private readonly Dictionary<Collider, PhysicsMaterial> _appliedMaterials = new Dictionary<Collider, PhysicsMaterial>();     ///< 摩擦を取り除いた Collider と、代わりに付けた材質
+        private readonly HashSet<Collider> _currentColliders = new HashSet<Collider>();   ///< いまの自分の Collider（外れた物を見分けるため使い回す）
+        private readonly List<Collider> _detachedColliders = new List<Collider>();       ///< 外れた Collider（辞書を回しながら消せないため使い回す）
 
         /// @brief 摩擦が残っている Collider に、摩擦の無い材質を付ける。トリガーは物を支えないので相手にしない
         /// 材質がすでに付いていれば、跳ね返りなどを残すため複製して摩擦だけ 0 にする。
@@ -27,7 +27,7 @@ namespace Aura.Gimmick
             RestoreDetached(colliders);
             foreach (Collider each in colliders)
             {
-                if (each == null || each.isTrigger || _originals.ContainsKey(each))
+                if (each == null || each.isTrigger || _originalMaterials.ContainsKey(each))
                 {
                     continue;
                 }
@@ -47,8 +47,8 @@ namespace Aura.Gimmick
                     replacement.name = current.name + "_" + FrictionlessName;
                     MakeFrictionless(replacement);
                 }
-                _originals.Add(each, current);
-                _applied.Add(each, replacement);
+                _originalMaterials.Add(each, current);
+                _appliedMaterials.Add(each, replacement);
                 each.sharedMaterial = replacement;
             }
         }
@@ -57,57 +57,57 @@ namespace Aura.Gimmick
         /// 計算量: O(A)（A は摩擦を取り除いてある Collider の数）
         public void RestoreAll()
         {
-            _detached.Clear();
-            _detached.AddRange(_originals.Keys);
-            foreach (Collider each in _detached)
+            _detachedColliders.Clear();
+            _detachedColliders.AddRange(_originalMaterials.Keys);
+            foreach (Collider each in _detachedColliders)
             {
                 Restore(each);
             }
-            _detached.Clear();
+            _detachedColliders.Clear();
         }
 
         // colliders に無くなった Collider を元の材質へ戻す
         private void RestoreDetached(Collider[] colliders)
         {
-            if (_originals.Count == 0)
+            if (_originalMaterials.Count == 0)
             {
                 return;
             }
-            _current.Clear();
+            _currentColliders.Clear();
             foreach (Collider each in colliders)
             {
-                _current.Add(each);
+                _currentColliders.Add(each);
             }
-            _detached.Clear();
-            foreach (Collider each in _originals.Keys)
+            _detachedColliders.Clear();
+            foreach (Collider each in _originalMaterials.Keys)
             {
-                if (!_current.Contains(each))
+                if (!_currentColliders.Contains(each))
                 {
-                    _detached.Add(each);
+                    _detachedColliders.Add(each);
                 }
             }
-            foreach (Collider each in _detached)
+            foreach (Collider each in _detachedColliders)
             {
                 Restore(each);
             }
-            _detached.Clear();
-            _current.Clear();
+            _detachedColliders.Clear();
+            _currentColliders.Clear();
         }
 
         // 1 つの Collider を元の材質へ戻し、覚えていた分を消す。
         // 付けた材質がほかの処理で差し替えられていたら、その材質を残す（相手の変更を消さないため）
         private void Restore(Collider collider)
         {
-            PhysicsMaterial original = _originals[collider];
-            PhysicsMaterial replacement = _applied[collider];
-            _originals.Remove(collider);
-            _applied.Remove(collider);
+            PhysicsMaterial original = _originalMaterials[collider];
+            PhysicsMaterial replacement = _appliedMaterials[collider];
+            _originalMaterials.Remove(collider);
+            _appliedMaterials.Remove(collider);
             if (collider != null && collider.sharedMaterial == replacement)
             {
                 collider.sharedMaterial = original;
             }
             // 複製した材質はこの Collider だけが使うので消す。使い回しの材質は残す
-            if (replacement != null && replacement != s_frictionless)
+            if (replacement != null && replacement != _frictionless)
             {
                 Object.Destroy(replacement);
             }
@@ -116,12 +116,12 @@ namespace Aura.Gimmick
         /// 使い回す材質。プレイを止めると消えるので、Unity の null 判定で消えたかを見て作り直す
         private static PhysicsMaterial GetSharedFrictionless()
         {
-            if (s_frictionless == null)
+            if (_frictionless == null)
             {
-                s_frictionless = new PhysicsMaterial(FrictionlessName);
-                MakeFrictionless(s_frictionless);
+                _frictionless = new PhysicsMaterial(FrictionlessName);
+                MakeFrictionless(_frictionless);
             }
-            return s_frictionless;
+            return _frictionless;
         }
 
         /// 相手の材質によらず摩擦が 0 になるよう、合わせ方を Minimum にする（Average だと相手の摩擦の半分が残る）
