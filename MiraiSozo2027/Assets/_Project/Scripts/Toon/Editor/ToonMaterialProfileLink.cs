@@ -72,7 +72,7 @@ namespace MS.Toon.Editor
             }
             else
             {
-                // 登録を外したら、全体の見た目(Applier)に従う状態へ戻すのが自然なため両方オンにする
+                // 登録を外したら、全体の見た目(共通設定)に従う状態へ戻すのが自然なため両方オンにする
                 material.SetFloat(UseGlobalOutlineId, GlobalToggleOn);
                 material.SetFloat(UseGlobalStyleId, GlobalToggleOn);
             }
@@ -194,7 +194,7 @@ namespace MS.Toon.Editor
         }
 
         /// <summary>一覧を捨て、次に必要になったとき作り直させる。</summary>
-        internal static void InvalidateCache()
+        private static void InvalidateCache()
         {
             s_cache = null;
         }

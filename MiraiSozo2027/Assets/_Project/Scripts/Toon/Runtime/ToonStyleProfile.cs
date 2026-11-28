@@ -76,7 +76,7 @@ namespace MS.Toon
         [Tooltip("輪郭線の太さ(ワールド上の長さ)。カメラから遠いほど細く見える")]
         [SerializeField, Range(0f, 0.1f)] private float _outlineWidth = 0.02f;
 
-        // 共通設定(Applier)として使うときは無視される。一部の項目だけ変えたいキャラ用の設定ファイルで、
+        // 共通設定(ToonProjectSettings や ToonStyleApplier)として使うときは無視される。一部の項目だけ変えたいキャラ用の設定ファイルで、
         // 残りの項目は共通設定に従わせるために分けている
         [Header("Per-Material Use")]
         [Tooltip("マテリアルに個別登録したとき、輪郭線(色・太さ)をこのファイルの値にする。オフなら共通設定に従う")]
@@ -84,7 +84,7 @@ namespace MS.Toon
         [Tooltip("マテリアルに個別登録したとき、影・環境光・リム・階調をこのファイルの値にする。オフなら共通設定に従う")]
         [SerializeField] private bool _overrideStyle;
 
-        /// <summary>インスペクターで値が変わったときに通知する(Applier が再反映する)。</summary>
+        /// <summary>インスペクターで値が変わったときに通知する(ToonProjectSettings・ToonStyleApplier が再反映する)。</summary>
         public event Action Changed;
 
 #if UNITY_EDITOR

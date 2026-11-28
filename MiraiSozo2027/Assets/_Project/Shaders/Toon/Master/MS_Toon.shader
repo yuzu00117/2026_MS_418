@@ -1,7 +1,7 @@
 // プロジェクト共通トゥーンシェーダー(URP / HLSL 手書き)
 //
 // - ライティング処理は Includes/ProjectLighting.hlsl に集約。絵作りを変える場合は基本そちらを触る。
-// - 全体の見た目は _Global* (ToonStyleProfile -> ToonStyleApplier) で一括変更できる。
+// - 全体の見た目は _Global* で一括変更できる(ToonStyleProfile を ToonProjectSettings(全体の既定) か ToonStyleApplier(シーンごとの上書き) が反映)。
 //   マテリアルの "Use Global Style" をオフにすると、そのマテリアルだけ個別値で動く。
 //   共通値の対応: 影・環境光・リム・階調は Use Global Style、輪郭線(色・太さ)は Use Global Outline で切り替わる。
 //   マテリアルに個別の設定ファイル(ToonStyleProfile)を登録すると、その値がマテリアルへ書き込まれ、
